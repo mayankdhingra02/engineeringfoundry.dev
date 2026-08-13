@@ -5,7 +5,6 @@ import { parseProfileForm } from "@/lib/auth/validation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface ProfileActionState { status: "idle" | "error" | "success"; message: string; username?: string; visibility?: "public" | "private"; }
-export const initialProfileState: ProfileActionState = { status: "idle", message: "" };
 
 export async function saveProfileAction(_: ProfileActionState, formData: FormData): Promise<ProfileActionState> {
   const user = await getCurrentUser();

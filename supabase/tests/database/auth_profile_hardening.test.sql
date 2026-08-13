@@ -191,30 +191,23 @@ select is(
   0,
   'authenticated user cannot read another base profile'
 );
-select is(
-  (
-    with changed as (
-      update public.profiles
-      set display_name = 'Member A Updated'
-      where id = '11111111-1111-4111-8111-111111111111'
-      returning id
-    )
-    select count(*)::integer from changed
-  ),
-  1,
+select results_eq(
+  $$
+    update public.profiles
+    set display_name = 'Member A Updated'
+    where id = '11111111-1111-4111-8111-111111111111'
+    returning id
+  $$,
+  $$values ('11111111-1111-4111-8111-111111111111'::uuid)$$,
   'authenticated user can update exactly their own profile'
 );
-select is(
-  (
-    with changed as (
-      update public.profiles
-      set display_name = 'Unauthorized change'
-      where id = '22222222-2222-4222-8222-222222222222'
-      returning id
-    )
-    select count(*)::integer from changed
-  ),
-  0,
+select is_empty(
+  $$
+    update public.profiles
+    set display_name = 'Unauthorized change'
+    where id = '22222222-2222-4222-8222-222222222222'
+    returning id
+  $$,
   'authenticated user cannot update another profile'
 );
 select throws_ok(

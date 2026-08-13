@@ -6,7 +6,9 @@ import { useActionState, useEffect } from "react";
 import type { Profile } from "@/lib/supabase/database.types";
 import { identifyUser, track } from "@/lib/analytics";
 import { safeInternalPath } from "@/lib/auth/redirects";
-import { initialProfileState, saveProfileAction } from "./actions";
+import { saveProfileAction, type ProfileActionState } from "./actions";
+
+const initialProfileState: ProfileActionState = { status: "idle", message: "" };
 
 export function ProfileForm({ profile, mode, next, userId }: { profile: Profile; mode: "onboarding" | "settings"; next?: string; userId: string }) {
   const [state, action, pending] = useActionState(saveProfileAction, initialProfileState);
@@ -30,7 +32,7 @@ export function ProfileForm({ profile, mode, next, userId }: { profile: Profile;
     <input type="hidden" name="mode" value={mode} />
     <div className="profile-form-header"><div><p className="auth-kicker">{mode === "onboarding" ? "Account → Profile → Ready" : "Public identity"}</p><h2>{mode === "onboarding" ? "Set up your profile" : "Profile settings"}</h2><p>{mode === "onboarding" ? "Only a username and display name are required. Everything else is optional." : "Control what other engineers see on your public profile."}</p></div><span className="icon-well"><UserRound size={20} /></span></div>
     <div className="form-grid">
-      <div className="form-group"><label htmlFor="username">Username <span>Required</span></label><div className="input-prefix"><span>engineeringfoundry.dev/u/</span><input id="username" name="username" required minLength={3} maxLength={30} pattern="[a-zA-Z0-9][a-zA-Z0-9_-]{2,29}" defaultValue={profile.username ?? ""} autoCapitalize="none" autoCorrect="off" /></div><small>3–30 letters, numbers, underscores, or hyphens.</small></div>
+      <div className="form-group"><label htmlFor="username">Username <span>Required</span></label><div className="input-prefix"><span>engineeringfoundry.dev/u/</span><input id="username" name="username" required minLength={3} maxLength={30} pattern={"[a-zA-Z0-9][a-zA-Z0-9_\\-]{2,29}"} defaultValue={profile.username ?? ""} autoCapitalize="none" autoCorrect="off" /></div><small>3–30 letters, numbers, underscores, or hyphens.</small></div>
       <div className="form-group"><label htmlFor="display-name">Display name <span>Required</span></label><input id="display-name" name="display_name" required maxLength={80} defaultValue={profile.display_name ?? ""} autoComplete="name" /></div>
       <div className="form-group"><label htmlFor="current-company">Current company <span>Optional</span></label><input id="current-company" name="current_company" maxLength={100} defaultValue={profile.current_company ?? ""} /></div>
       <div className="form-group"><label htmlFor="current-role">Current role <span>Optional</span></label><input id="current-role" name="current_role" maxLength={100} defaultValue={profile.current_role ?? ""} /></div>

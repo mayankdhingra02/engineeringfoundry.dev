@@ -6,7 +6,7 @@ create table if not exists public.profiles (
   display_name text,
   bio text,
   current_company text,
-  current_role text,
+  "current_role" text,
   years_experience integer,
   linkedin_url text,
   github_url text,
@@ -19,7 +19,7 @@ create table if not exists public.profiles (
   constraint profiles_display_name_length check (display_name is null or char_length(display_name) between 1 and 80),
   constraint profiles_bio_length check (bio is null or char_length(bio) <= 280),
   constraint profiles_company_length check (current_company is null or char_length(current_company) <= 100),
-  constraint profiles_role_length check (current_role is null or char_length(current_role) <= 100),
+  constraint profiles_role_length check ("current_role" is null or char_length("current_role") <= 100),
   constraint profiles_years_experience_range check (years_experience is null or years_experience between 0 and 80),
   constraint profiles_linkedin_url_scheme check (linkedin_url is null or linkedin_url ~* '^https?://'),
   constraint profiles_github_url_scheme check (github_url is null or github_url ~* '^https?://'),
@@ -47,7 +47,7 @@ create policy "Owners can update their profile" on public.profiles for update to
 revoke insert, delete on public.profiles from anon, authenticated;
 revoke update on public.profiles from anon, authenticated;
 grant select on public.profiles to anon, authenticated;
-grant update (username, display_name, bio, current_company, current_role, years_experience, linkedin_url, github_url, is_public, onboarding_complete) on public.profiles to authenticated;
+grant update (username, display_name, bio, current_company, "current_role", years_experience, linkedin_url, github_url, is_public, onboarding_complete) on public.profiles to authenticated;
 
 create or replace function public.set_updated_at()
 returns trigger

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { LoaderCircle, Mail, ShieldCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { initialPasswordState, updatePasswordAction } from "./password-actions";
+import { updatePasswordAction, type PasswordActionState } from "./password-actions";
+
+const initialPasswordState: PasswordActionState = { status: "idle", message: "" };
 
 export function ForgotPasswordForm() {
   const [pending, setPending] = useState(false);
@@ -29,9 +30,6 @@ export function ForgotPasswordForm() {
 }
 
 export function ResetPasswordForm() {
-  const router = useRouter();
   const [state, action, pending] = useActionState(updatePasswordAction, initialPasswordState);
-  useEffect(() => { if (state.status === "success") { const timeout = window.setTimeout(() => { router.push("/dashboard"); router.refresh(); }, 1000); return () => window.clearTimeout(timeout); } }, [router, state.status]);
-  if (state.status === "success") return <div className="auth-card auth-success" role="status"><ShieldCheck size={25} /><p className="auth-kicker">Password updated</p><h1>You&apos;re all set.</h1><p>Your new password is active. Redirecting to your dashboard…</p></div>;
   return <div className="auth-card"><p className="auth-kicker">Secure recovery</p><h1>Choose a new password.</h1><p className="auth-intro">Use at least eight characters and avoid reusing a password from another service.</p><form className="auth-form" action={action}><div className="form-group"><label htmlFor="new-password">New password</label><input id="new-password" name="password" type="password" autoComplete="new-password" minLength={8} required /></div><div className="form-group"><label htmlFor="confirm-new-password">Confirm new password</label><input id="confirm-new-password" name="confirm_password" type="password" autoComplete="new-password" minLength={8} required /></div>{state.status === "error" && <p className="form-error" role="alert">{state.message}</p>}<button className="button auth-submit" disabled={pending} type="submit">{pending ? <><LoaderCircle className="spin" size={16} />Updating…</> : "Update password"}</button></form></div>;
 }

@@ -1,10 +1,10 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface PasswordActionState { status: "idle" | "error" | "success"; message: string; }
-export const initialPasswordState: PasswordActionState = { status: "idle", message: "" };
 
 export async function updatePasswordAction(_: PasswordActionState, formData: FormData): Promise<PasswordActionState> {
   const cookieStore = await cookies();
@@ -20,5 +20,5 @@ export async function updatePasswordAction(_: PasswordActionState, formData: For
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { status: "error", message: "We couldn't update your password. Request a new reset link and try again." };
   cookieStore.delete("ef-password-recovery");
-  return { status: "success", message: "Password updated." };
+  redirect("/dashboard");
 }
