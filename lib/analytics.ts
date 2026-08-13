@@ -31,7 +31,13 @@ export type AnalyticsEvent =
   | "system_design_guidance_opened"
   | "ml_design_problem_viewed"
   | "ml_design_guidance_opened"
-  | "design_problem_started";
+  | "design_problem_started"
+  | "behavioral_question_viewed"
+  | "behavioral_guidance_opened"
+  | "behavioral_prompt_randomized"
+  | "interview_checklist_used"
+  | "interview_playbook_section_viewed"
+  | "resource_opened";
 
 export type EventProperties = Record<string, string | number | boolean | null | undefined>;
 

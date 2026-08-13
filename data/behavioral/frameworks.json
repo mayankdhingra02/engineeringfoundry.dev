@@ -1,0 +1,55 @@
+{
+  "answerFramework": [
+    { "id": "situation", "label": "Situation", "plainLabel": "Context", "guidance": "Name only the context the listener needs to understand the stakes." },
+    { "id": "task", "label": "Task", "plainLabel": "Responsibility", "guidance": "State what you personally owned, what success meant, and any meaningful constraint." },
+    { "id": "action", "label": "Action", "plainLabel": "Actions and decisions", "guidance": "Explain the choices you made, how you worked with others, and why you chose that path." },
+    { "id": "result", "label": "Result", "plainLabel": "Outcome", "guidance": "Describe the evidence of impact without inflating or inventing measurements." },
+    { "id": "reflection", "label": "Reflection", "plainLabel": "Learning", "guidance": "Add what changed in your judgment or what you would do differently now." }
+  ],
+  "storyTypes": [
+    { "id": "major-project", "label": "Major project" },
+    { "id": "disagreement", "label": "Disagreement" },
+    { "id": "failure", "label": "Failure" },
+    { "id": "ambiguous-problem", "label": "Ambiguous problem" },
+    { "id": "tight-deadline", "label": "Tight deadline" },
+    { "id": "difficult-stakeholder", "label": "Difficult stakeholder" },
+    { "id": "mentoring", "label": "Mentoring" },
+    { "id": "technical-tradeoff", "label": "Technical tradeoff" },
+    { "id": "incident", "label": "Incident" },
+    { "id": "process-improvement", "label": "Process improvement" },
+    { "id": "customer-impact", "label": "Customer impact" },
+    { "id": "leadership-without-authority", "label": "Leadership without authority" }
+  ],
+  "storyInventory": [
+    { "id": "inventory-project", "title": "A successful project", "storyType": "major-project", "prompt": "Choose work where your decisions materially changed delivery, quality, or user value." },
+    { "id": "inventory-failure", "title": "A meaningful failure", "storyType": "failure", "prompt": "Choose a real miss you can own without making someone else the villain." },
+    { "id": "inventory-disagreement", "title": "A productive disagreement", "storyType": "disagreement", "prompt": "Find a case where listening or new evidence changed the path—not merely who won." },
+    { "id": "inventory-ambiguity", "title": "An ambiguous problem", "storyType": "ambiguous-problem", "prompt": "Recall how you reduced uncertainty and decided what could safely move first." },
+    { "id": "inventory-leadership", "title": "Leadership without authority", "storyType": "leadership-without-authority", "prompt": "Use an example where people followed the clarity you created, not your title." },
+    { "id": "inventory-mentoring", "title": "Someone you helped grow", "storyType": "mentoring", "prompt": "Focus on how you adapted support and increased the other person's independence." },
+    { "id": "inventory-deadline", "title": "A difficult deadline", "storyType": "tight-deadline", "prompt": "Identify the scope or risk decisions that mattered more than simply working longer." },
+    { "id": "inventory-customer", "title": "A customer-impact decision", "storyType": "customer-impact", "prompt": "Connect the technical choice to a concrete user problem or trust outcome." },
+    { "id": "inventory-tradeoff", "title": "A technical tradeoff", "storyType": "technical-tradeoff", "prompt": "Pick a decision with credible alternatives and a constraint that shaped the choice." },
+    { "id": "inventory-incident", "title": "An incident or recovery", "storyType": "incident", "prompt": "Separate immediate stabilization from the later prevention work you influenced." }
+  ],
+  "commonMistakes": [
+    { "title": "Too much runway", "guidance": "Compress context until the listener can reach your decision quickly." },
+    { "title": "Invisible ownership", "guidance": "Use “we” for team outcomes and “I” for the actions you actually owned." },
+    { "title": "Activity without judgment", "guidance": "Name the choice, alternatives, or tradeoff rather than listing meetings and tasks." },
+    { "title": "A missing result", "guidance": "Close the loop with observed impact, qualitative evidence, or an honest incomplete outcome." },
+    { "title": "Blame as explanation", "guidance": "Describe behavior and constraints professionally; show what remained in your control." },
+    { "title": "A spotless failure", "guidance": "A failure story needs a real miss and a specific change in your later behavior." },
+    { "title": "Robotic delivery", "guidance": "Prepare the structure and evidence, then answer the question that was actually asked." },
+    { "title": "Borrowed accomplishments", "guidance": "Do not inflate team work or invent measurements to make a story sound stronger." },
+    { "title": "No reflection", "guidance": "Show how the experience changed a later decision, habit, or risk check." }
+  ],
+  "finalChecklist": [
+    "I can explain my personal responsibility without erasing the team's contribution.",
+    "Each story contains a decision, action, or tradeoff—not only context.",
+    "My outcomes are accurate and I can distinguish measured from observed impact.",
+    "I have at least one honest failure and one productive disagreement story.",
+    "I can adapt each story to the prompt instead of reciting a fixed script.",
+    "I can answer likely follow-ups about alternatives, feedback, and what changed afterward.",
+    "I will not disclose confidential details or fabricate an experience."
+  ]
+}

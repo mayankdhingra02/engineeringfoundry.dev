@@ -25,3 +25,18 @@ Engineering Foundry may publish complete prompts and explanations that it author
 ## Community submissions
 
 Community-reported material must remain labeled as such until independently reviewed. A later submission workflow must include moderation, attribution review, privacy safeguards, and a way to correct or remove outdated material.
+
+## Behavioral and interview guidance
+
+- Behavioral prompts, follow-ups, answer guidance, and interview tips published as Engineering Foundry material must use original wording.
+- Do not copy proprietary company guides, paid courses, question banks, scripted answers, or confidential interview material.
+- Do not label behavioral prompts as asked by a company without specific, reviewable provenance.
+- Guidance should help visitors reason from truthful experience; it must not encourage fabricated accomplishments, measurements, or conflict.
+- Engineering Foundry does not collect story text, answer drafts, or confidential interview questions through product analytics.
+
+## External resource summaries
+
+- Resource summaries must be original descriptions of why a public destination may be useful; do not copy the provider's marketing or course description.
+- External destinations identify their provider, use direct HTTPS links without affiliate or tracking parameters, and show a verification state.
+- `verified` means the public destination and its purpose were checked on the recorded date. It does not imply endorsement, partnership, quality ranking, or permanent availability.
+- Paid material may be linked and accurately labeled, but Engineering Foundry does not reproduce it.

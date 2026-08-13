@@ -79,16 +79,87 @@ export interface CompanyGuide {
   claims: Array<{ claim: string; verification: VerificationStatus; source: ProvenanceSource }>;
 }
 
+export type BehavioralCategory =
+  | "Leadership"
+  | "Ownership"
+  | "Collaboration"
+  | "Conflict & Influence"
+  | "Ambiguity"
+  | "Failure & Growth"
+  | "Execution & Prioritization"
+  | "Mentorship"
+  | "Technical Judgment"
+  | "Customer Impact"
+  | "Cross-functional Work"
+  | "Incident & Quality";
+export type BehavioralScope = "Individual" | "Team" | "Cross-functional" | "Leadership";
+
+export interface BehavioralQuestion {
+  id: string;
+  slug: string;
+  prompt: string;
+  category: BehavioralCategory;
+  signals: string[];
+  storyTypes: string[];
+  scope: BehavioralScope[];
+  followUps: string[];
+  answerGuidance: string[];
+  commonMistakes: string[];
+  searchFeatured?: boolean;
+  status: "active" | "needs_review";
+  source: { name: "Engineering Foundry"; platform: "original" };
+}
+
+export type InterviewTipCategory =
+  | "Preparation"
+  | "Before the Interview"
+  | "Coding"
+  | "System Design"
+  | "ML Design"
+  | "Behavioral"
+  | "Communication"
+  | "Recovering When Stuck"
+  | "Closing"
+  | "After the Interview";
+
+export interface InterviewTip {
+  id: string;
+  category: InterviewTipCategory;
+  title: string;
+  guidance: string[];
+  whyItMatters: string;
+  avoid: string[];
+  status: "active" | "needs_review";
+}
+
+export interface InterviewChecklist {
+  id: string;
+  title: string;
+  timing: string;
+  description: string;
+  items: Array<{ id: string; label: string }>;
+  status: "active" | "needs_review";
+}
+
+export type ResourceCategory = "DSA" | "System Design" | "ML / AI" | "Behavioral" | "Interview Strategy" | "Engineering" | "Career";
+export type ResourceType = "Practice Platform" | "Guide" | "Course" | "Book" | "Documentation" | "Repository" | "Visualization" | "Roadmap";
+export type ResourceAccess = "Free" | "Paid" | "Freemium";
+export type ResourceVerification = "verified" | "unverified" | "needs_review";
+
 export interface Resource {
   id: string;
   title: string;
   description: string;
-  category: string;
-  type: "Platform" | "Book" | "Blog" | "Video" | "Course";
+  category: ResourceCategory;
+  type: ResourceType;
+  access: ResourceAccess;
   url: string;
-  access: "Free" | "Paid" | "Freemium";
+  provider: string;
+  isInternal: boolean;
+  status: "active" | "needs_review";
+  verification: ResourceVerification;
+  lastVerifiedAt: string | null;
   tags: string[];
-  demo: boolean;
 }
 
 export type DesignDifficulty = "Foundation" | "Intermediate" | "Advanced";

@@ -6,12 +6,15 @@ interface PageMetadataOptions {
   description: string;
   path: `/${string}` | "/";
   image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   absoluteTitle?: boolean;
 }
 
 const defaultImage = "/og.png";
 
-export function createPageMetadata({ title, description, path, image = defaultImage, absoluteTitle = false }: PageMetadataOptions): Metadata {
+export function createPageMetadata({ title, description, path, image = defaultImage, imageAlt = `${siteConfig.name} — ${siteConfig.tagline}`, imageWidth = 1730, imageHeight = 909, absoluteTitle = false }: PageMetadataOptions): Metadata {
   const canonicalUrl = new URL(path, siteConfig.url).toString();
   const imageUrl = new URL(image, siteConfig.url).toString();
 
@@ -26,7 +29,7 @@ export function createPageMetadata({ title, description, path, image = defaultIm
       title,
       description,
       url: canonicalUrl,
-      images: [{ url: imageUrl, width: 1730, height: 909, alt: `${siteConfig.name} — ${siteConfig.tagline}` }],
+      images: [{ url: imageUrl, width: imageWidth, height: imageHeight, alt: imageAlt }],
     },
     twitter: { card: "summary_large_image", title, description, images: [imageUrl] },
   };

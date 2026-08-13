@@ -4,10 +4,12 @@ import Link from "next/link";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { companies } from "@/data/companies";
+import { behavioralCategories, behavioralSearchQuestions } from "@/data/behavioral";
 import { activeQuestions, dsaPatterns, dsaTopics } from "@/data/dsa";
+import { interviewPlaybookSections } from "@/data/interview-tips";
 import { activeMlDesignProblems, mlDesignConcepts } from "@/data/ml-design";
+import { activeResources } from "@/data/resources";
 import { activeSystemDesignProblems, systemDesignConcepts } from "@/data/system-design";
-import { resources } from "@/data/fixtures/resources";
 import { track } from "@/lib/analytics";
 
 const staticResults = [
@@ -30,7 +32,10 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     ...systemDesignConcepts.map((concept) => ({ title: concept.title, type: "System Design concept", href: `/system-design#concepts` })),
     ...activeMlDesignProblems.map((problem) => ({ title: problem.title, type: "ML Design problem", href: `/ml-design/${problem.slug}` })),
     ...mlDesignConcepts.map((concept) => ({ title: concept.title, type: "ML Design concept", href: `/ml-design#concepts` })),
-    ...resources.filter((resource) => !resource.demo).map((resource) => ({ title: resource.title, type: "Resource", href: "/resources" })),
+    ...behavioralCategories.map((category) => ({ title: category.name, type: "Behavioral category", href: `/behavioral?category=${encodeURIComponent(category.name)}` })),
+    ...behavioralSearchQuestions.map((question) => ({ title: question.prompt, type: "Behavioral practice", href: `/behavioral?question=${question.slug}` })),
+    ...interviewPlaybookSections.map((section) => ({ title: `${section.title} playbook`, type: "Interview playbook", href: `/interview-tips#${section.id}` })),
+    ...activeResources.map((resource) => ({ title: resource.title, type: `Resource · ${resource.provider}`, href: `/resources?search=${encodeURIComponent(resource.title)}` })),
     ...staticResults,
   ], []);
   const results = query.trim() ? items.filter((item) => `${item.title} ${item.type}`.toLowerCase().includes(query.toLowerCase())).slice(0, 8) : items.slice(0, 6);
@@ -54,7 +59,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
         <div className="search-backdrop">
           <button className="search-dismiss" onClick={() => setOpen(false)} aria-label="Close search" />
           <section className="search-dialog" role="dialog" aria-modal="true" aria-label="Global search">
-            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, designs, companies…" aria-label="Search query" /><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
+            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, playbooks, resources…" aria-label="Search query" /><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
             <div className="search-meta"><span>{query ? `${results.length} results` : "Suggested"}</span><span className="kbd">ESC</span></div>
             <div className="search-results">
               {results.map((item) => <Link href={item.href} key={`${item.type}-${item.title}`} onClick={() => { track("search_used", { result_type: item.type.split(" · ")[0].toLowerCase() }); setTimeout(() => setOpen(false), 0); }}><span><small>{item.type}</small>{item.title}</span><ArrowUpRight size={16} /></Link>)}

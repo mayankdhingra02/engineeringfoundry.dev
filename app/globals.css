@@ -853,3 +853,189 @@ button.flow-card { cursor: pointer; }
   .practice-details summary { padding-inline: 13px; }
   .practice-details-body { padding-inline: 14px; }
 }
+
+/* Behavioral practice, interview playbook, and resource directory */
+#explorer, #practice, #checklists, .playbook-section, #verification { scroll-margin-top: 88px; }
+.page-loading { min-height: 280px; }
+.behavioral-framework-section, .playbook-map-section { padding-block: 64px; }
+.behavioral-framework { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); border-radius: 13px; background: var(--surface); list-style: none; overflow: hidden; }
+.behavioral-framework li { position: relative; min-width: 0; min-height: 220px; padding: 20px 18px; border-right: 1px solid var(--line); }
+.behavioral-framework li:last-child { border-right: 0; }
+.behavioral-framework li > span { color: var(--accent); font: 750 9px ui-monospace, monospace; }
+.behavioral-framework li > div { margin-top: 54px; }
+.behavioral-framework small { color: var(--muted); font: 700 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.behavioral-framework h3 { margin: 5px 0 8px; font-size: 17px; letter-spacing: -.025em; }
+.behavioral-framework p { margin: 0; color: var(--muted); font-size: 10.5px; line-height: 1.55; }
+.behavioral-framework li > svg { position: absolute; z-index: 1; right: -8px; top: 50%; color: var(--muted); background: var(--surface); }
+.story-inventory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.story-inventory-grid article { min-width: 0; padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: var(--card); }
+.story-inventory-grid article > span { float: right; color: var(--accent); font: 750 9px ui-monospace, monospace; }
+.story-inventory-grid small { color: var(--muted); font: 700 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; }
+.story-inventory-grid h3 { margin: 23px 0 7px; font-size: 18px; letter-spacing: -.03em; }
+.story-inventory-grid p { margin: 0; color: var(--text-secondary); font-size: 11px; line-height: 1.55; }
+.story-inventory-grid article > div { margin-top: 19px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.story-inventory-grid b { padding: 7px 5px; border: 1px dashed var(--line-strong); border-radius: 5px; color: var(--muted); font-size: 8px; text-align: center; }
+.privacy-callout, .session-only-banner { margin: 14px 0 0; padding: 15px 17px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid color-mix(in srgb, var(--green) 28%, var(--line)); border-radius: 9px; background: var(--green-soft); color: var(--text-secondary); font-size: 10.5px; line-height: 1.5; }
+.privacy-callout svg, .session-only-banner svg { flex: none; color: var(--green); }
+.privacy-callout strong, .session-only-banner strong { display: block; color: var(--text); }
+.behavioral-filters { display: grid; grid-template-columns: minmax(250px, 1.5fr) repeat(3, minmax(150px, 1fr)); gap: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.behavioral-filters label, .resource-filters label { min-width: 0; display: grid; gap: 6px; color: var(--muted); font: 700 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; }
+.behavioral-filters label > div, .resource-filters label > div { position: relative; min-width: 0; }
+.behavioral-filters label > div svg, .resource-filters label > div svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.behavioral-filters input, .behavioral-filters select, .resource-filters input, .resource-filters select { width: 100%; min-width: 0; height: 42px; padding: 0 11px; border: 1px solid var(--line); border-radius: 7px; color: var(--text); background: var(--bg); font: 500 11px var(--font-sans, inherit); text-transform: none; letter-spacing: normal; }
+.behavioral-filters input, .resource-filters input { padding-left: 37px; }
+.behavioral-results-meta, .resource-result-meta { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font: 700 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.behavioral-question-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.behavioral-question-grid button { min-width: 0; min-height: 235px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: var(--card); font: inherit; text-align: left; cursor: pointer; transition: .18s ease; }
+.behavioral-question-grid button:hover, .behavioral-question-grid button.selected { border-color: color-mix(in srgb, var(--accent) 42%, var(--line)); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.behavioral-question-grid button.selected { background: color-mix(in srgb, var(--accent-soft) 45%, var(--card)); }
+.behavioral-question-grid button > span { color: var(--accent); font: 750 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; }
+.behavioral-question-grid h3 { margin: 29px 0 16px; font-size: 16px; line-height: 1.38; letter-spacing: -.02em; }
+.behavioral-question-grid button > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.behavioral-question-grid small { padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: var(--surface-2); font-size: 8.5px; }
+.behavioral-question-grid b { margin-top: auto; padding-top: 19px; display: inline-flex; align-items: center; gap: 7px; color: var(--accent); font-size: 10px; }
+.behavioral-practice-section .page-width { max-width: 930px; }
+.behavioral-prompt-card { padding: clamp(26px, 5vw, 46px); border: 1px solid var(--line-strong); border-radius: 15px; background: radial-gradient(circle at 95% 0, var(--accent-soft), transparent 36%), var(--surface); box-shadow: var(--shadow-sm); }
+.behavioral-prompt-meta { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 45px; color: var(--muted); font: 750 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.behavioral-prompt-card > svg { color: var(--accent); }
+.behavioral-prompt-card h2 { margin: 20px 0 14px; max-width: 760px; font-size: clamp(27px, 4vw, 40px); line-height: 1.18; letter-spacing: -.04em; }
+.behavioral-prompt-card > p { max-width: 680px; margin: 0; color: var(--text-secondary); font-size: 12px; line-height: 1.65; }
+.behavioral-signal-list { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 6px; }
+.behavioral-signal-list span { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); background: var(--surface-2); font-size: 9px; }
+.behavioral-reveals { margin-top: 11px; display: grid; gap: 8px; }
+.behavioral-reveals details, .playbook-tip-grid details { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.behavioral-reveals summary, .playbook-tip-grid summary { min-height: 72px; padding: 15px 17px; display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 11px; cursor: pointer; list-style: none; }
+.behavioral-reveals summary::-webkit-details-marker, .playbook-tip-grid summary::-webkit-details-marker { display: none; }
+.behavioral-reveals summary > span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 7px; color: var(--accent); background: var(--accent-soft); font: 750 8px ui-monospace, monospace; }
+.behavioral-reveals summary strong, .behavioral-reveals summary small, .playbook-tip-grid summary strong, .playbook-tip-grid summary small { display: block; }
+.behavioral-reveals summary strong, .playbook-tip-grid summary strong { font-size: 12px; }
+.behavioral-reveals summary small, .playbook-tip-grid summary small { margin-top: 4px; color: var(--muted); font-size: 9.5px; line-height: 1.45; }
+.behavioral-reveals details[open], .playbook-tip-grid details[open] { border-color: var(--line-strong); box-shadow: var(--shadow-sm); }
+.behavioral-reveals ul, .playbook-tip-grid ul, .behavioral-final-checklist ul { margin: 0; padding: 6px 19px 20px 62px; display: grid; gap: 9px; list-style: none; border-top: 1px solid var(--line); }
+.behavioral-reveals li, .playbook-tip-grid li, .behavioral-final-checklist li { display: flex; align-items: flex-start; gap: 8px; color: var(--text-secondary); font-size: 11px; line-height: 1.5; }
+.behavioral-reveals li svg, .playbook-tip-grid li svg, .behavioral-final-checklist li svg { flex: none; margin-top: 1px; color: var(--green); }
+.behavioral-review-grid { display: grid; grid-template-columns: minmax(0, 1fr) 355px; gap: 32px; align-items: start; }
+.behavioral-mistakes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.behavioral-mistakes article { padding: 16px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+.behavioral-mistakes h3 { margin: 0 0 6px; font-size: 12px; }
+.behavioral-mistakes p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.behavioral-final-checklist { position: sticky; top: 88px; padding: 25px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.behavioral-final-checklist > small { color: var(--accent); font: 750 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.behavioral-final-checklist h2 { margin: 13px 0 19px; font-size: 25px; letter-spacing: -.04em; }
+.behavioral-final-checklist ul { padding: 0; border: 0; }
+.behavioral-final-checklist .button { width: 100%; margin-top: 23px; }
+
+.playbook-map { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.playbook-map a { min-width: 0; min-height: 125px; padding: 16px; display: flex; flex-direction: column; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--text); }
+.playbook-map a:nth-child(5n) { border-right: 0; }
+.playbook-map a:nth-last-child(-n + 5) { border-bottom: 0; }
+.playbook-map span { color: var(--accent); font: 750 8px ui-monospace, monospace; }
+.playbook-map strong { margin: auto 0 4px; font-size: 11px; }
+.playbook-map small { color: var(--muted); font-size: 8.5px; }
+.playbook-sections { display: grid; gap: 14px; }
+.playbook-section { padding: clamp(20px, 4vw, 31px); border: 1px solid var(--line); border-radius: 13px; background: var(--card); }
+.playbook-section > header { display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 13px; margin-bottom: 20px; }
+.playbook-section > header > span { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; color: var(--accent); background: var(--accent-soft); font: 750 8px ui-monospace, monospace; }
+.playbook-section > header small { color: var(--muted); font: 700 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.playbook-section > header h2 { margin: 3px 0 0; font-size: 23px; letter-spacing: -.035em; }
+.playbook-section > header a { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: 10px; font-weight: 700; }
+.playbook-tip-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.playbook-tip-grid summary { grid-template-columns: 42px 1fr; min-height: 105px; }
+.playbook-tip-grid details > div { padding: 18px; border-top: 1px solid var(--line); }
+.playbook-tip-grid details > div h3 { margin: 0 0 9px; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+.playbook-tip-grid details > div h3:not(:first-child) { margin-top: 20px; }
+.playbook-tip-grid ul { padding: 0; border: 0; }
+.playbook-tip-grid details > div h3:last-of-type + ul li svg { color: var(--muted); }
+.interview-checklist-grid { margin-top: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.interview-checklist-grid fieldset { min-width: 0; margin: 0; padding: 22px; border: 1px solid var(--line); border-radius: 11px; background: var(--card); }
+.interview-checklist-grid legend { padding: 0 8px; }
+.interview-checklist-grid legend small, .interview-checklist-grid legend span { display: block; }
+.interview-checklist-grid legend small { color: var(--accent); font: 750 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.interview-checklist-grid legend span { margin-top: 4px; font-size: 17px; font-weight: 750; letter-spacing: -.025em; }
+.interview-checklist-grid fieldset > p { margin: 3px 0 17px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.interview-checklist-grid fieldset > div { display: grid; gap: 7px; }
+.interview-checklist-grid label { position: relative; cursor: pointer; }
+.interview-checklist-grid input { position: absolute; opacity: 0; }
+.interview-checklist-grid label > span { min-height: 52px; padding: 11px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 9px; border: 1px solid var(--line); border-radius: 7px; color: var(--text-secondary); background: var(--surface-2); font-size: 10.5px; line-height: 1.45; }
+.interview-checklist-grid label svg { color: var(--muted); }
+.interview-checklist-grid input:checked + span { border-color: color-mix(in srgb, var(--green) 45%, var(--line)); background: var(--green-soft); }
+.interview-checklist-grid input:checked + span svg { color: var(--green); }
+.interview-checklist-grid input:checked + span { text-decoration: line-through; text-decoration-color: var(--muted); }
+.interview-checklist-grid input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--focus) 22%, transparent); outline-offset: 2px; }
+.truthful-recovery { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 45px; align-items: start; }
+.truthful-recovery > div:first-child > small { color: var(--accent); font: 750 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.truthful-recovery h2 { margin: 13px 0 11px; font-size: clamp(30px, 4vw, 43px); letter-spacing: -.045em; }
+.truthful-recovery > div:first-child p { color: var(--text-secondary); font-size: 12px; line-height: 1.65; }
+.truthful-recovery > div:last-child { display: grid; gap: 8px; }
+.truthful-recovery article { padding: 18px; display: grid; grid-template-columns: 28px 1fr; gap: 4px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+.truthful-recovery article svg { grid-row: 1 / 3; color: var(--accent); }
+.truthful-recovery article h3 { margin: 0; font-size: 12px; }
+.truthful-recovery article p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+
+.resource-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 11px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); }
+.resource-result-meta > span:last-child { text-align: right; text-transform: none; letter-spacing: normal; font-weight: 500; }
+.real-resource-grid { align-items: stretch; }
+.real-resource-card { min-width: 0; min-height: 320px; padding: 22px; }
+.resource-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.resource-verification, .resource-destination { display: inline-flex; align-items: center; gap: 5px; font-size: 8.5px; text-transform: capitalize; }
+.resource-verification { padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: var(--surface-2); }
+.resource-verification.verified { color: var(--green); border-color: color-mix(in srgb, var(--green) 30%, var(--line)); background: var(--green-soft); }
+.resource-destination { color: var(--muted); }
+.resource-provider { margin-top: 28px; color: var(--accent); font: 750 8px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; }
+.real-resource-card h3 { margin: 7px 0 8px; font-size: 20px; letter-spacing: -.03em; }
+.real-resource-card > p { font-size: 11.5px; }
+.resource-card-tags { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 5px; }
+.resource-card-tags span { padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: var(--surface-2); font-size: 8.5px; }
+.real-resource-card footer { margin-top: auto; padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); }
+.real-resource-card footer span { color: var(--muted); font-size: 8.5px; }
+.real-resource-card footer b { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-size: 9.5px; }
+.resource-integrity > div:last-child { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.resource-integrity article { padding: 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+.resource-integrity article strong { font-size: 12px; }
+.resource-integrity article p { margin: 8px 0 0; color: var(--muted); font-size: 10.5px; line-height: 1.55; }
+
+@media (max-width: 1000px) {
+  .behavioral-framework { grid-template-columns: repeat(3, 1fr); }
+  .behavioral-framework li { border-bottom: 1px solid var(--line); }
+  .behavioral-framework li:nth-child(3n) { border-right: 0; }
+  .behavioral-framework li:last-child { border-bottom: 0; }
+  .behavioral-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .behavioral-search { grid-column: 1 / -1; }
+  .playbook-map { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .playbook-map a, .playbook-map a:nth-child(5n) { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .playbook-map a:nth-child(even) { border-right: 0; }
+  .playbook-map a:nth-last-child(-n + 2) { border-bottom: 0; }
+}
+
+@media (max-width: 800px) {
+  .story-inventory-grid, .behavioral-question-grid, .behavioral-mistakes, .playbook-tip-grid, .interview-checklist-grid, .resource-integrity > div:last-child { grid-template-columns: 1fr; }
+  .behavioral-review-grid, .truthful-recovery { grid-template-columns: 1fr; }
+  .behavioral-final-checklist { position: static; }
+  .resource-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .resource-search { grid-column: 1 / -1; }
+  .playbook-section > header { grid-template-columns: 42px 1fr; }
+  .playbook-section > header a { grid-column: 2; }
+}
+
+@media (max-width: 520px) {
+  .behavioral-framework { grid-template-columns: 1fr; }
+  .behavioral-framework li, .behavioral-framework li:nth-child(3n) { min-height: 0; display: grid; grid-template-columns: 28px 1fr; gap: 10px; border-right: 0; }
+  .behavioral-framework li > div { margin-top: 0; }
+  .behavioral-framework li > svg { display: none; }
+  .story-inventory-grid article > div { grid-template-columns: repeat(2, 1fr); }
+  .behavioral-filters, .resource-filters { grid-template-columns: 1fr; }
+  .behavioral-search, .resource-search { grid-column: auto; }
+  .behavioral-question-grid button { min-height: 0; }
+  .behavioral-prompt-meta, .resource-result-meta, .real-resource-card footer { align-items: flex-start; flex-direction: column; }
+  .behavioral-reveals summary { padding-inline: 12px; }
+  .behavioral-reveals ul { padding: 14px 14px 18px; }
+  .playbook-map { grid-template-columns: 1fr; }
+  .playbook-map a, .playbook-map a:nth-child(even), .playbook-map a:nth-last-child(-n + 2) { min-height: 84px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .playbook-map a:last-child { border-bottom: 0; }
+  .playbook-section { padding: 16px 12px; }
+  .playbook-section > header { grid-template-columns: 36px 1fr; }
+  .playbook-section > header > span { width: 34px; height: 34px; }
+  .playbook-tip-grid summary { grid-template-columns: 34px 1fr; padding-inline: 11px; }
+  .interview-checklist-grid fieldset { padding: 17px 12px; }
+  .real-resource-card { min-height: 0; }
+}

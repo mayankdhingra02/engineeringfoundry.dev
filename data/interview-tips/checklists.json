@@ -1,0 +1,44 @@
+[
+  { "id": "readiness-24-hours", "title": "24 hours before", "timing": "Preparation", "description": "A calm logistics and preparation pass—not an official interview standard.", "items": [
+    { "id": "schedule", "label": "Confirm the schedule, time zone, interview format, and contact path." },
+    { "id": "environment", "label": "Verify the coding or presentation environment named in the invitation." },
+    { "id": "stories", "label": "Review a compact inventory of truthful stories and likely follow-ups." },
+    { "id": "role", "label": "Review the role and reliable company-provided material relevant to the conversation." },
+    { "id": "logistics", "label": "Plan location, power, network, travel, and a reasonable rest window." }
+  ], "status": "active" },
+  { "id": "readiness-15-minutes", "title": "15 minutes before", "timing": "Interview day", "description": "A final setup pass that leaves room to settle before the call.", "items": [
+    { "id": "audio-video", "label": "Check audio and video using the intended device." },
+    { "id": "power", "label": "Connect power and keep water nearby." },
+    { "id": "notifications", "label": "Silence notifications and close unrelated tabs or applications." },
+    { "id": "materials", "label": "Open the interview link and any explicitly permitted blank workspace." },
+    { "id": "environment", "label": "Check lighting, background, seating, and likely interruptions." }
+  ], "status": "active" },
+  { "id": "coding-interview", "title": "Coding interview", "timing": "During", "description": "A process checklist for a live problem—not a promise that every round follows this order.", "items": [
+    { "id": "restate", "label": "Restate the problem and clarify inputs, outputs, constraints, and edge cases." },
+    { "id": "example", "label": "Work a small example and name a correct baseline." },
+    { "id": "plan", "label": "Explain the chosen pattern, invariant, and complexity before implementation." },
+    { "id": "implement", "label": "Implement in verifiable increments while keeping the interviewer oriented." },
+    { "id": "test", "label": "Test normal, boundary, and adversarial cases; correct mistakes directly." }
+  ], "status": "active" },
+  { "id": "design-interview", "title": "Design interview", "timing": "During", "description": "Works for System Design and ML System Design with track-specific deep dives.", "items": [
+    { "id": "clarify", "label": "Clarify users, requirements, constraints, and success measures." },
+    { "id": "assumptions", "label": "State scale or data assumptions as hypothetical interview assumptions." },
+    { "id": "flow", "label": "Trace one high-level end-to-end path before deep-diving." },
+    { "id": "risk", "label": "Choose the highest-risk component, model boundary, or bottleneck to examine." },
+    { "id": "tradeoffs", "label": "Compare alternatives against the clarified requirements and failure modes." }
+  ], "status": "active" },
+  { "id": "behavioral-interview", "title": "Behavioral interview", "timing": "During", "description": "A truthful story structure that stays flexible enough for follow-up questions.", "items": [
+    { "id": "story", "label": "Choose the closest truthful story with a real decision and personal ownership." },
+    { "id": "context", "label": "Compress context and state your responsibility clearly." },
+    { "id": "action", "label": "Explain your actions, decisions, collaboration, and tradeoffs." },
+    { "id": "result", "label": "Describe an accurate result without inventing measurements." },
+    { "id": "reflection", "label": "Add what changed afterward and answer follow-ups directly." }
+  ], "status": "active" },
+  { "id": "post-interview", "title": "Post-interview review", "timing": "After", "description": "A private preparation review; do not record confidential interview material.", "items": [
+    { "id": "notes", "label": "Capture topics and preparation gaps while they are fresh." },
+    { "id": "process", "label": "Identify one process behavior to keep and one to improve." },
+    { "id": "confidentiality", "label": "Remove confidential or proprietary interview details from notes you may share." },
+    { "id": "followup", "label": "Send a concise follow-up when appropriate through the expected channel." },
+    { "id": "reset", "label": "Return to the preparation plan without guessing at recruiter timelines." }
+  ], "status": "active" }
+]

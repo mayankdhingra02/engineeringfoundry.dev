@@ -16,13 +16,18 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `company_question_clicked` | A sourced company-associated question is opened from a company guide | Question and company identifiers | Reserved | Company preparation engagement |
 | `search_used` | A visitor chooses a global-search result | `result_type`; raw search text is never sent | Active | Discovery engagement |
 | `company_page_viewed` | A valid company guide renders | `company_slug`, `company_name` | Active | Company-guide interest |
-| `resource_clicked` | An external resource is opened | `resource_id`, `category`, `resource_type` | Active | Resource engagement |
+| `resource_opened` | A visitor opens an internal or safely linked external resource | `resource_id`, `provider`, `category`, `resource_type`, `internal`; full URLs are not sent | Active | Meaningful preparation engagement |
 | `roadmap_viewed` | A preparation roadmap renders | `roadmap` | Active | Preparation-track interest |
 | `system_design_problem_viewed` | An active System Design practice renders | `problem_id`, `difficulty`, `domain`, `track` | Active | Meaningful preparation engagement |
 | `system_design_guidance_opened` | A visitor opens a System Design guidance section | `problem_id`, `difficulty`, `domain`, `track`, `section` | Active | Meaningful preparation engagement |
 | `ml_design_problem_viewed` | An active ML System Design practice renders | `problem_id`, `difficulty`, `domain`, `track` | Active | Meaningful preparation engagement |
 | `ml_design_guidance_opened` | A visitor opens an ML guidance section | `problem_id`, `difficulty`, `domain`, `track`, `section` | Active | Meaningful preparation engagement |
 | `design_problem_started` | Any active design practice page renders | `problem_id`, `difficulty`, `domain`, `track` | Active | Engaged visitor calculation |
+| `behavioral_question_viewed` | A behavioral practice prompt becomes active | `question_id`, `category`, `scope`; answer text is never sent | Active | Behavioral practice engagement |
+| `behavioral_guidance_opened` | A visitor reveals guidance, follow-ups, or mistakes for a prompt | `question_id`, `category`, `section` | Active | Meaningful preparation engagement |
+| `behavioral_prompt_randomized` | A visitor asks for another random prompt | `question_id`, `category`, `pool_size` | Active | Behavioral practice engagement |
+| `interview_checklist_used` | A session-only checklist item is changed | `checklist_id`, `item_id`, `checked`; no personal notes | Active | Meaningful preparation engagement |
+| `interview_playbook_section_viewed` | A visitor opens a playbook tip | `section`, `tip_id` | Active | Preparation engagement |
 | `mock_interview_requested` | The current peer mock request CTA is clicked | `demo`, `interview_type` | Active demo | Mock interview demand |
 | `referral_page_viewed` | The referral workspace renders | `demo` | Active demo | Referral funnel entry |
 | `referral_requested` | The demo referral request form is previewed | `demo` | Active demo | Referral request intent |
@@ -56,7 +61,7 @@ Demo feature events still measure intent and must not be interpreted as complete
 
 - DSA question clicks
 - Topic-guide views, question-filter changes, source inspection, and preparation-path navigation
-- Engaged visitors can be derived from meaningful preparation events, including opening a design problem or its guidance, without sending raw search queries
+- Engaged visitors can be derived from meaningful preparation events, including opening design or behavioral guidance, practicing a behavioral prompt, using an interview checklist, or opening a substantive resource, without sending raw search queries, story text, answer drafts, or personal notes
 - Roadmap views by preparation track
 - Roadmap progress and completion after persistence is implemented
 - Resource clicks by category and type
