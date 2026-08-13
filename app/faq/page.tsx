@@ -5,8 +5,8 @@ export const metadata = createPageMetadata({ title: "FAQ", description: "Frequen
 const faqs = [
   ["What is Engineering Foundry?", "A software-engineering interview preparation and professional community platform being built around structured learning, deliberate practice, and engineers helping engineers."],
   ["Is Engineering Foundry free?", "Public preparation content is intended to remain browsable without an account. Final pricing and any premium programs have not been decided."],
-  ["Do I need an account?", "Not to browse public educational content. Accounts will be needed for saved progress, mock interviews, referrals, submissions, challenges, profiles, and leaderboard participation."],
-  ["How do mock interviews work?", "The planned flow matches peers by interview type, experience level, and availability, then supports scheduling and structured feedback."],
+  ["Do I need an account?", "Not to browse public educational content or use the Mock Interview Practice Lab. Accounts will be needed for future saved progress, referrals, submissions, challenges, profiles, and leaderboard participation."],
+  ["How do mock interviews work?", "Choose DSA, System Design, ML System Design, or Behavioral; then run a structured solo session or use the candidate and interviewer packets with a peer you already have. Engineering Foundry does not currently match or schedule users."],
   ["How do referrals work?", "Job seekers can share a role and relevant context. Volunteer Referrers independently decide whether to accept, decline, or request more information."],
   ["Does Engineering Foundry guarantee referrals?", "No. Engineering Foundry does not guarantee referrals, interviews, or employment outcomes."],
   ["How can I become a Referrer?", "The planned Referrer profile lets employees share their company, role, availability, job families, and optional bio after verification controls are implemented."],

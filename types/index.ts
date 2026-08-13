@@ -246,12 +246,36 @@ export interface MlDesignProblem {
   source: DesignSource;
 }
 
-export interface MockInterview {
+export type MockTrack = "dsa" | "system-design" | "ml-design" | "behavioral";
+export type MockPracticeMode = "solo" | "peer";
+export type MockContentKind = "dsa-question" | "system-design-problem" | "ml-design-problem" | "behavioral-question";
+
+export interface MockSessionPlan {
   id: string;
-  type: "DSA" | "System Design" | "ML System Design" | "Behavioral";
-  experienceLevel: string;
-  status: "Open" | "Matched" | "Scheduled" | "Completed" | "Cancelled";
-  startsAt?: string;
+  slug: string;
+  title: string;
+  track: MockTrack;
+  recommended_minutes: { min: number; max: number };
+  sections: Array<{ id: string; title: string; minutes: number }>;
+  candidate_instructions: string[];
+  interviewer_instructions: string[];
+  content_reference: { kind: MockContentKind; id: string };
+  rubric_id: string;
+  status: "active" | "needs_review";
+}
+
+export interface MockRubricDimension {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface MockRubric {
+  id: string;
+  track: MockTrack;
+  title: string;
+  disclaimer: string;
+  dimensions: MockRubricDimension[];
 }
 
 export type ReferralStatus =

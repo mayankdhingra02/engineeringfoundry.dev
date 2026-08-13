@@ -34,11 +34,15 @@ jobs:
         run: npm run test:content-validator
       - name: Test interview content validator
         run: npm run test:interview-content-validator
+      - name: Test mock content validator
+        run: npm run test:mock-content-validator
       - name: Validate content
         run: npm run validate:content
       - name: Validate design content
         run: npm run validate:design-content
       - name: Validate interview content
         run: npm run validate:interview-content
+      - name: Validate mock content
+        run: npm run validate:mock-content
       - name: Build
         run: npm run build

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "mock-dsa-frequency-ledger", "slug": "frequency-ledger", "title": "Frequency Ledger", "track": "dsa",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "clarify", "title": "Clarify and explore", "minutes": 7 }, { "id": "solve", "title": "Design and implement", "minutes": 30 }, { "id": "review", "title": "Test and reflect", "minutes": 8 }],
+    "candidate_instructions": ["Restate the task and clarify edge cases before proposing an approach.", "Explain the data structures and complexity before implementation.", "Test with a normal case, an edge case, and one failure-prone case."],
+    "interviewer_instructions": ["Ask what should happen when a count returns to zero.", "Ask how first-appearance order can be preserved without sorting.", "Observe whether the candidate checks the stated non-negative-count invariant."],
+    "content_reference": { "kind": "dsa-question", "id": "ef-frequency-ledger" }, "rubric_id": "rubric-dsa", "status": "active"
+  },
+  {
+    "id": "mock-dsa-bounded-sensor-window", "slug": "bounded-sensor-window", "title": "Bounded Sensor Window", "track": "dsa",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "clarify", "title": "Clarify and explore", "minutes": 7 }, { "id": "solve", "title": "Design and implement", "minutes": 30 }, { "id": "review", "title": "Test and reflect", "minutes": 8 }],
+    "candidate_instructions": ["Clarify the empty-input and boundary behavior.", "Develop the single-pass invariant aloud before coding.", "Explain the amortized cost and test repeated extrema."],
+    "interviewer_instructions": ["Ask why rescanning the current window is too expensive.", "Ask how expired minimum and maximum values leave the data structure.", "Observe whether the candidate can state and preserve a window invariant."],
+    "content_reference": { "kind": "dsa-question", "id": "ef-bounded-sensor-window" }, "rubric_id": "rubric-dsa", "status": "active"
+  },
+  {
+    "id": "mock-dsa-merge-service-queues", "slug": "merge-service-queues", "title": "Merge Service Queues", "track": "dsa",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "clarify", "title": "Clarify and explore", "minutes": 7 }, { "id": "solve", "title": "Design and implement", "minutes": 30 }, { "id": "review", "title": "Test and reflect", "minutes": 8 }],
+    "candidate_instructions": ["Clarify stream exhaustion and timestamp ties.", "Explain why the memory bound shapes the approach.", "Test one empty stream and multiple tied timestamps."],
+    "interviewer_instructions": ["Ask how the candidate enforces deterministic tie-breaking.", "Ask for time and auxiliary-space complexity in terms of streams and events.", "Observe whether the implementation advances exactly one source per output."],
+    "content_reference": { "kind": "dsa-question", "id": "ef-merge-service-queues" }, "rubric_id": "rubric-dsa", "status": "active"
+  },
+  {
+    "id": "mock-dsa-transit-reachability", "slug": "transit-network-reachability", "title": "Transit Network Reachability", "track": "dsa",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "clarify", "title": "Clarify and explore", "minutes": 7 }, { "id": "solve", "title": "Design and implement", "minutes": 30 }, { "id": "review", "title": "Test and reflect", "minutes": 8 }],
+    "candidate_instructions": ["Define precisely what counts as a transfer.", "Choose graph state that prevents repeated route expansion.", "Test same-stop, unreachable, and transfer-boundary cases."],
+    "interviewer_instructions": ["Ask whether routes or stops should be the primary traversal state.", "Ask how the maximum-transfer bound changes the search.", "Observe whether both visited routes and visited stops are handled deliberately."],
+    "content_reference": { "kind": "dsa-question", "id": "ef-transit-reachability" }, "rubric_id": "rubric-dsa", "status": "active"
+  },
+  {
+    "id": "mock-system-url-shortener", "slug": "url-shortener", "title": "URL Shortener", "track": "system-design",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "scope", "title": "Scope and scale", "minutes": 10 }, { "id": "architecture", "title": "Architecture and data", "minutes": 23 }, { "id": "deep-dive", "title": "Tradeoffs and failures", "minutes": 12 }],
+    "candidate_instructions": ["State functional scope and scale assumptions before drawing components.", "Trace the write and redirect paths through the design.", "Choose one risk or tradeoff for a deeper discussion."],
+    "interviewer_instructions": ["Ask how short codes are generated and collisions are handled.", "Probe cache behavior, abuse controls, and a storage outage.", "Keep scale assumptions candidate-owned; there is no hidden official number."],
+    "content_reference": { "kind": "system-design-problem", "id": "sd-problem-url-shortener" }, "rubric_id": "rubric-system-design", "status": "active"
+  },
+  {
+    "id": "mock-system-notification-service", "slug": "notification-service", "title": "Notification Service", "track": "system-design",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "scope", "title": "Scope and scale", "minutes": 10 }, { "id": "architecture", "title": "Architecture and data", "minutes": 23 }, { "id": "deep-dive", "title": "Tradeoffs and failures", "minutes": 12 }],
+    "candidate_instructions": ["Clarify channels, delivery semantics, and user preferences.", "Separate request acceptance from provider delivery.", "Explain retry, idempotency, and observable status."],
+    "interviewer_instructions": ["Probe quiet hours, priorities, and provider-specific failures.", "Ask how duplicate delivery is limited across retries.", "Observe whether the candidate distinguishes accepted, delivered, and failed."],
+    "content_reference": { "kind": "system-design-problem", "id": "sd-problem-notification-service" }, "rubric_id": "rubric-system-design", "status": "active"
+  },
+  {
+    "id": "mock-system-ticket-reservation", "slug": "ticket-reservation", "title": "Ticket Reservation System", "track": "system-design",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "scope", "title": "Scope and scale", "minutes": 10 }, { "id": "architecture", "title": "Architecture and data", "minutes": 23 }, { "id": "deep-dive", "title": "Tradeoffs and failures", "minutes": 12 }],
+    "candidate_instructions": ["Name the inventory invariant and scope the purchase flow.", "Separate browsing, temporary holds, and authoritative reservation.", "Discuss contention, expiration, and ambiguous payment outcomes."],
+    "interviewer_instructions": ["Probe how overselling is prevented under concurrency.", "Ask what happens when payment succeeds but confirmation times out.", "Observe whether hot-event load is isolated from authoritative inventory."],
+    "content_reference": { "kind": "system-design-problem", "id": "sd-problem-ticket-reservation" }, "rubric_id": "rubric-system-design", "status": "active"
+  },
+  {
+    "id": "mock-ml-recommendation", "slug": "recommendation-system", "title": "Recommendation System", "track": "ml-design",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "frame", "title": "Product and metrics", "minutes": 10 }, { "id": "model", "title": "Data and modeling", "minutes": 20 }, { "id": "serve", "title": "Serving and monitoring", "minutes": 15 }],
+    "candidate_instructions": ["Frame the product decision, users, and success metrics first.", "Describe a baseline before a more complex model.", "Connect training data, serving, and monitoring into one system."],
+    "interviewer_instructions": ["Ask how exposure bias affects labels and evaluation.", "Probe retrieval, ranking, policy, and fallback boundaries.", "Ask for both quality metrics and product guardrails."],
+    "content_reference": { "kind": "ml-design-problem", "id": "ml-problem-recommendation" }, "rubric_id": "rubric-ml-design", "status": "active"
+  },
+  {
+    "id": "mock-ml-fraud", "slug": "fraud-detection", "title": "Fraud Detection", "track": "ml-design",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "frame", "title": "Product and metrics", "minutes": 10 }, { "id": "model", "title": "Data and modeling", "minutes": 20 }, { "id": "serve", "title": "Serving and monitoring", "minutes": 15 }],
+    "candidate_instructions": ["Define the actions and asymmetric costs before choosing metrics.", "Address delayed, selective, and adversarial labels.", "Explain the online scoring path, fallback, and review capacity."],
+    "interviewer_instructions": ["Ask how score thresholds connect to approve, review, and decline.", "Probe delayed chargeback labels and feedback-loop bias.", "Ask how the system detects attacker adaptation without leaking policy."],
+    "content_reference": { "kind": "ml-design-problem", "id": "ml-problem-fraud" }, "rubric_id": "rubric-ml-design", "status": "active"
+  },
+  {
+    "id": "mock-ml-rag", "slug": "rag-knowledge-assistant", "title": "RAG Knowledge Assistant", "track": "ml-design",
+    "recommended_minutes": { "min": 40, "max": 50 },
+    "sections": [{ "id": "frame", "title": "Product and metrics", "minutes": 10 }, { "id": "model", "title": "Data and modeling", "minutes": 20 }, { "id": "serve", "title": "Serving and monitoring", "minutes": 15 }],
+    "candidate_instructions": ["Define the user task, evidence boundary, and abstention behavior.", "Separate ingestion, retrieval, reranking, context construction, and generation.", "Explain permission enforcement and independent retrieval/generation evaluation."],
+    "interviewer_instructions": ["Probe document freshness, deletion, and access-control changes.", "Ask how retrieval quality and grounded generation are evaluated separately.", "Ask for safe fallbacks when evidence is missing or contradictory."],
+    "content_reference": { "kind": "ml-design-problem", "id": "ml-problem-rag" }, "rubric_id": "rubric-ml-design", "status": "active"
+  },
+  {
+    "id": "mock-behavioral-direction", "slug": "create-direction-without-title", "title": "Create Direction Without Authority", "track": "behavioral",
+    "recommended_minutes": { "min": 25, "max": 35 },
+    "sections": [{ "id": "prepare", "title": "Choose and shape a story", "minutes": 7 }, { "id": "answer", "title": "Answer and follow-ups", "minutes": 15 }, { "id": "reflect", "title": "Feedback and reflection", "minutes": 8 }],
+    "candidate_instructions": ["Choose one truthful example and keep confidential details out.", "Keep context concise so personal decisions and actions remain central.", "Close with the outcome and what you learned or changed."],
+    "interviewer_instructions": ["Ask what made others trust the direction.", "Ask where disagreement was invited and what changed afterward.", "Distinguish the candidate's ownership from the group's result."],
+    "content_reference": { "kind": "behavioral-question", "id": "beh-lead-01" }, "rubric_id": "rubric-behavioral", "status": "active"
+  },
+  {
+    "id": "mock-behavioral-risk", "slug": "own-a-missed-risk", "title": "Own a Missed Risk", "track": "behavioral",
+    "recommended_minutes": { "min": 25, "max": 35 },
+    "sections": [{ "id": "prepare", "title": "Choose and shape a story", "minutes": 7 }, { "id": "answer", "title": "Answer and follow-ups", "minutes": 15 }, { "id": "reflect", "title": "Feedback and reflection", "minutes": 8 }],
+    "candidate_instructions": ["Choose a real risk that was reasonably yours to notice.", "Separate immediate recovery from the prevention work that followed.", "Explain the durable behavior or system change without deflecting blame."],
+    "interviewer_instructions": ["Ask which signal was available but missed.", "Ask what check or behavior exists now because of the experience.", "Observe whether accountability is specific and proportionate."],
+    "content_reference": { "kind": "behavioral-question", "id": "beh-own-01" }, "rubric_id": "rubric-behavioral", "status": "active"
+  },
+  {
+    "id": "mock-behavioral-technical-direction", "slug": "challenge-technical-direction", "title": "Challenge a Technical Direction", "track": "behavioral",
+    "recommended_minutes": { "min": 25, "max": 35 },
+    "sections": [{ "id": "prepare", "title": "Choose and shape a story", "minutes": 7 }, { "id": "answer", "title": "Answer and follow-ups", "minutes": 15 }, { "id": "reflect", "title": "Feedback and reflection", "minutes": 8 }],
+    "candidate_instructions": ["Describe the disagreement without turning another person into the problem.", "Make the evidence, decision process, and your own actions concrete.", "Explain the resolution and what the relationship or process learned."],
+    "interviewer_instructions": ["Ask what evidence could have changed the candidate's view.", "Ask how the disagreement affected trust and execution.", "Observe whether the candidate can explain the other position fairly."],
+    "content_reference": { "kind": "behavioral-question", "id": "beh-conflict-01" }, "rubric_id": "rubric-behavioral", "status": "active"
+  }
+]

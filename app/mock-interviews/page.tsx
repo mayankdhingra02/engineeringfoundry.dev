@@ -1,7 +1,17 @@
-import { BadgeCheck, CalendarClock, MessagesSquare, UserRound, Users } from "lucide-react";
-import { PageHero, SectionHeading, StatusPill } from "@/components/page-shell";
-import { TrackedButton } from "@/components/tracked-action";
+import { Suspense } from "react";
+import { MockInterviewLab } from "@/components/mock-interview-lab";
 import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata = createPageMetadata({ title: "Mock Interviews", description: "Peer mock interview matching and future experienced-interviewer practice.", path: "/mock-interviews" });
-export default function MockInterviewsPage() { return <><PageHero eyebrow="Mock interviews" title="Practice the interview, not just the material." description="Match on interview type, experience level, and availability. Give structured feedback that helps both engineers improve." /><section className="section"><div className="page-width"><SectionHeading eyebrow="Choose your practice mode" title="Feedback makes preparation real." /><div className="two-column-feature"><article className="flow-card"><span className="icon-well"><Users size={20} /></span><h2>Practice with a Peer</h2><p>Offer or request a focused practice session with another engineer in the community.</p><ul className="bullet-list"><li>DSA, System Design, ML Design, or Behavioral</li><li>Match by experience level and availability</li><li>Structured post-session feedback</li><li>Mutual respect and clear expectations</li></ul><TrackedButton event="mock_interview_requested" properties={{ demo: true, interview_type: "peer" }}>Request a peer mock</TrackedButton></article><article className="flow-card"><div className="feature-card-top"><span className="icon-well"><BadgeCheck size={20} /></span><StatusPill tone="accent">Coming soon</StatusPill></div><h2>Practice with an Experienced Interviewer</h2><p>A future path for deeper, role-specific practice with experienced interviewers.</p><ul className="bullet-list"><li>Experienced interviewer profiles</li><li>Role- and domain-aware matching</li><li>Clear session scope and expectations</li><li>No payment functionality in this phase</li></ul><button className="button button-secondary" disabled>Join the waitlist later</button></article></div></div></section><section className="section section-alt"><div className="page-width"><SectionHeading eyebrow="Session lifecycle" title="Simple scheduling. Useful feedback." /><div className="how-grid"><div className="how-step"><UserRound size={18} /><h3>Create request</h3><p>Choose type, level, focus areas, and availability.</p></div><div className="how-step"><Users size={18} /><h3>Match</h3><p>Find a compatible peer and confirm expectations.</p></div><div className="how-step"><CalendarClock size={18} /><h3>Schedule</h3><p>Coordinate a session with clear time and format.</p></div><div className="how-step"><MessagesSquare size={18} /><h3>Reflect</h3><p>Exchange structured feedback after practice.</p></div></div></div></section></>; }
+export const metadata = createPageMetadata({
+  title: "Free Mock Interview Practice",
+  description: "Practice mock interviews solo or with your own peer using structured DSA, System Design, ML System Design, and Behavioral session kits.",
+  path: "/mock-interviews",
+  image: "/og-interview-prep.png",
+  imageAlt: "Engineering Foundry Mock Interview Practice Lab",
+  imageWidth: 1659,
+  imageHeight: 948,
+});
+
+export default function MockInterviewsPage() {
+  return <Suspense fallback={<div className="page-loading" aria-label="Loading Mock Interview Practice Lab" />}><MockInterviewLab /></Suspense>;
+}

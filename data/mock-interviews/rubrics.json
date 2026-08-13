@@ -1,0 +1,55 @@
+[
+  {
+    "id": "rubric-dsa", "track": "dsa", "title": "DSA reasoning practice rubric",
+    "disclaimer": "An Engineering Foundry self-review aid—not an employer scoring system or hiring prediction.",
+    "dimensions": [
+      { "id": "clarification", "label": "Clarification", "description": "Clarifies inputs, outputs, constraints, and edge cases before committing." },
+      { "id": "approach", "label": "Approach", "description": "Builds a coherent strategy and explains why it fits." },
+      { "id": "correctness", "label": "Correctness", "description": "Maintains the stated invariant and handles important cases." },
+      { "id": "complexity", "label": "Complexity reasoning", "description": "Explains time and space costs accurately." },
+      { "id": "implementation", "label": "Implementation discipline", "description": "Writes organized code with deliberate state and naming." },
+      { "id": "testing", "label": "Testing", "description": "Tests normal, edge, and failure-prone cases." },
+      { "id": "communication", "label": "Communication", "description": "Makes reasoning visible and responds constructively to prompts." }
+    ]
+  },
+  {
+    "id": "rubric-system-design", "track": "system-design", "title": "System Design reasoning practice rubric",
+    "disclaimer": "An Engineering Foundry self-review aid—not an employer scoring system or hiring prediction.",
+    "dimensions": [
+      { "id": "requirements", "label": "Requirement clarification", "description": "Defines scope, users, scale assumptions, and priorities." },
+      { "id": "decomposition", "label": "Decomposition", "description": "Separates responsibilities and traces core request paths." },
+      { "id": "scalability", "label": "Scalability", "description": "Finds likely bottlenecks and scales the relevant components." },
+      { "id": "data", "label": "Data and storage reasoning", "description": "Chooses models and storage based on access and consistency needs." },
+      { "id": "reliability", "label": "Reliability", "description": "Addresses failures, recovery, idempotency, and observability." },
+      { "id": "tradeoffs", "label": "Tradeoffs", "description": "Makes alternatives and consequences explicit." },
+      { "id": "communication", "label": "Communication", "description": "Keeps the design legible and responds to changing constraints." }
+    ]
+  },
+  {
+    "id": "rubric-ml-design", "track": "ml-design", "title": "ML System Design reasoning practice rubric",
+    "disclaimer": "An Engineering Foundry self-review aid—not an employer scoring system or hiring prediction.",
+    "dimensions": [
+      { "id": "product", "label": "Product framing", "description": "Defines the decision, user value, actions, and constraints." },
+      { "id": "metrics", "label": "Metric selection", "description": "Connects offline, online, and guardrail metrics to the goal." },
+      { "id": "data", "label": "Data and labels", "description": "Addresses sources, labels, leakage, bias, and freshness." },
+      { "id": "model", "label": "Baseline and model reasoning", "description": "Starts with a defensible baseline and justifies complexity." },
+      { "id": "serving", "label": "Serving", "description": "Explains online boundaries, latency, versioning, and fallback." },
+      { "id": "monitoring", "label": "Monitoring", "description": "Covers data, model, product, and feedback-loop health." },
+      { "id": "tradeoffs", "label": "Tradeoffs", "description": "Makes quality, latency, safety, and cost choices visible." },
+      { "id": "communication", "label": "Communication", "description": "Keeps the ML system connected to the product decision." }
+    ]
+  },
+  {
+    "id": "rubric-behavioral", "track": "behavioral", "title": "Behavioral answer practice rubric",
+    "disclaimer": "An Engineering Foundry self-review aid—not an employer scoring system or hiring prediction.",
+    "dimensions": [
+      { "id": "relevance", "label": "Relevance", "description": "Chooses a truthful example that directly answers the prompt." },
+      { "id": "context", "label": "Context", "description": "Provides enough situation and stakes without crowding out action." },
+      { "id": "ownership", "label": "Personal ownership", "description": "Separates personal responsibility from the team's work." },
+      { "id": "actions", "label": "Decisions and actions", "description": "Explains the choices, alternatives, and concrete steps taken." },
+      { "id": "outcome", "label": "Outcome", "description": "Gives a credible result and appropriate evidence." },
+      { "id": "reflection", "label": "Reflection", "description": "Shows learning and what changed afterward." },
+      { "id": "communication", "label": "Communication", "description": "Answers clearly, specifically, and with fair attribution." }
+    ]
+  }
+]

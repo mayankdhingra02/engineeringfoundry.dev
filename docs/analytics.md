@@ -28,7 +28,12 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `behavioral_prompt_randomized` | A visitor asks for another random prompt | `question_id`, `category`, `pool_size` | Active | Behavioral practice engagement |
 | `interview_checklist_used` | A session-only checklist item is changed | `checklist_id`, `item_id`, `checked`; no personal notes | Active | Meaningful preparation engagement |
 | `interview_playbook_section_viewed` | A visitor opens a playbook tip | `section`, `tip_id` | Active | Preparation engagement |
-| `mock_interview_requested` | The current peer mock request CTA is clicked | `demo`, `interview_type` | Active demo | Mock interview demand |
+| `mock_session_configured` | A visitor starts a configured Practice Lab session | `track`, `mode`, `prompt_id`, `rubric_id` | Active | Mock practice activation |
+| `mock_session_started` | A configured Practice Lab session starts | `track`, `mode`, `prompt_id`, `rubric_id` | Active | Mock practice activation |
+| `mock_prompt_randomized` | Random prompt chooses from the active track pool | `track`, `mode`, `prompt_id`, `rubric_id` | Active | Practice exploration |
+| `mock_guidance_opened` | Solo guidance or a peer interviewer packet is first revealed | `track`, `mode`, `prompt_id`, `rubric_id`, `section` | Active | Practice engagement |
+| `mock_feedback_copied` | A visitor copies locally composed qualitative feedback | `track`, `mode`, `prompt_id`, `rubric_id`; copied content is never sent | Active | Practice completion signal |
+| `mock_community_clicked` | The Practice Lab community CTA is opened | `placement` | Active | Community acquisition |
 | `referral_page_viewed` | The referral workspace renders | `demo` | Active demo | Referral funnel entry |
 | `referral_requested` | The demo referral request form is previewed | `demo` | Active demo | Referral request intent |
 | `referrer_signup_started` | The demo Referrer profile form is previewed | `demo` | Active demo | Referrer supply intent |
@@ -41,7 +46,6 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `profile_updated` | An authenticated user saves profile settings | `profile_visibility`, `username_changed` | Active when configured | Profile maintenance |
 | `public_profile_viewed` | A public, completed profile renders | `username` | Active when configured | Profile engagement |
 | `roadmap_step_completed` | A signed-in user completes a roadmap step | Roadmap and step identifiers | Future | Preparation progress |
-| `mock_interview_started` | A scheduled mock session begins | Interview and type identifiers | Future | Practice activation |
 | `account_created` | Email signup returns a confirmed new session | `method=email` | Active when reliably known | Account conversion |
 
 Demo feature events still measure intent and must not be interpreted as completed referrals or scheduled interviews. Account events now require real Supabase outcomes.
@@ -69,8 +73,9 @@ Demo feature events still measure intent and must not be interpreted as complete
 ### Community
 
 - Discord CTA clicks by placement
-- Mock interview requests
-- Mock interviews completed after scheduling exists
+- Practice Lab sessions started by track and mode
+- Guidance opens and feedback-copy actions; no marks, notes, clipboard contents, or exact duration
+- Scheduled or matched mock interviews remain a future metric because those systems do not exist
 - Referral requests
 - Referrer registrations
 - Challenge participation and submissions
@@ -96,5 +101,5 @@ Outcome metrics require explicit definitions, consent-aware collection, and safe
 - Successful sign-out captures `sign_out_completed` and then calls `resetAnalyticsUser` before returning to anonymous browsing.
 - Accurate new-account attribution for OAuth is deferred because the callback cannot reliably distinguish a new OAuth user from a returning one without inventing a heuristic.
 - Event names and property meanings should remain stable. Additive properties are preferred to renaming historical events.
-- Never send passwords, tokens, resumes, free-form referral messages, or other sensitive user content to analytics.
+- Never send passwords, tokens, resumes, free-form referral messages, Mock Interview Practice Lab marks or notes, clipboard contents, exact practice duration, or other sensitive user content to analytics.
 - Production dashboards should distinguish active, demo, future, and self-reported metrics.

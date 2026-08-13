@@ -15,7 +15,7 @@ import { track } from "@/lib/analytics";
 const staticResults = [
   { title: "System Design roadmap", type: "Roadmap", href: "/system-design" },
   { title: "ML system design", type: "Roadmap", href: "/ml-design" },
-  { title: "Mock interview matching", type: "Practice", href: "/mock-interviews" },
+  { title: "Mock Interview Practice Lab", type: "Practice", href: "/mock-interviews" },
   { title: "Referral community", type: "Career", href: "/referrals" },
 ];
 
