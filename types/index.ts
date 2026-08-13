@@ -76,7 +76,7 @@ export interface CompanyGuide {
   slug: string;
   description: string;
   guideStatus: "available" | "curating";
-  claims: Array<{ claim: string; source: ProvenanceSource }>;
+  claims: Array<{ claim: string; verification: VerificationStatus; source: ProvenanceSource }>;
 }
 
 export interface Resource {

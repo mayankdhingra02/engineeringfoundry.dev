@@ -45,4 +45,4 @@ Company guide claims follow the same rule: claim text, source, source type, veri
 
 ## Validation
 
-`npm run validate:content` enforces unique IDs and slugs, valid taxonomy references, roadmap integrity, HTTPS external links, original-versus-external boundaries, valid companies, sourced associations, and the intended seed-dataset size. GitHub Actions runs this check before the production build.
+`npm run validate:content` enforces unique IDs and slugs, valid taxonomy references, roadmap integrity, HTTPS external links, original-versus-external boundaries, valid companies, sourced associations and company claims, and the minimum seed-dataset size. GitHub Actions regression-tests the validator and runs this check before the production build.
