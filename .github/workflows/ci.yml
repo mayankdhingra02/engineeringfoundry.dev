@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 15
     env:
       NEXT_PUBLIC_SITE_URL: https://engineeringfoundry.dev
-      NEXT_PUBLIC_DISCORD_URL: https://discord.gg/example
+      NEXT_PUBLIC_DISCORD_URL: https://discord.gg/cNgNq3AFGX
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

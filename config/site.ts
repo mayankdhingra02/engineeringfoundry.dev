@@ -4,20 +4,23 @@ export const siteConfig = {
   description:
     "Structured engineering interview preparation, practice, and community—all in one place.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://engineeringfoundry.dev",
-  discordUrl: process.env.NEXT_PUBLIC_DISCORD_URL ?? "https://discord.gg/example",
-  nav: [
+  discordUrl: process.env.NEXT_PUBLIC_DISCORD_URL ?? "https://discord.gg/cNgNq3AFGX",
+  prepareNav: [
     { label: "DSA", href: "/dsa" },
     { label: "System Design", href: "/system-design" },
     { label: "ML Design", href: "/ml-design" },
     { label: "Behavioral", href: "/behavioral" },
+    { label: "Interview Tips", href: "/interview-tips" },
+  ],
+  primaryNav: [
     { label: "Mock Interviews", href: "/mock-interviews" },
     { label: "Referrals", href: "/referrals" },
-    { label: "Resources", href: "/resources" },
+    { label: "Companies", href: "/companies" },
     { label: "Community", href: "/community" },
   ],
-  moreNav: [
+  exploreNav: [
     { label: "Interview Experiences", href: "/interview-experiences" },
-    { label: "Company Guides", href: "/companies" },
+    { label: "Resources", href: "/resources" },
     { label: "Challenges", href: "/challenges" },
     { label: "Leaderboard", href: "/leaderboard" },
     { label: "About", href: "/about" },
