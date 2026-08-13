@@ -27,7 +27,11 @@ export type AnalyticsEvent =
   | "profile_onboarding_completed"
   | "profile_updated"
   | "public_profile_viewed"
-  | "system_design_problem_viewed";
+  | "system_design_problem_viewed"
+  | "system_design_guidance_opened"
+  | "ml_design_problem_viewed"
+  | "ml_design_guidance_opened"
+  | "design_problem_started";
 
 export type EventProperties = Record<string, string | number | boolean | null | undefined>;
 

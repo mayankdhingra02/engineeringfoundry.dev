@@ -1,0 +1,8 @@
+[
+  {"id":"sd-stage-foundations","slug":"foundations","order":1,"title":"Foundations","summary":"Build the vocabulary for reasoning about performance, scale, and interfaces.","topics":["latency vs throughput","availability and durability","capacity estimation","API and data modeling"]},
+  {"id":"sd-stage-data","slug":"data","order":2,"title":"Data","summary":"Choose storage shapes by access pattern, consistency need, and growth path.","topics":["relational vs non-relational","indexes","replication","partitioning","consistency"]},
+  {"id":"sd-stage-building-blocks","slug":"building-blocks","order":3,"title":"Building Blocks","summary":"Combine common infrastructure components without treating them as a checklist.","topics":["caching","load balancing","queues and pub/sub","CDN","object storage"]},
+  {"id":"sd-stage-distributed-systems","slug":"distributed-systems","order":4,"title":"Distributed Systems","summary":"Design for partial failure, duplicate work, and overload as normal operating conditions.","topics":["timeouts and retries","idempotency","leader and follower roles","coordination","backpressure"]},
+  {"id":"sd-stage-architecture-patterns","slug":"architecture-patterns","order":5,"title":"Architecture Patterns","summary":"Recognize recurring shapes for delivery, fan-out, search, and event processing.","topics":["fan-out","event-driven systems","real-time delivery","search indexes","streaming pipelines"]},
+  {"id":"sd-stage-interview-execution","slug":"interview-execution","order":6,"title":"Interview Execution","summary":"Turn an ambiguous prompt into a scoped, defensible conversation.","topics":["clarify requirements","estimate scale","draw the high-level design","deep dive","find bottlenecks","communicate tradeoffs"]}
+]

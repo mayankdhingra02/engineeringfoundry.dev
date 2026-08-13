@@ -18,7 +18,11 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `company_page_viewed` | A valid company guide renders | `company_slug`, `company_name` | Active | Company-guide interest |
 | `resource_clicked` | An external resource is opened | `resource_id`, `category`, `resource_type` | Active | Resource engagement |
 | `roadmap_viewed` | A preparation roadmap renders | `roadmap` | Active | Preparation-track interest |
-| `system_design_problem_viewed` | A registered System Design practice shell renders | `problem_slug`, `problem_title`, `status` | Active | System Design practice interest |
+| `system_design_problem_viewed` | An active System Design practice renders | `problem_id`, `difficulty`, `domain`, `track` | Active | Meaningful preparation engagement |
+| `system_design_guidance_opened` | A visitor opens a System Design guidance section | `problem_id`, `difficulty`, `domain`, `track`, `section` | Active | Meaningful preparation engagement |
+| `ml_design_problem_viewed` | An active ML System Design practice renders | `problem_id`, `difficulty`, `domain`, `track` | Active | Meaningful preparation engagement |
+| `ml_design_guidance_opened` | A visitor opens an ML guidance section | `problem_id`, `difficulty`, `domain`, `track`, `section` | Active | Meaningful preparation engagement |
+| `design_problem_started` | Any active design practice page renders | `problem_id`, `difficulty`, `domain`, `track` | Active | Engaged visitor calculation |
 | `mock_interview_requested` | The current peer mock request CTA is clicked | `demo`, `interview_type` | Active demo | Mock interview demand |
 | `referral_page_viewed` | The referral workspace renders | `demo` | Active demo | Referral funnel entry |
 | `referral_requested` | The demo referral request form is previewed | `demo` | Active demo | Referral request intent |
@@ -52,7 +56,7 @@ Demo feature events still measure intent and must not be interpreted as complete
 
 - DSA question clicks
 - Topic-guide views, question-filter changes, source inspection, and preparation-path navigation
-- Engaged visitors can be derived from meaningful preparation events without sending raw search queries
+- Engaged visitors can be derived from meaningful preparation events, including opening a design problem or its guidance, without sending raw search queries
 - Roadmap views by preparation track
 - Roadmap progress and completion after persistence is implemented
 - Resource clicks by category and type

@@ -91,6 +91,90 @@ export interface Resource {
   demo: boolean;
 }
 
+export type DesignDifficulty = "Foundation" | "Intermediate" | "Advanced";
+export type DesignContentStatus = "active" | "needs_review";
+
+export interface DesignSource {
+  name: "Engineering Foundry";
+  platform: "original";
+}
+
+export interface DesignRoadmapStage {
+  id: string;
+  slug: string;
+  order: number;
+  title: string;
+  summary: string;
+  topics: string[];
+}
+
+export interface DesignConcept {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  solves: string;
+  useWhen: string;
+  tradeoff: string;
+  commonMistake: string;
+}
+
+export interface SystemDesignProblem {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  difficulty: DesignDifficulty;
+  roadmapStage: string;
+  domains: string[];
+  patterns: string[];
+  prompt: string;
+  clarifyingQuestions: string[];
+  functionalRequirements: string[];
+  nonFunctionalRequirements: string[];
+  scaleAssumptions: string[];
+  capacityDiscussion: string[];
+  coreComponents: Array<{ name: string; purpose: string }>;
+  dataModelNotes: string[];
+  apiNotes: string[];
+  keyTradeoffs: string[];
+  failureModes: string[];
+  extensions: string[];
+  interviewChecklist: string[];
+  status: DesignContentStatus;
+  source: DesignSource;
+}
+
+export interface MlDesignProblem {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  difficulty: DesignDifficulty;
+  roadmapStage: string;
+  domains: string[];
+  prompt: string;
+  productGoal: string[];
+  predictionTarget: string[];
+  successMetrics: string[];
+  dataSources: string[];
+  labeling: string[];
+  features: string[];
+  baseline: string[];
+  modelDiscussion: string[];
+  training: string[];
+  evaluation: string[];
+  serving: string[];
+  monitoring: string[];
+  feedbackLoop: string[];
+  failureModes: string[];
+  tradeoffs: string[];
+  extensions: string[];
+  interviewChecklist: string[];
+  status: DesignContentStatus;
+  source: DesignSource;
+}
+
 export interface MockInterview {
   id: string;
   type: "DSA" | "System Design" | "ML System Design" | "Behavioral";

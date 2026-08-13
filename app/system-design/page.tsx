@@ -1,8 +1,22 @@
-import { LearningTrackPage } from "@/components/learning-track-page";
+import { DesignTrackPage } from "@/components/design-track-page";
+import { activeSystemDesignProblems, systemDesignConcepts, systemDesignDomains, systemDesignRoadmap } from "@/data/system-design";
 import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata = createPageMetadata({ title: "System Design", description: "Build system-design foundations and practice architecture interviews.", path: "/system-design" });
-const config = { eyebrow: "System Design", title: "Design systems with clear reasoning.", description: "Learn the fundamentals, explore architecture tradeoffs, and practice communicating designs under interview constraints.", roadmap: [
-  { title: "Foundations", description: "Latency, throughput, availability, and capacity." }, { title: "Data & storage", description: "Data models, databases, partitioning, and replication." }, { title: "Distributed building blocks", description: "Caching, queues, load balancing, and APIs." }, { title: "Reliability & tradeoffs", description: "Failure modes, consistency, observability, and recovery." }, { title: "Interview practice", description: "Scope, estimate, design, evaluate, and communicate." },
-], categories: ["Scalability", "Caching", "Databases", "Load Balancing", "Messaging", "Distributed Systems", "Storage", "APIs", "Reliability", "Consistency"], practiceTitle: "Practice architecture interviews with a repeatable approach.", resources: ["Architecture fundamentals", "Distributed systems reading", "Design interview prompts"] };
-export default function Page() { return <LearningTrackPage config={config} roadmap="system-design" />; }
+export const metadata = createPageMetadata({
+  title: "System Design Interview Roadmap",
+  description: "Learn a repeatable System Design interview framework, explore architecture concepts, and practice 10 original design problems.",
+  path: "/system-design",
+});
+
+export default function SystemDesignPage() {
+  return <DesignTrackPage
+    track="system-design"
+    eyebrow="System Design"
+    title="System Design Interview Roadmap"
+    description="Learn a repeatable framework, reason from explicit constraints, and practice complete original architecture prompts without pretending there is one correct design."
+    roadmap={systemDesignRoadmap}
+    concepts={systemDesignConcepts}
+    problems={activeSystemDesignProblems}
+    domains={systemDesignDomains}
+  />;
+}

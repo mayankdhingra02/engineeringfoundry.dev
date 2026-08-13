@@ -34,5 +34,7 @@ jobs:
         run: npm run test:content-validator
       - name: Validate content
         run: npm run validate:content
+      - name: Validate design content
+        run: npm run validate:design-content
       - name: Build
         run: npm run build

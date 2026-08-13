@@ -12,7 +12,8 @@
     "lint": "eslint . --ignore-pattern .next",
     "typecheck": "tsc --noEmit",
     "test:content-validator": "node scripts/test-content-validator.mjs",
-    "validate:content": "node scripts/validate-content.mjs"
+    "validate:content": "node scripts/validate-content.mjs",
+    "validate:design-content": "node scripts/validate-design-content.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

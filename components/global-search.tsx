@@ -5,6 +5,8 @@ import { Search, X, ArrowUpRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { companies } from "@/data/companies";
 import { activeQuestions, dsaPatterns, dsaTopics } from "@/data/dsa";
+import { activeMlDesignProblems, mlDesignConcepts } from "@/data/ml-design";
+import { activeSystemDesignProblems, systemDesignConcepts } from "@/data/system-design";
 import { resources } from "@/data/fixtures/resources";
 import { track } from "@/lib/analytics";
 
@@ -24,6 +26,10 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     ...dsaTopics.map((topic) => ({ title: topic.name, type: "Topic", href: `/dsa/${topic.slug}` })),
     ...dsaPatterns.map((pattern) => ({ title: pattern.name, type: "Pattern", href: `/dsa?pattern=${pattern.slug}` })),
     ...companies.map((company) => ({ title: company.name, type: "Company guide", href: `/companies/${company.slug}` })),
+    ...activeSystemDesignProblems.map((problem) => ({ title: problem.title, type: "System Design problem", href: `/system-design/${problem.slug}` })),
+    ...systemDesignConcepts.map((concept) => ({ title: concept.title, type: "System Design concept", href: `/system-design#concepts` })),
+    ...activeMlDesignProblems.map((problem) => ({ title: problem.title, type: "ML Design problem", href: `/ml-design/${problem.slug}` })),
+    ...mlDesignConcepts.map((concept) => ({ title: concept.title, type: "ML Design concept", href: `/ml-design#concepts` })),
     ...resources.filter((resource) => !resource.demo).map((resource) => ({ title: resource.title, type: "Resource", href: "/resources" })),
     ...staticResults,
   ], []);
@@ -48,7 +54,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
         <div className="search-backdrop">
           <button className="search-dismiss" onClick={() => setOpen(false)} aria-label="Close search" />
           <section className="search-dialog" role="dialog" aria-modal="true" aria-label="Global search">
-            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, companies, topics…" aria-label="Search query" /><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
+            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, designs, companies…" aria-label="Search query" /><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
             <div className="search-meta"><span>{query ? `${results.length} results` : "Suggested"}</span><span className="kbd">ESC</span></div>
             <div className="search-results">
               {results.map((item) => <Link href={item.href} key={`${item.type}-${item.title}`} onClick={() => { track("search_used", { result_type: item.type.split(" · ")[0].toLowerCase() }); setTimeout(() => setOpen(false), 0); }}><span><small>{item.type}</small>{item.title}</span><ArrowUpRight size={16} /></Link>)}
