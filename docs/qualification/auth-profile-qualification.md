@@ -117,7 +117,7 @@ No UUID, email, timestamps, visibility flags, onboarding flag, or provider data 
 | Google OAuth configuration and flows | Hosted / Google | **BLOCKED — provider credentials/configuration required** | No provider credentials were available |
 | GitHub OAuth configuration and flows | Hosted / GitHub | **BLOCKED — provider credentials/configuration required** | No provider credentials were available |
 | Production environment variables/deployment | Production host | **BLOCKED** | No production-host access or confirmed hosted Supabase public configuration |
-| Production application reachability | Production edge | **NOT TESTED** | `https://engineeringfoundry.dev` did not return within the qualification request timeout |
+| Production application reachability | Production edge | **BLOCKED / UNREACHABLE** | `https://engineeringfoundry.dev` did not return within the qualification request timeout |
 | Hosted/edge cache-safety refresh | Production edge | **BLOCKED — mandatory** | Requires deployed hosted auth and an actual edge session refresh |
 
 ## Application validation
@@ -130,7 +130,7 @@ No UUID, email, timestamps, visibility flags, onboarding flag, or provider data 
 | `npm run build -- --webpack` | **PASS** | Optimized production build completed and generated all routes |
 | `npm run build` | **BLOCKED IN CODEX SANDBOX** | Turbopack crashed while attempting to bind an internal port (`Operation not permitted`); not treated as an application pass |
 | `npm audit --omit=dev` | **PASS** | 0 vulnerabilities |
-| GitHub Actions CI | **NOT TESTED YET** | Must be observed after the qualification commits are pushed |
+| GitHub Actions CI | **PASS** | Run `31674726909` on commit `189f26cf9ecb73277720bf5957719f774093e79b`; install, lint, typecheck, and default build passed |
 
 ## Exact owner actions required
 
