@@ -5,6 +5,7 @@ import { Github, LoaderCircle, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { identifyUser, track } from "@/lib/analytics";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { safeInternalPath } from "@/lib/auth/redirects";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -23,7 +24,7 @@ function friendlyAuthError(message: string) {
 }
 
 export function AuthForm({ mode, next }: { mode: AuthMode; next?: string }) {
-  const configured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const configured = isAccountPlatformAvailable();
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState("");

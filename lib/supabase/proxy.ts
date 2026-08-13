@@ -1,11 +1,12 @@
 import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import type { Database } from "./database.types";
 
 export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return NextResponse.next({ request });
+  if (!isAccountPlatformAvailable() || !url || !key) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
   const setAll: SetAllCookies = (cookiesToSet, headers) => {

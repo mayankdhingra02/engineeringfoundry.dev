@@ -276,7 +276,7 @@ export function ReferralWorkspace() {
     </>}
 
     <section className="referral-community-safety" aria-labelledby="community-safety-title">
-      <div><ShieldCheck size={24} aria-hidden="true" /><span className="section-kicker">Community safety</span><h2 id="community-safety-title">Keep every interaction voluntary and professional.</h2><GuidanceList items={referralGuidance.communitySafety} /><a className="button button-secondary" href={siteConfig.discordUrl} target="_blank" rel="noreferrer" onClick={() => track("referral_community_clicked", { placement: "referrals_page" })}>Discuss referral etiquette in the community <ExternalLink size={15} /></a></div>
+      <div><ShieldCheck size={24} aria-hidden="true" /><span className="section-kicker">Community safety</span><h2 id="community-safety-title">Keep every interaction voluntary and professional.</h2><GuidanceList items={referralGuidance.communitySafety} /><a className="button button-secondary" href={siteConfig.discordUrl} target="_blank" rel="noopener noreferrer" onClick={() => track("referral_community_clicked", { placement: "referrals_page" })}>Discuss referral etiquette in the community <ExternalLink size={15} /></a></div>
       <aside><span className="section-kicker">Future account-based workflow</span><h3>Authenticated routing remains a later phase.</h3><p>This release does not create profiles, match people, route requests, verify employment, track decisions, or process payment.</p><ol>{referralGuidance.futureWorkflow.map((item) => <li key={item.id}><strong>{item.title}</strong><span>{item.text}</span></li>)}</ol></aside>
     </section>
   </div>;

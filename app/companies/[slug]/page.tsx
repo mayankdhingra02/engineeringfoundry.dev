@@ -9,6 +9,7 @@ import { companies, getCompany } from "@/data/companies";
 import { questionsForCompany } from "@/data/dsa";
 import { createPageMetadata } from "@/lib/metadata";
 
+export const dynamicParams = false;
 export function generateStaticParams() { return companies.map((company) => ({ slug: company.slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const { slug } = await params; const company = getCompany(slug); if (!company) notFound(); return createPageMetadata({ title: `${company.name} Engineering Interview Preparation Guide`, description: `A neutral ${company.name} preparation hub with general DSA, System Design, behavioral, experience, and future attributed company-specific resources.`, path: `/companies/${company.slug}` }); }
 

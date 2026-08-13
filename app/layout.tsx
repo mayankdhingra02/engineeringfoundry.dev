@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { PostHogPageView } from "@/components/posthog-page-view";
 import { siteConfig } from "@/config/site";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 const themeScript = `(function(){try{var t=localStorage.getItem('ef-theme');var d=t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d)}catch(e){}})()`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const accountPlatformAvailable = isAccountPlatformAvailable();
   return (
     <html lang="en" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
@@ -28,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Header />
           <main>{children}</main>
           <Footer />
-          <Suspense fallback={null}><AuthStateBridge /></Suspense>
+          {accountPlatformAvailable && <Suspense fallback={null}><AuthStateBridge /></Suspense>}
           <Suspense fallback={null}><PostHogPageView /></Suspense>
         </AnalyticsProvider>
       </body>

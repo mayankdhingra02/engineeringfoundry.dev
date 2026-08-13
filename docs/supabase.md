@@ -1,6 +1,6 @@
 # Supabase authentication setup
 
-Engineering Foundry uses Supabase Auth, cookie-backed SSR sessions, and Postgres Row Level Security. The application builds and public pages remain available without credentials, but account features stay inactive until a project is configured.
+Engineering Foundry uses Supabase Auth, cookie-backed SSR sessions, and Postgres Row Level Security. The application builds and public pages remain available without credentials. Account features stay inactive unless a project is configured **and** the separate account feature flag is explicitly enabled.
 
 ## 1. Create the project
 
@@ -9,7 +9,10 @@ Create a Supabase project for Engineering Foundry. In the project's **Connect** 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+NEXT_PUBLIC_ACCOUNTS_ENABLED=false
 ```
+
+Keep `NEXT_PUBLIC_ACCOUNTS_ENABLED=false` throughout public content-first launch preparation. Set it to `true` only in an environment where the hosted qualification gate below has been completed; Supabase variables alone never enable accounts.
 
 Never place the service-role or secret key in a `NEXT_PUBLIC_` variable, browser code, GitHub Actions, or this repository.
 

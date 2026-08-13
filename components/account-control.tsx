@@ -4,13 +4,21 @@ import Link from "next/link";
 import { ChevronDown, LayoutDashboard, LogOut, Settings, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import type { Profile } from "@/lib/supabase/database.types";
 import { resetAnalyticsUser, track } from "@/lib/analytics";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type AccountSummary = Pick<Profile, "username" | "display_name" | "avatar_url" | "is_public">;
 
-export function AccountControl({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
+type AccountControlProps = { mobile?: boolean; onNavigate?: () => void };
+
+export function AccountControl(props: AccountControlProps) {
+  if (!isAccountPlatformAvailable()) return null;
+  return <AvailableAccountControl {...props} />;
+}
+
+function AvailableAccountControl({ mobile = false, onNavigate }: AccountControlProps) {
   const router = useRouter();
   const [account, setAccount] = useState<AccountSummary | null>(null);
   const [open, setOpen] = useState(false);

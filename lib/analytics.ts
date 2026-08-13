@@ -25,6 +25,7 @@ export type AnalyticsEvent =
   | "referrer_card_copied"
   | "referral_community_clicked"
   | "discord_clicked"
+  | "contact_channel_clicked"
   | "challenge_opened"
   | "challenge_guidance_opened"
   | "challenge_rubric_used"

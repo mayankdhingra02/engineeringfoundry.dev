@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Binary, Bookmark, CalendarClock, GitPullRequestArrow, HeartHandshake, Trophy, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
+import { AccountUnavailable } from "@/components/account-unavailable";
 import { PageHero, SectionHeading } from "@/components/page-shell";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/queries";
 
 export const metadata: Metadata = { title: "Dashboard", description: "Your Engineering Foundry account dashboard.", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  if (!isAccountPlatformAvailable()) return <AccountUnavailable />;
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in?next=/dashboard");
   const profile = await getCurrentProfile();

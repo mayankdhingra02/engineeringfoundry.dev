@@ -1,5 +1,66 @@
+import { Bug, ExternalLink, Mail, MessagesSquare } from "lucide-react";
 import { PageHero, SectionHeading } from "@/components/page-shell";
+import { TrackedLink } from "@/components/tracked-action";
+import { siteConfig } from "@/config/site";
 import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata = createPageMetadata({ title: "Contact", description: "Contact Engineering Foundry.", path: "/contact" });
-export default function ContactPage() { return <><PageHero eyebrow="Contact" title="Start the right conversation." description="Choose a category and share enough context for the Engineering Foundry team to route your message." /><section className="section"><div className="page-width"><div className="dashboard-grid"><div className="form-shell"><SectionHeading eyebrow="Message" title="How can we help?" /><form className="form-grid"><div className="form-group"><label htmlFor="contact-name">Name</label><input id="contact-name" required /></div><div className="form-group"><label htmlFor="contact-email">Email</label><input id="contact-email" type="email" required /></div><div className="form-group full"><label htmlFor="category">Category</label><select id="category"><option>General</option><option>Partnership</option><option>Sponsorship</option><option>Community</option><option>Feedback</option><option>Report an Issue</option></select></div><div className="form-group full"><label htmlFor="contact-message">Message</label><textarea id="contact-message" required placeholder="Share a little context…" /></div><div className="form-group full"><button className="button" type="button">Email hello@engineeringfoundry.dev</button></div></form></div><aside className="panel"><h2>Before you send</h2><div className="activity-list"><div className="activity-row"><strong>General</strong><span>Product questions</span></div><div className="activity-row"><strong>Partnership</strong><span>Aligned organizations</span></div><div className="activity-row"><strong>Sponsorship</strong><span>Community programs</span></div><div className="activity-row"><strong>Feedback</strong><span>Product and content</span></div><div className="activity-row"><strong>Report an Issue</strong><span>Safety or quality</span></div></div><p className="muted" style={{ fontSize:12,lineHeight:1.6 }}>Form delivery is intentionally not connected in this phase.</p></aside></div></div></section></>; }
+export const metadata = createPageMetadata({
+  title: "Contact",
+  description: "Reach Engineering Foundry through its working community and website-support channels.",
+  path: "/contact",
+});
+
+export default function ContactPage() {
+  return (
+    <>
+      <PageHero
+        eyebrow="Contact"
+        title="Choose a working channel."
+        description="Engineering Foundry does not collect contact-form submissions. Use the community for discussion or GitHub Issues for website and content reports."
+      />
+      <section className="section">
+        <div className="page-width">
+          <SectionHeading
+            eyebrow="Contact pathways"
+            title="Reach the right place directly."
+            description="These links open the actual destination. No message is stored or sent by this website."
+          />
+          <div className="contact-channel-grid">
+            <article className="contact-channel-card">
+              <span className="icon-well"><MessagesSquare size={21} aria-hidden="true" /></span>
+              <h2>Community discussion</h2>
+              <p>Ask general questions, compare preparation approaches, and connect with the existing Discord community.</p>
+              <TrackedLink href={siteConfig.discordUrl} event="contact_channel_clicked" properties={{ channel: "discord", placement: "contact_page" }} target="_blank">
+                Open Discord <ExternalLink size={15} aria-hidden="true" />
+              </TrackedLink>
+            </article>
+            <article className="contact-channel-card">
+              <span className="icon-well"><Bug size={21} aria-hidden="true" /></span>
+              <h2>Website or content issue</h2>
+              <p>Report broken links, content problems, accessibility issues, or reproducible website bugs in the public repository.</p>
+              <TrackedLink href={siteConfig.githubIssuesUrl} event="contact_channel_clicked" properties={{ channel: "github_issues", placement: "contact_page" }} target="_blank">
+                Open GitHub Issues <ExternalLink size={15} aria-hidden="true" />
+              </TrackedLink>
+            </article>
+            {siteConfig.contactEmail && (
+              <article className="contact-channel-card">
+                <span className="icon-well"><Mail size={21} aria-hidden="true" /></span>
+                <h2>Email</h2>
+                <p>Use the configured mailbox for matters that are not appropriate for a public issue or community channel.</p>
+                <TrackedLink href={`mailto:${siteConfig.contactEmail}`} event="contact_channel_clicked" properties={{ channel: "email", placement: "contact_page" }}>
+                  Email Engineering Foundry
+                </TrackedLink>
+              </article>
+            )}
+          </div>
+        </div>
+      </section>
+      <section className="section section-alt">
+        <div className="page-width contact-boundary">
+          <h2>Keep public reports safe.</h2>
+          <p>Do not include passwords, access tokens, private interview content, personal data, or confidential employer information in Discord or GitHub Issues.</p>
+        </div>
+      </section>
+    </>
+  );
+}

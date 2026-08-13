@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Search, X, ArrowUpRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { companies } from "@/data/companies";
 import { activeChallenges } from "@/data/challenges";
 import { behavioralCategories, behavioralSearchQuestions } from "@/data/behavioral";
@@ -30,6 +30,12 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeSearch = useCallback(() => {
+    setOpen(false);
+    window.setTimeout(() => triggerRef.current?.focus(), 0);
+  }, []);
   const items = useMemo(() => [
     ...activeQuestions.map((question) => ({ title: question.title, type: `Question · ${question.source.name}`, href: `/dsa?search=${encodeURIComponent(question.title)}` })),
     ...dsaTopics.map((topic) => ({ title: topic.name, type: "Topic", href: `/dsa/${topic.slug}` })),
@@ -52,23 +58,37 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); setOpen(true); }
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeSearch();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [closeSearch]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 30); }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    function keepFocusInDialog(event: KeyboardEvent) {
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+    document.addEventListener("keydown", keepFocusInDialog);
+    return () => document.removeEventListener("keydown", keepFocusInDialog);
+  }, [open]);
 
   return (
     <>
-      <button className={triggerClass} onClick={() => setOpen(true)} aria-label="Search Engineering Foundry">
+      <button ref={triggerRef} className={triggerClass} onClick={() => setOpen(true)} aria-label="Search Engineering Foundry">
         <Search size={17} /><span className="search-label">Search</span>
       </button>
       {open && (
         <div className="search-backdrop">
-          <button className="search-dismiss" onClick={() => setOpen(false)} aria-label="Close search" />
-          <section className="search-dialog" role="dialog" aria-modal="true" aria-label="Global search">
-            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, playbooks, resources…" aria-label="Search query" /><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
+          <button className="search-dismiss" onClick={closeSearch} aria-label="Close search" />
+          <section ref={dialogRef} className="search-dialog" role="dialog" aria-modal="true" aria-label="Global search">
+            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, playbooks, resources…" aria-label="Search query" /><button className="icon-button" onClick={closeSearch} aria-label="Close search"><X size={17} /></button></div>
             <div className="search-meta"><span>{query ? `${results.length} results` : "Suggested"}</span><span className="kbd">ESC</span></div>
             <div className="search-results">
               {results.map((item) => <Link href={item.href} key={`${item.type}-${item.title}`} onClick={() => { track("search_used", { result_type: item.type.split(" · ")[0].toLowerCase() }); setTimeout(() => setOpen(false), 0); }}><span><small>{item.type}</small>{item.title}</span><ArrowUpRight size={16} /></Link>)}

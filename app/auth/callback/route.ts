@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { appendAuthEvent, safeInternalPath } from "@/lib/auth/redirects";
 import { siteConfig } from "@/config/site";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
+  if (!isAccountPlatformAvailable()) return NextResponse.redirect(new URL("/sign-in", request.url));
   const code = request.nextUrl.searchParams.get("code");
   const flow = request.nextUrl.searchParams.get("flow");
   const next = safeInternalPath(request.nextUrl.searchParams.get("next"));

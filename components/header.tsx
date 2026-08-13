@@ -19,7 +19,11 @@ const navDescriptions: Record<string, string> = {
   "System Design": "Architecture concepts and design prompts",
   "ML Design": "Applied ML and AI system design",
   Behavioral: "Stories, leadership, and communication",
-  "Interview Tips": "Practical guidance for interview day",
+  "Interview Playbook": "Practical guidance for interview day",
+  "Mock Interviews": "Structured solo or bring-your-own-peer practice",
+  Referrals: "Private request builder and referrer toolkit",
+  Companies: "Neutral, provenance-aware preparation guides",
+  Community: "Public pathways and Discord community",
   "Interview Experiences": "Private, privacy-conscious write-up builder",
   Resources: "Curated preparation material",
   Challenges: "Self-guided engineering scenarios",
@@ -45,7 +49,7 @@ function NavDropdown({ label, items, pathname, open, onToggle, onClose }: { labe
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [openMenu, setOpenMenu] = useState<"prepare" | "explore" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"prepare" | "practice" | "career" | "more" | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const closeMobile = () => setMobileOpen(false);
@@ -71,8 +75,9 @@ export function Header() {
         <Logo />
         <nav className="desktop-nav" aria-label="Primary navigation">
           <NavDropdown label="Prepare" items={siteConfig.prepareNav} pathname={pathname} open={openMenu === "prepare"} onToggle={() => setOpenMenu(openMenu === "prepare" ? null : "prepare")} onClose={() => setOpenMenu(null)} />
-          {siteConfig.primaryNav.map((item) => <Link className={cn("nav-link", pathname.startsWith(item.href) && "active")} aria-current={pathname === item.href ? "page" : undefined} href={item.href} key={item.href}>{item.label}</Link>)}
-          <NavDropdown label="Explore" items={siteConfig.exploreNav} pathname={pathname} open={openMenu === "explore"} onToggle={() => setOpenMenu(openMenu === "explore" ? null : "explore")} onClose={() => setOpenMenu(null)} />
+          <NavDropdown label="Practice" items={siteConfig.practiceNav} pathname={pathname} open={openMenu === "practice"} onToggle={() => setOpenMenu(openMenu === "practice" ? null : "practice")} onClose={() => setOpenMenu(null)} />
+          <NavDropdown label="Career & community" items={siteConfig.careerCommunityNav} pathname={pathname} open={openMenu === "career"} onToggle={() => setOpenMenu(openMenu === "career" ? null : "career")} onClose={() => setOpenMenu(null)} />
+          <NavDropdown label="More" items={siteConfig.moreNav} pathname={pathname} open={openMenu === "more"} onToggle={() => setOpenMenu(openMenu === "more" ? null : "more")} onClose={() => setOpenMenu(null)} />
         </nav>
         <div className="nav-actions">
           <GlobalSearch />
@@ -85,8 +90,10 @@ export function Header() {
       {mobileOpen && <nav id="mobile-menu" className="mobile-nav" aria-label="Mobile navigation">
         <div className="mobile-search"><GlobalSearch triggerClass="mobile-search-trigger" /></div>
         <div className="mobile-nav-group"><span>Prepare</span>{siteConfig.prepareNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
-        <div className="mobile-nav-group"><span>Practice & career</span>{siteConfig.primaryNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
-        <div className="mobile-nav-group"><span>Explore</span>{siteConfig.exploreNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
+        <div className="mobile-nav-group"><span>Practice</span>{siteConfig.practiceNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
+        <div className="mobile-nav-group"><span>Career / community</span>{siteConfig.careerCommunityNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
+        <div className="mobile-nav-group"><span>More</span>{siteConfig.moreNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
+        <div className="mobile-utilities"><ThemeToggle showLabel /></div>
         <div className="mobile-actions"><a className="button button-secondary" href={siteConfig.discordUrl} onClick={() => track("discord_clicked", { placement: "mobile_header" })}>Join Discord</a><Link className="button" href="/dsa" onClick={closeMobile}>Start preparing</Link></div>
         <AccountControl mobile onNavigate={closeMobile} />
       </nav>}

@@ -16,6 +16,7 @@ jobs:
     env:
       NEXT_PUBLIC_SITE_URL: https://engineeringfoundry.dev
       NEXT_PUBLIC_DISCORD_URL: https://discord.gg/cNgNq3AFGX
+      NEXT_PUBLIC_ACCOUNTS_ENABLED: "false"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -46,6 +47,8 @@ jobs:
         run: npm run test:experience-privacy
       - name: Test experience fabrication integrity
         run: npm run test:experience-integrity
+      - name: Test public launch integrity
+        run: npm run test:public-launch-integrity
       - name: Validate content
         run: npm run validate:content
       - name: Validate design content
@@ -60,5 +63,9 @@ jobs:
         run: npm run validate:community-content
       - name: Validate experience content
         run: npm run validate:experience-content
+      - name: Validate public links
+        run: npm run validate:public-links
       - name: Build
         run: npm run build
+      - name: Smoke public routes
+        run: npm run test:public-routes

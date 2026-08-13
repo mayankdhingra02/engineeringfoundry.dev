@@ -1,6 +1,6 @@
 # Analytics specification
 
-Engineering Foundry uses PostHog for anonymous product analytics from launch. Pageviews are captured centrally, custom events are typed in `lib/analytics.ts`, and identified profiles are created only after a user authenticates. No product metric below is a current claim or fabricated result.
+Engineering Foundry supports optional PostHog product analytics. It remains fully inactive when `NEXT_PUBLIC_POSTHOG_KEY` is absent. When configured, pageviews are captured centrally, custom events are typed in `lib/analytics.ts`, and identified profiles can be created only after the separately gated account platform authenticates a user. No product metric below is a current claim or fabricated result.
 
 ## Event taxonomy
 
@@ -8,6 +8,7 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | --- | --- | --- | --- | --- |
 | `$pageview` | A route or query string changes | `$current_url` | Active | Visitors, DAU/WAU/MAU, sessions, returning visitors |
 | `discord_clicked` | A Discord CTA is clicked | `placement` | Active | Community acquisition |
+| `contact_channel_clicked` | A visitor opens a working contact destination | `channel`, `placement`; no name, email, subject, or message text | Active | Contact-path usefulness |
 | `dsa_question_clicked` | A question’s attributed external link is opened | `question_id`, `source`, `difficulty`, `primary_topic`, `external_host` | Active | DSA practice engagement |
 | `dsa_filter_changed` | A visitor changes a question-explorer filter | `filter`, normalized `value`; raw search text is never sent | Active | Preparation engagement |
 | `dsa_topic_viewed` | A registered topic guide renders | `topic_slug`, `question_count` | Active | Preparation navigation |
@@ -57,15 +58,15 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `experience_guidance_opened` | Privacy and writing guidance is first opened | `placement`, `source_route` | Active | Privacy-guidance engagement |
 | `experience_community_clicked` | The experience-workspace community CTA is opened | `placement`, `source_route` | Active | Community acquisition |
 | `experience_company_workspace_viewed` | One of six registered company workspaces renders | `company_slug`, `source_route` | Active | Company-workspace interest |
-| `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Active | Account acquisition funnel |
-| `sign_in_completed` | Supabase confirms authentication | `method` | Active when configured | Account activation |
-| `sign_out_completed` | Supabase successfully clears the session | None | Active when configured | Session lifecycle |
-| `profile_onboarding_started` | An authenticated user opens profile onboarding | None | Active when configured | Onboarding funnel |
-| `profile_onboarding_completed` | A valid profile is saved for the first time | `profile_visibility` | Active when configured | Onboarding conversion |
-| `profile_updated` | An authenticated user saves profile settings | `profile_visibility`, `username_changed` | Active when configured | Profile maintenance |
-| `public_profile_viewed` | A public, completed profile renders | `username` | Active when configured | Profile engagement |
+| `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Disabled in public launch; requires account qualification | Account acquisition funnel |
+| `sign_in_completed` | Supabase confirms authentication | `method` | Disabled in public launch; requires account qualification | Account activation |
+| `sign_out_completed` | Supabase successfully clears the session | None | Disabled in public launch; requires account qualification | Session lifecycle |
+| `profile_onboarding_started` | An authenticated user opens profile onboarding | None | Disabled in public launch; requires account qualification | Onboarding funnel |
+| `profile_onboarding_completed` | A valid profile is saved for the first time | `profile_visibility` | Disabled in public launch; requires account qualification | Onboarding conversion |
+| `profile_updated` | An authenticated user saves profile settings | `profile_visibility`, `username_changed` | Disabled in public launch; requires account qualification | Profile maintenance |
+| `public_profile_viewed` | A public, completed profile renders | `username` | Disabled in public launch; requires account qualification | Profile engagement |
 | `roadmap_step_completed` | A signed-in user completes a roadmap step | Roadmap and step identifiers | Future | Preparation progress |
-| `account_created` | Email signup returns a confirmed new session | `method=email` | Active when reliably known | Account conversion |
+| `account_created` | Email signup returns a confirmed new session | `method=email` | Disabled in public launch; requires account qualification | Account conversion |
 
 Local referral-tool events measure preparation activity and must not be interpreted as requests sent, referrers registered, matches made, or referrals completed. Account events require real Supabase outcomes.
 
@@ -92,6 +93,7 @@ Local referral-tool events measure preparation activity and must not be interpre
 ### Community
 
 - Discord CTA clicks by placement
+- Working contact-channel clicks by channel and placement; contact text and identity fields are never collected
 - Practice Lab sessions started by track and mode
 - Guidance opens and feedback-copy actions; no marks, notes, clipboard contents, or exact duration
 - Scheduled or matched mock interviews remain a future metric because those systems do not exist

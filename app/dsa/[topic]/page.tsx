@@ -8,6 +8,7 @@ import { QuestionList } from "@/components/question-list";
 import { dsaPatterns, dsaTopics, questionsForTopic, roadmapStages, topicBySlug } from "@/data/dsa";
 import { createPageMetadata } from "@/lib/metadata";
 
+export const dynamicParams = false;
 export function generateStaticParams() { return dsaTopics.map((topic) => ({ topic: topic.slug })); }
 
 export async function generateMetadata({ params }: { params: Promise<{ topic: string }> }): Promise<Metadata> {
