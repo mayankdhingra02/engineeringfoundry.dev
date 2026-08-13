@@ -1,0 +1,67 @@
+{
+  "requestQualityChecklist": [
+    { "id": "request-exact-role", "text": "Name the exact role and company you are asking about.", "status": "active", "phase": "current" },
+    { "id": "request-direct-link", "text": "Include the official job link or job ID when one is available.", "status": "active", "phase": "current" },
+    { "id": "request-active-role", "text": "Confirm that the official job posting is still active before sharing your request.", "status": "active", "phase": "current" },
+    { "id": "request-brief-intro", "text": "Keep your introduction short and easy to scan.", "status": "active", "phase": "current" },
+    { "id": "request-specific-fit", "text": "Connect your experience to two or three concrete role requirements.", "status": "active", "phase": "current" },
+    { "id": "request-evidence", "text": "Share relevant skills, outcomes, or projects instead of broad claims.", "status": "active", "phase": "current" },
+    { "id": "request-links", "text": "Check that every link works and is appropriate to share.", "status": "active", "phase": "current" },
+    { "id": "request-employer-rules", "text": "Review any employer referral rules you know about without assuming every employer uses the same process.", "status": "active", "phase": "current" },
+    { "id": "request-choice", "text": "Make it clear that the recipient can decline without explanation.", "status": "active", "phase": "current" }
+  ],
+  "goodRequestBehavior": [
+    { "id": "good-personalize", "text": "Personalize the opening and explain why you chose this person.", "status": "active", "phase": "current" },
+    { "id": "good-research", "text": "Read the job description and confirm that the role is still listed.", "status": "active", "phase": "current" },
+    { "id": "good-concise", "text": "Use a concise first message and offer detail through optional links.", "status": "active", "phase": "current" },
+    { "id": "good-honest", "text": "Represent your experience, work authorization, and relationship honestly.", "status": "active", "phase": "current" },
+    { "id": "good-boundaries", "text": "Respect stated availability, review preferences, and employer policies.", "status": "active", "phase": "current" },
+    { "id": "good-thanks", "text": "Thank the recipient for considering the request, whatever they decide.", "status": "active", "phase": "current" }
+  ],
+  "poorRequestBehavior": [
+    { "id": "poor-blast", "text": "Do not mass-message employees or repeatedly contact someone who has not responded.", "status": "active", "phase": "current" },
+    { "id": "poor-pressure", "text": "Do not pressure anyone for a referral, interview, update, or explanation.", "status": "active", "phase": "current" },
+    { "id": "poor-fabricate", "text": "Do not invent a relationship, employment history, project, or qualification.", "status": "active", "phase": "current" },
+    { "id": "poor-payment", "text": "Do not offer money, favors, or hidden compensation for referral access.", "status": "active", "phase": "current" },
+    { "id": "poor-sensitive", "text": "Do not request confidential hiring information or internal employee data.", "status": "active", "phase": "current" },
+    { "id": "poor-guarantee", "text": "Do not imply that a referral controls an interview or hiring decision.", "status": "active", "phase": "current" }
+  ],
+  "communitySafety": [
+    { "id": "safety-public", "text": "Share only professional information you are comfortable making available to the recipient.", "status": "active", "phase": "current" },
+    { "id": "safety-sensitive", "text": "Remove home addresses, government identifiers, account credentials, and other sensitive data.", "status": "active", "phase": "current" },
+    { "id": "safety-control", "text": "You control where the copied packet is shared; Engineering Foundry does not route it.", "status": "active", "phase": "current" },
+    { "id": "safety-policy", "text": "Follow the recipient's boundaries and the employer's referral and conflict-of-interest policies.", "status": "active", "phase": "current" },
+    { "id": "safety-report", "text": "Leave or report conversations that involve harassment, impersonation, payment demands, or suspicious links.", "status": "active", "phase": "current" }
+    ,{ "id": "safety-rules", "text": "Follow the community and channel rules wherever you choose to share a request or availability card.", "status": "active", "phase": "current" }
+    ,{ "id": "safety-no-scraping", "text": "Do not scrape member lists or use the community to mass-message people.", "status": "active", "phase": "current" }
+    ,{ "id": "safety-no-pressure", "text": "Do not pressure employees, and remember that community membership does not signal review availability.", "status": "active", "phase": "current" }
+  ],
+  "referrerReviewChecklist": [
+    { "id": "review-policy", "text": "Check your employer's current referral and conflict-of-interest policies.", "status": "active", "phase": "current" },
+    { "id": "review-identity", "text": "Confirm what you can truthfully say about how you know the candidate.", "status": "active", "phase": "current" },
+    { "id": "review-role", "text": "Verify the role, location, and job link through an official source.", "status": "active", "phase": "current" },
+    { "id": "review-scope", "text": "Confirm that this is a role you can responsibly refer for under the current program.", "status": "active", "phase": "current" },
+    { "id": "review-evidence", "text": "Review the candidate's stated evidence without inventing or overstating it.", "status": "active", "phase": "current" },
+    { "id": "review-boundaries", "text": "Decide whether you have enough context and time for an independent review.", "status": "active", "phase": "current" },
+    { "id": "review-conflict", "text": "Check for a personal, professional, or financial conflict before proceeding.", "status": "active", "phase": "current" },
+    { "id": "review-confidentiality", "text": "Do not disclose private hiring information, internal systems, or employee data.", "status": "active", "phase": "current" },
+    { "id": "review-choice", "text": "Choose to proceed, ask for more information, or decline without promising an outcome.", "status": "active", "phase": "current" }
+  ],
+  "availabilityCardHelp": [
+    { "id": "card-scope", "text": "State which company and job families you are comfortable discussing.", "status": "active", "phase": "current" },
+    { "id": "card-current", "text": "Choose an availability label that reflects your current capacity.", "status": "active", "phase": "current" },
+    { "id": "card-preferences", "text": "Describe the context you need before you can independently review a request.", "status": "active", "phase": "current" },
+    { "id": "card-boundary", "text": "Share the card only where you want to receive requests and update it when your capacity changes.", "status": "active", "phase": "current" }
+  ],
+  "decisionSteps": [
+    { "id": "decision-check", "title": "Check boundaries", "text": "Review policy, capacity, and any conflict before considering the candidate.", "status": "active", "phase": "current" },
+    { "id": "decision-review", "title": "Review context", "text": "Assess only the information provided and verify role details through official sources.", "status": "active", "phase": "current" },
+    { "id": "decision-choose", "title": "Choose independently", "text": "Proceed, request specific missing context, or decline. No explanation is required.", "status": "active", "phase": "current" },
+    { "id": "decision-close", "title": "Close clearly", "text": "Communicate your decision without suggesting control over interviews or hiring.", "status": "active", "phase": "current" }
+  ],
+  "futureWorkflow": [
+    { "id": "future-auth", "title": "Authenticated profiles", "text": "A later phase may support user-controlled profiles with clear privacy controls.", "status": "active", "phase": "future" },
+    { "id": "future-routing", "title": "Opt-in routing", "text": "A later phase may support voluntary request routing only after safety and moderation controls are defined.", "status": "active", "phase": "future" },
+    { "id": "future-status", "title": "Private status", "text": "A later phase may support private request status without implying an interview or employment outcome.", "status": "active", "phase": "future" }
+  ]
+}

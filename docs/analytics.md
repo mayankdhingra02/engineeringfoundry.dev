@@ -34,9 +34,12 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `mock_guidance_opened` | Solo guidance or a peer interviewer packet is first revealed | `track`, `mode`, `prompt_id`, `rubric_id`, `section` | Active | Practice engagement |
 | `mock_feedback_copied` | A visitor copies locally composed qualitative feedback | `track`, `mode`, `prompt_id`, `rubric_id`; copied content is never sent | Active | Practice completion signal |
 | `mock_community_clicked` | The Practice Lab community CTA is opened | `placement` | Active | Community acquisition |
-| `referral_page_viewed` | The referral workspace renders | `demo` | Active demo | Referral funnel entry |
-| `referral_requested` | The demo referral request form is previewed | `demo` | Active demo | Referral request intent |
-| `referrer_signup_started` | The demo Referrer profile form is previewed | `demo` | Active demo | Referrer supply intent |
+| `referral_builder_opened` | The local request-builder mode opens | `mode=request` | Active | Referral preparation engagement |
+| `referral_packet_copied` | A locally generated request packet is copied | `mode=request`, `packet_type` | Active | Referral preparation completion signal |
+| `referral_draft_cleared` | A visitor clears the current local draft | `mode` | Active | Local-tool use |
+| `referrer_toolkit_opened` | The local referrer-toolkit mode opens | `mode=referrer` | Active | Referrer guidance engagement |
+| `referrer_card_copied` | A locally generated availability card is copied | `mode=referrer`, `availability` | Active | Referrer-tool completion signal |
+| `referral_community_clicked` | The referral-etiquette community CTA is opened | `placement` | Active | Community acquisition |
 | `challenge_viewed` | The demo challenge preview CTA is clicked | `challenge_id` | Active demo | Challenge interest |
 | `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Active | Account acquisition funnel |
 | `sign_in_completed` | Supabase confirms authentication | `method` | Active when configured | Account activation |
@@ -48,7 +51,7 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `roadmap_step_completed` | A signed-in user completes a roadmap step | Roadmap and step identifiers | Future | Preparation progress |
 | `account_created` | Email signup returns a confirmed new session | `method=email` | Active when reliably known | Account conversion |
 
-Demo feature events still measure intent and must not be interpreted as completed referrals or scheduled interviews. Account events now require real Supabase outcomes.
+Local referral-tool events measure preparation activity and must not be interpreted as requests sent, referrers registered, matches made, or referrals completed. Account events require real Supabase outcomes.
 
 ## Intended product metrics
 
@@ -76,8 +79,9 @@ Demo feature events still measure intent and must not be interpreted as complete
 - Practice Lab sessions started by track and mode
 - Guidance opens and feedback-copy actions; no marks, notes, clipboard contents, or exact duration
 - Scheduled or matched mock interviews remain a future metric because those systems do not exist
-- Referral requests
-- Referrer registrations
+- Referral builder and referrer toolkit opens
+- Locally generated packet and availability-card copy actions; no form values or copied text
+- Sent requests, referrer registrations, matching, and routing remain future metrics because those systems do not exist
 - Challenge participation and submissions
 - Interview experiences submitted after moderation exists
 
@@ -101,5 +105,6 @@ Outcome metrics require explicit definitions, consent-aware collection, and safe
 - Successful sign-out captures `sign_out_completed` and then calls `resetAnalyticsUser` before returning to anonymous browsing.
 - Accurate new-account attribution for OAuth is deferred because the callback cannot reliably distinguish a new OAuth user from a returning one without inventing a heuristic.
 - Event names and property meanings should remain stable. Additive properties are preferred to renaming historical events.
+- Referral analytics properties are restricted to `mode`, `packet_type`, `availability`, and `placement`. Never send company names, role details, links, introductions, experience text, review preferences, biography text, generated packets, or copied content.
 - Never send passwords, tokens, resumes, free-form referral messages, Mock Interview Practice Lab marks or notes, clipboard contents, exact practice duration, or other sensitive user content to analytics.
 - Production dashboards should distinguish active, demo, future, and self-reported metrics.

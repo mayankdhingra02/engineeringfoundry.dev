@@ -16,7 +16,8 @@ const staticResults = [
   { title: "System Design roadmap", type: "Roadmap", href: "/system-design" },
   { title: "ML system design", type: "Roadmap", href: "/ml-design" },
   { title: "Mock Interview Practice Lab", type: "Practice", href: "/mock-interviews" },
-  { title: "Referral community", type: "Career", href: "/referrals" },
+  { title: "Referral Request Builder", type: "Career tool", href: "/referrals?mode=request" },
+  { title: "Referrer Toolkit", type: "Career tool", href: "/referrals?mode=referrer" },
 ];
 
 export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: string }) {

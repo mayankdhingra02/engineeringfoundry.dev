@@ -1,0 +1,58 @@
+[
+  {
+    "id": "decline-generic",
+    "title": "Concise decline",
+    "body": "Thanks for reaching out and for sharing the context. I am not able to support this referral request, so I need to decline. I wish you well with the role.",
+    "kind": "decline",
+    "status": "active",
+    "phase": "current"
+  },
+  {
+    "id": "decline-capacity",
+    "title": "Limited capacity",
+    "body": "Thanks for reaching out. I do not have capacity to review referral requests right now, so I need to decline. I appreciate you thinking of me and wish you well with the role.",
+    "kind": "decline",
+    "status": "active",
+    "phase": "current"
+  },
+  {
+    "id": "decline-comfort",
+    "title": "Not comfortable referring",
+    "body": "Thanks for the thoughtful request. I am not comfortable supporting a referral in this case, so I need to decline. I appreciate your understanding and wish you the best.",
+    "kind": "decline",
+    "status": "active",
+    "phase": "current"
+  },
+  {
+    "id": "decline-context",
+    "title": "Not enough direct context",
+    "body": "Thanks for sharing this. I am not able to speak to your work closely enough to support a referral, so I need to decline. I appreciate the thoughtful request and wish you the best.",
+    "kind": "decline",
+    "status": "active",
+    "phase": "current"
+  },
+  {
+    "id": "decline-role-fit",
+    "title": "Outside review scope",
+    "body": "Thanks for reaching out. This role is outside the areas I can review responsibly, so I am going to decline. I hope you find someone with more relevant context.",
+    "kind": "decline",
+    "status": "active",
+    "phase": "current"
+  },
+  {
+    "id": "decline-policy",
+    "title": "Policy or conflict",
+    "body": "Thanks for the request. I cannot participate because of a policy or conflict consideration, so I need to decline. I am not able to provide additional detail, but I wish you well.",
+    "kind": "decline",
+    "status": "active",
+    "phase": "current"
+  },
+  {
+    "id": "more-information",
+    "title": "Request more information",
+    "body": "Thanks for reaching out. Before I decide whether I can help, could you share the official job link or ID, a brief explanation of your fit for the role, and one or two examples of relevant work? Please leave out sensitive personal information.",
+    "kind": "more-information",
+    "status": "active",
+    "phase": "current"
+  }
+]

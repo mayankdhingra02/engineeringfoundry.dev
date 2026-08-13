@@ -26,6 +26,16 @@ Engineering Foundry may publish complete prompts and explanations that it author
 
 Community-reported material must remain labeled as such until independently reviewed. A later submission workflow must include moderation, attribution review, privacy safeguards, and a way to correct or remove outdated material.
 
+## Referral and community conduct
+
+- Public referral tools may help a visitor draft text or review a request, but they must not claim to send, route, match, verify, or persist a referral request.
+- Requests must be specific, truthful, professional, and controlled by the person sharing them. Do not encourage spam, scraping employee information, impersonation, or fabricated employment and relationship claims.
+- Do not promise or imply a referral, interview, employment outcome, expedited review, or access to confidential hiring information.
+- Do not sell referral access, solicit payment for a referral, or encourage hidden compensation, favors, commissions, or bounties.
+- Referrers decide independently, may decline without explanation, and must follow employer referral, confidentiality, and conflict-of-interest policies.
+- Visitors should share only professional information they control and should remove sensitive personal data. Engineering Foundry analytics must not receive draft values, professional links, generated copy, or clipboard contents.
+- Any future authenticated profiles or request routing must be opt-in and ship only with explicit privacy, moderation, abuse-reporting, correction, and deletion controls.
+
 ## Behavioral and interview guidance
 
 - Behavioral prompts, follow-ups, answer guidance, and interview tips published as Engineering Foundry material must use original wording.

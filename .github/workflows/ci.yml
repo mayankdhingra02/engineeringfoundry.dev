@@ -36,6 +36,8 @@ jobs:
         run: npm run test:interview-content-validator
       - name: Test mock content validator
         run: npm run test:mock-content-validator
+      - name: Test referral privacy boundary
+        run: npm run test:referral-privacy
       - name: Validate content
         run: npm run validate:content
       - name: Validate design content
@@ -44,5 +46,7 @@ jobs:
         run: npm run validate:interview-content
       - name: Validate mock content
         run: npm run validate:mock-content
+      - name: Validate referral content
+        run: npm run validate:referral-content
       - name: Build
         run: npm run build

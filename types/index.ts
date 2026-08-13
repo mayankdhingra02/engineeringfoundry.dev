@@ -278,38 +278,36 @@ export interface MockRubric {
   dimensions: MockRubricDimension[];
 }
 
-export type ReferralStatus =
-  | "Open"
-  | "Under Review"
-  | "More Information Requested"
-  | "Accepted"
-  | "Declined"
-  | "Closed";
+export type ReferralContentStatus = "active" | "needs_review";
+export type ReferralContentPhase = "current" | "future";
+export type ReferrerAvailability = "Open" | "Limited" | "Not reviewing requests";
 
-export interface ReferralRequest {
+export interface ReferralGuidanceItem {
   id: string;
-  companyId: string;
-  jobTitle: string;
-  jobId?: string;
-  jobUrl?: string;
-  location?: string;
-  introduction: string;
-  linkedinUrl?: string;
-  message?: string;
-  status: ReferralStatus;
-  compensation?: { enabled: boolean; amount?: number; currency?: string };
+  title?: string;
+  text: string;
+  status: ReferralContentStatus;
+  phase: ReferralContentPhase;
 }
 
-export interface Referrer {
+export interface ReferralGuidanceCollection {
+  requestQualityChecklist: ReferralGuidanceItem[];
+  goodRequestBehavior: ReferralGuidanceItem[];
+  poorRequestBehavior: ReferralGuidanceItem[];
+  communitySafety: ReferralGuidanceItem[];
+  referrerReviewChecklist: ReferralGuidanceItem[];
+  availabilityCardHelp: ReferralGuidanceItem[];
+  decisionSteps: ReferralGuidanceItem[];
+  futureWorkflow: ReferralGuidanceItem[];
+}
+
+export interface ReferralTemplate {
   id: string;
-  userId: string;
-  companyId: string;
   title: string;
-  verificationStatus: "Unverified" | "Pending" | "Verified";
-  requestsReviewed: number;
-  availability: "Open" | "Limited" | "Unavailable";
-  jobFamilies: string[];
-  bio?: string;
+  body: string;
+  kind: "decline" | "more-information";
+  status: ReferralContentStatus;
+  phase: "current";
 }
 
 export interface InterviewExperience {
