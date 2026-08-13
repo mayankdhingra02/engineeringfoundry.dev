@@ -8,7 +8,7 @@ import type { Profile } from "@/lib/supabase/database.types";
 import { resetAnalyticsUser, track } from "@/lib/analytics";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type AccountSummary = Pick<Profile, "username" | "display_name" | "avatar_url">;
+type AccountSummary = Pick<Profile, "username" | "display_name" | "avatar_url" | "is_public">;
 
 export function AccountControl({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const router = useRouter();
@@ -23,7 +23,7 @@ export function AccountControl({ mobile = false, onNavigate }: { mobile?: boolea
     async function load() {
       const { data } = await client.auth.getUser();
       if (!data.user) return setAccount(null);
-      const { data: profile } = await client.from("profiles").select("username,display_name,avatar_url").eq("id", data.user.id).maybeSingle();
+      const { data: profile } = await client.from("profiles").select("username,display_name,avatar_url,is_public").eq("id", data.user.id).maybeSingle();
       setAccount(profile);
     }
     load();
@@ -55,8 +55,8 @@ export function AccountControl({ mobile = false, onNavigate }: { mobile?: boolea
 
   if (!account) return mobile ? <div className="mobile-account-actions"><Link className="button button-secondary" href="/sign-in" onClick={onNavigate}>Sign in</Link><Link className="button" href="/sign-up" onClick={onNavigate}>Create account</Link></div> : <div className="logged-out-actions"><Link className="text-link sign-in" href="/sign-in">Sign in</Link><Link className="button button-sm" href="/sign-up">Get started</Link></div>;
 
-  if (mobile) return <div className="mobile-account"><span>Signed in as <strong>{account.display_name ?? account.username ?? "Member"}</strong></span><div className="mobile-account-links"><Link href="/dashboard" onClick={onNavigate}>Dashboard</Link>{account.username && <Link href={`/u/${account.username}`} onClick={onNavigate}>Public profile</Link>}<Link href="/settings/profile" onClick={onNavigate}>Profile settings</Link><button type="button" onClick={signOut}>Sign out</button></div></div>;
+  if (mobile) return <div className="mobile-account"><span>Signed in as <strong>{account.display_name ?? account.username ?? "Member"}</strong></span><div className="mobile-account-links"><Link href="/dashboard" onClick={onNavigate}>Dashboard</Link>{account.username && account.is_public && <Link href={`/u/${account.username}`} onClick={onNavigate}>Public profile</Link>}<Link href="/settings/profile" onClick={onNavigate}>Profile settings</Link><button type="button" onClick={signOut}>Sign out</button></div></div>;
 
   const initials = (account.display_name ?? account.username ?? "EF").split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  return <div className="account-control" ref={wrapper}><button className="account-trigger" type="button" aria-expanded={open} aria-controls="account-menu" onClick={() => setOpen(!open)}><span>{initials}</span><b>{account.display_name ?? account.username ?? "Member"}</b><ChevronDown size={13} /></button>{open && <div className="account-menu" id="account-menu"><div><small>ENGINEERING FOUNDRY ACCOUNT</small><strong>{account.display_name ?? "Member"}</strong>{account.username && <span>@{account.username}</span>}</div><Link href="/dashboard" onClick={() => setOpen(false)}><LayoutDashboard size={15} />Dashboard</Link>{account.username && <Link href={`/u/${account.username}`} onClick={() => setOpen(false)}><UserRound size={15} />Profile</Link>}<Link href="/settings/profile" onClick={() => setOpen(false)}><Settings size={15} />Settings</Link><button type="button" onClick={signOut}><LogOut size={15} />Sign out</button></div>}</div>;
+  return <div className="account-control" ref={wrapper}><button className="account-trigger" type="button" aria-expanded={open} aria-controls="account-menu" onClick={() => setOpen(!open)}><span>{initials}</span><b>{account.display_name ?? account.username ?? "Member"}</b><ChevronDown size={13} /></button>{open && <div className="account-menu" id="account-menu"><div><small>ENGINEERING FOUNDRY ACCOUNT</small><strong>{account.display_name ?? "Member"}</strong>{account.username && <span>@{account.username}</span>}</div><Link href="/dashboard" onClick={() => setOpen(false)}><LayoutDashboard size={15} />Dashboard</Link>{account.username && account.is_public && <Link href={`/u/${account.username}`} onClick={() => setOpen(false)}><UserRound size={15} />Profile</Link>}<Link href="/settings/profile" onClick={() => setOpen(false)}><Settings size={15} />Settings</Link><button type="button" onClick={signOut}><LogOut size={15} />Sign out</button></div>}</div>;
 }

@@ -64,17 +64,26 @@ Provider secrets belong in the Supabase dashboard, never in this application rep
 
 The app requests authentication only; it does not store or use provider access tokens.
 
-## 7. Production checklist
+## 7. Production setup gate
 
-- Apply every migration and confirm `public.profiles` has RLS enabled.
-- Confirm anonymous users can read only public, completed profiles.
-- Confirm User A cannot update User B's row.
-- Confirm inserts and deletes are unavailable to anonymous/authenticated API clients.
-- Confirm profile creation works through the `auth.users` trigger.
-- Verify the production Site URL and exact callback allowlist.
-- Configure email confirmation, production SMTP, Google, and GitHub as intended.
-- Set only the public URL and anon/publishable key in the application environment.
-- Verify no service-role or secret key is exposed to the browser.
-- Exercise sign-up, confirmation, OAuth, recovery, onboarding, visibility, and sign-out on the production origin.
+This gate is intentionally **unverified** in the repository. A passing build or local database test does not prove that the hosted project, provider consoles, DNS, SMTP, or deployment environment is configured correctly. Do not allow real users until an operator checks all 15 items and records evidence.
+
+1. **Migrations applied:** apply every committed migration to the intended project; record the project reference and migration versions, and confirm the grants, RLS policies, and function definitions match `docs/auth-security.md`.
+2. **Email signup:** create a disposable account from the production origin using production SMTP and confirm no premature authenticated session is created when confirmation is required.
+3. **Confirmation:** use the delivered confirmation link once, verify its callback/expiry behavior, and confirm a profile row is created by the trigger.
+4. **Sign in:** sign in with the confirmed account, verify the SSR cookie session and protected-page access, and confirm invalid credentials fail safely.
+5. **Onboarding:** complete onboarding, verify exactly one owned profile row changes, and confirm reserved/invalid names receive friendly errors.
+6. **Profile update:** update every supported profile field, refresh in a second request, and confirm the persisted owner row and `updated_at` behavior.
+7. **Private/public switch:** test both transitions; confirm the RPC, `/u/[username]`, account menu, settings CTA, metadata, and analytics all follow the resulting visibility.
+8. **Password recovery:** complete request, callback, password update, expired/reused-link, and new-password sign-in flows from the production origin.
+9. **Google OAuth:** configure the exact provider callback, complete a Google sign-in, and verify the Engineering Foundry callback, onboarding decision, and session persistence.
+10. **GitHub OAuth:** configure the exact provider callback, complete a GitHub sign-in, and verify the Engineering Foundry callback, onboarding decision, and session persistence.
+11. **User A/User B RLS isolation:** prove User A can read/update only A's base row, cannot read/update B's row, and normal API roles cannot insert or delete profiles.
+12. **Public-profile RPC field inspection:** as both `anon` and `authenticated`, confirm only the nine approved fields are returned and private/incomplete profiles return no row; prove anon base-table select is denied.
+13. **Reserved username rejection:** attempt every reserved class through the UI and direct Data API; also test uppercase and case-insensitive duplicate values, and confirm raw database errors never reach the UI.
+14. **Trigger-function execution denial:** confirm `PUBLIC`, `anon`, and `authenticated` lack direct execution while profile creation and `updated_at` triggers still work normally.
+15. **Sign out/session reset:** sign out, verify cookies and analytics identity reset, confirm protected routes redirect, and repeat in a second browser to rule out response/session leakage.
+
+Before sign-off, also verify exact Auth callback URLs, remove broad production wildcards, keep all service-role/SMTP/OAuth secrets out of browser bundles and logs, archive the test evidence with date/tester/environment, and review relevant Supabase Auth and Postgres logs.
 
 The checked-in TypeScript database interface is maintained in `lib/supabase/database.types.ts`. After future schema changes, it can be regenerated with the Supabase CLI and reviewed before replacing that file.

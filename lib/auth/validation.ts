@@ -12,6 +12,42 @@ export interface ProfileInput {
 
 export const USERNAME_PATTERN = /^[a-z0-9][a-z0-9_-]{2,29}$/;
 
+export const RESERVED_USERNAMES = [
+  "admin",
+  "administrator",
+  "root",
+  "support",
+  "help",
+  "staff",
+  "moderator",
+  "moderators",
+  "mod",
+  "official",
+  "system",
+  "security",
+  "auth",
+  "api",
+  "engineeringfoundry",
+  "engineering-foundry",
+  "engineering_foundry",
+  "owner",
+  "team",
+  "abuse",
+  "contact",
+  "legal",
+  "privacy",
+  "terms",
+  "account",
+  "settings",
+  "dashboard",
+  "signin",
+  "signup",
+  "login",
+  "logout",
+] as const;
+
+const RESERVED_USERNAME_SET = new Set<string>(RESERVED_USERNAMES);
+
 function cleanOptional(value: FormDataEntryValue | null, max: number) {
   const normalized = typeof value === "string" ? value.trim() : "";
   return normalized ? normalized.slice(0, max) : null;
@@ -33,6 +69,7 @@ export function parseProfileForm(formData: FormData): { data?: ProfileInput; err
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const displayName = String(formData.get("display_name") ?? "").trim();
   if (!USERNAME_PATTERN.test(username)) return { error: "Use 3–30 lowercase letters, numbers, underscores, or hyphens. Start with a letter or number." };
+  if (RESERVED_USERNAME_SET.has(username)) return { error: "That username is reserved. Choose another one." };
   if (displayName.length < 1 || displayName.length > 80) return { error: "Display name must be between 1 and 80 characters." };
 
   const bio = cleanOptional(formData.get("bio"), 280);

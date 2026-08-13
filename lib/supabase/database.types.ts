@@ -53,10 +53,26 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_public_profile: {
+        Args: { profile_username: string };
+        Returns: {
+          username: string;
+          display_name: string | null;
+          bio: string | null;
+          current_company: string | null;
+          current_role: string | null;
+          years_experience: number | null;
+          linkedin_url: string | null;
+          github_url: string | null;
+          avatar_url: string | null;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
 };
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type PublicProfile = Database["public"]["Functions"]["get_public_profile"]["Returns"][number];

@@ -1,7 +1,8 @@
 import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Profile } from "@/lib/supabase/database.types";
+import type { Profile, PublicProfile } from "@/lib/supabase/database.types";
+import { USERNAME_PATTERN } from "@/lib/auth/validation";
 
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   const supabase = await createSupabaseServerClient();
@@ -19,11 +20,11 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   return data;
 });
 
-export const getPublicProfile = cache(async (username: string): Promise<Profile | null> => {
+export const getPublicProfile = cache(async (username: string): Promise<PublicProfile | null> => {
   const normalized = username.toLowerCase();
-  if (!/^[a-z0-9][a-z0-9_-]{2,29}$/.test(normalized)) return null;
+  if (!USERNAME_PATTERN.test(normalized)) return null;
   const supabase = await createSupabaseServerClient();
   if (!supabase) return null;
-  const { data } = await supabase.from("profiles").select("*").eq("username", normalized).eq("is_public", true).eq("onboarding_complete", true).maybeSingle();
+  const { data } = await supabase.rpc("get_public_profile", { profile_username: normalized }).maybeSingle();
   return data;
 });

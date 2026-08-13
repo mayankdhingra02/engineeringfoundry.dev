@@ -19,7 +19,7 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Revalidates the token and refreshes cookies. Authorization remains in pages/actions and RLS.
-  await supabase.auth.getUser();
+  // Verifies or refreshes the token and propagates updated cookies. Authorization remains in pages/actions and RLS.
+  await supabase.auth.getClaims();
   return response;
 }
