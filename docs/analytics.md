@@ -48,6 +48,15 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `community_pathway_clicked` | A public Community Hub or recognition pathway is chosen | `pathway`, `placement` | Active | Community pathway engagement |
 | `community_discord_clicked` | A Community Hub or Recognition Preview Discord CTA is opened | `placement` | Active | Community acquisition |
 | `recognition_preview_viewed` | The honest Recognition Preview renders | `placement` | Active | Recognition-model interest |
+| `experience_builder_opened` | The private write-up builder hydrates | `mode`, `source_route` | Active | Experience-writing engagement |
+| `experience_round_added` | A visitor adds a local process round | `round_count_bucket`, `source_route` | Active | Experience-writing engagement |
+| `experience_round_removed` | A visitor removes a local process round | `round_count_bucket`, `source_route` | Active | Experience-writing engagement |
+| `experience_summary_generated` | A local safe-summary preview is generated | `round_count_bucket`, `source_route` | Active | Experience-writing completion signal |
+| `experience_summary_copied` | A checklist-reviewed local summary is copied | `round_count_bucket`, `source_route` | Active | Experience-writing completion signal |
+| `experience_draft_cleared` | A visitor clears the local draft | `mode`, `source_route` | Active | Local-tool use |
+| `experience_guidance_opened` | Privacy and writing guidance is first opened | `placement`, `source_route` | Active | Privacy-guidance engagement |
+| `experience_community_clicked` | The experience-workspace community CTA is opened | `placement`, `source_route` | Active | Community acquisition |
+| `experience_company_workspace_viewed` | One of six registered company workspaces renders | `company_slug`, `source_route` | Active | Company-workspace interest |
 | `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Active | Account acquisition funnel |
 | `sign_in_completed` | Supabase confirms authentication | `method` | Active when configured | Account activation |
 | `sign_out_completed` | Supabase successfully clears the session | None | Active when configured | Session lifecycle |
@@ -92,7 +101,8 @@ Local referral-tool events measure preparation activity and must not be interpre
 - Challenge opens, guidance reveals, qualitative-rubric use, solution-summary copy actions, and community discussion clicks; no worksheet fields, solution URLs, assessments, or copied text
 - Community Hub pathway and Discord clicks; `1,000+ community members` is a verified membership statement, not an analytics-derived active-user metric
 - Official challenge submissions, judging, winners, rankings, and recognition remain future metrics because those systems do not exist
-- Interview experiences submitted after moderation exists
+- Interview builder opens, rounds added, guidance opens, summary generation, and summary copies; these are local writing actions, not submissions or published experiences
+- Interview experiences submitted remains a future metric available only after authenticated submission and moderation exist
 
 ### Outcomes — future and self-reported
 
@@ -115,6 +125,7 @@ Outcome metrics require explicit definitions, consent-aware collection, and safe
 - Accurate new-account attribution for OAuth is deferred because the callback cannot reliably distinguish a new OAuth user from a returning one without inventing a heuristic.
 - Event names and property meanings should remain stable. Additive properties are preferred to renaming historical events.
 - Challenge and community analytics properties are limited to registered content identifiers and taxonomy (`challenge_id`, `category`, `level`, `section`) plus navigation context (`placement`, `pathway`). Never send worksheet text, solution URLs, copied summaries, personal names, or qualitative selections.
+- Interview-experience analytics are restricted to fixed `mode`, fixed `source_route`, coarse `round_count_bucket`, `placement`, and a registered public `company_slug` on the six static workspace pages. Never send a user-entered company, role, level, region, interview period, result, topic selection, round note, reflection, generated summary, checklist state, or clipboard content.
 - Referral analytics properties are restricted to `mode`, `packet_type`, `availability`, and `placement`. Never send company names, role details, links, introductions, experience text, review preferences, biography text, generated packets, or copied content.
 - Never send passwords, tokens, resumes, free-form referral messages, Mock Interview Practice Lab marks or notes, clipboard contents, exact practice duration, or other sensitive user content to analytics.
 - Production dashboards should distinguish active, demo, future, and self-reported metrics.

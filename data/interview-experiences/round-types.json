@@ -1,0 +1,13 @@
+[
+  { "id": "recruiter-intro", "label": "Recruiter / Intro", "description": "Initial process, role, or logistics conversation." },
+  { "id": "hiring-manager", "label": "Hiring Manager", "description": "Role context, experience, scope, and mutual fit discussion." },
+  { "id": "coding", "label": "Coding", "description": "Programming, problem-solving, or implementation discussion." },
+  { "id": "system-design", "label": "System Design", "description": "Architecture, requirements, tradeoffs, and operations discussion." },
+  { "id": "ml-design", "label": "ML Design", "description": "Machine-learning system framing, data, modeling, and serving discussion." },
+  { "id": "behavioral", "label": "Behavioral", "description": "Past experience, judgment, collaboration, and reflection discussion." },
+  { "id": "technical-discussion", "label": "Technical Discussion", "description": "High-level technical experience or domain conversation." },
+  { "id": "take-home", "label": "Take-home", "description": "Offline work; describe only format and permitted high-level context." },
+  { "id": "presentation", "label": "Presentation", "description": "Presentation or walkthrough of work that may be discussed publicly." },
+  { "id": "team-values", "label": "Team / Values", "description": "Team interaction, working preferences, or values conversation." },
+  { "id": "other", "label": "Other", "description": "A process stage not covered by the neutral taxonomy." }
+]

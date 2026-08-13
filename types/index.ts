@@ -310,18 +310,29 @@ export interface ReferralTemplate {
   phase: "current";
 }
 
-export interface InterviewExperience {
+export type ExperienceTopicCategory = "Coding" | "System Design" | "ML" | "Behavioral";
+export type ExperienceModerationState = "Draft" | "Submitted" | "Needs changes" | "Approved" | "Rejected" | "Archived";
+
+export interface ExperienceRoundType {
   id: string;
-  companyId: string;
-  role: string;
-  level: string;
-  interviewDate: string;
-  location: string;
-  rounds: string[];
-  topics: string[];
-  experience: string;
-  result?: "Offer" | "No offer" | "Withdrew" | "In progress";
-  anonymous: boolean;
+  label: string;
+  description: string;
+}
+
+export interface ExperienceTopic {
+  id: string;
+  label: string;
+  category: ExperienceTopicCategory;
+}
+
+export interface ExperienceGuidance {
+  currentPublicExperienceCount: 0;
+  draftFields: string[];
+  writingGuidance: string[];
+  privacyGuidance: string[];
+  safetyChecklist: Array<{ id: string; label: string }>;
+  futureModerationStates: ExperienceModerationState[];
+  futureIdentityChoices: string[];
 }
 
 export type ChallengeCategory = "DSA" | "System Design" | "ML System Design" | "Backend Engineering";

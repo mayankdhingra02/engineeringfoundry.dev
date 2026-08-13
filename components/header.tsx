@@ -20,7 +20,7 @@ const navDescriptions: Record<string, string> = {
   "ML Design": "Applied ML and AI system design",
   Behavioral: "Stories, leadership, and communication",
   "Interview Tips": "Practical guidance for interview day",
-  "Interview Experiences": "Community-shared process context",
+  "Interview Experiences": "Private, privacy-conscious write-up builder",
   Resources: "Curated preparation material",
   Challenges: "Self-guided engineering scenarios",
   Recognition: "Honest recognition preview",

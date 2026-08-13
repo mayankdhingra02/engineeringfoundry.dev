@@ -17,12 +17,15 @@
     "test:referral-privacy": "node scripts/test-referral-privacy.mjs",
     "test:challenge-privacy": "node scripts/test-challenge-privacy.mjs",
     "test:recognition-integrity": "node scripts/test-recognition-integrity.mjs",
+    "test:experience-privacy": "node scripts/test-experience-privacy.mjs",
+    "test:experience-integrity": "node scripts/test-experience-integrity.mjs",
     "validate:content": "node scripts/validate-content.mjs",
     "validate:design-content": "node scripts/validate-design-content.mjs",
     "validate:interview-content": "node scripts/validate-interview-content.mjs",
     "validate:mock-content": "node scripts/validate-mock-content.mjs",
     "validate:referral-content": "node scripts/validate-referral-content.mjs",
-    "validate:community-content": "node scripts/validate-community-content.mjs"
+    "validate:community-content": "node scripts/validate-community-content.mjs",
+    "validate:experience-content": "node scripts/validate-experience-content.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

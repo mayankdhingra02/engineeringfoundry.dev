@@ -1,0 +1,41 @@
+{
+  "currentPublicExperienceCount": 0,
+  "draftFields": [
+    "company",
+    "role",
+    "level",
+    "region",
+    "interview_period",
+    "result",
+    "overall_summary",
+    "rounds",
+    "preparation_lessons",
+    "what_went_well",
+    "what_would_change",
+    "what_surprised_you",
+    "what_you_learned"
+  ],
+  "writingGuidance": [
+    "Describe the overall process and topic areas at a high level.",
+    "Separate what you observed from what you inferred.",
+    "Focus reflections on preparation, communication, and learning.",
+    "Treat outcomes as context, not a measure of candidate quality."
+  ],
+  "privacyGuidance": [
+    "Share only information you are permitted and comfortable making public.",
+    "Respect confidentiality obligations, NDAs where applicable, and employer or platform policies.",
+    "Do not include exact proprietary question wording, memorized prompts, confidential scenarios, assessment screenshots, or internal documents.",
+    "Remove interviewer and recruiter identities, emails, phone numbers, private meeting links, and sensitive personal information.",
+    "This guidance supports safer writing and is not legal advice."
+  ],
+  "safetyChecklist": [
+    { "id": "identities", "label": "I removed interviewer and recruiter identities." },
+    { "id": "contact-details", "label": "I removed emails, phone numbers, and private links." },
+    { "id": "question-wording", "label": "I did not include exact proprietary question wording." },
+    { "id": "assessment-material", "label": "I did not paste confidential assessment material." },
+    { "id": "personal-information", "label": "I removed sensitive personal information." },
+    { "id": "comfortable-sharing", "label": "I am comfortable sharing the remaining information." }
+  ],
+  "futureModerationStates": ["Draft", "Submitted", "Needs changes", "Approved", "Rejected", "Archived"],
+  "futureIdentityChoices": ["Display username", "Anonymous publicly"]
+}

@@ -26,6 +26,16 @@ Engineering Foundry may publish complete prompts and explanations that it author
 
 Community-reported material must remain labeled as such until independently reviewed. A later submission workflow must include moderation, attribution review, privacy safeguards, and a way to correct or remove outdated material.
 
+## Interview experience accounts
+
+- Do not scrape, import, paraphrase, or republish interview reviews from Glassdoor, Blind, social networks, private groups, or other platforms.
+- Do not copy exact proprietary interview questions, memorized coding prompts, confidential system-design scenarios, take-home assignments, assessment screenshots, internal documents, or other restricted material.
+- Do not publish interviewer or recruiter names, emails, phone numbers, private meeting links, or sensitive personal information.
+- Experience summaries should focus on high-level process structure, broad topic areas, candidate reflections, and preparation lessons.
+- Contributors must share only information they are permitted and comfortable making public, respect confidentiality obligations and applicable policies, and avoid treating this product guidance as legal advice.
+- Future public submissions require authentication, moderation, privacy review, provenance/status handling, freshness controls, and a contributor-accessible correction or removal path.
+- Contributor accounts represent personal experience, not verified company policy. Anonymous public display may be a future preference but must never be described as perfect anonymity.
+
 ## Referral and community conduct
 
 - Public referral tools may help a visitor draft text or review a request, but they must not claim to send, route, match, verify, or persist a referral request.
