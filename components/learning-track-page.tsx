@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Compass, Layers3, Wrench } from "lucide-react";
 import { EmptyState, FeatureCard, PageHero, SectionHeading, StatusPill } from "./page-shell";
+import { AnalyticsEventOnMount } from "./analytics-event";
 
 export interface TrackConfig {
   eyebrow: string;
@@ -12,8 +13,9 @@ export interface TrackConfig {
   resources: string[];
 }
 
-export function LearningTrackPage({ config }: { config: TrackConfig }) {
+export function LearningTrackPage({ config, roadmap }: { config: TrackConfig; roadmap: string }) {
   return <>
+    <AnalyticsEventOnMount event="roadmap_viewed" properties={{ roadmap }} />
     <PageHero eyebrow={config.eyebrow} title={config.title} description={config.description}><a className="button" href="#roadmap">View roadmap <ArrowRight size={16} /></a><Link className="button button-secondary" href="/resources">Browse resources</Link></PageHero>
     <section className="section" id="roadmap"><div className="page-width"><div className="content-grid">
       <aside className="sidebar-card"><h3>On this page</h3><a href="#roadmap">Roadmap</a><a href="#fundamentals">Fundamentals</a><a href="#practice">Practice</a><a href="#resources">Resources</a></aside>

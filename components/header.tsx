@@ -31,7 +31,7 @@ export function Header() {
           <button className="icon-button mobile-menu-button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="mobile-menu" aria-label="Toggle menu">{open ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
       </div>
-      {open && <nav id="mobile-menu" className="mobile-nav" aria-label="Mobile navigation">{[...siteConfig.nav, ...siteConfig.moreNav].map((item) => <Link href={item.href} key={item.href} onClick={() => setOpen(false)}>{item.label}</Link>)}<div className="mobile-actions"><a className="button button-secondary" href={siteConfig.discordUrl}>Join Discord</a><Link className="button" href="/dashboard">Get started</Link></div></nav>}
+      {open && <nav id="mobile-menu" className="mobile-nav" aria-label="Mobile navigation">{[...siteConfig.nav, ...siteConfig.moreNav].map((item) => <Link href={item.href} key={item.href} onClick={() => setOpen(false)}>{item.label}</Link>)}<div className="mobile-actions"><a className="button button-secondary" href={siteConfig.discordUrl} onClick={() => track("discord_clicked", { placement: "mobile_header" })}>Join Discord</a><Link className="button" href="/dashboard">Get started</Link></div></nav>}
     </header>
   );
 }

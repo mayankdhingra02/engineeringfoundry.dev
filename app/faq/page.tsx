@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import { PageHero } from "@/components/page-shell";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = { title: "FAQ", description: "Frequently asked questions about Engineering Foundry." };
+export const metadata = createPageMetadata({ title: "FAQ", description: "Frequently asked questions about Engineering Foundry.", path: "/faq" });
 const faqs = [
   ["What is Engineering Foundry?", "A software-engineering interview preparation and professional community platform being built around structured learning, deliberate practice, and engineers helping engineers."],
   ["Is Engineering Foundry free?", "Public preparation content is intended to remain browsable without an account. Final pricing and any premium programs have not been decided."],

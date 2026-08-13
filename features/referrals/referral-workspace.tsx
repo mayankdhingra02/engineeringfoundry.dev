@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { HandHeart, Info, Send } from "lucide-react";
 import { companies } from "@/data/fixtures/companies";
 import { track } from "@/lib/analytics";
 import { StatusPill } from "@/components/page-shell";
+import { AnalyticsEventOnMount } from "@/components/analytics-event";
 
 export function ReferralWorkspace() {
   const [tab, setTab] = useState<"request" | "referrer">("request");
   const [submitted, setSubmitted] = useState(false);
-  useEffect(() => track("referral_page_viewed"), []);
   function submit(event: React.FormEvent) { event.preventDefault(); setSubmitted(true); track(tab === "request" ? "referral_requested" : "referrer_signup_started", { demo: true }); }
   return <>
+    <AnalyticsEventOnMount event="referral_page_viewed" properties={{ demo: true }} />
     <div className="two-column-feature">
       <button className={`flow-card ${tab === "request" ? "selected" : ""}`} onClick={() => { setTab("request"); setSubmitted(false); }}><span className="icon-well"><Send size={20} /></span><h2>Request a Referral</h2><p>Share the role and enough context for a Referrer to independently consider your request.</p><span className="card-link">Open request form</span></button>
       <button className={`flow-card ${tab === "referrer" ? "selected" : ""}`} onClick={() => { setTab("referrer"); setSubmitted(false); }}><span className="icon-well"><HandHeart size={20} /></span><h2>Become a Referrer</h2><p>Volunteer to review relevant requests on your own terms and your own timeline.</p><span className="card-link">Create Referrer profile</span></button>

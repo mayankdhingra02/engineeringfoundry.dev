@@ -4,7 +4,7 @@ export const siteConfig = {
   description:
     "Structured engineering interview preparation, practice, and community—all in one place.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://engineeringfoundry.dev",
-  discordUrl: process.env.NEXT_PUBLIC_DISCORD_URL ?? "#discord-community",
+  discordUrl: process.env.NEXT_PUBLIC_DISCORD_URL ?? "https://discord.gg/example",
   nav: [
     { label: "DSA", href: "/dsa" },
     { label: "System Design", href: "/system-design" },
@@ -30,7 +30,7 @@ export const footerGroups = [
   { title: "Prepare", links: [["DSA", "/dsa"], ["System Design", "/system-design"], ["ML Design", "/ml-design"], ["Behavioral", "/behavioral"], ["Interview Tips", "/interview-tips"]] },
   { title: "Practice", links: [["Mock Interviews", "/mock-interviews"], ["Challenges", "/challenges"], ["Interview Experiences", "/interview-experiences"]] },
   { title: "Career", links: [["Referrals", "/referrals"], ["Company Guides", "/companies"]] },
-  { title: "Community", links: [["Discord", "#discord-community"], ["Contributors", "/community#contributors"]] },
+  { title: "Community", links: [["Discord", siteConfig.discordUrl], ["Contributors", "/community#contributors"]] },
   { title: "Engineering Foundry", links: [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"]] },
   { title: "Legal", links: [["Privacy", "/privacy"], ["Terms", "/terms"]] },
 ] as const;
