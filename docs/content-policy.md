@@ -36,6 +36,16 @@ Community-reported material must remain labeled as such until independently revi
 - Visitors should share only professional information they control and should remove sensitive personal data. Engineering Foundry analytics must not receive draft values, professional links, generated copy, or clipboard contents.
 - Any future authenticated profiles or request routing must be opt-in and ship only with explicit privacy, moderation, abuse-reporting, correction, and deletion controls.
 
+## Challenges, solutions, and recognition
+
+- Every Engineering Challenge Lab prompt, constraint, deliverable, guidance section, mistake list, stretch goal, and rubric must use original Engineering Foundry wording. Do not adapt proprietary assessments, interview questions, course exercises, competitions, or take-home assignments.
+- Community participants must share their own work, identify assumptions, and must not plagiarize another participant's solution or present generated or copied work as independently produced.
+- Do not post confidential employer, customer, candidate, interview, assessment, source-code, credential, or access-control information in a worksheet or community discussion.
+- Feedback should critique ideas rather than people, explain reasoning, and avoid harassment, dogpiling, or unsupported accusations.
+- Engineering Foundry does not currently collect official challenge submissions, judge entries, promise prizes, name winners, or calculate rankings.
+- Any future judged round needs published eligibility and evaluation rules, conflict handling, moderation, reviewer accountability, corrections, and an auditable result record.
+- Future recognition must use actual recorded evidence, require opt-in public visibility, and disclose its rules. Never fabricate participants, winners, ranks, scores, reviews, or activity counts.
+
 ## Behavioral and interview guidance
 
 - Behavioral prompts, follow-ups, answer guidance, and interview tips published as Engineering Foundry material must use original wording.

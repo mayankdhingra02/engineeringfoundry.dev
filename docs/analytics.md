@@ -40,7 +40,14 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `referrer_toolkit_opened` | The local referrer-toolkit mode opens | `mode=referrer` | Active | Referrer guidance engagement |
 | `referrer_card_copied` | A locally generated availability card is copied | `mode=referrer`, `availability` | Active | Referrer-tool completion signal |
 | `referral_community_clicked` | The referral-etiquette community CTA is opened | `placement` | Active | Community acquisition |
-| `challenge_viewed` | The demo challenge preview CTA is clicked | `challenge_id` | Active demo | Challenge interest |
+| `challenge_opened` | An active Challenge Lab detail page hydrates | `challenge_id`, `category`, `level` | Active | Challenge practice engagement |
+| `challenge_guidance_opened` | Guidance, mistakes, or stretch goals are first revealed | `challenge_id`, `category`, `level`, `section` | Active | Challenge practice engagement |
+| `challenge_rubric_used` | A visitor chooses a qualitative self-review state | `challenge_id`, `category`, `level`, `section`; the selected assessment is not sent | Active | Meaningful challenge engagement |
+| `challenge_solution_summary_copied` | A visitor copies the locally prepared solution summary | `challenge_id`, `category`, `level`; worksheet and copied text are never sent | Active | Challenge practice completion signal |
+| `challenge_community_clicked` | A Challenge Lab community CTA is opened | `challenge_id` when on a detail page, `category`, `level`, `placement` | Active | Community discussion interest |
+| `community_pathway_clicked` | A public Community Hub or recognition pathway is chosen | `pathway`, `placement` | Active | Community pathway engagement |
+| `community_discord_clicked` | A Community Hub or Recognition Preview Discord CTA is opened | `placement` | Active | Community acquisition |
+| `recognition_preview_viewed` | The honest Recognition Preview renders | `placement` | Active | Recognition-model interest |
 | `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Active | Account acquisition funnel |
 | `sign_in_completed` | Supabase confirms authentication | `method` | Active when configured | Account activation |
 | `sign_out_completed` | Supabase successfully clears the session | None | Active when configured | Session lifecycle |
@@ -82,7 +89,9 @@ Local referral-tool events measure preparation activity and must not be interpre
 - Referral builder and referrer toolkit opens
 - Locally generated packet and availability-card copy actions; no form values or copied text
 - Sent requests, referrer registrations, matching, and routing remain future metrics because those systems do not exist
-- Challenge participation and submissions
+- Challenge opens, guidance reveals, qualitative-rubric use, solution-summary copy actions, and community discussion clicks; no worksheet fields, solution URLs, assessments, or copied text
+- Community Hub pathway and Discord clicks; `1,000+ community members` is a verified membership statement, not an analytics-derived active-user metric
+- Official challenge submissions, judging, winners, rankings, and recognition remain future metrics because those systems do not exist
 - Interview experiences submitted after moderation exists
 
 ### Outcomes — future and self-reported
@@ -105,6 +114,7 @@ Outcome metrics require explicit definitions, consent-aware collection, and safe
 - Successful sign-out captures `sign_out_completed` and then calls `resetAnalyticsUser` before returning to anonymous browsing.
 - Accurate new-account attribution for OAuth is deferred because the callback cannot reliably distinguish a new OAuth user from a returning one without inventing a heuristic.
 - Event names and property meanings should remain stable. Additive properties are preferred to renaming historical events.
+- Challenge and community analytics properties are limited to registered content identifiers and taxonomy (`challenge_id`, `category`, `level`, `section`) plus navigation context (`placement`, `pathway`). Never send worksheet text, solution URLs, copied summaries, personal names, or qualitative selections.
 - Referral analytics properties are restricted to `mode`, `packet_type`, `availability`, and `placement`. Never send company names, role details, links, introductions, experience text, review preferences, biography text, generated packets, or copied content.
 - Never send passwords, tokens, resumes, free-form referral messages, Mock Interview Practice Lab marks or notes, clipboard contents, exact practice duration, or other sensitive user content to analytics.
 - Production dashboards should distinguish active, demo, future, and self-reported metrics.

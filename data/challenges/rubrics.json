@@ -1,0 +1,58 @@
+[
+  {
+    "id": "challenge-rubric-dsa",
+    "category": "DSA",
+    "title": "DSA deliverable self-review",
+    "dimensions": [
+      {"id":"dsa-decomposition","label":"Problem decomposition","strong":"Defines inputs, outputs, invariants, and smaller operations before choosing a structure.","developing":"Identifies the main operation but leaves some semantics or invariants implicit.","needs_attention":"Starts implementing without a stable problem definition."},
+      {"id":"dsa-correctness","label":"Correctness","strong":"Explains why the algorithm satisfies the invariant across normal and boundary cases.","developing":"The approach appears sound but the reasoning skips important transitions.","needs_attention":"The approach fails a stated constraint or lacks a correctness argument."},
+      {"id":"dsa-reasoning","label":"Algorithmic reasoning","strong":"Compares plausible approaches and chooses one for explicit reasons.","developing":"Chooses a workable approach with limited comparison.","needs_attention":"Uses a structure without connecting it to the problem's operations."},
+      {"id":"dsa-complexity","label":"Complexity","strong":"States and justifies time, space, and output-sensitive costs.","developing":"Gives headline complexity with minor omissions.","needs_attention":"Complexity is missing or inconsistent with the algorithm."},
+      {"id":"dsa-edges","label":"Edge cases","strong":"Covers boundaries, empty input, ties, bursts, and scale-specific cases.","developing":"Covers common edges but misses a challenge-specific boundary.","needs_attention":"Relies mainly on a happy-path example."},
+      {"id":"dsa-testing","label":"Testing","strong":"Uses targeted examples that would expose incorrect semantics or cleanup behavior.","developing":"Provides useful tests without explaining what each protects.","needs_attention":"Offers only one broad example or no test plan."},
+      {"id":"dsa-explanation","label":"Explanation","strong":"The deliverable is precise enough for another engineer to implement and review.","developing":"The core idea is understandable but some steps require inference.","needs_attention":"Key decisions or operations remain ambiguous."}
+    ]
+  },
+  {
+    "id": "challenge-rubric-system-design",
+    "category": "System Design",
+    "title": "System Design deliverable self-review",
+    "dimensions": [
+      {"id":"system-assumptions","label":"Assumptions","strong":"Defines scale, objectives, semantics, and exclusions that materially shape the design.","developing":"States basic scale and requirements with some missing targets.","needs_attention":"Architecture begins without explicit assumptions."},
+      {"id":"system-architecture","label":"Architecture","strong":"Components, responsibilities, and data movement form a coherent end-to-end path.","developing":"The main path works but ownership or boundaries are fuzzy.","needs_attention":"The diagram is a list of technologies without a traceable flow."},
+      {"id":"system-data","label":"Data and interfaces","strong":"Models durable entities, state transitions, APIs, and events consistently.","developing":"Names core data and interfaces but misses lifecycle detail.","needs_attention":"Data ownership and contracts are largely absent."},
+      {"id":"system-scale","label":"Scalability","strong":"Partitioning, hotspots, backpressure, and growth limits follow from the workload.","developing":"Describes horizontal scaling without fully treating hotspots.","needs_attention":"Uses scale claims without explaining distribution or limits."},
+      {"id":"system-reliability","label":"Reliability","strong":"Traces partial failures, recovery, idempotency, and degraded behavior.","developing":"Handles common outages but leaves ambiguous states unresolved.","needs_attention":"Assumes components remain available or retries always succeed."},
+      {"id":"system-tradeoffs","label":"Tradeoffs","strong":"Compares alternatives and ties choices to stated objectives.","developing":"Mentions drawbacks after selecting an approach.","needs_attention":"Presents choices as universally correct."},
+      {"id":"system-operability","label":"Operability","strong":"Defines meaningful metrics, auditability, rollout, and operator recovery.","developing":"Includes monitoring but limited operational control.","needs_attention":"Stops at the happy-path architecture."}
+    ]
+  },
+  {
+    "id": "challenge-rubric-ml-system-design",
+    "category": "ML System Design",
+    "title": "ML System Design deliverable self-review",
+    "dimensions": [
+      {"id":"ml-framing","label":"Problem framing","strong":"Connects a precise prediction or ranking task to a product decision and safe fallback.","developing":"Defines the task but leaves action costs or fallback vague.","needs_attention":"Begins with a model choice instead of a product decision."},
+      {"id":"ml-metrics","label":"Metrics","strong":"Balances offline quality, online outcomes, guardrails, and subgroup behavior.","developing":"Uses relevant metrics without a complete decision framework.","needs_attention":"Relies on one generic model metric."},
+      {"id":"ml-data","label":"Data and labels","strong":"Addresses exposure, noise, leakage, time, permissions, and label policy.","developing":"Identifies useful sources but under-specifies label construction.","needs_attention":"Treats historical events as unbiased ground truth."},
+      {"id":"ml-baseline","label":"Baseline and model reasoning","strong":"Starts with a credible baseline and justifies added model complexity.","developing":"Names baseline and model with limited comparison.","needs_attention":"Chooses a complex model without a baseline or rationale."},
+      {"id":"ml-production","label":"Production design","strong":"Covers feature/index lifecycle, serving, fallback, versioning, and access boundaries.","developing":"Explains serving but misses lifecycle or fallback detail.","needs_attention":"Describes training without a production decision path."},
+      {"id":"ml-monitoring","label":"Monitoring","strong":"Separates data, model, system, and product signals with response actions.","developing":"Lists useful signals without ownership or thresholds.","needs_attention":"Monitoring is limited to infrastructure health."},
+      {"id":"ml-failures","label":"Failure analysis","strong":"Tests uncertainty, drift, cold starts, harmful errors, and human review behavior.","developing":"Covers common model errors but misses operational consequences.","needs_attention":"Assumes predictions are always available and actionable."}
+    ]
+  },
+  {
+    "id": "challenge-rubric-backend",
+    "category": "Backend Engineering",
+    "title": "Backend Engineering deliverable self-review",
+    "dimensions": [
+      {"id":"backend-interface","label":"API and interface","strong":"Defines identities, semantics, validation, idempotency, and error behavior.","developing":"Defines the main operations with incomplete failure contracts.","needs_attention":"Names endpoints or methods without behavioral guarantees."},
+      {"id":"backend-data","label":"Data model","strong":"Entities, constraints, transitions, and audit history support the promised semantics.","developing":"Core tables are present but lifecycle details are incomplete.","needs_attention":"Persistence choices do not support correctness claims."},
+      {"id":"backend-correctness","label":"Correctness","strong":"States invariants and traces them across retries and recovery.","developing":"Explains expected behavior but skips ambiguous outcomes.","needs_attention":"Depends on best-effort execution for a correctness requirement."},
+      {"id":"backend-concurrency","label":"Concurrency and idempotency","strong":"Handles duplicate and concurrent work with concrete coordination rules.","developing":"Recognizes races but leaves one transition unprotected.","needs_attention":"Assumes requests or workers execute only once."},
+      {"id":"backend-failures","label":"Failure handling","strong":"Traces timeout, crash, partition, retry exhaustion, and operator recovery.","developing":"Covers retries and terminal failure with limited ambiguity handling.","needs_attention":"Retries are the only recovery strategy."},
+      {"id":"backend-observability","label":"Observability","strong":"Metrics, logs, traces, audit records, and alerts support diagnosis and repair.","developing":"Includes standard telemetry without domain-specific signals.","needs_attention":"Offers little evidence for understanding production state."},
+      {"id":"backend-testing","label":"Testing","strong":"Combines invariant, concurrency, failure-injection, boundary, and load tests.","developing":"Covers functional and some failure scenarios.","needs_attention":"Testing focuses only on successful API responses."}
+    ]
+  }
+]

@@ -324,14 +324,51 @@ export interface InterviewExperience {
   anonymous: boolean;
 }
 
-export interface Challenge {
+export type ChallengeCategory = "DSA" | "System Design" | "ML System Design" | "Backend Engineering";
+export type ChallengeLevel = "Foundation" | "Intermediate" | "Advanced";
+export type ChallengeAssessment = "Strong" | "Developing" | "Needs attention";
+
+export interface ChallengeGuidanceSection {
   id: string;
   title: string;
-  category: "DSA" | "System Design" | "ML Design" | "Backend Engineering";
+  considerations: string[];
+}
+
+export interface EngineeringChallenge {
+  id: string;
+  slug: string;
+  title: string;
   summary: string;
-  deadline?: string;
-  status: "Upcoming" | "Open" | "Judging" | "Complete";
-  score?: number;
+  category: ChallengeCategory;
+  level: ChallengeLevel;
+  prompt: string;
+  context: string[];
+  deliverables: string[];
+  constraints: string[];
+  success_criteria: string[];
+  suggested_minutes: number;
+  workflow: string[];
+  guidance: ChallengeGuidanceSection[];
+  common_mistakes: string[];
+  stretch_goals: string[];
+  rubric_id: string;
+  status: "active" | "needs_review";
+  source: { name: "Engineering Foundry"; platform: "original" };
+}
+
+export interface ChallengeRubricDimension {
+  id: string;
+  label: string;
+  strong: string;
+  developing: string;
+  needs_attention: string;
+}
+
+export interface ChallengeRubric {
+  id: string;
+  category: ChallengeCategory;
+  title: string;
+  dimensions: ChallengeRubricDimension[];
 }
 
 export interface Badge {

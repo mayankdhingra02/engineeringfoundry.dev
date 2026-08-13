@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { companies } from "@/data/companies";
+import { activeChallenges } from "@/data/challenges";
 import { behavioralCategories, behavioralSearchQuestions } from "@/data/behavioral";
 import { activeQuestions, dsaPatterns, dsaTopics } from "@/data/dsa";
 import { interviewPlaybookSections } from "@/data/interview-tips";
@@ -18,6 +19,9 @@ const staticResults = [
   { title: "Mock Interview Practice Lab", type: "Practice", href: "/mock-interviews" },
   { title: "Referral Request Builder", type: "Career tool", href: "/referrals?mode=request" },
   { title: "Referrer Toolkit", type: "Career tool", href: "/referrals?mode=referrer" },
+  { title: "Engineering Challenge Lab", type: "Practice", href: "/challenges" },
+  { title: "Community Hub", type: "Community", href: "/community" },
+  { title: "Community Recognition Preview", type: "Community", href: "/leaderboard" },
 ];
 
 export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: string }) {
@@ -29,6 +33,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     ...dsaTopics.map((topic) => ({ title: topic.name, type: "Topic", href: `/dsa/${topic.slug}` })),
     ...dsaPatterns.map((pattern) => ({ title: pattern.name, type: "Pattern", href: `/dsa?pattern=${pattern.slug}` })),
     ...companies.map((company) => ({ title: company.name, type: "Company guide", href: `/companies/${company.slug}` })),
+    ...activeChallenges.map((challenge) => ({ title: challenge.title, type: `${challenge.category} challenge`, href: `/challenges/${challenge.slug}` })),
     ...activeSystemDesignProblems.map((problem) => ({ title: problem.title, type: "System Design problem", href: `/system-design/${problem.slug}` })),
     ...systemDesignConcepts.map((concept) => ({ title: concept.title, type: "System Design concept", href: `/system-design#concepts` })),
     ...activeMlDesignProblems.map((problem) => ({ title: problem.title, type: "ML Design problem", href: `/ml-design/${problem.slug}` })),

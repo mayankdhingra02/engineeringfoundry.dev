@@ -22,7 +22,7 @@ export const siteConfig = {
     { label: "Interview Experiences", href: "/interview-experiences" },
     { label: "Resources", href: "/resources" },
     { label: "Challenges", href: "/challenges" },
-    { label: "Leaderboard", href: "/leaderboard" },
+    { label: "Recognition", href: "/leaderboard" },
     { label: "About", href: "/about" },
     { label: "FAQ", href: "/faq" },
     { label: "Contact", href: "/contact" },
