@@ -31,19 +31,6 @@ export interface Resource {
   demo: boolean;
 }
 
-export interface User {
-  id: string;
-  username: string;
-  displayName: string;
-  avatarUrl?: string;
-  bio?: string;
-  currentCompany?: string;
-  currentRole?: string;
-  yearsExperience?: number;
-  linkedinUrl?: string;
-  githubUrl?: string;
-}
-
 export interface MockInterview {
   id: string;
   type: "DSA" | "System Design" | "ML System Design" | "Behavioral";

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AnalyticsProvider } from "@/components/analytics-provider";
+import { AuthStateBridge } from "@/components/auth-state-bridge";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { PostHogPageView } from "@/components/posthog-page-view";
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Header />
           <main>{children}</main>
           <Footer />
+          <Suspense fallback={null}><AuthStateBridge /></Suspense>
           <Suspense fallback={null}><PostHogPageView /></Suspense>
         </AnalyticsProvider>
       </body>

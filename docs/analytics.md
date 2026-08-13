@@ -18,12 +18,18 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | `referral_requested` | The demo referral request form is previewed | `demo` | Active demo | Referral request intent |
 | `referrer_signup_started` | The demo Referrer profile form is previewed | `demo` | Active demo | Referrer supply intent |
 | `challenge_viewed` | The demo challenge preview CTA is clicked | `challenge_id` | Active demo | Challenge interest |
-| `account_signup_started` | A sign-in method is selected or submitted | `method`, `demo` | Active demo | Account acquisition funnel |
+| `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Active | Account acquisition funnel |
+| `sign_in_completed` | Supabase confirms authentication | `method` | Active when configured | Account activation |
+| `sign_out_completed` | Supabase successfully clears the session | None | Active when configured | Session lifecycle |
+| `profile_onboarding_started` | An authenticated user opens profile onboarding | None | Active when configured | Onboarding funnel |
+| `profile_onboarding_completed` | A valid profile is saved for the first time | `profile_visibility` | Active when configured | Onboarding conversion |
+| `profile_updated` | An authenticated user saves profile settings | `profile_visibility`, `username_changed` | Active when configured | Profile maintenance |
+| `public_profile_viewed` | A public, completed profile renders | `username` | Active when configured | Profile engagement |
 | `roadmap_step_completed` | A signed-in user completes a roadmap step | Roadmap and step identifiers | Future | Preparation progress |
 | `mock_interview_started` | A scheduled mock session begins | Interview and type identifiers | Future | Practice activation |
-| `account_created` | Authentication confirms a new account | Provider and acquisition context | Future | Account conversion |
+| `account_created` | Email signup returns a confirmed new session | `method=email` | Active when reliably known | Account conversion |
 
-Demo events measure intent in the current frontend shell. They must not be interpreted as completed referrals, scheduled interviews, or created accounts.
+Demo feature events still measure intent and must not be interpreted as completed referrals or scheduled interviews. Account events now require real Supabase outcomes.
 
 ## Intended product metrics
 
@@ -69,6 +75,9 @@ Outcome metrics require explicit definitions, consent-aware collection, and safe
 - PostHog initialization is idempotent and must never block application rendering.
 - Automatic PostHog pageview capture remains disabled; the centralized route listener is the only `$pageview` source.
 - Anonymous activity may be associated with a user only after successful authentication through `identifyUser`.
+- Supabase user UUID is the analytics distinct ID. Email, biography, professional URLs, passwords, tokens, and private profile fields are not identity properties.
+- Successful sign-out captures `sign_out_completed` and then calls `resetAnalyticsUser` before returning to anonymous browsing.
+- Accurate new-account attribution for OAuth is deferred because the callback cannot reliably distinguish a new OAuth user from a returning one without inventing a heuristic.
 - Event names and property meanings should remain stable. Additive properties are preferred to renaming historical events.
 - Never send passwords, tokens, resumes, free-form referral messages, or other sensitive user content to analytics.
 - Production dashboards should distinguish active, demo, future, and self-reported metrics.

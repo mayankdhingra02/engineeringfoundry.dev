@@ -10,6 +10,7 @@ import { track } from "@/lib/analytics";
 import { GlobalSearch } from "./global-search";
 import { Logo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
+import { AccountControl } from "./account-control";
 
 type NavItem = { readonly label: string; readonly href: string };
 
@@ -77,8 +78,7 @@ export function Header() {
           <GlobalSearch />
           <ThemeToggle />
           <a className="text-link discord-nav" href={siteConfig.discordUrl} onClick={() => track("discord_clicked", { placement: "header" })}>Discord</a>
-          <Link className="text-link sign-in" href="/sign-in">Sign in</Link>
-          <Link className="button button-sm" href="/dsa">Get started</Link>
+          <AccountControl />
           <button className="icon-button mobile-menu-button" onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-controls="mobile-menu" aria-label={mobileOpen ? "Close navigation" : "Open navigation"}>{mobileOpen ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
       </div>
@@ -88,6 +88,7 @@ export function Header() {
         <div className="mobile-nav-group"><span>Practice & career</span>{siteConfig.primaryNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
         <div className="mobile-nav-group"><span>Explore</span>{siteConfig.exploreNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile}>{item.label}</Link>)}</div>
         <div className="mobile-actions"><a className="button button-secondary" href={siteConfig.discordUrl} onClick={() => track("discord_clicked", { placement: "mobile_header" })}>Join Discord</a><Link className="button" href="/dsa" onClick={closeMobile}>Start preparing</Link></div>
+        <AccountControl mobile onNavigate={closeMobile} />
       </nav>}
     </header>
   );

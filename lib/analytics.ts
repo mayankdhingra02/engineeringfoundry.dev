@@ -15,9 +15,15 @@ export type AnalyticsEvent =
   | "challenge_viewed"
   | "account_signup_started"
   | "account_created"
+  | "sign_in_completed"
+  | "sign_out_completed"
+  | "profile_onboarding_started"
+  | "profile_onboarding_completed"
+  | "profile_updated"
+  | "public_profile_viewed"
   | "system_design_problem_viewed";
 
-type EventProperties = Record<string, string | number | boolean | null | undefined>;
+export type EventProperties = Record<string, string | number | boolean | null | undefined>;
 
 let initialized = false;
 
