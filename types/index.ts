@@ -1,22 +1,82 @@
 export type Difficulty = "Easy" | "Medium" | "Hard";
 
-export interface Company {
+export type VerificationStatus = "verified" | "community-reported" | "unverified" | "demo";
+export type SourcePlatform = "leetcode" | "hackerrank" | "codeforces" | "geeksforgeeks" | "official" | "community" | "original" | "other";
+export type ContentStatus = "active" | "unavailable" | "needs_review";
+
+export interface ProvenanceSource {
+  name: string;
+  platform: SourcePlatform;
+  url: string | null;
+  verification: VerificationStatus;
+  lastVerifiedAt: string | null;
+  notes?: string;
+}
+
+export interface CompanyAssociation {
+  companySlug: string;
+  verification: VerificationStatus;
+  source: ProvenanceSource;
+}
+
+export interface DsaQuestion {
+  id: string;
+  slug: string;
+  title: string;
+  difficulty: Difficulty;
+  topics: string[];
+  patterns: string[];
+  companyAssociations: CompanyAssociation[];
+  roadmapStage: string;
+  priority: 1 | 2 | 3;
+  isFree: boolean;
+  isOriginal: boolean;
+  status: ContentStatus;
+  verification: VerificationStatus;
+  lastVerifiedAt: string | null;
+  externalUrl: string | null;
+  source: ProvenanceSource;
+  note: string;
+  originalPrompt?: string;
+}
+
+export interface DsaTopic {
+  id: string;
+  slug: string;
+  name: string;
+  summary: string;
+  interviewUse: string;
+  complexityFocus: string;
+  commonMistakes: string[];
+  relatedTopics: string[];
+}
+
+export interface DsaPattern {
+  id: string;
+  slug: string;
+  name: string;
+  summary: string;
+  recognitionSignals: string[];
+  commonMistakes: string[];
+}
+
+export interface RoadmapStage {
+  id: string;
+  slug: string;
+  order: number;
+  title: string;
+  description: string;
+  topics: string[];
+  patterns: string[];
+}
+
+export interface CompanyGuide {
   id: string;
   name: string;
   slug: string;
   description: string;
-  focusAreas: string[];
-  questionCount?: number;
-}
-
-export interface Question {
-  id: string;
-  title: string;
-  difficulty: Difficulty;
-  topic: string;
-  companies: string[];
-  completed: boolean;
-  externalUrl: string;
+  guideStatus: "available" | "curating";
+  claims: Array<{ claim: string; source: ProvenanceSource }>;
 }
 
 export interface Resource {

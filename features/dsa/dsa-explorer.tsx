@@ -1,33 +1,76 @@
 "use client";
 
-import { Check, Circle, ExternalLink, Search } from "lucide-react";
-import { useMemo, useState } from "react";
-import { companies } from "@/data/fixtures/companies";
-import { dsaTopics, questions } from "@/data/fixtures/questions";
+import { RotateCcw, Search, SlidersHorizontal } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { QuestionList } from "@/components/question-list";
+import { companies } from "@/data/companies";
+import { activeQuestions, dsaPatterns, dsaTopics, roadmapStages } from "@/data/dsa";
 import { track } from "@/lib/analytics";
-import { StatusPill } from "@/components/page-shell";
+
+type Filters = { search: string; difficulty: string; topic: string; pattern: string; company: string; source: string; availability: string; verification: string; sort: string };
+const defaults: Filters = { search: "", difficulty: "", topic: "", pattern: "", company: "", source: "", availability: "", verification: "", sort: "roadmap" };
+const filterKeys = Object.keys(defaults) as Array<keyof Filters>;
+const difficultyOrder = { Easy: 1, Medium: 2, Hard: 3 } as const;
+const roadmapOrder = new Map(roadmapStages.map((stage) => [stage.slug, stage.order]));
 
 export function DsaExplorer() {
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("All difficulties");
-  const [topic, setTopic] = useState("All topics");
-  const [company, setCompany] = useState("All companies");
-  const filtered = useMemo(() => questions.filter((question) => {
-    const matchesSearch = `${question.title} ${question.topic} ${question.companies.join(" ")}`.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch && (difficulty === "All difficulties" || question.difficulty === difficulty) && (topic === "All topics" || question.topic === topic) && (company === "All companies" || question.companies.includes(company));
-  }), [search, difficulty, topic, company]);
+  const searchParams = useSearchParams();
+  const [filters, setFilters] = useState<Filters>(() => Object.fromEntries(filterKeys.map((key) => [key, searchParams.get(key) ?? defaults[key]])) as unknown as Filters);
+  const hydrated = useRef(false);
 
-  return <>
-    <div className="progress-card"><div className="progress-ring"><span>33%</span></div><div><h2>Demo progress</h2><p>2 of 6 sample questions marked complete. Sign in will persist this later.</p></div><span>Foundation track</span></div>
-    <div className="filter-bar"><label><Search size={16} /><input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search questions or topics…" /></label>
-      <select value={difficulty} onChange={(event) => setDifficulty(event.target.value)} aria-label="Filter by difficulty"><option>All difficulties</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
-      <select value={topic} onChange={(event) => setTopic(event.target.value)} aria-label="Filter by topic">{dsaTopics.map((item) => <option key={item}>{item}</option>)}</select>
-      <select value={company} onChange={(event) => setCompany(event.target.value)} aria-label="Filter by company"><option>All companies</option>{companies.map((item) => <option key={item.slug}>{item.name}</option>)}</select>
-      <span className="filter-count">{filtered.length} demo questions</span>
+  useEffect(() => {
+    if (!hydrated.current) { hydrated.current = true; return; }
+    const params = new URLSearchParams();
+    filterKeys.forEach((key) => { if (filters[key] && filters[key] !== defaults[key]) params.set(key, filters[key]); });
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`);
+  }, [filters]);
+
+  const companyOptions = useMemo(() => companies.filter((company) => activeQuestions.some((question) => question.companyAssociations.some((association) => association.companySlug === company.slug))), []);
+  const sourceOptions = useMemo(() => [...new Set(activeQuestions.map((question) => question.source.platform))].sort(), []);
+  const filtered = useMemo(() => activeQuestions.filter((question) => {
+    const titleMatches = question.title.toLowerCase().includes(filters.search.trim().toLowerCase());
+    return titleMatches
+      && (!filters.difficulty || question.difficulty.toLowerCase() === filters.difficulty)
+      && (!filters.topic || question.topics.includes(filters.topic))
+      && (!filters.pattern || question.patterns.includes(filters.pattern))
+      && (!filters.company || question.companyAssociations.some((association) => association.companySlug === filters.company))
+      && (!filters.source || question.source.platform === filters.source)
+      && (!filters.verification || question.verification === filters.verification)
+      && (!filters.availability || (filters.availability === "free" ? question.isFree : filters.availability === "external" ? Boolean(question.externalUrl) : question.isOriginal));
+  }).sort((left, right) => {
+    if (filters.sort === "difficulty") return difficultyOrder[left.difficulty] - difficultyOrder[right.difficulty] || left.title.localeCompare(right.title);
+    if (filters.sort === "alphabetical") return left.title.localeCompare(right.title);
+    if (filters.sort === "verified") return (right.lastVerifiedAt ?? "").localeCompare(left.lastVerifiedAt ?? "") || left.title.localeCompare(right.title);
+    return (roadmapOrder.get(left.roadmapStage) ?? 99) - (roadmapOrder.get(right.roadmapStage) ?? 99) || left.priority - right.priority || left.title.localeCompare(right.title);
+  }), [filters]);
+
+  function update<K extends keyof Filters>(key: K, value: Filters[K]) {
+    setFilters((current) => ({ ...current, [key]: value }));
+    track("dsa_filter_changed", { filter: key, value: key === "search" ? (value ? "used" : "cleared") : value || "all" });
+  }
+
+  const activeCount = filterKeys.filter((key) => key !== "sort" && filters[key]).length;
+  return <div className="explorer-shell">
+    <div className="persistence-note"><SlidersHorizontal size={18} aria-hidden="true" /><span><strong>Build a focused practice queue.</strong> Filters are reflected in the URL so this view can be shared.</span><span>Progress tracking will become available when account persistence is enabled.</span></div>
+    <div className="dsa-filters" aria-label="Question filters">
+      <label className="search-filter"><span>Search by title</span><span className="field-with-icon"><Search size={15} aria-hidden="true" /><input value={filters.search} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} onBlur={() => filters.search && track("dsa_filter_changed", { filter: "search", value: "used" })} placeholder="Try Two Sum…" /></span></label>
+      <Filter label="Difficulty" value={filters.difficulty} onChange={(value) => update("difficulty", value)} options={[["", "All difficulties"], ["easy", "Easy"], ["medium", "Medium"], ["hard", "Hard"]]} />
+      <Filter label="Topic" value={filters.topic} onChange={(value) => update("topic", value)} options={[["", "All topics"], ...dsaTopics.map((item) => [item.slug, item.name] as [string, string])]} />
+      <Filter label="Pattern" value={filters.pattern} onChange={(value) => update("pattern", value)} options={[["", "All patterns"], ...dsaPatterns.map((item) => [item.slug, item.name] as [string, string])]} />
+      {companyOptions.length > 0 && <Filter label="Company" value={filters.company} onChange={(value) => update("company", value)} options={[["", "All sourced companies"], ...companyOptions.map((item) => [item.slug, item.name] as [string, string])]} />}
+      <Filter label="Source" value={filters.source} onChange={(value) => update("source", value)} options={[["", "All sources"], ...sourceOptions.map((item) => [item, item === "original" ? "Engineering Foundry" : item[0].toUpperCase() + item.slice(1)] as [string, string])]} />
+      <Filter label="Availability" value={filters.availability} onChange={(value) => update("availability", value)} options={[["", "All availability"], ["free", "Free / public"], ["external", "External links"], ["original", "Original prompts"]]} />
+      <Filter label="Verification" value={filters.verification} onChange={(value) => update("verification", value)} options={[["", "All verification"], ["verified", "Verified"], ["community-reported", "Community reported"], ["unverified", "Unverified"]]} />
+      <Filter label="Sort" value={filters.sort} onChange={(value) => update("sort", value)} options={[["roadmap", "Roadmap order"], ["difficulty", "Difficulty"], ["alphabetical", "Alphabetical"], ["verified", "Recently verified"]]} />
     </div>
-    <div className="data-table"><div className="table-head"><span /><span>Question</span><span>Difficulty</span><span>Topic</span><span>Companies</span><span /></div>
-      {filtered.map((question) => <div className="question-row" key={question.id}><span className={`check-state ${question.completed ? "done" : ""}`}>{question.completed ? <Check size={12} /> : <Circle size={8} />}</span><span className="question-title">{question.title}</span><span data-col="difficulty"><StatusPill tone={question.difficulty === "Easy" ? "success" : question.difficulty === "Hard" ? "danger" : "warning"}>{question.difficulty}</StatusPill></span><span data-col="topic" className="muted">{question.topic}</span><span data-col="companies" className="tag-list">{question.companies.map((item) => <span className="tag" key={item}>{item}</span>)}</span><a className="icon-button" href={question.externalUrl} target="_blank" rel="noreferrer" aria-label={`Open ${question.title} externally`} onClick={() => track("dsa_question_clicked", { question_id: question.id, topic: question.topic, external_host: new URL(question.externalUrl).host })}><ExternalLink size={15} /></a></div>)}
-      {!filtered.length && <div className="empty-inline"><strong>No matching demo questions</strong><span>Clear a filter or try another search.</span></div>}
-    </div>
-  </>;
+    <div className="explorer-summary"><span><strong>{filtered.length}</strong> of {activeQuestions.length} questions</span>{activeCount > 0 && <button type="button" onClick={() => setFilters(defaults)}><RotateCcw size={13} aria-hidden="true" />Clear {activeCount} {activeCount === 1 ? "filter" : "filters"}</button>}</div>
+    <QuestionList questions={filtered} />
+  </div>;
+}
+
+function Filter({ label, value, options, onChange }: { label: string; value: string; options: [string, string][]; onChange: (value: string) => void }) {
+  const id = `filter-${label.toLowerCase().replaceAll(" ", "-")}`;
+  return <label htmlFor={id}><span>{label}</span><select id={id} value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, optionLabel]) => <option value={optionValue} key={optionValue || "all"}>{optionLabel}</option>)}</select></label>;
 }

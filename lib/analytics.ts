@@ -2,6 +2,12 @@ import posthog from "posthog-js";
 
 export type AnalyticsEvent =
   | "dsa_question_clicked"
+  | "dsa_filter_changed"
+  | "dsa_topic_viewed"
+  | "dsa_pattern_viewed"
+  | "company_question_clicked"
+  | "verification_source_opened"
+  | "search_used"
   | "company_page_viewed"
   | "resource_clicked"
   | "roadmap_viewed"

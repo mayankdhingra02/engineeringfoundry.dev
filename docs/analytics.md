@@ -8,7 +8,13 @@ Engineering Foundry uses PostHog for anonymous product analytics from launch. Pa
 | --- | --- | --- | --- | --- |
 | `$pageview` | A route or query string changes | `$current_url` | Active | Visitors, DAU/WAU/MAU, sessions, returning visitors |
 | `discord_clicked` | A Discord CTA is clicked | `placement` | Active | Community acquisition |
-| `dsa_question_clicked` | A demo question’s external link is opened | `question_id`, `topic`, `external_host` | Active | DSA practice engagement |
+| `dsa_question_clicked` | A question’s attributed external link is opened | `question_id`, `source`, `difficulty`, `primary_topic`, `external_host` | Active | DSA practice engagement |
+| `dsa_filter_changed` | A visitor changes a question-explorer filter | `filter`, normalized `value`; raw search text is never sent | Active | Preparation engagement |
+| `dsa_topic_viewed` | A registered topic guide renders | `topic_slug`, `question_count` | Active | Preparation navigation |
+| `dsa_pattern_viewed` | A future registered pattern guide renders | `pattern_slug` | Reserved | Pattern-level engagement |
+| `verification_source_opened` | A visitor leaves the site through a provenance/source link | `content_type`, `content_id`, `source`, `external_host` | Active | Source inspection |
+| `company_question_clicked` | A sourced company-associated question is opened from a company guide | Question and company identifiers | Reserved | Company preparation engagement |
+| `search_used` | A visitor chooses a global-search result | `result_type`; raw search text is never sent | Active | Discovery engagement |
 | `company_page_viewed` | A valid company guide renders | `company_slug`, `company_name` | Active | Company-guide interest |
 | `resource_clicked` | An external resource is opened | `resource_id`, `category`, `resource_type` | Active | Resource engagement |
 | `roadmap_viewed` | A preparation roadmap renders | `roadmap` | Active | Preparation-track interest |
@@ -45,6 +51,8 @@ Demo feature events still measure intent and must not be interpreted as complete
 ### Preparation
 
 - DSA question clicks
+- Topic-guide views, question-filter changes, source inspection, and preparation-path navigation
+- Engaged visitors can be derived from meaningful preparation events without sending raw search queries
 - Roadmap views by preparation track
 - Roadmap progress and completion after persistence is implemented
 - Resource clicks by category and type

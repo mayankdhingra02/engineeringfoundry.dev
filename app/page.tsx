@@ -3,7 +3,7 @@ import { ArrowRight, Binary, BrainCircuit, CheckCircle2, Code2, GitPullRequestAr
 import { FeatureCard, SectionHeading } from "@/components/page-shell";
 import { TrackedLink } from "@/components/tracked-action";
 import { siteConfig } from "@/config/site";
-import { companies } from "@/data/fixtures/companies";
+import { companies } from "@/data/companies";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({ title: "Engineering Foundry — Prepare. Practice. Build. Grow.", description: siteConfig.description, path: "/", absoluteTitle: true });

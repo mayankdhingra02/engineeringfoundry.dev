@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { HandHeart, Info, Send } from "lucide-react";
-import { companies } from "@/data/fixtures/companies";
+import { companies } from "@/data/companies";
 import { track } from "@/lib/analytics";
 import { StatusPill } from "@/components/page-shell";
 import { AnalyticsEventOnMount } from "@/components/analytics-event";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { companies } from "@/data/fixtures/companies";
+import { companies } from "@/data/companies";
 import { PageHero, EmptyState } from "@/components/page-shell";
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "@/lib/metadata";

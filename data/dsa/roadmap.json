@@ -1,0 +1,9 @@
+[
+  {"id":"stage-1","slug":"foundations","order":1,"title":"Foundations","description":"Build fluency with indexed data, text, lookup, ordering, and complexity tradeoffs.","topics":["arrays","strings","hash-maps","sorting"],"patterns":["frequency-map"]},
+  {"id":"stage-2","slug":"core-patterns","order":2,"title":"Core Patterns","description":"Learn the reusable movement and state patterns that remove brute-force work.","topics":["arrays","strings","binary-search","stacks-queues"],"patterns":["two-pointers","sliding-window","prefix-sum","binary-search","stack"]},
+  {"id":"stage-3","slug":"data-structures","order":3,"title":"Data Structures","description":"Practice pointer, hierarchy, priority, and prefix-oriented structures.","topics":["linked-lists","trees","heaps","tries"],"patterns":["fast-slow-pointers","bfs","dfs","heap-selection","trie"]},
+  {"id":"stage-4","slug":"graph-thinking","order":4,"title":"Graph Thinking","description":"Model relationships explicitly and reason about reachability, order, and components.","topics":["graphs"],"patterns":["dfs","bfs","topological-sort","union-find"]},
+  {"id":"stage-5","slug":"recursion-search","order":5,"title":"Recursion & Search","description":"Explore decision trees systematically and prune invalid partial work.","topics":["backtracking"],"patterns":["backtracking","dfs"]},
+  {"id":"stage-6","slug":"dynamic-programming","order":6,"title":"Dynamic Programming","description":"Define reusable subproblems before optimizing state transitions and storage.","topics":["dynamic-programming"],"patterns":["1d-dp","2d-dp"]},
+  {"id":"stage-7","slug":"advanced-patterns","order":7,"title":"Advanced Interview Patterns","description":"Combine ordering, proof, range structure, and compact representation.","topics":["intervals","greedy","bit-manipulation"],"patterns":["monotonic-stack","merge-intervals","greedy","bit-manipulation","binary-search"]}
+]

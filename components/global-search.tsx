@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { Search, X, ArrowUpRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { companies } from "@/data/fixtures/companies";
-import { questions } from "@/data/fixtures/questions";
+import { companies } from "@/data/companies";
+import { activeQuestions, dsaPatterns, dsaTopics } from "@/data/dsa";
 import { resources } from "@/data/fixtures/resources";
+import { track } from "@/lib/analytics";
 
 const staticResults = [
   { title: "System Design roadmap", type: "Roadmap", href: "/system-design" },
@@ -19,8 +20,10 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const items = useMemo(() => [
-    ...questions.map((q) => ({ title: q.title, type: "DSA question", href: "/dsa" })),
-    ...companies.map((c) => ({ title: c.name, type: "Company guide", href: `/companies/${c.slug}` })),
+    ...activeQuestions.map((question) => ({ title: question.title, type: `Question · ${question.source.name}`, href: `/dsa?search=${encodeURIComponent(question.title)}` })),
+    ...dsaTopics.map((topic) => ({ title: topic.name, type: "Topic", href: `/dsa/${topic.slug}` })),
+    ...dsaPatterns.map((pattern) => ({ title: pattern.name, type: "Pattern", href: `/dsa?pattern=${pattern.slug}` })),
+    ...companies.map((company) => ({ title: company.name, type: "Company guide", href: `/companies/${company.slug}` })),
     ...resources.map((r) => ({ title: r.title, type: "Resource", href: "/resources" })),
     ...staticResults,
   ], []);
@@ -46,9 +49,9 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
           <button className="search-dismiss" onClick={() => setOpen(false)} aria-label="Close search" />
           <section className="search-dialog" role="dialog" aria-modal="true" aria-label="Global search">
             <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, companies, topics…" aria-label="Search query" /><button className="icon-button" onClick={() => setOpen(false)} aria-label="Close search"><X size={17} /></button></div>
-            <div className="search-meta"><span>{query ? `${results.length} demo results` : "Suggested"}</span><span className="kbd">ESC</span></div>
+            <div className="search-meta"><span>{query ? `${results.length} results` : "Suggested"}</span><span className="kbd">ESC</span></div>
             <div className="search-results">
-              {results.map((item) => <Link href={item.href} key={`${item.type}-${item.title}`} onClick={() => setOpen(false)}><span><small>{item.type}</small>{item.title}</span><ArrowUpRight size={16} /></Link>)}
+              {results.map((item) => <Link href={item.href} key={`${item.type}-${item.title}`} onClick={() => { track("search_used", { result_type: item.type.split(" · ")[0].toLowerCase() }); setOpen(false); }}><span><small>{item.type}</small>{item.title}</span><ArrowUpRight size={16} /></Link>)}
               {!results.length && <div className="empty-inline"><strong>No results yet</strong><span>Try a broader topic or company name.</span></div>}
             </div>
           </section>
