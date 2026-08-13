@@ -20,6 +20,7 @@
     "test:experience-privacy": "node scripts/test-experience-privacy.mjs",
     "test:experience-integrity": "node scripts/test-experience-integrity.mjs",
     "test:public-launch-integrity": "node scripts/test-public-launch-integrity.mjs",
+    "test:ui-density": "node scripts/test-ui-density.mjs",
     "test:public-routes": "node scripts/smoke-public-routes.mjs",
     "validate:content": "node scripts/validate-content.mjs",
     "validate:design-content": "node scripts/validate-design-content.mjs",

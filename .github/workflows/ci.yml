@@ -49,6 +49,8 @@ jobs:
         run: npm run test:experience-integrity
       - name: Test public launch integrity
         run: npm run test:public-launch-integrity
+      - name: Test UI density guardrails
+        run: npm run test:ui-density
       - name: Validate content
         run: npm run validate:content
       - name: Validate design content
