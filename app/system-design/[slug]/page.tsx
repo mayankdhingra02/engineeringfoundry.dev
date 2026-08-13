@@ -1,0 +1,6 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { PageHero, EmptyState } from "@/components/page-shell";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const { slug } = await params; const title = slug.split("-").map((w) => w[0]?.toUpperCase()+w.slice(1)).join(" "); return { title: `${title} System Design`, description: `System-design practice page for ${title}.` }; }
+export default async function SystemPromptPage({ params }: { params: Promise<{ slug: string }> }) { const { slug } = await params; const title = slug.split("-").map((w) => w[0]?.toUpperCase()+w.slice(1)).join(" "); return <><PageHero eyebrow="System Design practice" title={title} description="An SEO-ready practice route prepared for requirements, estimates, architecture, tradeoffs, and review." /><section className="section"><div className="page-width"><EmptyState title="Practice content coming in the next phase" description="This route is intentionally structural and contains no copied interview content." /><div className="hero-actions"><Link className="button button-secondary" href="/system-design">Back to roadmap</Link></div></div></section></>; }

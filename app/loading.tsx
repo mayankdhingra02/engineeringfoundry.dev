@@ -1,0 +1,1 @@
+export default function Loading() { return <div className="page-width" style={{ paddingBlock:80 }} aria-busy="true" aria-label="Loading"><div className="progress-rail"><span style={{ width:"42%" }} /></div><p className="muted" style={{ fontSize:12 }}>Heating the Foundry…</p></div>; }

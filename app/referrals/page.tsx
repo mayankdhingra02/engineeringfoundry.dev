@@ -1,0 +1,7 @@
+import type { Metadata } from "next";
+import { ReferralWorkspace } from "@/features/referrals/referral-workspace";
+import { PageHero, SectionHeading, StatusPill } from "@/components/page-shell";
+
+export const metadata: Metadata = { title: "Community Referrals", description: "A transparent, voluntary community referral request architecture." };
+const states = ["Open", "Under Review", "More Information Requested", "Accepted", "Declined", "Closed"];
+export default function ReferralsPage() { return <><PageHero eyebrow="Community referrals" title="Make a thoughtful request. Help when you can." description="A transparent community workflow connecting job seekers with employees willing to independently review referral requests." /><section className="section"><div className="page-width"><SectionHeading eyebrow="Two voluntary paths" title="Built around choice and context." description="No payment flow and no guarantees. Referrers always control whether and how they act on a request." /><ReferralWorkspace /></div></section><section className="section section-alt"><div className="page-width"><SectionHeading eyebrow="Activity model" title="Clear state at every step." description="A clean future dashboard can show what is happening without implying an outcome." /><div className="tag-list">{states.map((state, index) => <StatusPill tone={index === 3 ? "success" : index === 4 ? "danger" : index === 2 ? "warning" : "neutral"} key={state}>{state}</StatusPill>)}</div></div></section></>; }
