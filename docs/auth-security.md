@@ -38,6 +38,10 @@ The Next.js proxy calls `supabase.auth.getClaims()` so expired tokens can be ver
 
 Do not use `getSession()` as proof of identity in server authorization code. Do not cache responses that can refresh authentication cookies.
 
+### Proxy cache safety
+
+The Proxy uses `getClaims()` for session verification and refresh, copies refreshed cookies to the outgoing response, and propagates every cache-control or security header supplied by `@supabase/ssr`. Responses that refresh authentication must not be cached by a CDN or reverse proxy, because replaying a cached `Set-Cookie` response could attach one user's session to another request.
+
 ## Security test matrix
 
 The pgTAP suite at `supabase/tests/database/auth_profile_hardening.test.sql` automates the database-capable rows below. UI behavior and hosted-project behavior remain explicit manual checks.

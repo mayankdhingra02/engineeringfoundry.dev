@@ -82,7 +82,7 @@ This gate is intentionally **unverified** in the repository. A passing build or 
 12. **Public-profile RPC field inspection:** as both `anon` and `authenticated`, confirm only the nine approved fields are returned and private/incomplete profiles return no row; prove anon base-table select is denied.
 13. **Reserved username rejection:** attempt every reserved class through the UI and direct Data API; also test uppercase and case-insensitive duplicate values, and confirm raw database errors never reach the UI.
 14. **Trigger-function execution denial:** confirm `PUBLIC`, `anon`, and `authenticated` lack direct execution while profile creation and `updated_at` triggers still work normally.
-15. **Sign out/session reset:** sign out, verify cookies and analytics identity reset, confirm protected routes redirect, and repeat in a second browser to rule out response/session leakage.
+15. **Sign out/session reset:** verify hosted session-refresh responses preserve the cache-safety headers supplied by `@supabase/ssr` and cannot become cacheable; then sign out, verify cookies and analytics identity reset, confirm protected routes redirect, and repeat in a second browser to rule out response/session leakage. This hosted response-header check remains unverified until it is performed against the configured real project.
 
 Before sign-off, also verify exact Auth callback URLs, remove broad production wildcards, keep all service-role/SMTP/OAuth secrets out of browser bundles and logs, archive the test evidence with date/tester/environment, and review relevant Supabase Auth and Postgres logs.
 

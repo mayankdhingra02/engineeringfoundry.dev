@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient, type SetAllCookies } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 
@@ -8,14 +8,17 @@ export async function updateSession(request: NextRequest) {
   if (!url || !key) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
+  const setAll: SetAllCookies = (cookiesToSet, headers) => {
+    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+    response = NextResponse.next({ request });
+    cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+    Object.entries(headers).forEach(([name, value]) => response.headers.set(name, value));
+  };
+
   const supabase = createServerClient<Database, "public">(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (cookies: { name: string; value: string; options: CookieOptions }[]) => {
-        cookies.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookies.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-      },
+      setAll,
     },
   });
 
