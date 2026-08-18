@@ -22,7 +22,7 @@ Normal sections use `--section-space`; framework bands and other compact transit
 
 ## Cards and product surfaces
 
-- Generic feature cards use 18–21px padding and a 224px minimum only where grid balance benefits.
+- Generic feature cards use 21–26px responsive padding and a 224px minimum only where grid balance benefits.
 - Catalog, pathway, framework, challenge, and roadmap cards should prefer content-driven height. A minimum is appropriate only when it creates a clearly scannable row.
 - Decorative index-to-title gaps should generally stay around 18–28px, not 40–65px.
 - Forms and workspaces should compact panel padding, section gaps, and help text spacing before reducing control height.

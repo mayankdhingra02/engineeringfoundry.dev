@@ -12,20 +12,20 @@ export const metadata = createPageMetadata({
 export default function PrivacyPage() {
   return (
     <>
-      <PageHero eyebrow="Legal" title="Privacy" description="A plain-language description of the current public-site and deferred account data boundaries." />
+      <PageHero eyebrow="Legal" title="Privacy" description="A plain-language description of the current public-site and account data boundaries." />
       <section className="section">
         <div className="page-width legal-copy">
           <p className="notice"><strong>Draft notice:</strong> This policy requires owner and qualified legal review before public deployment.</p>
           <h2>Public tools</h2>
           <p>The Mock Interview Lab, Referral Toolkit, Challenge Lab, and Interview Experience Write-up Builder keep private drafts in browser memory only. Those drafts are not stored in local storage, sent to Supabase, or included in analytics, and refreshing the page clears them.</p>
           <h2>Accounts and profiles</h2>
-          <p>Account features are disabled by default for the public content-first launch. If the account platform is explicitly enabled after hosted qualification, Supabase will provide authentication, session handling, and profile storage. Public profiles will show only fields a member deliberately makes public after completing onboarding.</p>
+          <p>When the account platform is enabled, Supabase provides authentication, session handling, and private account storage. Applications, interview preparation, behavioral stories and answers, progress notes, design attempts, preferences, and reminders are scoped to the authenticated owner. Public profiles show only fields a member deliberately makes public.</p>
           <h2>Product analytics</h2>
           <p>Engineering Foundry may use PostHog for pageviews and fixed product events. Analytics remains inactive when its public environment key is absent. Free-text drafts, passwords, tokens, personal contact fields, and clipboard contents are not intentionally sent as event properties.</p>
           <h2>External channels</h2>
           <p>Discord, GitHub, and any configured email provider apply their own privacy practices when you choose to open those services. Do not post credentials, confidential interview material, or sensitive personal information in a public channel.</p>
-          <h2>Your choices and future processes</h2>
-          <p>Account deletion, exports, retention periods, analytics consent where required, and additional privacy controls still require a reviewed production process before account features can launch.</p>
+          <h2>Your choices</h2>
+          <p>Signed-in members can download a private JSON export and permanently delete their authentication identity and associated private Engineering Foundry records from <Link href="/settings/privacy">Privacy &amp; data settings</Link>. Production retention terms and analytics consent where required still need owner and qualified legal review.</p>
           <h2>Contact</h2>
           <p>{siteConfig.contactEmail ? <>Privacy questions can be sent to <a href={`mailto:${siteConfig.contactEmail}`}>{siteConfig.contactEmail}</a>.</> : <>No privacy mailbox is currently configured. Use the <Link href="/contact">working contact channels</Link>, and avoid including sensitive information in public reports.</>}</p>
         </div>

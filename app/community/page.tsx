@@ -8,7 +8,7 @@ export const metadata = createPageMetadata({ title: "Engineering Foundry Communi
 
 const pathways = [
   { group: "Learn", icon: Binary, title: "DSA", text: "Build algorithmic foundations through sourced questions and original topic guidance.", href: "/dsa", pathway: "dsa" },
-  { group: "Learn", icon: Network, title: "System Design", text: "Practice requirements, architecture, reliability, and tradeoff reasoning.", href: "/system-design", pathway: "system_design" },
+  { group: "Learn", icon: Network, title: "System Design", text: "Practice requirements, architecture, reliability, and tradeoff reasoning.", href: "/system-design/start-here/introduction", pathway: "system_design" },
   { group: "Learn", icon: BrainCircuit, title: "ML Design", text: "Work from product framing through data, models, serving, and monitoring.", href: "/ml-design", pathway: "ml_design" },
   { group: "Learn", icon: MessagesSquare, title: "Behavioral", text: "Build truthful stories around leadership, collaboration, judgment, and growth.", href: "/behavioral", pathway: "behavioral" },
   { group: "Practice", icon: Users, title: "Mock Interview Practice Lab", text: "Run a structured solo session or bring a peer you already have.", href: "/mock-interviews", pathway: "mock_interviews" },

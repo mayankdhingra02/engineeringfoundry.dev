@@ -9,10 +9,11 @@ export const siteConfig = {
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || null,
   prepareNav: [
     { label: "DSA", href: "/dsa" },
-    { label: "System Design", href: "/system-design" },
+    { label: "System Design", href: "/system-design/start-here/introduction" },
+    { label: "Companies", href: "/companies" },
     { label: "ML Design", href: "/ml-design" },
     { label: "Behavioral", href: "/behavioral" },
-    { label: "Interview Playbook", href: "/interview-tips" },
+    { label: "Interview Execution Guide", href: "/interview-tips" },
   ],
   practiceNav: [
     { label: "Mock Interviews", href: "/mock-interviews" },
@@ -22,7 +23,6 @@ export const siteConfig = {
     { label: "Referrals", href: "/referrals" },
     { label: "Interview Experiences", href: "/interview-experiences" },
     { label: "Resources", href: "/resources" },
-    { label: "Companies", href: "/companies" },
     { label: "Community", href: "/community" },
   ],
   moreNav: [
@@ -34,9 +34,9 @@ export const siteConfig = {
 } as const;
 
 export const footerGroups = [
-  { title: "Prepare", links: [["DSA", "/dsa"], ["System Design", "/system-design"], ["ML Design", "/ml-design"], ["Behavioral", "/behavioral"], ["Interview Playbook", "/interview-tips"]] },
+  { title: "Prepare", links: [["DSA", "/dsa"], ["System Design", "/system-design/start-here/introduction"], ["Company Guides", "/companies"], ["ML Design", "/ml-design"], ["Behavioral", "/behavioral"], ["Interview Execution Guide", "/interview-tips"]] },
   { title: "Practice", links: [["Mock Interviews", "/mock-interviews"], ["Challenges", "/challenges"]] },
-  { title: "Career", links: [["Referrals", "/referrals"], ["Interview Experiences", "/interview-experiences"], ["Resources", "/resources"], ["Company Guides", "/companies"]] },
+  { title: "Career", links: [["Referrals", "/referrals"], ["Interview Experiences", "/interview-experiences"], ["Resources", "/resources"]] },
   { title: "Community", links: [["Community Hub", "/community"], ["Recognition", "/leaderboard"], ["Discord", siteConfig.discordUrl]] },
   { title: "Engineering Foundry", links: [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"]] },
   { title: "Legal", links: [["Privacy", "/privacy"], ["Terms", "/terms"]] },

@@ -52,7 +52,7 @@ export function DesignPracticePage({
   sections: PracticeSection[];
   checklist: string[];
 }) {
-  const basePath = track === "system" ? "/system-design" : "/ml-design";
+  const basePath = track === "system" ? "/system-design/start-here/introduction" : "/ml-design";
   const viewEvent: AnalyticsEvent = track === "system" ? "system_design_problem_viewed" : "ml_design_problem_viewed";
   const guidanceEvent: AnalyticsEvent = track === "system" ? "system_design_guidance_opened" : "ml_design_guidance_opened";
   const properties = { problem_id: id, difficulty, domain: domains[0] ?? "unknown", track: track === "system" ? "system-design" : "ml-design" };
@@ -61,10 +61,10 @@ export function DesignPracticePage({
     <AnalyticsEventOnMount event={viewEvent} properties={properties} />
     <AnalyticsEventOnMount event="design_problem_started" properties={properties} />
     <PageHero eyebrow={track === "system" ? "System Design practice" : "ML System Design practice"} title={title} description={summary}>
-      <StatusPill tone={difficulty === "Foundation" ? "success" : difficulty === "Advanced" ? "warning" : "accent"}>{difficulty}</StatusPill>
+      <StatusPill>{difficulty}</StatusPill>
       <span className="difficulty-note">Engineering Foundry preparation level</span>
     </PageHero>
-    <main className="section practice-page"><div className="page-width practice-layout">
+    <div className="section practice-page"><div className="page-width practice-layout">
       <aside className="practice-sidebar"><Link href={basePath}><ArrowLeft size={15} />Back to roadmap</Link><div><small>Domains</small>{domains.map((domain) => <span key={domain}>{domain}</span>)}</div>{patterns.length ? <div><small>Patterns</small>{patterns.map((pattern) => <span key={pattern}>{pattern}</span>)}</div> : null}</aside>
       <div className="practice-content">
         <section className="prompt-card"><div><span className="icon-well"><Gauge size={20} /></span><small>Original Engineering Foundry prompt</small></div><h2>{prompt}</h2><p>Spend 30–45 minutes outlining your assumptions and design before opening the guidance below. There is no single correct architecture.</p></section>
@@ -72,6 +72,6 @@ export function DesignPracticePage({
         <div className="practice-sections">{sections.map((section) => <GuidanceSection key={section.id} section={section} event={guidanceEvent} properties={properties} />)}</div>
         <section className="final-checklist"><div className="section-kicker">Final review</div><h2>Can you defend the design?</h2><p>Use this checklist after the deep dive. A strong answer makes its assumptions and tradeoffs visible.</p><ul>{checklist.map((item) => <li key={item}><CheckCircle2 size={17} />{item}</li>)}</ul><Link className="button button-secondary" href={basePath}><Scale size={16} />Choose another practice</Link></section>
       </div>
-    </div></main>
+    </div></div>
   </>;
 }

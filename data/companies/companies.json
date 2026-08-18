@@ -1,7 +1,8 @@
 [
-  {"id":"google","name":"Google","slug":"google","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]},
-  {"id":"meta","name":"Meta","slug":"meta","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]},
-  {"id":"amazon","name":"Amazon","slug":"amazon","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]},
+  {"id":"google","name":"Google","slug":"google","description":"A structured L3, L4, and L5 software engineering interview workspace with clearly separated official guidance, candidate reports, and preparation recommendations.","guideStatus":"available","claims":[]},
+  {"id":"meta","name":"Meta","slug":"meta","description":"A structured E3, E4, and E5 software engineering interview workspace centered on fast coding execution, design-track calibration, and clearly labeled evidence.","guideStatus":"available","claims":[]},
+  {"id":"amazon","name":"Amazon","slug":"amazon","description":"A structured SDE I, SDE II, and Senior SDE preparation workspace grounded in official guidance and clearly labeled candidate reports.","guideStatus":"available","claims":[]},
+  {"id":"walmart","name":"Walmart","slug":"walmart","description":"A geography-aware Walmart Global Tech interview workspace for Early, Mid, and Senior preparation across coding, design, backend engineering, and behavioral evidence.","guideStatus":"available","claims":[]},
   {"id":"microsoft","name":"Microsoft","slug":"microsoft","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]},
   {"id":"apple","name":"Apple","slug":"apple","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]},
   {"id":"linkedin","name":"LinkedIn","slug":"linkedin","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]}

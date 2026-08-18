@@ -195,11 +195,11 @@ export function ReferralWorkspace() {
   const availabilityCard = buildAvailabilityCard(referrerDraft);
 
   return <div className="referral-workspace">
-    <div className="referral-mode-picker" role="tablist" aria-label="Referral tool">
-      <button type="button" role="tab" aria-selected={mode === "request"} className={mode === "request" ? "selected" : ""} onClick={() => changeMode("request")}>
+    <div className="referral-mode-picker" role="group" aria-label="Referral tool">
+      <button type="button" aria-pressed={mode === "request"} className={mode === "request" ? "selected" : ""} onClick={() => changeMode("request")}>
         <FileText size={20} aria-hidden="true" /><span><strong>Request builder</strong><small>Draft a request to share yourself</small></span>
       </button>
-      <button type="button" role="tab" aria-selected={mode === "referrer"} className={mode === "referrer" ? "selected" : ""} onClick={() => changeMode("referrer")}>
+      <button type="button" aria-pressed={mode === "referrer"} className={mode === "referrer" ? "selected" : ""} onClick={() => changeMode("referrer")}>
         <HandHeart size={20} aria-hidden="true" /><span><strong>Referrer toolkit</strong><small>Set boundaries and review consistently</small></span>
       </button>
     </div>

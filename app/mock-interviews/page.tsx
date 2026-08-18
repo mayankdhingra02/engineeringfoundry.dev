@@ -13,5 +13,5 @@ export const metadata = createPageMetadata({
 });
 
 export default function MockInterviewsPage() {
-  return <Suspense fallback={<div className="page-loading" aria-label="Loading Mock Interview Practice Lab" />}><MockInterviewLab /></Suspense>;
+  return <Suspense fallback={<div className="page-loading" role="status" aria-live="polite"><span className="sr-only">Loading Mock Interview Practice Lab…</span></div>}><MockInterviewLab /></Suspense>;
 }

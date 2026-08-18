@@ -6,7 +6,7 @@ Engineering Foundry supports optional PostHog product analytics. It remains full
 
 | Event | Fires when | Important properties | Status | Contributes to |
 | --- | --- | --- | --- | --- |
-| `$pageview` | A route or query string changes | `$current_url` | Active | Visitors, DAU/WAU/MAU, sessions, returning visitors |
+| `$pageview` | A public route changes | Path-only `$current_url`; query strings and fragments are removed | Active | Visitors, DAU/WAU/MAU, sessions, returning visitors |
 | `discord_clicked` | A Discord CTA is clicked | `placement` | Active | Community acquisition |
 | `contact_channel_clicked` | A visitor opens a working contact destination | `channel`, `placement`; no name, email, subject, or message text | Active | Contact-path usefulness |
 | `dsa_question_clicked` | A question’s attributed external link is opened | `question_id`, `source`, `difficulty`, `primary_topic`, `external_host` | Active | DSA practice engagement |
@@ -120,7 +120,9 @@ Outcome metrics require explicit definitions, consent-aware collection, and safe
 ## Implementation rules
 
 - PostHog initialization is idempotent and must never block application rendering.
-- Automatic PostHog pageview capture remains disabled; the centralized route listener is the only `$pageview` source.
+- PostHog autocapture, session recording, page-leave capture, and automatic pageview capture remain disabled. Explicit, reviewed events are the only analytics source.
+- The centralized route listener is the only `$pageview` source. It records public paths only, removes every query string and fragment, and suppresses authentication and private workspace routes including Applications, Behavioral workspace, Dashboard, Onboarding, and Settings. The final send hook applies the same query/fragment removal to standard URL properties on every event and discards referrer, search-keyword, and campaign-parameter properties.
+- Never encode a user ID, record ID, email address, search query, filter text, draft, note, answer, or other free-form value in an analytics URL or event property. Use registered public content identifiers and fixed/coarse taxonomy values only.
 - Anonymous activity may be associated with a user only after successful authentication through `identifyUser`.
 - Supabase user UUID is the analytics distinct ID. Email, biography, professional URLs, passwords, tokens, and private profile fields are not identity properties.
 - Successful sign-out captures `sign_out_completed` and then calls `resetAnalyticsUser` before returning to anonymous browsing.

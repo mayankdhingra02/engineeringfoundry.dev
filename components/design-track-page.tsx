@@ -49,7 +49,7 @@ export function DesignTrackPage({
   const [query, setQuery] = useState("");
   const [difficulty, setDifficulty] = useState("All");
   const [domain, setDomain] = useState("All");
-  const basePath = track === "system-design" ? "/system-design" : "/ml-design";
+  const basePath = track === "system-design" ? "/system-design/start-here/introduction" : "/ml-design";
   const filtered = useMemo(() => problems.filter((problem) => {
     const matchesQuery = `${problem.title} ${problem.summary} ${problem.domains.join(" ")} ${(problem.patterns ?? []).join(" ")}`.toLowerCase().includes(query.trim().toLowerCase());
     return matchesQuery && (difficulty === "All" || problem.difficulty === difficulty) && (domain === "All" || problem.domains.includes(domain));
@@ -85,7 +85,7 @@ export function DesignTrackPage({
         <label><Waypoints size={15} /><span className="sr-only">Domain</span><select value={domain} onChange={(event) => setDomain(event.target.value)}><option>All</option>{domains.map((item) => <option key={item}>{item}</option>)}</select></label>
       </div>
       <div className="design-result-meta">{filtered.length} {filtered.length === 1 ? "practice" : "practices"}</div>
-      <div className="design-problem-grid">{filtered.map((problem) => <Link className="design-problem-card" href={`${basePath}/${problem.slug}`} key={problem.id}><div className="design-card-meta"><StatusPill tone={problem.difficulty === "Foundation" ? "success" : problem.difficulty === "Advanced" ? "warning" : "accent"}>{problem.difficulty}</StatusPill><span>{problem.domains.slice(0, 2).join(" · ")}</span></div><h3>{problem.title}</h3><p>{problem.summary}</p>{problem.patterns?.length ? <div className="design-tags">{problem.patterns.slice(0, 3).map((pattern) => <span key={pattern}>{pattern}</span>)}</div> : null}<span className="card-link">Start practice <ArrowRight size={15} /></span></Link>)}</div>
+      <div className="design-problem-grid">{filtered.map((problem) => <Link className="design-problem-card" href={`${basePath}/${problem.slug}`} key={problem.id}><div className="design-card-meta"><StatusPill>{problem.difficulty}</StatusPill><span>{problem.domains.slice(0, 2).join(" · ")}</span></div><h3>{problem.title}</h3><p>{problem.summary}</p>{problem.patterns?.length ? <div className="design-tags">{problem.patterns.slice(0, 3).map((pattern) => <span key={pattern}>{pattern}</span>)}</div> : null}<span className="card-link">Start practice <ArrowRight size={15} /></span></Link>)}</div>
       {!filtered.length && <div className="empty-inline"><BookOpen size={18} /><strong>No practices match these filters.</strong><span>Try a broader title, difficulty, or domain.</span></div>}
     </div></section>
   </>;

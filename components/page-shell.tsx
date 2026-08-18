@@ -6,8 +6,9 @@ export function PageHero({ eyebrow, title, description, children }: { eyebrow: s
   return <section className="page-hero"><div className="page-width"><div className="eyebrow"><CircleDot size={12} />{eyebrow}</div><h1>{title}</h1><p>{description}</p>{children && <div className="hero-actions">{children}</div>}</div></section>;
 }
 
-export function SectionHeading({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: React.ReactNode }) {
-  return <div className="section-heading"><div>{eyebrow && <span className="section-kicker">{eyebrow}</span>}<h2>{title}</h2>{description && <p>{description}</p>}</div>{action}</div>;
+export function SectionHeading({ eyebrow, title, description, action, level = 2 }: { eyebrow?: string; title: string; description?: string; action?: React.ReactNode; level?: 1 | 2 }) {
+  const Heading = level === 1 ? "h1" : "h2";
+  return <div className="section-heading"><div>{eyebrow && <span className="section-kicker">{eyebrow}</span>}<Heading>{title}</Heading>{description && <p>{description}</p>}</div>{action}</div>;
 }
 
 export function FeatureCard({ icon: Icon, label, title, description, href, cta = "Explore" }: { icon: LucideIcon; label?: string; title: string; description: string; href?: string; cta?: string }) {

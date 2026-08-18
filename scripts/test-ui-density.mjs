@@ -16,8 +16,9 @@ function numericValue(selector, property) {
 
 requireMatch(/--section-space:\s*clamp\(56px,\s*5vw,\s*68px\)/, "The global section-space token is missing or unexpectedly expanded.");
 requireMatch(/--section-space-compact:\s*clamp\(42px,\s*3\.5vw,\s*48px\)/, "The compact section-space token is missing or unexpectedly expanded.");
-requireMatch(/--card-padding:\s*clamp\(18px,\s*2vw,\s*21px\)/, "The shared card-padding token is missing or unexpectedly expanded.");
+requireMatch(/--card-padding:\s*clamp\(21px,\s*2vw,\s*26px\)/, "The shared card-padding token is missing or outside the readability guardrail.");
 requireMatch(/\.section\s*\{\s*padding-block:\s*var\(--section-space\)/, "Standard sections must use the shared density token.");
+if (/\.feature-card(?::hover|:focus-visible)?::before/.test(css)) failures.push("Feature cards must not render a detached partial top-border decoration.");
 
 const heroHeight = numericValue(".hero-inner", "min-height");
 if (heroHeight === null || heroHeight > 600) failures.push(`Homepage hero min-height must stay at or below 600px; received ${heroHeight ?? "no value"}.`);

@@ -23,12 +23,13 @@ const themeScript = `(function(){try{var t=localStorage.getItem('ef-theme');var 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const accountPlatformAvailable = isAccountPlatformAvailable();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
-      <body>
+      <body suppressHydrationWarning>
         <AnalyticsProvider>
+          <a className="skip-link" href="#main-content">Skip to content</a>
           <Header />
-          <main>{children}</main>
+          <main id="main-content" tabIndex={-1}>{children}</main>
           <Footer />
           {accountPlatformAvailable && <Suspense fallback={null}><AuthStateBridge /></Suspense>}
           <Suspense fallback={null}><PostHogPageView /></Suspense>

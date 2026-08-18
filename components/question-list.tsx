@@ -20,7 +20,7 @@ export function QuestionList({ questions, emptyTitle = "No questions match these
       {question.originalPrompt && <details className="original-prompt"><summary>Read original prompt</summary><p>{question.originalPrompt}</p></details>}
     </div>
     <div className="question-card-meta">
-      <StatusPill tone={question.difficulty === "Easy" ? "success" : question.difficulty === "Hard" ? "danger" : "warning"}>{question.difficulty}</StatusPill>
+      <StatusPill>{question.difficulty}</StatusPill>
       <span>{question.isFree ? "Free / public" : "External"}</span>
       {question.lastVerifiedAt && <span>Checked {question.lastVerifiedAt}</span>}
       {question.companyAssociations.length > 0 && <span>{question.companyAssociations.length} sourced {question.companyAssociations.length === 1 ? "association" : "associations"}</span>}

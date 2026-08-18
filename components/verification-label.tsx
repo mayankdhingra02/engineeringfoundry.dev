@@ -10,7 +10,9 @@ const labels: Record<VerificationStatus | "original", string> = {
 };
 
 export function VerificationLabel({ status, original = false }: { status: VerificationStatus; original?: boolean }) {
-  const display = original ? "original" : status;
-  const Icon = display === "verified" ? BadgeCheck : display === "community-reported" ? MessagesSquare : display === "original" ? Wrench : CircleDotDashed;
-  return <span className={`verification-label ${display}`} aria-label={`Verification status: ${labels[display]}`}><Icon size={12} aria-hidden="true" />{labels[display]}</span>;
+  const Icon = status === "verified" ? BadgeCheck : status === "community-reported" ? MessagesSquare : CircleDotDashed;
+  return <>
+    {original && <span className="verification-label original" aria-label="Authorship: Engineering Foundry original"><Wrench size={12} aria-hidden="true" />{labels.original}</span>}
+    <span className={`verification-label ${status}`} aria-label={`Verification status: ${labels[status]}`}><Icon size={12} aria-hidden="true" />{labels[status]}</span>
+  </>;
 }
