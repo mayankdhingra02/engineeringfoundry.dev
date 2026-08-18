@@ -5,7 +5,7 @@ import { register } from "node:module";
 register(new URL("./typescript-path-loader.mjs", import.meta.url));
 
 const { parseApplicationForm, parseRoundForm } = await import("../lib/applications/validation.ts");
-const { applicationNeedsAttention, attentionLabel, isActiveApplication, isUpcomingInterview, roundProgress } = await import("../lib/applications/insights.ts");
+const { applicationNeedsAttention, attentionLabel, isActiveApplication, isActiveInterviewProcess, isUpcomingInterview, roundProgress } = await import("../lib/applications/insights.ts");
 
 const failures = [];
 const read = (file) => readFileSync(file, "utf8");
@@ -91,6 +91,26 @@ assert.deepEqual(roundProgress([{ status: "Completed" }, { status: "Scheduled" }
 assert.equal(isUpcomingInterview({ scheduled_at: "2026-08-18T19:00:00Z", status: "Scheduled" }, insightNow), true, "future scheduled interviews should be upcoming");
 assert.equal(isUpcomingInterview({ scheduled_at: "2026-08-18T19:00:00Z", status: "Completed" }, insightNow), false, "completed interviews must not remain upcoming");
 assert.equal(isUpcomingInterview({ scheduled_at: "2026-08-18T19:00:00Z", status: "Cancelled" }, insightNow), false, "cancelled interviews must not remain upcoming");
+
+// isActiveInterviewProcess: an open application is not necessarily an active interview
+// process — that requires either a process-implying status (Recruiter Screen,
+// Interviewing) or at least one live round (Planned, Scheduled, Rescheduled).
+// isActiveApplication continues to own the open-pipeline (not terminal) definition.
+assert.equal(isActiveInterviewProcess({ status: "Wishlist", interview_rounds: [] }), false, "Wishlist with no rounds is not an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "Interested", interview_rounds: [] }), false, "Interested with no rounds is not an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "Applied", interview_rounds: [] }), false, "Applied with no rounds is not an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "On Hold", interview_rounds: [] }), false, "On Hold with no rounds is not an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "Recruiter Screen", interview_rounds: [] }), true, "Recruiter Screen with no rounds is an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "Interviewing", interview_rounds: [] }), true, "Interviewing with no rounds is an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "Applied", interview_rounds: [{ status: "Scheduled" }] }), true, "Applied with a Scheduled round is an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "On Hold", interview_rounds: [{ status: "Planned" }] }), true, "On Hold with a Planned round is an active interview process");
+assert.equal(isActiveInterviewProcess({ status: "Rejected", interview_rounds: [{ status: "Scheduled" }] }), false, "a terminal Rejected application is never an active interview process, regardless of round status");
+assert.equal(isActiveInterviewProcess({ status: "Offer", interview_rounds: [{ status: "Scheduled" }] }), false, "a terminal Offer application is never an active interview process, regardless of round status");
+assert.equal(isActiveInterviewProcess({ status: "Accepted", interview_rounds: [{ status: "Scheduled" }] }), false, "a terminal Accepted application is never an active interview process, regardless of round status");
+assert.equal(isActiveInterviewProcess({ status: "Applied", interview_rounds: [{ status: "Rescheduled" }] }), true, "a Rescheduled round also counts as a live round");
+assert.equal(isActiveInterviewProcess({ status: "Interviewing", interview_rounds: [{ status: "Completed" }, { status: "Cancelled" }] }), true, "Interviewing status alone is sufficient regardless of round statuses");
+assert.equal(isActiveApplication("Rejected"), false, "isActiveApplication itself remains unchanged: Rejected is still terminal");
+assert.equal(isActiveApplication("Wishlist"), true, "isActiveApplication itself remains unchanged: Wishlist is still open");
 
 if (failures.length) { console.error(`Application tracker regression failed:\n- ${failures.join("\n- ")}`); process.exit(1); }
 console.log("Application tracker regression passed: protected CRUD routes, ownership-scoped actions, RLS, timeline ordering, timezone validation, dashboard integration, filters, empty states, and responsive layouts hold.");

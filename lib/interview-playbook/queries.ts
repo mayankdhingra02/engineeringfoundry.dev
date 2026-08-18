@@ -1,9 +1,9 @@
 import "server-only";
 
-import { isActiveApplication } from "@/lib/applications/insights";
+import { isActiveApplication, isActiveInterviewProcess } from "@/lib/applications/insights";
 import { UPCOMING_ROUND_STATUSES } from "@/lib/applications/options";
 import { getApplications, type ApplicationWithRounds } from "@/lib/applications/queries";
-import { modulesForRound } from "@/lib/interview-preparation/model";
+import { resolveRoundPreparationContext } from "@/lib/interview-preparation/model";
 import { chooseRoundPreparationNextAction } from "@/lib/interview-preparation/next-action";
 import { getInterviewPreparationHub, getPreparationCounts } from "@/lib/interview-preparation/queries";
 import {
@@ -34,6 +34,10 @@ type ApplicationRoundRow = ApplicationWithRounds["interview_rounds"][number];
 const UPCOMING_ROUND_STATUS_SET: readonly string[] = UPCOMING_ROUND_STATUSES;
 
 function toRoundInput(round: ApplicationRoundRow, applicationId: string): InterviewPlaybookRoundInput {
+  // Resolved exactly once per round from the canonical taxonomy; every
+  // downstream field (modules, clarification, execution guides) is derived
+  // from this single call rather than re-resolving the round label.
+  const roundContext = resolveRoundPreparationContext(round.round_type);
   return {
     id: round.id,
     applicationId,
@@ -51,7 +55,10 @@ function toRoundInput(round: ApplicationRoundRow, applicationId: string): Interv
     status: round.status,
     result: round.result,
     active: UPCOMING_ROUND_STATUS_SET.includes(round.status),
-    modules: modulesForRound(round.round_type),
+    modules: roundContext.modules,
+    needsSignalClarification: roundContext.needsSignalClarification,
+    clarificationPrompt: roundContext.clarificationPrompt,
+    executionGuideSlugs: roundContext.executionGuideSlugs,
   };
 }
 
@@ -64,7 +71,11 @@ function toApplicationInput(application: ApplicationWithRounds): InterviewPlaybo
     roleLevel: application.role_level,
     status: application.status,
     updatedAt: application.updated_at,
-    active: isActiveApplication(application.status),
+    open: isActiveApplication(application.status),
+    interviewProcessActive: isActiveInterviewProcess({
+      status: application.status,
+      interview_rounds: application.interview_rounds.map((round) => ({ status: round.status })),
+    }),
     rounds: application.interview_rounds.map((round) => toRoundInput(round, application.id)),
   };
 }

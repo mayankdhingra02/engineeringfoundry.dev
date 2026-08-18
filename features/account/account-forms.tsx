@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Download, LoaderCircle, LogOut, Trash2 } from "lucide-react";
 import { useActionState, useEffect } from "react";
 import {
@@ -53,12 +54,13 @@ export function PasswordChangeForm() {
 }
 
 export function GlobalSignOutForm() {
+  const router = useRouter();
   const [state, action, pending] = useActionState(signOutEverywhereAction, initialAccountActionState);
   useEffect(() => {
     if (state.status !== "success") return;
-    const timer = window.setTimeout(() => window.location.assign("/"), 700);
+    const timer = window.setTimeout(() => router.push("/"), 700);
     return () => window.clearTimeout(timer);
-  }, [state.status]);
+  }, [state.status, router]);
   return <form className="account-inline-action" action={action}>
     <div><strong>Sign out everywhere</strong><p>Revoke refresh tokens for this account, including this browser.</p></div>
     <button className="button button-secondary" disabled={pending}><LogOut size={16} />{pending ? "Signing out…" : "Sign out all sessions"}</button>

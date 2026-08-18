@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { chooseRoundPreparationNextAction } from "../lib/interview-preparation/next-action.ts";
+import { modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
 import { buildInterviewPlaybookOverview } from "../lib/interview-playbook/overview.ts";
 import { resolveInterviewPlaybookTiming } from "../lib/interview-playbook/timing.ts";
+import { isActiveInterviewProcess } from "../lib/applications/insights.ts";
 
 const root = process.cwd();
 const read = (file) => readFileSync(join(root, file), "utf8");
@@ -82,6 +84,9 @@ function makeRound(overrides) {
     result: "Pending",
     active: true,
     modules: ["dsa", "company"],
+    needsSignalClarification: false,
+    clarificationPrompt: null,
+    executionGuideSlugs: ["algorithmic-coding"],
     ...overrides,
   };
 }
@@ -95,7 +100,8 @@ function makeApplication(overrides) {
     roleLevel: null,
     status: "Interviewing",
     updatedAt: "2026-08-01T00:00:00.000Z",
-    active: true,
+    open: true,
+    interviewProcessActive: true,
     rounds: [],
     ...overrides,
   };
@@ -135,7 +141,7 @@ const case5OverdueSummary = case5Overview.applications[0].rounds[0];
 
 // Case 6: a terminal application's round cannot be active or primary.
 const case6Round = makeRound({ id: "round-terminal", status: "Scheduled", scheduledAt: "2026-08-25T10:00:00.000Z" });
-const case6Overview = overviewOf([makeApplication({ id: "app-terminal", status: "Rejected", active: false, rounds: [case6Round] })]);
+const case6Overview = overviewOf([makeApplication({ id: "app-terminal", status: "Rejected", open: false, interviewProcessActive: false, rounds: [case6Round] })]);
 
 // Case 7: preparation counts are batched checklist progress only, never a percentage.
 const case7RoundWithCount = makeRound({ id: "round-with-count", roundNumber: 1, status: "Scheduled", scheduledAt: "2026-08-22T10:00:00.000Z" });
@@ -169,6 +175,109 @@ const case10Overview = overviewOf([]);
 const case11Round = makeRound({ id: "round-now", status: "Scheduled", scheduledAt: overviewNow.toISOString() });
 const case11Overview = overviewOf([makeApplication({ rounds: [case11Round] })]);
 const case11Summary = case11Overview.applications[0].rounds[0];
+
+// --- Canonical round-preparation context resolution ------------------------
+// resolveRoundPreparationContext must call resolveRoundExecution exactly once
+// and derive modules/execution guides/clarification from that single result —
+// no separate regex-based mapping table.
+const roundContextCases = {
+  "Coding / DSA": resolveRoundPreparationContext("Coding / DSA"),
+  "System Design": resolveRoundPreparationContext("System Design"),
+  "Behavioral": resolveRoundPreparationContext("Behavioral"),
+  "Coding + Behavioral Technical Screen": resolveRoundPreparationContext("Coding + Behavioral Technical Screen"),
+  "Technical Screen": resolveRoundPreparationContext("Technical Screen"),
+  "Domain / Technical": resolveRoundPreparationContext("Domain / Technical"),
+  "Bar Raiser": resolveRoundPreparationContext("Bar Raiser"),
+  "Onsite / Virtual Onsite": resolveRoundPreparationContext("Onsite / Virtual Onsite"),
+  "Recruiter Screen": resolveRoundPreparationContext("Recruiter Screen"),
+  "Hiring Manager": resolveRoundPreparationContext("Hiring Manager"),
+  "Machine Coding": resolveRoundPreparationContext("Machine Coding"),
+  "Debugging": resolveRoundPreparationContext("Debugging"),
+  "Code Review": resolveRoundPreparationContext("Code Review"),
+  "Low-Level Design": resolveRoundPreparationContext("Low-Level Design"),
+  "ML System Design": resolveRoundPreparationContext("ML System Design"),
+};
+const arraysEqual = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => v === b[i]);
+
+// --- Application versus interview-process classification -------------------
+const processCases = {
+  "Wishlist, no rounds": isActiveInterviewProcess({ status: "Wishlist", interview_rounds: [] }),
+  "Interested, no rounds": isActiveInterviewProcess({ status: "Interested", interview_rounds: [] }),
+  "Applied, no rounds": isActiveInterviewProcess({ status: "Applied", interview_rounds: [] }),
+  "On Hold, no rounds": isActiveInterviewProcess({ status: "On Hold", interview_rounds: [] }),
+  "Recruiter Screen, no rounds": isActiveInterviewProcess({ status: "Recruiter Screen", interview_rounds: [] }),
+  "Interviewing, no rounds": isActiveInterviewProcess({ status: "Interviewing", interview_rounds: [] }),
+  "Applied, Scheduled round": isActiveInterviewProcess({ status: "Applied", interview_rounds: [{ status: "Scheduled" }] }),
+  "On Hold, Planned round": isActiveInterviewProcess({ status: "On Hold", interview_rounds: [{ status: "Planned" }] }),
+  "Rejected, Scheduled round": isActiveInterviewProcess({ status: "Rejected", interview_rounds: [{ status: "Scheduled" }] }),
+  "Offer, Scheduled round": isActiveInterviewProcess({ status: "Offer", interview_rounds: [{ status: "Scheduled" }] }),
+  "Accepted, Scheduled round": isActiveInterviewProcess({ status: "Accepted", interview_rounds: [{ status: "Scheduled" }] }),
+};
+
+// --- Playbook overview: interview-process versus pre-interview applications -
+const caseProcA = makeApplication({ id: "app-wishlist", status: "Wishlist", open: true, interviewProcessActive: false, rounds: [] });
+const caseProcB = makeApplication({ id: "app-interviewing", status: "Interviewing", open: true, interviewProcessActive: true, rounds: [makeRound({ id: "round-proc-b", applicationId: "app-interviewing", status: "Scheduled", scheduledAt: "2026-08-25T10:00:00.000Z" })] });
+const caseProcOverview = overviewOf([caseProcA, caseProcB]);
+
+// --- Playbook overview: clarification fields travel through round summaries -
+const caseClarifyRound = makeRound({ id: "round-clarify", roundType: "Technical Screen", needsSignalClarification: true, clarificationPrompt: "Ask the recruiter which signals the screen will cover, such as coding, design, behavioral evidence, or project depth.", executionGuideSlugs: ["technical-screen"] });
+const caseClarifyOverview = overviewOf([makeApplication({ rounds: [caseClarifyRound] })]);
+const caseClarifySummary = caseClarifyOverview.applications[0].rounds[0];
+
+// --- Playbook overview: global queues are scoped to activeInterviewProcesses only, not merely open applications -
+const caseQueueScopeApp = makeApplication({ id: "app-queue-scope", status: "Wishlist", open: true, interviewProcessActive: false, rounds: [makeRound({ id: "round-queue-scope", applicationId: "app-queue-scope", status: "Scheduled", scheduledAt: "2026-08-25T10:00:00.000Z" })] });
+const caseQueueScopeOverview = overviewOf([caseQueueScopeApp]);
+
+// --- Playbook page: pre-interview versus active-process-without-round copy --
+const playbookPreInterviewSection = (() => {
+  const start = playbookPage.indexOf("Branch E:");
+  const end = playbookPage.indexOf("Branch F:");
+  return start === -1 || end === -1 ? "" : playbookPage.slice(start, end);
+})();
+
+// --- Playbook private round page: execution-guide integration --------------
+const preparePageExecutionGuideSection = (() => {
+  const start = page.indexOf("Round execution");
+  return start === -1 ? "" : page.slice(Math.max(0, start - 400), start + 400);
+})();
+
+// --- Playbook private round page: does not infer a specialist module from a vague label -
+const onsiteContext = resolveRoundPreparationContext("Onsite / Virtual Onsite");
+const barRaiserContext = resolveRoundPreparationContext("Bar Raiser");
+const domainTechnicalContext = resolveRoundPreparationContext("Domain / Technical");
+
+// --- Playbook private round page: hub returns roundContext without an extra query -
+const preparationHubDefinitionSource = (() => {
+  const start = query.indexOf("export async function getInterviewPreparationHub");
+  const end = query.indexOf("export async function getPreparationCounts");
+  return start === -1 || end === -1 ? query : query.slice(start, end);
+})();
+
+// --- Playbook page: private-route registration ------------------------------
+const privacyRoutesSource = read("lib/privacy/routes.ts");
+const privateRoutePrivacyScript = read("scripts/test-private-route-privacy.mjs");
+const ciWorkflow = read(".github/workflows/ci.yml");
+const packageJson = read("package.json");
+
+// --- Playbook page: clarification StatusPill and edit-round link -----------
+const playbookClarificationSection = (() => {
+  const start = playbookPage.indexOf("needsSignalClarification ? <StatusPill");
+  return start === -1 ? "" : playbookPage.slice(start, start + 600);
+})();
+
+// --- Playbook page: queue-state label ---------------------------------------
+const queueStateLabelSource = (() => {
+  const start = playbookPage.indexOf("function queueStateLabel");
+  const end = playbookPage.indexOf("export default async function InterviewPlaybookPage");
+  return start === -1 || end === -1 ? "" : playbookPage.slice(start, end);
+})();
+
+// --- Playbook private round page: application-tracker classifier source ----
+const insights = read("lib/applications/insights.ts");
+const applicationTrackerTest = read("scripts/test-application-tracker.mjs");
+
+// --- Playbook overview module: no second resolver call ---------------------
+const overviewSource = read("lib/interview-playbook/overview.ts");
 
 // --- Playbook final-preparation timing model -------------------------------
 const timingNow = new Date("2026-08-18T12:00:00.000Z"); // UTC calendar day 2026-08-18
@@ -259,11 +368,8 @@ const cases = [
   ["owner-first query", query.indexOf('.eq("user_id", actor.user.id)') < query.indexOf("Promise.all")],
   ["guessed round returns null", query.includes("if (!roundData) return null")],
   ["central module type", model.includes("export type PreparationModule")],
-  ["coding mapping", model.includes('coding: ["dsa", "company"]')],
-  ["design mapping", model.includes('"system-design": ["system-design", "company"]')],
-  ["behavioral mapping", model.includes('behavioral: ["behavioral", "company"]')],
-  ["onsite balanced mapping", model.includes('onsite: ["dsa", "behavioral", "system-design", "company"]')],
-  ["recruiter excludes DSA", model.includes('recruiter: ["behavioral", "company"]')],
+  ["model derives modules from the canonical taxonomy resolver, not a standalone mapping table", model.includes("resolveRoundExecution") && !/const mapping\s*:/.test(model)],
+  ["model imports the canonical taxonomy with a Node-resolvable relative path", model.includes('from "../interview-playbook/round-execution.ts"')],
   ["role normalization", model.includes("roadmapLevelForRole")],
   ["conservative alias map", model.includes("companyAliases")],
   ["no inferred AWS alias", !model.includes('aws: "amazon"') && !model.includes('"amazon-web-services": "amazon"')],
@@ -340,7 +446,8 @@ const cases = [
   ["playbook overview: an overdue round appears in overdueRounds", case5Overview.overdueRounds.some((round) => round.id === "round-overdue")],
   ["playbook overview: an overdue round is never chosen as primary", case5Overview.primaryRound === null],
   ["playbook overview: a terminal application remains in the full applications list", case6Overview.applications.some((application) => application.id === "app-terminal")],
-  ["playbook overview: a terminal application is excluded from activeApplications", !case6Overview.activeApplications.some((application) => application.id === "app-terminal")],
+  ["playbook overview: a terminal application is excluded from openApplications", !case6Overview.openApplications.some((application) => application.id === "app-terminal")],
+  ["playbook overview: a terminal application is excluded from activeInterviewProcesses", !case6Overview.activeInterviewProcesses.some((application) => application.id === "app-terminal")],
   ["playbook overview: a terminal application's round is excluded from global upcomingRounds", !case6Overview.upcomingRounds.some((round) => round.id === "round-terminal")],
   ["playbook overview: a terminal application's round cannot be primary", case6Overview.primaryRound === null],
   ["playbook overview: a supplied preparation count is passed through exactly", case7WithCountSummary?.preparation.completed === 3 && case7WithCountSummary?.preparation.total === 5],
@@ -349,7 +456,7 @@ const cases = [
   ["playbook overview: application rounds are sorted by roundNumber then id", case8Overview.applications[0].rounds.map((round) => round.id).join(",") === "r1,r2,r3"],
   ["playbook overview: the original round input array is not mutated", case8OriginalOrderAfter.join(",") === case8OriginalOrderBefore.join(",") && case8OriginalOrderAfter.join(",") === "r3,r1,r2"],
   ["playbook overview: identical timestamps fall back to roundNumber then id", case9Overview.upcomingRounds.map((round) => round.id).join(",") === "r-a,r-b"],
-  ["playbook overview: an empty account has no applications", case10Overview.applications.length === 0 && case10Overview.activeApplications.length === 0],
+  ["playbook overview: an empty account has no applications", case10Overview.applications.length === 0 && case10Overview.openApplications.length === 0 && case10Overview.activeInterviewProcesses.length === 0 && case10Overview.preInterviewApplications.length === 0],
   ["playbook overview: an empty account has no rounds in any global queue", case10Overview.upcomingRounds.length === 0 && case10Overview.unscheduledRounds.length === 0 && case10Overview.overdueRounds.length === 0],
   ["playbook overview: an empty account has no primary round or reason", case10Overview.primaryRound === null && case10Overview.primaryRoundReason === null],
   ["playbook overview: a round scheduled exactly at now is upcoming", case11Summary.state === "upcoming"],
@@ -361,7 +468,8 @@ const cases = [
   ["playbook queries: calls chooseRoundPreparationNextAction", playbookQueries.includes("chooseRoundPreparationNextAction(")],
   ["playbook queries: uses isActiveApplication", playbookQueries.includes("isActiveApplication(")],
   ["playbook queries: uses UPCOMING_ROUND_STATUSES", playbookQueries.includes("UPCOMING_ROUND_STATUSES")],
-  ["playbook queries: uses modulesForRound", playbookQueries.includes("modulesForRound(")],
+  ["playbook queries: uses resolveRoundPreparationContext, not the old modulesForRound-only path", playbookQueries.includes("resolveRoundPreparationContext(")],
+  ["playbook queries: uses isActiveInterviewProcess", playbookQueries.includes("isActiveInterviewProcess(")],
   ["playbook queries: accepts no userId parameter", !playbookQueries.includes("userId")],
   ["playbook queries: contains no direct table access", !playbookQueries.includes(".from(")],
   ["playbook queries: contains no service-role reference", !playbookQueries.includes("serviceRole") && !playbookQueries.includes("SERVICE_ROLE")],
@@ -398,7 +506,7 @@ const cases = [
   ["playbook page: links the concurrent-change fallback to the application", playbookPage.includes("The round changed while this page was loading") && playbookPage.includes("href={`/applications/${primaryRound.applicationId}`}")],
   ["playbook page: contains the overdue-status-update branch", playbookPage.includes("Needs a status update") && playbookPage.includes("Update interview status")],
   ["playbook page: does not route the overdue dominant action to preparationHref", !/Update interview status[\s\S]{0,40}preparationHref/.test(playbookPage)],
-  ["playbook page: contains the active-application-without-round branch", playbookPage.includes("Add the next known interview round") && playbookPage.includes("firstActiveApplicationWithoutRound")],
+  ["playbook page: contains the active-interview-process-without-round branch", playbookPage.includes("Add the next known interview round") && playbookPage.includes("firstActiveInterviewProcessWithoutRound")],
   ["playbook page: contains the no-active-application branch", playbookPage.includes("No active interview process right now")],
   ["playbook page: contains the no-application first-use branch", playbookPage.includes("Start with the interview process you are pursuing.")],
   ["playbook page: builds its queue from upcomingRounds and unscheduledRounds", playbookPage.includes("overview.upcomingRounds") && playbookPage.includes("overview.unscheduledRounds")],
@@ -521,9 +629,120 @@ const cases = [
   ["playbook page: calculates no readiness score", !playbookPage.includes("readinessScore") && !/readiness\s*[:=]/.test(playbookPage)],
   ["playbook page: calculates no probability", !playbookPage.includes("passProbability") && !/probability\s*[:=]/.test(playbookPage)],
   ["playbook page: calculates no checklist percentage", !playbookPage.includes("* 100") && !playbookPage.includes("toFixed")],
-  ["playbook page: still contains all six dominant-action states", ["Branch A:", "Branch B:", "Branch C:", "Branch D:", "Branch E:", "Branch F:"].every((marker) => playbookPage.includes(marker))],
+  ["playbook page: still contains all seven dominant-action states", ["Branch A:", "Branch B:", "Branch C:", "Branch D:", "Branch E:", "Branch F:", "Branch G:"].every((marker) => playbookPage.includes(marker))],
   ["playbook page: still caps the preparation queue at six", playbookPage.includes(".slice(0, 6)")],
   ["playbook page: still caps overdue records at three", playbookPage.includes(".slice(0, 3)")],
+  // --- Canonical round-preparation context: exact resolution contracts -------
+  ["round context 'Coding / DSA': modules", arraysEqual(roundContextCases["Coding / DSA"].modules, ["dsa", "company"])],
+  ["round context 'Coding / DSA': no clarification needed", roundContextCases["Coding / DSA"].needsSignalClarification === false],
+  ["round context 'System Design': modules", arraysEqual(roundContextCases["System Design"].modules, ["system-design", "company"])],
+  ["round context 'System Design': no clarification needed", roundContextCases["System Design"].needsSignalClarification === false],
+  ["round context 'Behavioral': modules", arraysEqual(roundContextCases["Behavioral"].modules, ["behavioral", "company"])],
+  ["round context 'Behavioral': no clarification needed", roundContextCases["Behavioral"].needsSignalClarification === false],
+  ["round context 'Coding + Behavioral Technical Screen': modules", arraysEqual(roundContextCases["Coding + Behavioral Technical Screen"].modules, ["dsa", "behavioral", "company"])],
+  ["round context 'Coding + Behavioral Technical Screen': execution guides", arraysEqual(roundContextCases["Coding + Behavioral Technical Screen"].executionGuideSlugs, ["technical-screen", "algorithmic-coding", "behavioral"])],
+  ["round context 'Coding + Behavioral Technical Screen': no clarification needed", roundContextCases["Coding + Behavioral Technical Screen"].needsSignalClarification === false],
+  ["round context 'Technical Screen': modules", arraysEqual(roundContextCases["Technical Screen"].modules, ["company"])],
+  ["round context 'Technical Screen': execution guides", arraysEqual(roundContextCases["Technical Screen"].executionGuideSlugs, ["technical-screen"])],
+  ["round context 'Technical Screen': needs clarification", roundContextCases["Technical Screen"].needsSignalClarification === true],
+  ["round context 'Domain / Technical': modules", arraysEqual(roundContextCases["Domain / Technical"].modules, ["company"])],
+  ["round context 'Domain / Technical': needs clarification", roundContextCases["Domain / Technical"].needsSignalClarification === true],
+  ["round context 'Bar Raiser': modules", arraysEqual(roundContextCases["Bar Raiser"].modules, ["company"])],
+  ["round context 'Bar Raiser': needs clarification", roundContextCases["Bar Raiser"].needsSignalClarification === true],
+  ["round context 'Onsite / Virtual Onsite': modules", arraysEqual(roundContextCases["Onsite / Virtual Onsite"].modules, ["company"])],
+  ["round context 'Onsite / Virtual Onsite': needs clarification", roundContextCases["Onsite / Virtual Onsite"].needsSignalClarification === true],
+  ["round context 'Recruiter Screen': modules", arraysEqual(roundContextCases["Recruiter Screen"].modules, ["company"])],
+  ["round context 'Recruiter Screen': execution guides", arraysEqual(roundContextCases["Recruiter Screen"].executionGuideSlugs, ["recruiter-screen"])],
+  ["round context 'Recruiter Screen': no clarification needed", roundContextCases["Recruiter Screen"].needsSignalClarification === false],
+  ["round context 'Hiring Manager': modules", arraysEqual(roundContextCases["Hiring Manager"].modules, ["company"])],
+  ["round context 'Hiring Manager': execution guides", arraysEqual(roundContextCases["Hiring Manager"].executionGuideSlugs, ["hiring-manager"])],
+  ["round context 'Hiring Manager': no clarification needed", roundContextCases["Hiring Manager"].needsSignalClarification === false],
+  ["round context 'Machine Coding': modules", arraysEqual(roundContextCases["Machine Coding"].modules, ["company"])],
+  ["round context 'Machine Coding': execution guides", arraysEqual(roundContextCases["Machine Coding"].executionGuideSlugs, ["practical-coding"])],
+  ["round context 'Machine Coding': no clarification needed", roundContextCases["Machine Coding"].needsSignalClarification === false],
+  ["round context 'Debugging': modules", arraysEqual(roundContextCases["Debugging"].modules, ["company"])],
+  ["round context 'Debugging': execution guides", arraysEqual(roundContextCases["Debugging"].executionGuideSlugs, ["debugging"])],
+  ["round context 'Debugging': no clarification needed", roundContextCases["Debugging"].needsSignalClarification === false],
+  ["round context 'Code Review': modules", arraysEqual(roundContextCases["Code Review"].modules, ["company"])],
+  ["round context 'Code Review': execution guides", arraysEqual(roundContextCases["Code Review"].executionGuideSlugs, ["code-review"])],
+  ["round context 'Code Review': no clarification needed", roundContextCases["Code Review"].needsSignalClarification === false],
+  ["round context 'Low-Level Design': modules", arraysEqual(roundContextCases["Low-Level Design"].modules, ["company"])],
+  ["round context 'Low-Level Design': execution guides", arraysEqual(roundContextCases["Low-Level Design"].executionGuideSlugs, ["low-level-design"])],
+  ["round context 'Low-Level Design': no clarification needed", roundContextCases["Low-Level Design"].needsSignalClarification === false],
+  ["round context 'ML System Design': modules", arraysEqual(roundContextCases["ML System Design"].modules, ["company"])],
+  ["round context 'ML System Design': execution guides", arraysEqual(roundContextCases["ML System Design"].executionGuideSlugs, ["ml-system-design"])],
+  ["round context 'ML System Design': no clarification needed", roundContextCases["ML System Design"].needsSignalClarification === false],
+  ["round context: resolveRoundExecution is called exactly once per resolution (modules and executionGuideSlugs stay consistent for the same label)", arraysEqual(modulesForRound("Coding / DSA"), roundContextCases["Coding / DSA"].modules)],
+  ["round context: practical-coding/debugging/code-review/low-level-design/ml-system-design never map to dsa, behavioral, or system-design modules", ["Machine Coding", "Debugging", "Code Review", "Low-Level Design", "ML System Design"].every((label) => !roundContextCases[label].modules.includes("dsa") && !roundContextCases[label].modules.includes("behavioral") && !roundContextCases[label].modules.includes("system-design"))],
+  // --- Application versus interview-process classification -------------------
+  ["process: Wishlist with no rounds is not an active interview process", processCases["Wishlist, no rounds"] === false],
+  ["process: Interested with no rounds is not an active interview process", processCases["Interested, no rounds"] === false],
+  ["process: Applied with no rounds is not an active interview process", processCases["Applied, no rounds"] === false],
+  ["process: On Hold with no rounds is not an active interview process", processCases["On Hold, no rounds"] === false],
+  ["process: Recruiter Screen with no rounds is an active interview process", processCases["Recruiter Screen, no rounds"] === true],
+  ["process: Interviewing with no rounds is an active interview process", processCases["Interviewing, no rounds"] === true],
+  ["process: Applied with a Scheduled round is an active interview process", processCases["Applied, Scheduled round"] === true],
+  ["process: On Hold with a Planned round is an active interview process", processCases["On Hold, Planned round"] === true],
+  ["process: Rejected with a Scheduled round is not an active interview process", processCases["Rejected, Scheduled round"] === false],
+  ["process: Offer with a Scheduled round is not an active interview process", processCases["Offer, Scheduled round"] === false],
+  ["process: Accepted with a Scheduled round is not an active interview process", processCases["Accepted, Scheduled round"] === false],
+  ["isActiveApplication remains unchanged and still owns the open-pipeline definition", insights.includes("export function isActiveApplication")],
+  ["test-application-tracker.mjs covers isActiveInterviewProcess directly", applicationTrackerTest.includes("isActiveInterviewProcess")],
+  ["isActiveInterviewProcess is exported alongside isActiveApplication", insights.includes("export function isActiveInterviewProcess")],
+  // --- Playbook overview: open vs. interview-process vs. pre-interview -------
+  ["playbook overview: a Wishlist application with no rounds is open", caseProcOverview.openApplications.some((application) => application.id === "app-wishlist")],
+  ["playbook overview: a Wishlist application with no rounds is not an active interview process", !caseProcOverview.activeInterviewProcesses.some((application) => application.id === "app-wishlist")],
+  ["playbook overview: a Wishlist application with no rounds is pre-interview", caseProcOverview.preInterviewApplications.some((application) => application.id === "app-wishlist")],
+  ["playbook overview: an Interviewing application with a round is an active interview process, not pre-interview", caseProcOverview.activeInterviewProcesses.some((application) => application.id === "app-interviewing") && !caseProcOverview.preInterviewApplications.some((application) => application.id === "app-interviewing")],
+  ["playbook overview: openApplications contains both applications", caseProcOverview.openApplications.length === 2],
+  // --- Playbook overview: clarification fields travel through round summaries -
+  ["playbook overview: needsSignalClarification travels through the round summary", caseClarifySummary.needsSignalClarification === true],
+  ["playbook overview: clarificationPrompt travels through the round summary", caseClarifySummary.clarificationPrompt === caseClarifyRound.clarificationPrompt],
+  ["playbook overview: executionGuideSlugs travels through the round summary", arraysEqual(caseClarifySummary.executionGuideSlugs, ["technical-screen"])],
+  ["overview module does not call the canonical resolver a second time", !overviewSource.includes("resolveRoundExecution") && !overviewSource.includes("resolveRoundPreparationContext")],
+  // --- Playbook overview: global queues are scoped to activeInterviewProcesses -
+  ["playbook overview: a Scheduled round on a pre-interview (Wishlist) application does not enter the global upcoming queue", !caseQueueScopeOverview.upcomingRounds.some((round) => round.id === "round-queue-scope")],
+  // --- Playbook hub: roundContext and no extra query --------------------------
+  ["hub: getInterviewPreparationHub returns roundContext", /return\s*\{\s*round,\s*roundContext,/.test(query)],
+  ["hub: roundContext is resolved via resolveRoundPreparationContext", query.includes("resolveRoundPreparationContext(round.round_type)")],
+  ["hub: modules are derived from roundContext rather than a separate call", query.includes("const modules = roundContext.modules")],
+  ["hub: resolveRoundPreparationContext is a pure/synchronous call, not an additional Supabase query", !/resolveRoundPreparationContext\([^)]*\)\s*;\s*[\s\S]{0,80}\.from\(/.test(preparationHubDefinitionSource)],
+  // --- Private round page: clarification and execution-guide rendering -------
+  ["private round page: renders the clarification prompt", page.includes("roundContext.needsSignalClarification") && page.includes("roundContext.clarificationPrompt")],
+  ["private round page: contains the clarification heading", page.includes("Round focus needs confirmation")],
+  ["private round page: links the clarification panel to the round-edit route", page.includes("/rounds/${round.id}/edit")],
+  ["private round page: renders canonical execution-guide links", page.includes("roundExecutionGuideHref(guide.slug)") && preparePageExecutionGuideSection.includes("executionGuides.map")],
+  ["private round page: imports getRoundExecutionGuide and roundExecutionGuideHref from the presentation module", page.includes('from "@/lib/interview-playbook/round-execution-presentation"')],
+  ["private round page: does not infer DSA for Onsite / Virtual Onsite", !onsiteContext.modules.includes("dsa")],
+  ["private round page: does not infer Behavioral for Bar Raiser", !barRaiserContext.modules.includes("behavioral")],
+  ["private round page: does not infer Coding (dsa) for Domain / Technical", !domainTechnicalContext.modules.includes("dsa")],
+  ["private round page: still uses chooseRoundPreparationNextAction as the only next-action selector", page.includes("chooseRoundPreparationNextAction(") && (page.match(/NextAction/g) ?? []).length === 2],
+  // --- Playbook page: clarification StatusPill and edit-round link -----------
+  ["playbook page: renders a warning-tone Focus unconfirmed StatusPill when the primary round needs clarification", playbookClarificationSection.includes('tone="warning">Focus unconfirmed</StatusPill>')],
+  ["playbook page: does not substitute an inferred specialist recommendation for an ambiguous primary round", playbookPage.includes("primaryAction.href") && playbookPage.includes("primaryAction.label")],
+  // --- Playbook page: queue-state clarification label -------------------------
+  ["playbook page: queue rows return Focus unconfirmed before Scheduled or Date needed", queueStateLabelSource.includes("needsSignalClarification") && queueStateLabelSource.indexOf("needsSignalClarification") < queueStateLabelSource.indexOf('"Scheduled"')],
+  // --- Playbook page: pre-interview branch (E) vs. active-process-without-round branch (D) -
+  ["playbook page: the pre-interview branch links to /prepare", playbookPreInterviewSection.includes('href="/prepare"')],
+  ["playbook page: the pre-interview branch does not say 'Add the next known interview round'", !playbookPreInterviewSection.includes("Add the next known interview round")],
+  ["playbook page: the pre-interview branch uses the required copy intent", playbookPreInterviewSection.includes("Keep preparing while the interview process is not confirmed.")],
+  ["playbook page: the pre-interview branch offers 'Choose a general preparation track'", playbookPreInterviewSection.includes("Choose a general preparation track")],
+  ["playbook page: the active-process-without-round branch (D) still says 'Add the next known interview round'", playbookPage.includes("Add the next known interview round") && playbookPage.includes("firstActiveInterviewProcessWithoutRound")],
+  ["playbook page: branch D is scoped to activeInterviewProcesses, not every open application", playbookPage.includes("overview.activeInterviewProcesses.find(")],
+  // --- Playbook page: summary cards ------------------------------------------
+  ["playbook page: summary cards show Open applications", playbookPage.includes(">Open applications<")],
+  ["playbook page: summary cards show Active interview processes", playbookPage.includes(">Active interview processes<")],
+  ["playbook page: summary cards show Scheduled rounds", playbookPage.includes(">Scheduled rounds<")],
+  ["playbook page: summary cards show Need an update", playbookPage.includes(">Need an update<")],
+  ["playbook page: does not label a Wishlist/Applied application as an interview process card", !playbookPage.includes(">Active applications<")],
+  ["playbook page: queue section is gated on activeInterviewProcesses, not merely openApplications", playbookPage.includes("overview.activeInterviewProcesses.length > 0 && <section")],
+  // --- Part 1: Node compatibility ----------------------------------------------
+  ["package.json: test:interview-preparation-hub uses --experimental-strip-types", /"test:interview-preparation-hub":\s*"node --experimental-strip-types --no-warnings scripts\/test-interview-preparation-hub\.mjs"/.test(packageJson)],
+  // --- Part 2: /interview-playbook privacy boundary ---------------------------
+  ["privacy routes: /interview-playbook is registered in PRIVATE_ROUTE_PREFIXES", privacyRoutesSource.includes('"/interview-playbook"')],
+  ["privacy regression script: asserts /interview-playbook is private and /interview-tips/rounds/algorithmic-coding is public", privateRoutePrivacyScript.includes("/interview-playbook") && privateRoutePrivacyScript.includes("/interview-tips/rounds/algorithmic-coding")],
+  // --- Part 3: taxonomy suite runs in CI ---------------------------------------
+  ["CI: runs the interview execution taxonomy suite", ciWorkflow.includes("Test interview execution taxonomy") && ciWorkflow.includes("npm run test:interview-execution-taxonomy")],
   // --- Content integrity -------------------------------------------------------
   ["content integrity: no unauthorized outcome claims or quotas", ![playbookTiming, finalPreparationComponent, playbookPage].some((source) => /you will pass|likely to pass|readiness score|percent ready|confidence score|guarantee|must solve|problems per day/i.test(source))],
   ["content integrity: no unauthorized-AI guidance", ![playbookTiming, finalPreparationComponent, playbookPage].some((source) => /use (chatgpt|an ai tool|an llm)/i.test(source))],

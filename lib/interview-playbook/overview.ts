@@ -8,7 +8,13 @@
  * normalizes existing checklist-completion counts. It does not compute
  * readiness, a probability, or any score — see the module-level exclusions in
  * the Interview Playbook implementation notes.
+ *
+ * Round-taxonomy resolution (clarification state, execution-guide slugs)
+ * happens exactly once, in the query layer, and travels through this builder
+ * as plain input/output fields — this module never calls the canonical
+ * resolver itself.
  */
+import type { RoundExecutionGuideSlug } from "./round-execution.ts";
 
 export type InterviewPlaybookPreparationCount = Readonly<{
   completed: number;
@@ -29,6 +35,10 @@ export type InterviewPlaybookRoundInput = Readonly<{
   /** Whether this round is in a live/non-terminal status (not Completed or Cancelled). */
   active: boolean;
   modules: readonly string[];
+  /** Resolved once upstream by the canonical round-execution taxonomy. */
+  needsSignalClarification: boolean;
+  clarificationPrompt: string | null;
+  executionGuideSlugs: readonly RoundExecutionGuideSlug[];
 }>;
 
 export type InterviewPlaybookApplicationInput = Readonly<{
@@ -39,7 +49,10 @@ export type InterviewPlaybookApplicationInput = Readonly<{
   roleLevel: string | null;
   status: string;
   updatedAt: string;
-  active: boolean;
+  /** Not terminal (Offer/Accepted/Rejected/Withdrawn/Ghosted) — the open-pipeline definition. */
+  open: boolean;
+  /** A live or imminent interview process, not merely an open application (see `isActiveInterviewProcess`). */
+  interviewProcessActive: boolean;
   rounds: readonly InterviewPlaybookRoundInput[];
 }>;
 
@@ -74,6 +87,9 @@ export type InterviewPlaybookRoundSummary = Readonly<{
   result: string;
   state: InterviewPlaybookRoundState;
   modules: readonly string[];
+  needsSignalClarification: boolean;
+  clarificationPrompt: string | null;
+  executionGuideSlugs: readonly RoundExecutionGuideSlug[];
   preparationHref: string;
   preparation: InterviewPlaybookPreparationCount;
 }>;
@@ -86,7 +102,8 @@ export type InterviewPlaybookApplicationSummary = Readonly<{
   roleLevel: string | null;
   status: string;
   updatedAt: string;
-  active: boolean;
+  open: boolean;
+  interviewProcessActive: boolean;
   applicationHref: string;
   rounds: readonly InterviewPlaybookRoundSummary[];
   nextRound: InterviewPlaybookRoundSummary | null;
@@ -103,7 +120,12 @@ export type InterviewPlaybookPrimaryRoundReason =
 
 export type InterviewPlaybookOverviewBase = Readonly<{
   applications: readonly InterviewPlaybookApplicationSummary[];
-  activeApplications: readonly InterviewPlaybookApplicationSummary[];
+  /** All open (non-terminal) applications, regardless of interview-process state. */
+  openApplications: readonly InterviewPlaybookApplicationSummary[];
+  /** Open applications with a live or imminent interview process — the scope of the global round queues below. */
+  activeInterviewProcesses: readonly InterviewPlaybookApplicationSummary[];
+  /** Open applications with no interview process yet (Wishlist/Interested/Applied/On Hold with no live round). */
+  preInterviewApplications: readonly InterviewPlaybookApplicationSummary[];
   upcomingRounds: readonly InterviewPlaybookRoundSummary[];
   unscheduledRounds: readonly InterviewPlaybookRoundSummary[];
   overdueRounds: readonly InterviewPlaybookRoundSummary[];
@@ -166,6 +188,9 @@ function buildRoundSummary(
     result: round.result,
     state: classifyRoundState(round, now),
     modules: round.modules,
+    needsSignalClarification: round.needsSignalClarification,
+    clarificationPrompt: round.clarificationPrompt,
+    executionGuideSlugs: round.executionGuideSlugs,
     preparationHref: `/interviews/${round.id}/prepare`,
     preparation: roundPreparationCount(round.id, preparationCounts),
   };
@@ -224,7 +249,8 @@ function buildApplicationSummary(
     roleLevel: application.roleLevel,
     status: application.status,
     updatedAt: application.updatedAt,
-    active: application.active,
+    open: application.open,
+    interviewProcessActive: application.interviewProcessActive,
     applicationHref: `/applications/${application.id}`,
     rounds,
     nextRound: selectNextRound(rounds),
@@ -242,11 +268,16 @@ export function buildInterviewPlaybookOverview(
   const { now, preparationCounts } = input;
 
   // Preserve the input application order (`getApplications` already orders by
-  // most recently updated).
+  // most recently updated) across every derived list below.
   const applications = input.applications.map((application) => buildApplicationSummary(application, now, preparationCounts));
-  const activeApplications = applications.filter((application) => application.active);
+  const openApplications = applications.filter((application) => application.open);
+  const activeInterviewProcesses = applications.filter((application) => application.interviewProcessActive);
+  const preInterviewApplications = openApplications.filter((application) => !application.interviewProcessActive);
 
-  const upcomingRounds = activeApplications
+  // Global round queues are scoped to a live/imminent interview process, not
+  // merely an open application — a Wishlist or Applied role with no round has
+  // nothing to queue yet (see `isActiveInterviewProcess`).
+  const upcomingRounds = activeInterviewProcesses
     .flatMap((application) => application.rounds.filter((round) => round.state === "upcoming"))
     .sort((a, b) => {
       const left = parseScheduledAt(a.scheduledAt) ?? Number.POSITIVE_INFINITY;
@@ -254,12 +285,12 @@ export function buildInterviewPlaybookOverview(
       return left - right || compareByRoundNumberThenId(a, b);
     });
 
-  const unscheduledRounds = activeApplications
+  const unscheduledRounds = activeInterviewProcesses
     .flatMap((application) => application.rounds.filter((round) => round.state === "unscheduled").map((round) => ({ round, appUpdatedAt: application.updatedAt })))
     .sort((a, b) => b.appUpdatedAt.localeCompare(a.appUpdatedAt) || compareByRoundNumberThenId(a.round, b.round))
     .map((entry) => entry.round);
 
-  const overdueRounds = activeApplications
+  const overdueRounds = activeInterviewProcesses
     .flatMap((application) => application.rounds.filter((round) => round.state === "overdue"))
     .sort((a, b) => {
       const left = parseScheduledAt(a.scheduledAt) ?? Number.NEGATIVE_INFINITY;
@@ -276,7 +307,9 @@ export function buildInterviewPlaybookOverview(
 
   return {
     applications,
-    activeApplications,
+    openApplications,
+    activeInterviewProcesses,
+    preInterviewApplications,
     upcomingRounds,
     unscheduledRounds,
     overdueRounds,

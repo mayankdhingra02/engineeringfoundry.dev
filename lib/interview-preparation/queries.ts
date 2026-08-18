@@ -6,7 +6,7 @@ import { hasCompanyGuide } from "@/lib/applications/options";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { PrivateDataUnavailableError } from "@/lib/persistence/errors";
 import type { Application, InterviewPreparation, InterviewPreparationCustomTask, InterviewRound } from "@/lib/supabase/database.types";
-import { checklistForRound, modulesForRound, resolvePreparationCompanySlug, roadmapLevelForRole } from "./model";
+import { checklistForRound, resolveRoundPreparationContext, resolvePreparationCompanySlug, roadmapLevelForRole } from "./model";
 
 type OwnedRound = InterviewRound & { application: Pick<Application, "id" | "company_name" | "company_slug" | "role_title" | "role_level" | "status"> };
 
@@ -26,7 +26,8 @@ export async function getInterviewPreparationHub(roundId: string) {
   if (!roundData) return null;
 
   const round = roundData as unknown as OwnedRound;
-  const modules = modulesForRound(round.round_type);
+  const roundContext = resolveRoundPreparationContext(round.round_type);
+  const modules = roundContext.modules;
   const companySlug = resolvePreparationCompanySlug(round.application.company_slug);
   const includeDsa = modules.includes("dsa");
   const includeBehavioral = modules.includes("behavioral");
@@ -89,6 +90,7 @@ export async function getInterviewPreparationHub(roundId: string) {
 
   return {
     round,
+    roundContext,
     modules,
     preparation,
     tasks,

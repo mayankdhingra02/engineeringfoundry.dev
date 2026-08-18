@@ -75,6 +75,7 @@ for (const route of [
   "/settings/privacy",
   "/onboarding",
   "/system-design/practice",
+  "/interview-playbook",
 ]) {
   check(`private: ${route}`, isPrivateRoute(route));
 }
@@ -97,6 +98,9 @@ for (const route of [
   "/interview-experiences/google",
   "/u/some-public-username",
   "/resources",
+  "/interview-tips",
+  "/interview-tips/rounds",
+  "/interview-tips/rounds/algorithmic-coding",
 ]) {
   check(`public: ${route}`, !isPrivateRoute(route));
 }

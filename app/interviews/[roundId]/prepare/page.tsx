@@ -8,7 +8,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 */
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BellRing, BookOpenCheck, Boxes, Building2, CalendarClock, Code2, ExternalLink, ListChecks, MessageSquareText, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BellRing, BookOpenCheck, Boxes, Building2, CalendarClock, Code2, Compass, ExternalLink, ListChecks, MessageSquareText, TriangleAlert, UserRound } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AccountUnavailable } from "@/components/account-unavailable";
 import { addPreparationTaskAction, deletePreparationTaskAction, savePreparationNotesAction, savePreparationReflectionAction, togglePreparationChecklistAction, togglePreparationTaskAction } from "@/features/interview-preparation/actions";
@@ -20,6 +20,7 @@ import { requireMemberProfile } from "@/lib/auth/guards";
 import { chooseRoundPreparationNextAction } from "@/lib/interview-preparation/next-action";
 import { getInterviewPreparationHub } from "@/lib/interview-preparation/queries";
 import { getRoundReminderStates } from "@/lib/interview-calendar/queries";
+import { getRoundExecutionGuide, roundExecutionGuideHref } from "@/lib/interview-playbook/round-execution-presentation";
 
 export const metadata: Metadata = { title: "Interview preparation", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -30,7 +31,10 @@ export default async function InterviewPreparationPage({ params }: { params: Pro
   await requireMemberProfile(`/interviews/${roundId}/prepare`);
   const hub = await getInterviewPreparationHub(roundId);
   if (!hub) notFound();
-  const { round, preparation, tasks, checklist } = hub;
+  const { round, roundContext, preparation, tasks, checklist } = hub;
+  const executionGuides = roundContext.executionGuideSlugs
+    .map((slug) => getRoundExecutionGuide(slug))
+    .filter((guide): guide is NonNullable<typeof guide> => guide !== null);
   const reminderState = (await getRoundReminderStates([round.id])).get(round.id)?.filter((item) => item.status === "pending") ?? [];
   const applicationId = round.application.id;
   const completedIds = preparation?.completed_template_item_ids ?? [];
@@ -54,9 +58,12 @@ export default async function InterviewPreparationPage({ params }: { params: Pro
     <header className="prep-flight-band"><div><h1>{round.application.company_name} — {round.application.role_title}</h1><p>{round.round_type} · {round.round_name}</p></div><dl><div><dt>Interview</dt><dd>{formatInterviewDate(round.scheduled_at, round.timezone)}</dd></div><div><dt>Timing</dt><dd>{round.scheduled_at ? formatCountdown(round.scheduled_at, round.timezone) : "Not scheduled"}</dd></div>{round.duration_minutes && <div><dt>Duration</dt><dd>{round.duration_minutes} minutes</dd></div>}</dl></header>
     {stateLabel && <aside className={`prep-lifecycle ${round.status.toLowerCase()}`}><CalendarClock size={18} /><p>{stateLabel}</p></aside>}
     {round.scheduled_at && round.status !== "Cancelled" && <aside className="prep-calendar-cue"><BellRing size={18} /><div><strong>{reminderState.length ? `${reminderState.length} reminders scheduled` : "No reminders scheduled"}</strong><p>Calendar exports are manual snapshots. Re-export after a reschedule.</p></div><nav><a href={`/api/calendar/interviews/${round.id}/ics`}>Download .ics</a><a href={`/api/calendar/interviews/${round.id}/google`} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a><Link href="/settings/interviews">Reminder settings</Link></nav></aside>}
+    {roundContext.needsSignalClarification && <aside className="prep-lifecycle"><TriangleAlert size={18} /><p><strong>Round focus needs confirmation.</strong> {roundContext.clarificationPrompt} <Link href={`/applications/${applicationId}/rounds/${round.id}/edit`}>Update round details</Link></p></aside>}
     <section className="prep-next-action" aria-labelledby="prep-next-heading"><div><h2 id="prep-next-heading">Continue with the most useful preparation.</h2><p>Recommendations are selected from this round type, your saved progress, and reliable application context.</p></div><Link className="button" href={primary.href}>{primary.label}<ArrowRight size={15} /></Link></section>
 
     <div className="prep-grid"><div className="prep-route" aria-label="Round preparation route">
+      {executionGuides.length > 0 && <section className="prep-module"><header><Compass size={21} /><div><h2>Round execution</h2><p>Canonical execution guidance for this round’s confirmed signals</p></div></header><ul>{executionGuides.map((guide) => <li key={guide.slug}><Link href={roundExecutionGuideHref(guide.slug)}><span><strong>{guide.title}</strong><small>{guide.description}</small></span><ArrowRight size={14} /></Link></li>)}</ul></section>}
+
       {hub.dsa && <section className="prep-module"><header><Code2 size={21} /><div><h2>DSA route</h2><p>{hub.dsa.roadmapLevel === "sde3plus" ? "SDE III+" : hub.dsa.roadmapLevel.toUpperCase()} focus · saved review and company-relevant questions first</p></div><Link href={`/dsa/practice?${context}`}>Open practice<ArrowRight size={14} /></Link></header>{hub.dsa.recommendations.length ? <ol>{hub.dsa.recommendations.map(({ question, progress: item }) => <li key={question.id}><Link href={`/dsa/questions/${question.id}?${context}`}><span><strong>{question.title}</strong><small>{question.difficulty} · {question.topics.slice(0, 2).join(" · ")}</small></span><span className="prep-item-state">{item?.status === "review" ? "Review" : item?.bookmarked ? "Bookmarked" : item?.status === "attempted" ? "Attempted" : "Company match"}</span></Link></li>)}</ol> : <div className="prep-empty-inline"><p>No saved or reliable company-matched questions yet.</p><Link href={`/dsa/questions?${context}`}>Choose from the question library</Link></div>}</section>}
 
       {hub.systemDesign && <section className="prep-module"><header><Boxes size={21} /><div><h2>System Design route</h2><p>Saved attempts and concepts that deserve another pass</p></div><Link href={`/system-design/practice?${context}`}>Open practice<ArrowRight size={14} /></Link></header>{hub.systemDesign.attempts.length > 0 && <div className="prep-subroute"><h3>Attempts to review</h3><ul>{hub.systemDesign.attempts.map((attempt) => <li key={attempt.id}><Link href={`/system-design/problems/${attempt.problem_id}/practice/${attempt.id}`}><span><strong>{attempt.title}</strong><small>{attempt.application_id === applicationId ? "Linked to this application" : "Recent practice"}</small></span><span className="prep-item-state">{attempt.status}</span></Link></li>)}</ul></div>}<div className="prep-subroute"><h3>Concept pass</h3><ul>{hub.systemDesign.concepts.map((concept) => <li key={concept!.id}><Link href={concept!.href}><span><strong>{concept!.title}</strong><small>{concept!.category} · {concept!.estimatedMinutes} min</small></span><ArrowRight size={14} /></Link></li>)}</ul></div></section>}
