@@ -9,7 +9,7 @@ import { PageHero, SectionHeading } from "./page-shell";
 
 const trackLinks: Record<string, { href: string; label: string }> = {
   Coding: { href: "/dsa", label: "Open the DSA roadmap" },
-  "System Design": { href: "/system-design", label: "Practice System Design" },
+  "System Design": { href: "/system-design/start-here/introduction", label: "Practice System Design" },
   "ML Design": { href: "/ml-design", label: "Practice ML Design" },
   Behavioral: { href: "/behavioral", label: "Practice behavioral prompts" },
 };
@@ -24,14 +24,15 @@ export function InterviewPlaybook() {
   }
 
   return <>
-    <PageHero eyebrow="Software engineering interview playbook" title="A calmer plan for every stage of the interview." description="Use concise guidance and session-only checklists for preparation, coding, design, behavioral conversations, recovery, and follow-up.">
-      <a className="button" href="#playbook">Open the playbook <ArrowRight size={16} /></a>
-      <a className="button button-secondary" href="#checklists">Run a readiness check</a>
+    <PageHero eyebrow="Software engineering interview execution guide" title="Turn preparation into clear interview execution." description="Use concise, adaptable guidance for clarifying prompts, communicating decisions, recovering from mistakes, validating work, and handling interview-day logistics.">
+      <a className="button" href="#playbook">Open the execution guide <ArrowRight size={16} /></a>
+      <Link className="button button-secondary" href="/interview-tips/rounds">Browse round guides</Link>
+      <a className="button button-secondary" href="#checklists">Open final-preparation checklists</a>
     </PageHero>
 
     <section className="section playbook-map-section"><div className="page-width">
-      <SectionHeading eyebrow="Interview-day map" title="Know the next useful move without memorizing secret phrases." description="Each section focuses on observable habits. Adapt the sequence to the format and instructions you actually receive." />
-      <nav className="playbook-map" aria-label="Interview playbook sections">{interviewPlaybookSections.map((section, index) => <a href={`#${section.id}`} key={section.id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{section.title}</strong><small>{section.count} {section.count === 1 ? "guide" : "guides"}</small></a>)}</nav>
+      <SectionHeading eyebrow="Round execution map" title="Know the next useful move without memorizing scripts." description="Each section focuses on observable interview behavior. Adapt the sequence to the actual format and instructions you receive." />
+      <nav className="playbook-map" aria-label="Interview execution guide sections">{interviewPlaybookSections.map((section, index) => <a href={`#${section.id}`} key={section.id}><span>{String(index + 1).padStart(2, "0")}</span><strong>{section.title}</strong><small>{section.count} {section.count === 1 ? "guide" : "guides"}</small></a>)}</nav>
     </div></section>
 
     <section className="section section-alt" id="playbook"><div className="page-width playbook-sections">
@@ -39,14 +40,14 @@ export function InterviewPlaybook() {
         const items = activeInterviewTips.filter((tip) => tip.category === section.title);
         const related = trackLinks[section.title];
         return <section className="playbook-section" id={section.id} key={section.id} aria-labelledby={`${section.id}-title`}>
-          <header><span>{String(index + 1).padStart(2, "0")}</span><div><small>Playbook section</small><h2 id={`${section.id}-title`}>{section.title}</h2></div>{related && <Link href={related.href}>{related.label} <ArrowRight size={14} /></Link>}</header>
+          <header><span>{String(index + 1).padStart(2, "0")}</span><div><small>Execution section</small><h2 id={`${section.id}-title`}>{section.title}</h2></div>{related && <Link href={related.href}>{related.label} <ArrowRight size={14} /></Link>}</header>
           <div className="playbook-tip-grid">{items.map((tip) => <details key={tip.id} onToggle={(event) => { if (event.currentTarget.open) track("interview_playbook_section_viewed", { section: section.id, tip_id: tip.id }); }}><summary><span className="icon-well">{section.title === "Coding" ? <Code2 size={18} /> : section.title.includes("Design") ? <Waypoints size={18} /> : section.title === "Communication" ? <MessageCircle size={18} /> : section.title === "Recovering When Stuck" ? <RotateCcw size={18} /> : <CircleDot size={18} />}</span><span><strong>{tip.title}</strong><small>{tip.whyItMatters}</small></span></summary><div><h3>Do this</h3><ul>{tip.guidance.map((item) => <li key={item}><CheckCircle2 size={14} />{item}</li>)}</ul><h3>Avoid</h3><ul>{tip.avoid.map((item) => <li key={item}><CircleDot size={12} />{item}</li>)}</ul></div></details>)}</div>
         </section>;
       })}
     </div></section>
 
     <section className="section" id="checklists"><div className="page-width">
-      <SectionHeading eyebrow="Interactive readiness checks" title="Useful for this session. Gone on refresh." description="These checkboxes live only in browser memory. They are not stored locally, sent to Supabase, or treated as personal progress." />
+      <SectionHeading eyebrow="Final-preparation checklists" title="Useful for this session. Gone on refresh." description="These checkboxes live only in browser memory. They are not stored locally, sent to Supabase, or treated as personal progress or readiness evidence." />
       <div className="session-only-banner"><ShieldCheck size={18} aria-hidden="true" /><span><strong>Session only — not saved</strong> Refreshing or leaving the page may clear every check.</span></div>
       <div className="interview-checklist-grid">{activeInterviewChecklists.map((checklist) => <fieldset key={checklist.id}><legend><small>{checklist.timing}</small><span>{checklist.title}</span></legend><p>{checklist.description}</p><div>{checklist.items.map((item) => { const key = `${checklist.id}:${item.id}`; return <label key={item.id}><input type="checkbox" checked={Boolean(checked[key])} onChange={(event) => toggle(checklist.id, item.id, event.target.checked)} /><span><CheckCircle2 size={16} aria-hidden="true" />{item.label}</span></label>; })}</div></fieldset>)}</div>
     </div></section>

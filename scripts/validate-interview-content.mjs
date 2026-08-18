@@ -9,7 +9,7 @@ const resourceCategories = new Set(["DSA", "System Design", "ML / AI", "Behavior
 const resourceTypes = new Set(["Practice Platform", "Guide", "Course", "Book", "Documentation", "Repository", "Visualization", "Roadmap"]);
 const resourceAccess = new Set(["Free", "Paid", "Freemium"]);
 const resourceVerification = new Set(["verified", "unverified", "needs_review"]);
-const internalPaths = new Set(["/dsa", "/system-design", "/ml-design", "/behavioral", "/interview-tips"]);
+const internalPaths = new Set(["/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral", "/interview-tips"]);
 const trackingParams = /^(utm_.+|ref|referrer|affiliate|aff|source)$/i;
 
 const nonEmptyString = (value) => typeof value === "string" && value.trim().length > 0;

@@ -1,26 +1,41 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ArrowRight, Binary, BookOpen, Building2, MessagesSquare, Network, Quote, ShieldCheck, Users } from "lucide-react";
 import { AnalyticsEventOnMount } from "@/components/analytics-event";
 import { PageHero, SectionHeading, StatusPill } from "@/components/page-shell";
 import { QuestionList } from "@/components/question-list";
+import { CompanyGuideWorkspace } from "@/features/company-guides/company-guide-workspace";
 import { companies, getCompany } from "@/data/companies";
+import { amazonGuide, googleGuide, metaGuide, walmartGuide } from "@/data/company-guides";
+import type { CompanyInterviewGuide } from "@/data/company-guides";
 import { questionsForCompany } from "@/data/dsa";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const dynamicParams = false;
 export function generateStaticParams() { return companies.map((company) => ({ slug: company.slug })); }
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> { const { slug } = await params; const company = getCompany(slug); if (!company) notFound(); return createPageMetadata({ title: `${company.name} Engineering Interview Preparation Guide`, description: `A neutral ${company.name} preparation hub with general DSA, System Design, behavioral, experience, and future attributed company-specific resources.`, path: `/companies/${company.slug}` }); }
+const interviewGuides: Partial<Record<string, CompanyInterviewGuide>> = { amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide };
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params; const company = getCompany(slug); if (!company) notFound();
+  if (slug === "amazon") return createPageMetadata({ title: "Amazon SDE Interview Guide 2026 — SDE I, II & III", description: "Prepare for Amazon SDE I, SDE II, and Senior SDE interviews with round breakdowns, coding topics, system design, Leadership Principles, reported questions, and preparation roadmaps.", path: "/companies/amazon" });
+  if (slug === "google") return createPageMetadata({ title: "Google Software Engineer Interview Guide 2026 — L3, L4 & L5", description: "Prepare for Google L3, L4, and L5 software engineering interviews with coding patterns, interview-round breakdowns, system design, Googliness & Leadership, reported questions, and preparation roadmaps.", path: "/companies/google" });
+  if (slug === "meta") return createPageMetadata({ title: "Meta Software Engineer Interview Guide 2026 — E3, E4 & E5", description: "Prepare for Meta E3, E4, and E5 software engineering interviews with coding questions, system design, behavioral preparation, recent interview experiences, and level-specific roadmaps.", path: "/companies/meta" });
+  if (slug === "walmart") return createPageMetadata({ title: "Walmart Software Engineer Interview Guide 2026", description: "Prepare for Walmart Global Tech software engineering interviews with coding questions, LLD, system design, backend fundamentals, recent interview experiences, and level-specific preparation roadmaps.", path: "/companies/walmart" });
+  return createPageMetadata({ title: `${company.name} Engineering Interview Preparation Guide`, description: `A neutral ${company.name} preparation hub with general DSA, System Design, behavioral, experience, and future attributed company-specific resources.`, path: `/companies/${company.slug}` });
+}
 
 const generalTracks = [
   { icon: Binary, title: "DSA roadmap", text: "Build pattern recognition with a staged public practice path.", href: "/dsa", cta: "Open DSA roadmap" },
-  { icon: Network, title: "System Design", text: "Practice scope, architecture, tradeoffs, and operational reasoning.", href: "/system-design", cta: "Open System Design" },
+  { icon: Network, title: "System Design", text: "Practice scope, architecture, tradeoffs, and operational reasoning.", href: "/system-design/start-here/introduction", cta: "Open System Design" },
   { icon: MessagesSquare, title: "Behavioral preparation", text: "Structure evidence-based stories around decisions, impact, and collaboration.", href: "/behavioral", cta: "Open Behavioral" },
 ];
 
 export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params; const company = getCompany(slug); if (!company) notFound();
+  const interviewGuide = interviewGuides[company.slug];
+  if (interviewGuide) return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} /><Suspense fallback={<div className="page-width company-guide-loading" role="status" aria-live="polite">Loading {company.name} interview workspace…</div>}><CompanyGuideWorkspace guide={interviewGuide} /></Suspense></>;
   const associatedQuestions = questionsForCompany(company.slug);
   return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} />
     <PageHero eyebrow="Company preparation hub" title={`${company.name} engineering interview preparation`} description="A useful starting point for general preparation and a future home for company-specific material that has clear public or moderated community provenance."><StatusPill tone="accent">Curation in progress</StatusPill></PageHero>

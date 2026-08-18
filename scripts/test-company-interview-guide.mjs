@@ -1,0 +1,118 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+
+const data = fs.readFileSync("data/company-guides/amazon.ts", "utf8");
+const googleData = fs.readFileSync("data/company-guides/google.ts", "utf8");
+const metaData = fs.readFileSync("data/company-guides/meta.ts", "utf8");
+const walmartData = fs.readFileSync("data/company-guides/walmart.ts", "utf8");
+const types = fs.readFileSync("data/company-guides/types.ts", "utf8");
+const route = fs.readFileSync("app/companies/[slug]/page.tsx", "utf8");
+const workspace = fs.readFileSync("features/company-guides/company-guide-workspace.tsx", "utf8");
+const questionBank = fs.readFileSync("features/company-guides/question-bank.tsx", "utf8");
+const evidenceBadge = fs.readFileSync("features/company-guides/evidence-badge.tsx", "utf8");
+
+assert.match(route, /amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide/, "Amazon, Google, Meta, and Walmart must use the same guide workspace registry");
+assert.match(route, /Amazon SDE Interview Guide 2026/, "Amazon must have dedicated SEO metadata");
+assert.match(route, /Google Software Engineer Interview Guide 2026/, "Google must have dedicated SEO metadata");
+assert.match(route, /Meta Software Engineer Interview Guide 2026/, "Meta must have dedicated SEO metadata");
+assert.match(route, /Walmart Software Engineer Interview Guide 2026/, "Walmart must have dedicated SEO metadata");
+assert.match(workspace, /guide\.defaultLevel/, "each company must provide its own default level lens");
+assert.ok(workspace.indexOf('id="levels"') < workspace.indexOf('id="overview"'), "level choice must appear before the comparison overview");
+assert.match(workspace, /company-level-summary-grid.*role="group".*aria-pressed.*chooseLevel/s, "top level cards must be interactive selectors");
+assert.match(workspace, /id="company-guide-switcher"/, "company guide must expose a company switcher");
+assert.match(workspace, /companies\.map/, "company switcher must list every company");
+assert.match(workspace, /companyLevelOrder[\s\S]*amazon:[\s\S]*google:[\s\S]*meta:[\s\S]*walmart:/, "company switching must preserve the equivalent preparation lens across populated guides");
+assert.match(workspace, /onChange=\{\(event\) => chooseCompany\(event\.target\.value\)\}/, "company switcher must use the context-preserving shared navigation helper");
+assert.match(workspace, /Understand the loop[\s\S]*Practice[\s\S]*Build your stories[\s\S]*Make a plan/, "company guides must expose the four primary preparation jobs in order");
+assert.match(workspace, /company-guide-index[\s\S]*Full guide index/, "deep company research must remain reachable through a progressive full-guide index");
+assert.match(workspace, /Your \{role\.level\} interview brief/, "the first preparation surface must summarize the selected level");
+assert.match(workspace, /Prepare these first/, "the first preparation surface must expose prioritized preparation guidance");
+assert.match(workspace, /Must prepare[\s\S]*Important[\s\S]*Useful if time permits/, "practice tiers must have clear neutral priority labels");
+assert.match(workspace, /ProcessPipeline role=\{role\} compact/, "the first preparation surface must include the company and level-specific loop");
+assert.match(workspace, /kind="recommendation" confidence="Medium" compact/, "derived preparation priorities must remain labeled as Engineering Foundry recommendations");
+assert.match(workspace, /id="full-guide"[\s\S]*Nothing has been removed/, "research depth must be preserved behind progressive disclosure");
+assert.match(workspace, /href=\{`\/dsa\/practice\?company=\$\{guide\.slug\}`\}/, "practice must route into the shared DSA workspace with company context");
+assert.match(workspace, /href="\/behavioral"/, "story preparation must link to, not duplicate, the full Behavioral workspace");
+assert.match(evidenceBadge, /Official company source/, "official evidence must be visibly labeled without hard-coding one company");
+assert.match(evidenceBadge, /Candidate report/, "candidate evidence must be visibly labeled");
+assert.match(evidenceBadge, /EF recommendation/, "recommendations must be visibly labeled");
+assert.match(questionBank, /All levels/, "question bank must expose a level filter");
+assert.match(questionBank, /All seniority/, "question bank must expose a normalized seniority filter");
+assert.match(questionBank, /All topics/, "question bank must expose a topic filter");
+assert.match(questionBank, /All patterns/, "question bank must expose a pattern filter");
+assert.match(questionBank, /All difficulties/, "question bank must expose a difficulty filter");
+assert.match(questionBank, /All sources/, "question bank must expose a source filter");
+assert.match(questionBank, /All confidence/, "question bank must expose a source-confidence filter");
+assert.match(questionBank, /All years/, "question bank must expose a year filter");
+assert.match(questionBank, /company-question-more-filters/, "secondary question-bank filters must use progressive disclosure");
+assert.match(questionBank, /role="status" aria-live="polite"/, "question-bank result changes must be announced");
+assert.match(questionBank, /disabled=\{!hasActiveFilters\}/, "question-bank reset must be unavailable when it would be a no-op");
+assert.match(questionBank, /Source URL pending/, "missing candidate-report URLs must be disclosed rather than fabricated");
+assert.match(types, /interface InterviewLoop[\s\S]*baseline: boolean/, "shared schema must support baseline loops plus variants");
+assert.match(types, /QuestionMatch = "Exact" \| "Similar" \| "Same pattern" \| "Unknown"/, "question schema must distinguish exact and analogous reports");
+assert.match(types, /lastReported\?: string[\s\S]*recentSixMonthCount\?: number[\s\S]*oneYearCount\?: number[\s\S]*sourceCount\?: number/, "question schema must reserve future recency and aggregation fields");
+assert.match(types, /interface CodingRoundFormat[\s\S]*timing:/, "shared schema must support timed coding-round formats");
+assert.match(types, /interface DesignTrack[\s\S]*focus:/, "shared schema must support company design tracks");
+assert.match(types, /interface GeographyContext[\s\S]*processCaveats:/, "shared schema must support optional geography context");
+assert.match(types, /interface PracticalEngineeringGuide[\s\S]*categories:/, "shared schema must support practical engineering modules");
+assert.match(workspace, /id="geography"[\s\S]*GeographySelector/, "geography-aware guides must render the shared selector before level interpretation");
+assert.match(workspace, /visibleQuestions/, "geography context must filter questions with location metadata");
+assert.match(data, /4 × 55-minute loop/, "official SDE II loop baseline must be present");
+assert.match(data, /5 × 55-minute loop/, "official SDE III loop baseline must be present");
+assert.match(data, /does not show a standard OA/, "SDE III published-flow distinction must be present");
+assert.match(data, /not a universal round/, "emerging GenAI reporting must be qualified");
+assert.doesNotMatch(data, /downlevel.*%/i, "guide must not invent downlevel percentages");
+assert.doesNotMatch(data, /chance Amazon asks/i, "guide must not invent question probabilities");
+
+assert.match(googleData, /defaultLevel: "l4"/, "Google must default to L4");
+assert.match(googleData, /role: "SWE III"[\s\S]{0,100}careerStage: "Mid-Level"/, "Google SWE III must be labeled mid-level");
+assert.doesNotMatch(googleData, /role: "SWE III"[\s\S]{0,100}careerStage: "Senior"/, "Google SWE III must never be called senior");
+assert.match(googleData, /Dedicated system design is not a universal generalist L4 requirement/, "L4 design variability must be explicit");
+assert.match(googleData, /Senior does not mean system design only/, "L5 must retain a strong coding bar");
+assert.match(googleData, /Google Interview Execution Framework/, "Google plain-editor execution framework must be present");
+assert.match(googleData, /three coding evaluations, one system-design evaluation, and one Googliness/, "L5 corroborated loop baseline must be present");
+assert.match(googleData, /team matching and hiring review as variable/, "post-loop sequence variability must be explicit");
+assert.match(googleData, /limited Gemini-assisted interview pilots/, "AI-assisted interviewing must be labeled as a limited watch item");
+assert.doesNotMatch(googleData, /Google asks .*% of the time/i, "Google guide must not invent question frequencies");
+assert.doesNotMatch(googleData, /pass rate|downlevel probability/i, "Google guide must not invent outcome statistics");
+
+assert.match(metaData, /defaultLevel: "e4"/, "Meta must default to E4");
+assert.match(metaData, /The Meta 2-in-45 Challenge/, "Meta coding-speed spotlight must be present");
+assert.match(metaData, /Neither two questions nor exactly 45 minutes is an official universal guarantee/, "Meta coding format must be carefully qualified");
+assert.match(metaData, /two coding interviews, one design interview, and one behavioral interview/, "Meta E4 baseline must be present");
+assert.match(metaData, /Same categories, higher seniority bar/, "Meta E5 must emphasize bar rather than overstating structural differences");
+assert.match(metaData, /Meta-Tagged Questions Matter More Here/, "Meta tagged-question strategy must be present");
+assert.match(metaData, /Do not memorize implementations/, "Meta tagged-question strategy must reject memorization");
+assert.match(metaData, /title: "Product SWE"[\s\S]*title: "Infrastructure SWE"/, "Meta design tracks must include product and infrastructure lenses");
+assert.match(metaData, /2-in-45 success rate/, "Meta readiness scorecard must track two-question completion");
+assert.doesNotMatch(metaData, /pass rate|downlevel probability/i, "Meta guide must not invent outcome statistics");
+assert.doesNotMatch(metaData, /Meta asks .*% of the time/i, "Meta guide must not invent question frequencies");
+
+assert.match(walmartData, /defaultLevel: "mid"/, "Walmart must default to the Mid preparation band");
+assert.match(walmartData, /Walmart titles vary by geography/, "Walmart title ambiguity callout must be present");
+assert.match(walmartData, /SDE-2 may be entry-level in some organizations/, "India SDE-2 caveat must be explicit");
+assert.match(walmartData, /Recruiter instructions and the actual job description always override/, "Walmart geography mapping must defer to candidate-specific instructions");
+assert.match(walmartData, /House Robber II[\s\S]*sourceConfidence: "Corroborated"/, "repeated Walmart questions must receive stronger evidence labels");
+assert.match(walmartData, /Don’t Prepare With LeetCode Alone/, "Walmart practical backend section must be present");
+assert.match(walmartData, /practice domains—not necessarily reported Walmart prompts/, "Walmart design practice must not be presented as leaked questions");
+assert.match(walmartData, /Coding \/ DSA", value: 55[\s\S]*Architecture \/ design", value: 40/, "Walmart allocations must preserve level-specific recommendations");
+assert.doesNotMatch(walmartData, /Walmart asks .*% of the time/i, "Walmart guide must not invent question probabilities");
+assert.doesNotMatch(walmartData, /pass rate|downlevel probability/i, "Walmart guide must not invent outcome statistics");
+
+const sourceUrls = [...data.matchAll(/https:\/\/[^"\s]+/g)].map((match) => match[0]);
+assert.ok(sourceUrls.length >= 10, "guide should include a useful source set");
+for (const url of sourceUrls) assert.doesNotMatch(url, /example\.com|placeholder/i, `source must not be a placeholder: ${url}`);
+
+const googleSourceUrls = [...googleData.matchAll(/https:\/\/[^"\s]+/g)].map((match) => match[0]);
+assert.ok(googleSourceUrls.length >= 7, "Google guide should include official and primary-source resources");
+for (const url of googleSourceUrls) assert.doesNotMatch(url, /example\.com|placeholder/i, `Google source must not be a placeholder: ${url}`);
+
+const metaSourceUrls = [...metaData.matchAll(/https:\/\/[^"\s]+/g)].map((match) => match[0]);
+assert.ok(metaSourceUrls.length >= 2, "Meta guide should include verified official resources");
+for (const url of metaSourceUrls) assert.doesNotMatch(url, /example\.com|placeholder/i, `Meta source must not be a placeholder: ${url}`);
+
+const walmartSourceUrls = [...walmartData.matchAll(/https:\/\/[^"\s]+/g)].map((match) => match[0]);
+assert.ok(walmartSourceUrls.length >= 4, "Walmart guide should include verified official resources");
+for (const url of walmartSourceUrls) assert.doesNotMatch(url, /example\.com|placeholder/i, `Walmart source must not be a placeholder: ${url}`);
+
+console.log("Company interview guide integrity checks passed.");

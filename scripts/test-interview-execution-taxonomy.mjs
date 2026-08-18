@@ -1,0 +1,705 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+  ROUND_EXECUTION_GUIDES,
+  ROUND_EXECUTION_GUIDE_BY_SLUG,
+  resolveRoundExecution,
+} from "../lib/interview-playbook/round-execution.ts";
+import {
+  ROUND_EXECUTION_GUIDE_GROUPS,
+  ROUND_EXECUTION_FRAMEWORK_STEPS,
+  TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES,
+  V1_ROUND_EXECUTION_GUIDES,
+  LATER_ROUND_EXECUTION_GUIDES,
+  getRoundExecutionGuide,
+  roundExecutionGuideHref,
+  roundExecutionRelatedLinkLabel,
+  roundExecutionTreatmentLabel,
+} from "../lib/interview-playbook/round-execution-presentation.ts";
+import {
+  ROUND_EXECUTION_DOSSIERS,
+  ROUND_EXECUTION_DOSSIER_BY_SLUG,
+  PUBLISHED_ROUND_EXECUTION_DOSSIERS,
+  getRoundExecutionDossier,
+} from "../lib/interview-playbook/round-execution-dossiers.ts";
+
+const root = process.cwd();
+const exists = (file) => { try { readFileSync(join(root, file), "utf8"); return true; } catch { return false; } };
+const source = readFileSync(join(root, "lib/interview-playbook/round-execution.ts"), "utf8");
+const presentationSource = readFileSync(join(root, "lib/interview-playbook/round-execution-presentation.ts"), "utf8");
+const quickReferenceComponentSource = readFileSync(join(root, "components/interview-playbook/round-execution-quick-reference.tsx"), "utf8");
+const roundsIndexPageSource = readFileSync(join(root, "app/interview-tips/rounds/page.tsx"), "utf8");
+const roundsDetailPageSource = readFileSync(join(root, "app/interview-tips/rounds/[slug]/page.tsx"), "utf8");
+const interviewPlaybookComponentSource = readFileSync(join(root, "components/interview-playbook.tsx"), "utf8");
+const sitemapExists = exists("app/sitemap.ts");
+const sitemapSource = sitemapExists ? readFileSync(join(root, "app/sitemap.ts"), "utf8") : null;
+const dossierModelSource = readFileSync(join(root, "lib/interview-playbook/round-execution-dossiers.ts"), "utf8");
+const dossierComponentSource = readFileSync(join(root, "components/interview-playbook/round-execution-dossier.tsx"), "utf8");
+const roundsDetailPageSourceAfterDossier = readFileSync(join(root, "app/interview-tips/rounds/[slug]/page.tsx"), "utf8");
+
+const cases = [];
+const check = (name, ok) => cases.push([name, Boolean(ok)]);
+const arraysEqual = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => v === b[i]);
+
+// --- Catalog tests -----------------------------------------------------
+const REQUIRED_ORDER = [
+  "recruiter-screen", "online-assessment", "take-home", "technical-screen",
+  "algorithmic-coding", "practical-coding", "debugging", "code-review",
+  "low-level-design", "system-design", "ml-system-design", "behavioral",
+  "project-deep-dive", "hiring-manager", "cross-functional", "technical-presentation",
+];
+
+check("catalog has exactly 16 entries", ROUND_EXECUTION_GUIDES.length === 16);
+check("catalog slugs are unique", new Set(ROUND_EXECUTION_GUIDES.map((g) => g.slug)).size === ROUND_EXECUTION_GUIDES.length);
+check("catalog order matches the required order exactly", arraysEqual(ROUND_EXECUTION_GUIDES.map((g) => g.slug), REQUIRED_ORDER));
+check("exactly 15 entries have v1: true", ROUND_EXECUTION_GUIDES.filter((g) => g.v1 === true).length === 15);
+check("technical-presentation is the only v1: false entry", ROUND_EXECUTION_GUIDES.filter((g) => g.v1 === false).map((g) => g.slug).join(",") === "technical-presentation");
+check("exactly 12 entries use treatment complete", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "complete").length === 12);
+check("exactly two entries use treatment focused-variant", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "focused-variant").length === 2);
+check("exactly one entry uses treatment composition-shell", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "composition-shell").length === 1);
+check("exactly one entry uses treatment later", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "later").length === 1);
+check("no catalog slug contains forbidden substrings", ROUND_EXECUTION_GUIDES.every((g) => !/final|bar-raiser|onsite|mixed-signal/.test(g.slug)));
+check("ROUND_EXECUTION_GUIDE_BY_SLUG resolves every catalog entry", ROUND_EXECUTION_GUIDES.every((g) => ROUND_EXECUTION_GUIDE_BY_SLUG.get(g.slug) === g));
+check("every guide has complete non-empty fields", ROUND_EXECUTION_GUIDES.every((g) =>
+  g.title.trim().length > 0 && g.shortTitle.trim().length > 0 && g.description.trim().length > 0
+  && g.quickReference.firstMove.trim().length > 0 && g.quickReference.beforeDone.trim().length > 0
+  && g.quickReference.biggestTrap.trim().length > 0 && g.ownerBoundary.trim().length > 0));
+check("every related href begins with /", ROUND_EXECUTION_GUIDES.every((g) => g.relatedHrefs.every((href) => href.startsWith("/"))));
+check("the Low-Level Design guide does not invent a route", !ROUND_EXECUTION_GUIDE_BY_SLUG.get("low-level-design").relatedHrefs.some((href) => href === "/low-level-design" || href === "/lld"));
+check("no guide contains a company-specific process claim", !ROUND_EXECUTION_GUIDES.some((g) => /\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(`${g.description} ${g.ownerBoundary} ${g.quickReference.firstMove} ${g.quickReference.beforeDone} ${g.quickReference.biggestTrap}`)));
+check("no guide claims a readiness score or passing probability", !ROUND_EXECUTION_GUIDES.some((g) => /readiness score|passing probability|percent ready|confidence score/i.test(`${g.description} ${g.ownerBoundary}`)));
+check("no guide contains a universal minute allocation", !ROUND_EXECUTION_GUIDES.some((g) => /\b\d+\s*minutes?\b/i.test(`${g.description} ${g.quickReference.firstMove} ${g.quickReference.beforeDone} ${g.quickReference.biggestTrap} ${g.ownerBoundary}`)));
+
+// --- Current tracker-type tests -----------------------------------------
+function assertResolution(label, expected) {
+  const result = resolveRoundExecution(label);
+  if ("stage" in expected) check(`${label}: stage`, result.stage === expected.stage);
+  if ("modality" in expected) check(`${label}: modality`, result.modality === expected.modality);
+  if ("signals" in expected) check(`${label}: signals`, arraysEqual(result.signals, expected.signals));
+  if ("guideSlugs" in expected) check(`${label}: guideSlugs`, arraysEqual(result.guideSlugs, expected.guideSlugs));
+  if ("shell" in expected) check(`${label}: shell`, result.shell === expected.shell);
+  if ("confidence" in expected) check(`${label}: confidence`, result.confidence === expected.confidence);
+  if ("needsSignalClarification" in expected) check(`${label}: needsSignalClarification`, result.needsSignalClarification === expected.needsSignalClarification);
+  if ("clarificationPrompt" in expected) check(`${label}: clarificationPrompt`, result.clarificationPrompt === expected.clarificationPrompt);
+  return result;
+}
+
+assertResolution("Recruiter Screen", { stage: "recruiter-screen", guideSlugs: ["recruiter-screen"], shell: null, needsSignalClarification: false });
+assertResolution("Hiring Manager", { stage: "hiring-manager", signals: ["hiring-manager"], guideSlugs: ["hiring-manager"], shell: null, needsSignalClarification: false });
+assertResolution("Coding / DSA", { stage: "unknown", signals: ["algorithmic-coding"], guideSlugs: ["algorithmic-coding"], shell: null, needsSignalClarification: false });
+assertResolution("System Design", { stage: "unknown", signals: ["system-design"], guideSlugs: ["system-design"], shell: null, needsSignalClarification: false });
+assertResolution("Behavioral", { stage: "unknown", signals: ["behavioral"], guideSlugs: ["behavioral"], shell: null, needsSignalClarification: false });
+assertResolution("Machine Coding", { stage: "unknown", signals: ["practical-coding"], guideSlugs: ["practical-coding"], shell: null, needsSignalClarification: false });
+assertResolution("Debugging", { stage: "unknown", signals: ["debugging"], guideSlugs: ["debugging"], shell: null, needsSignalClarification: false });
+assertResolution("Domain / Technical", { stage: "technical-screen", signals: [], guideSlugs: [], shell: "technical-screen", confidence: "inferred", needsSignalClarification: true });
+assertResolution("Bar Raiser", { stage: "loop", signals: [], guideSlugs: [], shell: "mixed-signal", confidence: "inferred", needsSignalClarification: true });
+assertResolution("Take-home", { stage: "assessment", modality: "take-home", signals: [], guideSlugs: ["take-home"], shell: null, needsSignalClarification: false });
+assertResolution("Onsite / Virtual Onsite", { stage: "loop", modality: "live-remote", signals: [], guideSlugs: [], shell: "mixed-signal", confidence: "inferred", needsSignalClarification: true });
+assertResolution("Other", { stage: "unknown", modality: "unknown", signals: [], guideSlugs: [], shell: null, confidence: "unknown", needsSignalClarification: true });
+
+// --- Composition tests ---------------------------------------------------
+assertResolution("Technical phone screen", { stage: "technical-screen", modality: "live-remote", signals: [], guideSlugs: [], shell: "technical-screen", needsSignalClarification: true });
+assertResolution("Coding technical phone screen", { stage: "technical-screen", modality: "live-remote", signals: ["algorithmic-coding"], guideSlugs: ["algorithmic-coding"], shell: "technical-screen", needsSignalClarification: false });
+assertResolution("Coding + Behavioral Technical Screen", { signals: ["algorithmic-coding", "behavioral"], guideSlugs: ["algorithmic-coding", "behavioral"], shell: "technical-screen" });
+assertResolution("Practical Coding + DSA", { signals: ["algorithmic-coding", "practical-coding"], guideSlugs: ["algorithmic-coding", "practical-coding"] });
+assertResolution("Code Review and Debugging", { signals: ["debugging", "code-review"], guideSlugs: ["debugging", "code-review"] });
+assertResolution("ML System Design", { signals: ["ml-system-design"], guideSlugs: ["ml-system-design"] });
+assertResolution("Low-Level Design", { signals: ["low-level-design"], guideSlugs: ["low-level-design"] });
+assertResolution("Final System Design", { stage: "final", signals: ["system-design"], guideSlugs: ["system-design"], shell: "mixed-signal", needsSignalClarification: false });
+assertResolution("Virtual Onsite — Coding and System Design", { stage: "loop", modality: "live-remote", signals: ["algorithmic-coding", "system-design"], guideSlugs: ["algorithmic-coding", "system-design"], shell: "mixed-signal", needsSignalClarification: false });
+assertResolution("Onsite Project Deep Dive", { stage: "loop", modality: "onsite", signals: ["project-deep-dive"], guideSlugs: ["project-deep-dive"], shell: "mixed-signal", needsSignalClarification: false });
+assertResolution("Technical Presentation", { modality: "presentation", signals: ["technical-presentation"], guideSlugs: ["technical-presentation"], confidence: "explicit" });
+check("Technical Presentation guide is marked v1: false", ROUND_EXECUTION_GUIDE_BY_SLUG.get("technical-presentation").v1 === false);
+
+assertResolution("", {
+  rawRoundType: "",
+  normalizedRoundType: "",
+  stage: "unknown",
+  modality: "unknown",
+  signals: [],
+  guideSlugs: [],
+  shell: null,
+  confidence: "unknown",
+  needsSignalClarification: true,
+  clarificationPrompt: "Ask the recruiter for the round's focus, format, expected artifact, tools, and duration before choosing a preparation guide.",
+});
+{
+  const empty = resolveRoundExecution("");
+  check("empty string: rawRoundType", empty.rawRoundType === "");
+  check("empty string: normalizedRoundType", empty.normalizedRoundType === "");
+}
+{
+  const whitespace = resolveRoundExecution("   \t  ");
+  check("whitespace-only input: unknown stage", whitespace.stage === "unknown");
+  check("whitespace-only input: unknown modality", whitespace.modality === "unknown");
+  check("whitespace-only input: normalizedRoundType is empty", whitespace.normalizedRoundType === "");
+  check("whitespace-only input: needsSignalClarification", whitespace.needsSignalClarification === true);
+}
+{
+  const repeated = resolveRoundExecution("Coding    /   DSA");
+  check("repeated spaces collapse in normalizedRoundType", repeated.normalizedRoundType === "coding / dsa");
+  check("repeated spaces: still resolves algorithmic-coding", arraysEqual(repeated.signals, ["algorithmic-coding"]));
+}
+{
+  const enDash = resolveRoundExecution("Virtual Onsite – Coding and System Design");
+  check("en dash normalizes to hyphen", enDash.normalizedRoundType.includes(" - "));
+  check("en dash: still resolves both signals", arraysEqual(enDash.signals, ["algorithmic-coding", "system-design"]));
+}
+{
+  const emDash = resolveRoundExecution("Virtual Onsite — Coding and System Design");
+  check("em dash normalizes to hyphen", emDash.normalizedRoundType.includes(" - "));
+  check("em dash: still resolves both signals", arraysEqual(emDash.signals, ["algorithmic-coding", "system-design"]));
+}
+{
+  const mixedCase = resolveRoundExecution("cOdInG TeChNiCaL pHoNe ScReEn");
+  check("mixed casing still resolves stage", mixedCase.stage === "technical-screen");
+  check("mixed casing still resolves signal", arraysEqual(mixedCase.signals, ["algorithmic-coding"]));
+}
+{
+  const duplicateKeywords = resolveRoundExecution("Coding Coding Coding Technical Screen");
+  check("duplicate keywords do not duplicate a signal", arraysEqual(duplicateKeywords.signals, ["algorithmic-coding"]));
+  check("duplicate keywords do not duplicate a guide slug", arraysEqual(duplicateKeywords.guideSlugs, ["algorithmic-coding"]));
+}
+
+// --- Conservative-inference tests ----------------------------------------
+check("Bar Raiser does not add behavioral", !resolveRoundExecution("Bar Raiser").signals.includes("behavioral"));
+check("Onsite / Virtual Onsite does not add coding", !resolveRoundExecution("Onsite / Virtual Onsite").signals.includes("algorithmic-coding"));
+check("Onsite / Virtual Onsite does not add System Design", !resolveRoundExecution("Onsite / Virtual Onsite").signals.includes("system-design"));
+check("Onsite / Virtual Onsite does not add behavioral", !resolveRoundExecution("Onsite / Virtual Onsite").signals.includes("behavioral"));
+check("Domain / Technical does not add algorithmic coding", !resolveRoundExecution("Domain / Technical").signals.includes("algorithmic-coding"));
+check("Online Assessment does not automatically add algorithmic coding", !resolveRoundExecution("Online Assessment").signals.includes("algorithmic-coding"));
+check("Take-home does not automatically add practical coding", !resolveRoundExecution("Take-home").signals.includes("practical-coding"));
+check("Technical Screen with no signal requires clarification", resolveRoundExecution("Technical Screen").needsSignalClarification === true);
+check("Final with no signal requires clarification", resolveRoundExecution("Final").needsSignalClarification === true);
+check("Other remains unknown", resolveRoundExecution("Other").confidence === "unknown");
+check("an arbitrary company name remains unknown", resolveRoundExecution("Acme Corporation").confidence === "unknown");
+check("a generic job title remains unknown", resolveRoundExecution("Software Engineer").confidence === "unknown");
+check("Technical Presentation remains post-v1", ROUND_EXECUTION_GUIDE_BY_SLUG.get("technical-presentation").v1 === false);
+check("no resolution returns a final or bar-raiser guide slug", [
+  "Recruiter Screen", "Hiring Manager", "Coding / DSA", "System Design", "Behavioral", "Machine Coding", "Debugging",
+  "Domain / Technical", "Bar Raiser", "Take-home", "Onsite / Virtual Onsite", "Other", "Final System Design", "Final",
+].every((label) => !resolveRoundExecution(label).guideSlugs.some((slug) => slug === "final" || slug === "bar-raiser")));
+
+// --- Collision tests -------------------------------------------------------
+check("ML System Design does not also return System Design", !resolveRoundExecution("ML System Design").signals.includes("system-design"));
+check("Low-Level Design does not also return System Design", !resolveRoundExecution("Low-Level Design").signals.includes("system-design"));
+check("Code Review does not return algorithmic coding", !resolveRoundExecution("Code Review").signals.includes("algorithmic-coding"));
+check("Machine Coding does not return algorithmic coding", !resolveRoundExecution("Machine Coding").signals.includes("algorithmic-coding"));
+check("Practical Coding does not return algorithmic coding", !resolveRoundExecution("Practical Coding").signals.includes("algorithmic-coding"));
+check("Debugging does not return algorithmic coding", !resolveRoundExecution("Debugging").signals.includes("algorithmic-coding"));
+check("Practical Coding + DSA returns both", arraysEqual(resolveRoundExecution("Practical Coding + DSA").signals, ["algorithmic-coding", "practical-coding"]));
+check("Code Review + DSA returns both", arraysEqual(resolveRoundExecution("Code Review + DSA").signals, ["algorithmic-coding", "code-review"]));
+check("Debugging + DSA returns both", arraysEqual(resolveRoundExecution("Debugging + DSA").signals, ["algorithmic-coding", "debugging"]));
+
+// --- Architecture assertions ----------------------------------------------
+check("exports ROUND_EXECUTION_GUIDES", source.includes("export const ROUND_EXECUTION_GUIDES"));
+check("exports ROUND_EXECUTION_GUIDE_BY_SLUG", source.includes("export const ROUND_EXECUTION_GUIDE_BY_SLUG"));
+check("exports resolveRoundExecution", source.includes("export function resolveRoundExecution"));
+for (const typeName of [
+  "InterviewRoundStage", "InterviewRoundModality", "InterviewRoundSignal", "RoundExecutionGuideTreatment",
+  "RoundExecutionGuideSlug", "RoundExecutionGuideSummary", "RoundExecutionResolutionConfidence",
+  "RoundExecutionCompositionShell", "RoundExecutionResolution",
+]) check(`contains required type name ${typeName}`, source.includes(typeName));
+check("does not import React", !source.includes('from "react"'));
+check("does not import Next.js", !source.includes('from "next'));
+check("does not import Supabase", !/^import.*supabase/im.test(source) && !source.includes("createSupabase") && !source.includes(".auth."));
+check("does not contain direct table access", !source.includes(".from("));
+check("does not contain authentication", !source.includes("getAuthenticatedActor") && !source.includes("auth.uid"));
+check("does not read environment variables", !source.includes("process.env"));
+check("does not call new Date()", !source.includes("new Date()"));
+check("does not call Date.now()", !source.includes("Date.now()"));
+check("does not call Math.random", !source.includes("Math.random"));
+check("does not use fetch", !source.includes("fetch("));
+check("does not use localStorage", !source.includes("localStorage"));
+check("does not contain a Server Action", !source.includes('"use server"'));
+check("does not calculate readiness", !/readiness\s*[:=]|readinessScore/.test(source));
+check("does not calculate probability", !/probability\s*[:=]|passProbability/.test(source));
+check("does not contain a numerical score", !/\bscore\s*[:=]\s*\d/.test(source));
+check("does not create a generic final guide", !/slug:\s*"final"/.test(source));
+check("does not create a bar-raiser guide", !/slug:\s*"bar-raiser"/.test(source));
+check("does not invent a Low-Level Design route", !source.includes('"/low-level-design"') && !source.includes('"/lld"'));
+check("does not contain a company name", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(source));
+check("does not contain proprietary question content", !/leaked question|actual interview question|verbatim question/i.test(source));
+check("does not import server-only", !source.includes('import "server-only"'));
+
+// --- Presentation model: groups --------------------------------------------
+const REQUIRED_GROUP_IDS = ["process-assessment", "coding-practical", "design", "people-collaboration"];
+const flattenedGroupSlugs = ROUND_EXECUTION_GUIDE_GROUPS.flatMap((group) => group.slugs);
+const v1CatalogSlugsInOrder = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
+
+check("there are exactly four guide groups", ROUND_EXECUTION_GUIDE_GROUPS.length === 4);
+check("group IDs appear in the exact required order", arraysEqual(ROUND_EXECUTION_GUIDE_GROUPS.map((group) => group.id), REQUIRED_GROUP_IDS));
+check("flattened group slugs contain exactly 15 items", flattenedGroupSlugs.length === 15);
+check("flattened group slugs contain no duplicates", new Set(flattenedGroupSlugs).size === flattenedGroupSlugs.length);
+check("flattened group slugs exactly equal the v1 catalog slugs in catalog order", arraysEqual(flattenedGroupSlugs, v1CatalogSlugsInOrder));
+check("technical-presentation is absent from every v1 group", !flattenedGroupSlugs.includes("technical-presentation"));
+check("no group contains final, onsite, bar-raiser, or mixed-signal", !flattenedGroupSlugs.some((slug) => /final|onsite|bar-raiser|mixed-signal/.test(slug)));
+
+// --- V1 and later collections ------------------------------------------
+check("V1_ROUND_EXECUTION_GUIDES contains exactly 15 guides", V1_ROUND_EXECUTION_GUIDES.length === 15);
+check("every v1 guide has v1 === true", V1_ROUND_EXECUTION_GUIDES.every((guide) => guide.v1 === true));
+check("LATER_ROUND_EXECUTION_GUIDES contains exactly one guide", LATER_ROUND_EXECUTION_GUIDES.length === 1);
+check("the only later guide is technical-presentation", LATER_ROUND_EXECUTION_GUIDES[0]?.slug === "technical-presentation");
+check("the later guide has treatment later", LATER_ROUND_EXECUTION_GUIDES[0]?.treatment === "later");
+
+// --- Hrefs -----------------------------------------------------------------
+check("every v1 guide href equals /interview-tips/rounds/{slug}", V1_ROUND_EXECUTION_GUIDES.every((guide) => roundExecutionGuideHref(guide.slug) === `/interview-tips/rounds/${guide.slug}`));
+check("every href starts with /interview-tips/rounds/", V1_ROUND_EXECUTION_GUIDES.every((guide) => roundExecutionGuideHref(guide.slug).startsWith("/interview-tips/rounds/")));
+check("getRoundExecutionGuide returns every catalog guide by slug", ROUND_EXECUTION_GUIDES.every((guide) => getRoundExecutionGuide(guide.slug) === guide));
+check('getRoundExecutionGuide("not-a-guide") returns null', getRoundExecutionGuide("not-a-guide") === null);
+
+// --- Treatment labels --------------------------------------------------
+check("treatment label: complete", roundExecutionTreatmentLabel("complete") === "Core execution guide");
+check("treatment label: focused-variant", roundExecutionTreatmentLabel("focused-variant") === "Focused variant");
+check("treatment label: composition-shell", roundExecutionTreatmentLabel("composition-shell") === "Composition shell");
+check("treatment label: later", roundExecutionTreatmentLabel("later") === "Later");
+
+// --- Framework ---------------------------------------------------------
+const REQUIRED_STEP_IDS = ["orient", "clarify", "structure", "execute", "validate", "close"];
+check("there are exactly six framework steps", ROUND_EXECUTION_FRAMEWORK_STEPS.length === 6);
+check("step IDs are exactly the required sequence", arraysEqual(ROUND_EXECUTION_FRAMEWORK_STEPS.map((step) => step.id), REQUIRED_STEP_IDS));
+check("every step has a non-empty label", ROUND_EXECUTION_FRAMEWORK_STEPS.every((step) => step.label.trim().length > 0));
+check("every step has a non-empty description", ROUND_EXECUTION_FRAMEWORK_STEPS.every((step) => step.description.trim().length > 0));
+check("no framework step contains a universal minute allocation", !ROUND_EXECUTION_FRAMEWORK_STEPS.some((step) => /\b\d+\s*minutes?\b/i.test(step.description)));
+
+// --- Technical-screen common signal guides ------------------------------
+const REQUIRED_COMMON_SIGNAL_ORDER = [
+  "algorithmic-coding", "practical-coding", "debugging", "code-review",
+  "low-level-design", "system-design", "ml-system-design", "behavioral", "project-deep-dive",
+];
+check("the common-signal list matches the exact required order", arraysEqual(TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES, REQUIRED_COMMON_SIGNAL_ORDER));
+check("every listed slug is a v1 guide", TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES.every((slug) => v1CatalogSlugsInOrder.includes(slug)));
+check("the list excludes technical-screen", !TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES.includes("technical-screen"));
+check("the list excludes stage/modality concepts", !["recruiter-screen", "online-assessment", "take-home", "hiring-manager", "cross-functional"].some((slug) => TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES.includes(slug)));
+check("the list excludes technical-presentation", !TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES.includes("technical-presentation"));
+
+// --- Related labels ------------------------------------------------------
+const allRelatedHrefs = new Set(ROUND_EXECUTION_GUIDES.flatMap((guide) => guide.relatedHrefs));
+check("every current relatedHrefs entry receives a non-fallback label", [...allRelatedHrefs].every((href) => roundExecutionRelatedLinkLabel(href) !== "Engineering Foundry resource"));
+check("an arbitrary unknown path returns the fallback label", roundExecutionRelatedLinkLabel("/not-a-real-path") === "Engineering Foundry resource");
+
+// --- Presentation module architecture -----------------------------------
+check("presentation module imports the canonical taxonomy rather than restating it", presentationSource.includes('from "./round-execution.ts"') && !presentationSource.includes('slug: "recruiter-screen"'));
+for (const exported of [
+  "ROUND_EXECUTION_GUIDE_GROUPS", "ROUND_EXECUTION_FRAMEWORK_STEPS", "V1_ROUND_EXECUTION_GUIDES",
+  "LATER_ROUND_EXECUTION_GUIDES", "TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES",
+]) check(`presentation module exports ${exported}`, presentationSource.includes(`export const ${exported}`));
+for (const exported of ["getRoundExecutionGuide", "roundExecutionGuideHref", "roundExecutionTreatmentLabel", "roundExecutionRelatedLinkLabel"]) {
+  check(`presentation module exports ${exported}`, presentationSource.includes(`export function ${exported}`));
+}
+check("presentation module imports no React", !presentationSource.includes('from "react"'));
+check("presentation module imports no Next.js", !presentationSource.includes('from "next'));
+check("presentation module imports no Supabase", !/^import.*supabase/im.test(presentationSource) && !presentationSource.includes("createSupabase"));
+check("presentation module contains no direct table access", !presentationSource.includes(".from("));
+check("presentation module contains no authentication", !presentationSource.includes("getAuthenticatedActor") && !presentationSource.includes("auth.uid"));
+check("presentation module reads no environment variables", !presentationSource.includes("process.env"));
+check("presentation module does not call new Date()", !presentationSource.includes("new Date()"));
+check("presentation module does not call Date.now()", !presentationSource.includes("Date.now()"));
+check("presentation module does not call Math.random", !presentationSource.includes("Math.random"));
+check("presentation module does not call fetch", !presentationSource.includes("fetch("));
+check("presentation module does not use localStorage", !presentationSource.includes("localStorage"));
+check("presentation module does not calculate readiness", !/readiness\s*[:=]|readinessScore/.test(presentationSource));
+check("presentation module does not calculate probability", !/probability\s*[:=]|passProbability/.test(presentationSource));
+check("presentation module contains no company names", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(presentationSource));
+check("presentation module contains no proprietary questions", !/leaked question|actual interview question|verbatim question/i.test(presentationSource));
+
+// --- Index page assertions ------------------------------------------------
+check("index page uses createPageMetadata", roundsIndexPageSource.includes("createPageMetadata({"));
+check("index page keeps path /interview-tips/rounds", roundsIndexPageSource.includes('path: "/interview-tips/rounds"'));
+check("index page contains the required title", roundsIndexPageSource.includes("Software Engineering Interview Round Execution Guides"));
+check("index page contains the required description", roundsIndexPageSource.includes("Choose the execution guide for the signal being evaluated"));
+check("index page is a Server Component", !roundsIndexPageSource.includes("use client"));
+check("index page does not require authentication", !roundsIndexPageSource.includes("requireMemberProfile") && !roundsIndexPageSource.includes("isAccountPlatformAvailable"));
+check("index page does not import Supabase", !/^import.*supabase/im.test(roundsIndexPageSource) && !roundsIndexPageSource.includes("createSupabase"));
+check("index page contains no direct table access", !roundsIndexPageSource.includes(".from("));
+check("index page does not import private Playbook queries", !roundsIndexPageSource.includes("interview-playbook/queries"));
+check("index page contains no Server Action", !roundsIndexPageSource.includes('"use server"'));
+check("index page uses ROUND_EXECUTION_GUIDE_GROUPS", roundsIndexPageSource.includes("ROUND_EXECUTION_GUIDE_GROUPS"));
+check("index page uses getRoundExecutionGuide", roundsIndexPageSource.includes("getRoundExecutionGuide"));
+check("index page uses roundExecutionGuideHref", roundsIndexPageSource.includes("roundExecutionGuideHref"));
+check("index page does not call .sort(", !roundsIndexPageSource.includes(".sort("));
+for (const expected of [
+  "Where the conversation sits in the process", "How the evaluation is delivered", "What the candidate must make observable",
+  "confirm the format with the recruiter", "Execution guides are selected by signal",
+]) check(`index page contains: ${expected}`, roundsIndexPageSource.includes(expected));
+check('index page links to "/interview-tips"', roundsIndexPageSource.includes('"/interview-tips"'));
+check('index page links to "/mock-interviews"', roundsIndexPageSource.includes('"/mock-interviews"'));
+check("index page renders the later guide separately", roundsIndexPageSource.includes("LATER_ROUND_EXECUTION_GUIDES"));
+check("index page does not link the technical-presentation later card", !/<Link[^>]*laterGuide/.test(roundsIndexPageSource));
+check("index page does not create a generic final/onsite/bar-raiser/mixed-signal card", !/"final"|"onsite"|"bar-raiser"|"mixed-signal"/.test(roundsIndexPageSource));
+check("index page does not calculate readiness or probability", !/readiness|probability/i.test(roundsIndexPageSource));
+check("index page contains no universal minute allocation", !/\b\d+\s*minutes?\b/i.test(roundsIndexPageSource));
+
+// --- Dynamic detail page assertions ---------------------------------------
+check("detail page exports generateStaticParams", roundsDetailPageSource.includes("export function generateStaticParams"));
+check("detail page uses V1_ROUND_EXECUTION_GUIDES", roundsDetailPageSource.includes("V1_ROUND_EXECUTION_GUIDES"));
+check("detail page exports dynamicParams = false", roundsDetailPageSource.includes("export const dynamicParams = false"));
+check("detail page uses Promise-based params", roundsDetailPageSource.includes("params: Promise<{ slug: string }>"));
+check("detail page exports generateMetadata", roundsDetailPageSource.includes("export async function generateMetadata"));
+check("detail page uses createPageMetadata", roundsDetailPageSource.includes("createPageMetadata({"));
+check("detail page uses roundExecutionGuideHref", roundsDetailPageSource.includes("roundExecutionGuideHref"));
+check("detail page uses getRoundExecutionGuide", roundsDetailPageSource.includes("getRoundExecutionGuide"));
+check("detail page calls notFound() for an invalid or non-v1 guide", roundsDetailPageSource.includes("notFound()") && /!guide\s*\|\|\s*!guide\.v1/.test(roundsDetailPageSource));
+check("detail page renders RoundExecutionQuickReference", roundsDetailPageSource.includes("<RoundExecutionQuickReference"));
+check("detail page is a Server Component", !roundsDetailPageSource.includes("use client"));
+check("detail page does not require authentication", !roundsDetailPageSource.includes("requireMemberProfile") && !roundsDetailPageSource.includes("isAccountPlatformAvailable"));
+check("detail page does not import Supabase", !/^import.*supabase/im.test(roundsDetailPageSource) && !roundsDetailPageSource.includes("createSupabase"));
+check("detail page contains no direct table access", !roundsDetailPageSource.includes(".from("));
+check("detail page does not query applications or rounds", !roundsDetailPageSource.includes("getApplications") && !roundsDetailPageSource.includes("getDashboardPipeline") && !roundsDetailPageSource.includes("interview_rounds"));
+check("detail page does not accept a company, application, round, level, or user ID", !/applicationId|roundId|companySlug|level:|userId/.test(roundsDetailPageSource));
+{
+  const paramSlugs = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
+  check("detail page's generated params exclude technical-presentation", !paramSlugs.includes("technical-presentation"));
+  check("detail page's generated params exclude final/onsite/bar-raiser/mixed-signal", !paramSlugs.some((slug) => /final|onsite|bar-raiser|mixed-signal/.test(slug)));
+}
+
+// --- Quick-reference component assertions ---------------------------------
+check("component exports RoundExecutionQuickReference", quickReferenceComponentSource.includes("export function RoundExecutionQuickReference"));
+check("component is a Server Component", !quickReferenceComponentSource.includes("use client"));
+check("component does not use React state", !quickReferenceComponentSource.includes("useState"));
+check("component does not use effects", !quickReferenceComponentSource.includes("useEffect"));
+check("component contains no form", !quickReferenceComponentSource.includes("<form"));
+check("component contains no input", !quickReferenceComponentSource.includes("<input"));
+check("component contains no checkbox", !quickReferenceComponentSource.includes('type="checkbox"'));
+check("component contains no Server Action", !quickReferenceComponentSource.includes('"use server"'));
+check("component does not import Supabase", !/^import.*supabase/im.test(quickReferenceComponentSource) && !quickReferenceComponentSource.includes("createSupabase"));
+check("component does not call a data query", !quickReferenceComponentSource.includes("await ") && !quickReferenceComponentSource.includes(".from("));
+check("component uses guide.title", quickReferenceComponentSource.includes("guide.title"));
+check("component uses guide.description", quickReferenceComponentSource.includes("guide.description"));
+check("component uses guide.ownerBoundary", quickReferenceComponentSource.includes("guide.ownerBoundary"));
+for (const field of ["guide.quickReference.firstMove", "guide.quickReference.beforeDone", "guide.quickReference.biggestTrap"]) {
+  check(`component uses ${field}`, quickReferenceComponentSource.includes(field));
+}
+check("component uses ROUND_EXECUTION_FRAMEWORK_STEPS", quickReferenceComponentSource.includes("ROUND_EXECUTION_FRAMEWORK_STEPS"));
+check("component uses roundExecutionTreatmentLabel", quickReferenceComponentSource.includes("roundExecutionTreatmentLabel"));
+check("component uses roundExecutionRelatedLinkLabel", quickReferenceComponentSource.includes("roundExecutionRelatedLinkLabel"));
+check('component links to "/interview-tips/rounds"', quickReferenceComponentSource.includes('"/interview-tips/rounds"'));
+check('component links to "/mock-interviews"', quickReferenceComponentSource.includes('"/mock-interviews"'));
+check("component maps guide.relatedHrefs", quickReferenceComponentSource.includes("guide.relatedHrefs.map("));
+check("component has the technical-screen composition branch", quickReferenceComponentSource.includes('guide.slug === "technical-screen"'));
+check("component uses TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES", quickReferenceComponentSource.includes("TECHNICAL_SCREEN_COMMON_SIGNAL_GUIDES"));
+check("component contains the flexible-sequence disclaimer", quickReferenceComponentSource.includes("not a mandatory script or universal timer"));
+check("component contains the non-rubric statement", quickReferenceComponentSource.includes("it is not a pass/fail rubric"));
+check("component contains the company-boundary statement", quickReferenceComponentSource.includes("Company-specific differences belong in verified Company Guides"));
+check("component contains the integrity/proprietary-question statement", quickReferenceComponentSource.includes("do not reproduce proprietary questions"));
+check("component does not contain forbidden outcome language", !/you will pass|likely to pass|readiness score|pass probability|guaranteed|secret rubric|bar raiser tricks|final-round secrets/i.test(quickReferenceComponentSource));
+check("component contains no universal minute allocation", !/\b\d+\s*minutes?\b/i.test(quickReferenceComponentSource));
+check("component contains no company-specific process claims", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(quickReferenceComponentSource));
+check("component does not use dangerouslySetInnerHTML", !quickReferenceComponentSource.includes("dangerouslySetInnerHTML"));
+
+// --- Public Execution Guide home assertions -------------------------------
+check('interview-playbook.tsx contains href="/interview-tips/rounds"', interviewPlaybookComponentSource.includes('href="/interview-tips/rounds"'));
+check("interview-playbook.tsx contains Browse round guides", interviewPlaybookComponentSource.includes("Browse round guides"));
+check('interview-playbook.tsx still contains href="#playbook"', interviewPlaybookComponentSource.includes('href="#playbook"'));
+check("interview-playbook.tsx still contains Open the execution guide", interviewPlaybookComponentSource.includes("Open the execution guide"));
+check('interview-playbook.tsx still contains href="#checklists"', interviewPlaybookComponentSource.includes('href="#checklists"'));
+check("interview-playbook.tsx still contains Open final-preparation checklists", interviewPlaybookComponentSource.includes("Open final-preparation checklists"));
+check('interview-playbook.tsx still contains "use client"', interviewPlaybookComponentSource.includes("use client"));
+check("interview-playbook.tsx still uses session-only React state", interviewPlaybookComponentSource.includes("useState"));
+check("interview-playbook.tsx still calls existing checklist analytics", interviewPlaybookComponentSource.includes('"interview_checklist_used"'));
+check("interview-playbook.tsx still calls existing section analytics", interviewPlaybookComponentSource.includes('"interview_playbook_section_viewed"'));
+{
+  const analyticsEventNames = [...interviewPlaybookComponentSource.matchAll(/track\(\s*"([^"]+)"/g)].map((match) => match[1]);
+  check("interview-playbook.tsx adds no new analytics event", arraysEqual([...new Set(analyticsEventNames)].sort(), ["interview_checklist_used", "interview_playbook_section_viewed"].sort()));
+}
+check("interview-playbook.tsx adds no persistence behavior", !interviewPlaybookComponentSource.includes("localStorage") && !interviewPlaybookComponentSource.includes("sessionStorage") && !interviewPlaybookComponentSource.includes("createSupabase"));
+
+// --- Sitemap assertions (only when app/sitemap.ts exists) ------------------
+if (sitemapExists) {
+  check("sitemap contains /interview-tips/rounds", sitemapSource.includes('"/interview-tips/rounds"'));
+  check("sitemap derives detail routes from V1_ROUND_EXECUTION_GUIDES", sitemapSource.includes("V1_ROUND_EXECUTION_GUIDES"));
+  check("sitemap does not manually repeat all 15 slugs", !ROUND_EXECUTION_GUIDES.filter((g) => g.v1).every((g) => sitemapSource.includes(`"/interview-tips/rounds/${g.slug}"`)));
+  check("sitemap excludes technical-presentation", !sitemapSource.includes('"/interview-tips/rounds/technical-presentation"'));
+  check("sitemap does not add /interview-playbook", !sitemapSource.includes('"/interview-playbook"'));
+  check("sitemap does not add final/onsite/bar-raiser/mixed-signal routes", !/\/interview-tips\/rounds\/(final|onsite|bar-raiser|mixed-signal)/.test(sitemapSource));
+}
+
+// --- Dossier catalog state ------------------------------------------------
+const algorithmicCodingDossier = ROUND_EXECUTION_DOSSIERS[0];
+const practicalCodingDossier = ROUND_EXECUTION_DOSSIERS[1];
+const debuggingDossier = ROUND_EXECUTION_DOSSIERS[2];
+
+check("ROUND_EXECUTION_DOSSIERS contains exactly three dossiers", ROUND_EXECUTION_DOSSIERS.length === 3);
+check("the dossier order is exactly algorithmic-coding, practical-coding, debugging", arraysEqual(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug), ["algorithmic-coding", "practical-coding", "debugging"]));
+check("the first dossier slug is algorithmic-coding", algorithmicCodingDossier?.slug === "algorithmic-coding");
+check("the first dossier status is published", algorithmicCodingDossier?.status === "published");
+check("the second dossier slug is practical-coding", practicalCodingDossier?.slug === "practical-coding");
+check("the second dossier status is published", practicalCodingDossier?.status === "published");
+check("the third dossier slug is debugging", debuggingDossier?.slug === "debugging");
+check("the third dossier status is published", debuggingDossier?.status === "published");
+check("PUBLISHED_ROUND_EXECUTION_DOSSIERS contains exactly three dossiers", PUBLISHED_ROUND_EXECUTION_DOSSIERS.length === 3);
+check('getRoundExecutionDossier("algorithmic-coding") returns the dossier', getRoundExecutionDossier("algorithmic-coding") === algorithmicCodingDossier);
+check('getRoundExecutionDossier("practical-coding") returns the dossier', getRoundExecutionDossier("practical-coding") === practicalCodingDossier);
+check('getRoundExecutionDossier("debugging") returns the dossier', getRoundExecutionDossier("debugging") === debuggingDossier);
+check('getRoundExecutionDossier("system-design") returns null', getRoundExecutionDossier("system-design") === null);
+check('getRoundExecutionDossier("code-review") returns null', getRoundExecutionDossier("code-review") === null);
+check('getRoundExecutionDossier("not-a-guide") returns null', getRoundExecutionDossier("not-a-guide") === null);
+check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the first dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("algorithmic-coding") === algorithmicCodingDossier);
+check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the second dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("practical-coding") === practicalCodingDossier);
+check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the third dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("debugging") === debuggingDossier);
+check("every dossier slug exists in V1_ROUND_EXECUTION_GUIDES", ROUND_EXECUTION_DOSSIERS.every((dossier) => V1_ROUND_EXECUTION_GUIDES.some((guide) => guide.slug === dossier.slug)));
+check("no dossier exists for technical-presentation", getRoundExecutionDossier("technical-presentation") === null);
+check("the debugging guide retains treatment complete in the canonical taxonomy", ROUND_EXECUTION_GUIDE_BY_SLUG.get("debugging")?.treatment === "complete");
+
+// --- Dossier core content ---------------------------------------------
+const d = algorithmicCodingDossier;
+check("lastReviewed is exactly 2026-08-18", d.lastReviewed === "2026-08-18");
+check("purpose is non-empty", d.purpose.trim().length > 0);
+check("intendedEvaluation contains exactly seven items", d.intendedEvaluation.length === 7);
+check("companyVariation contains exactly six items", d.companyVariation.length === 6);
+check("beforeRound contains exactly four items", d.beforeRound.length === 4);
+check("flow contains exactly seven steps", d.flow.length === 7);
+check("flow IDs are exactly the required sequence", arraysEqual(d.flow.map((step) => step.id), ["orient", "clarify", "example-baseline", "approach", "implement", "validate", "follow-up-close"]));
+check("every flow step is complete", d.flow.every((step) =>
+  step.title.trim().length > 0 && step.objective.trim().length > 0 && step.actions.length >= 3
+  && ["widely-applicable", "context-dependent"].includes(step.classification)));
+check("there are exactly two time frameworks", d.timeFrameworks.length === 2);
+check("every time framework is context-dependent", d.timeFrameworks.every((framework) => framework.classification === "context-dependent"));
+check("every time framework has exactly four phases", d.timeFrameworks.every((framework) => framework.phases.length === 4));
+check("every time phase is complete", d.timeFrameworks.every((framework) => framework.phases.every((phase) =>
+  phase.label.trim().length > 0 && phase.range.trim().length > 0 && phase.objective.trim().length > 0 && phase.adjustment.trim().length > 0)));
+check("there are exactly four communication patterns", d.communication.length === 4);
+check("there are exactly five recovery scenarios", d.recovery.length === 5);
+check("there are exactly six validation items", d.validation.length === 6);
+check("there are exactly four closing items", d.closing.length === 4);
+check("there are exactly three questions to ask", d.questionsToAsk.length === 3);
+check("there are exactly six strong signals", d.signals.strong.length === 6);
+check("there are exactly six concern signals", d.signals.concern.length === 6);
+check("there are exactly seven failure modes", d.failureModes.length === 7);
+check("there are exactly three seniority entries", d.seniority.length === 3);
+check("seniority levels appear in the exact required order", arraysEqual(d.seniority.map((entry) => entry.level), ["SDE I / entry level", "SDE II / mid level", "Senior+"]));
+check("remote contains exactly three items", d.environment.remote.length === 3);
+check("onsite contains exactly three items", d.environment.onsite.length === 3);
+check("accessibility contains exactly four items", d.environment.accessibility.length === 4);
+check("there are exactly four company modifier rules", d.companyModifierRules.length === 4);
+check("there are exactly five interaction examples", d.interactions.length === 5);
+check("every interaction is classified as illustrative", d.interactions.every((example) => example.classification === "illustrative"));
+check("interaction IDs are unique", new Set(d.interactions.map((example) => example.id)).size === d.interactions.length);
+check("integrity contains exactly four statements", d.integrity.length === 4);
+
+// --- Practical Coding dossier core content --------------------------------
+const d2 = practicalCodingDossier;
+check("practical-coding: lastReviewed is exactly 2026-08-18", d2.lastReviewed === "2026-08-18");
+check("practical-coding: title is non-empty", d2.title.trim().length > 0);
+check("practical-coding: purpose is non-empty", d2.purpose.trim().length > 0);
+check("practical-coding: intendedEvaluation contains exactly seven items", d2.intendedEvaluation.length === 7);
+check("practical-coding: companyVariation contains exactly six items", d2.companyVariation.length === 6);
+check("practical-coding: beforeRound contains exactly four items", d2.beforeRound.length === 4);
+check("practical-coding: flow contains exactly seven steps", d2.flow.length === 7);
+check("practical-coding: flow IDs are exactly the required sequence", arraysEqual(d2.flow.map((step) => step.id), ["orient", "establish-behavior", "locate-surface", "plan-change", "implement", "validate", "close-risk"]));
+check("practical-coding: every flow step is complete", d2.flow.every((step) =>
+  step.title.trim().length > 0 && step.objective.trim().length > 0 && step.actions.length >= 3
+  && ["widely-applicable", "context-dependent"].includes(step.classification)));
+check("practical-coding: there are exactly two time frameworks", d2.timeFrameworks.length === 2);
+check("practical-coding: every time framework is context-dependent", d2.timeFrameworks.every((framework) => framework.classification === "context-dependent"));
+check("practical-coding: every time framework has exactly four phases", d2.timeFrameworks.every((framework) => framework.phases.length === 4));
+check("practical-coding: every time phase is complete", d2.timeFrameworks.every((framework) => framework.phases.every((phase) =>
+  phase.label.trim().length > 0 && phase.range.trim().length > 0 && phase.objective.trim().length > 0 && phase.adjustment.trim().length > 0)));
+check("practical-coding: there are exactly four communication patterns", d2.communication.length === 4);
+check("practical-coding: there are exactly five recovery scenarios", d2.recovery.length === 5);
+check("practical-coding: there are exactly six validation items", d2.validation.length === 6);
+check("practical-coding: there are exactly four closing items", d2.closing.length === 4);
+check("practical-coding: there are exactly three questions to ask", d2.questionsToAsk.length === 3);
+check("practical-coding: there are exactly six strong signals", d2.signals.strong.length === 6);
+check("practical-coding: there are exactly six concern signals", d2.signals.concern.length === 6);
+check("practical-coding: there are exactly seven failure modes", d2.failureModes.length === 7);
+check("practical-coding: there are exactly three seniority entries", d2.seniority.length === 3);
+check("practical-coding: seniority levels appear in the exact required order", arraysEqual(d2.seniority.map((entry) => entry.level), ["SDE I / entry level", "SDE II / mid level", "Senior+"]));
+check("practical-coding: remote contains exactly three items", d2.environment.remote.length === 3);
+check("practical-coding: onsite contains exactly three items", d2.environment.onsite.length === 3);
+check("practical-coding: accessibility contains exactly four items", d2.environment.accessibility.length === 4);
+check("practical-coding: there are exactly four company modifier rules", d2.companyModifierRules.length === 4);
+check("practical-coding: there are exactly five interaction examples", d2.interactions.length === 5);
+check("practical-coding: every interaction is classified as illustrative", d2.interactions.every((example) => example.classification === "illustrative"));
+check("practical-coding: interaction IDs are unique", new Set(d2.interactions.map((example) => example.id)).size === d2.interactions.length);
+check("practical-coding: integrity contains exactly four statements", d2.integrity.length === 4);
+
+// --- Debugging dossier core content ---------------------------------------
+const d3 = debuggingDossier;
+check("debugging: lastReviewed is exactly 2026-08-18", d3.lastReviewed === "2026-08-18");
+check("debugging: title is non-empty", d3.title.trim().length > 0);
+check("debugging: purpose is non-empty", d3.purpose.trim().length > 0);
+check("debugging: intendedEvaluation contains exactly seven items", d3.intendedEvaluation.length === 7);
+check("debugging: companyVariation contains exactly six items", d3.companyVariation.length === 6);
+check("debugging: beforeRound contains exactly four items", d3.beforeRound.length === 4);
+check("debugging: flow contains exactly seven steps", d3.flow.length === 7);
+check("debugging: flow IDs are exactly the required sequence", arraysEqual(d3.flow.map((step) => step.id), ["observe", "reproduce", "localize", "hypothesize", "discriminate", "repair", "regress-close"]));
+check("debugging: flow IDs are unique", new Set(d3.flow.map((step) => step.id)).size === d3.flow.length);
+check("debugging: every flow step is complete", d3.flow.every((step) =>
+  step.title.trim().length > 0 && step.objective.trim().length > 0 && step.actions.length >= 3
+  && ["widely-applicable", "context-dependent"].includes(step.classification)));
+check("debugging: there are exactly two time frameworks", d3.timeFrameworks.length === 2);
+check("debugging: every time framework is context-dependent", d3.timeFrameworks.every((framework) => framework.classification === "context-dependent"));
+check("debugging: every time framework has exactly four phases and a non-empty assumption", d3.timeFrameworks.every((framework) => framework.phases.length === 4 && framework.assumption.trim().length > 0));
+check("debugging: every time phase is complete", d3.timeFrameworks.every((framework) => framework.phases.every((phase) =>
+  phase.label.trim().length > 0 && phase.range.trim().length > 0 && phase.objective.trim().length > 0 && phase.adjustment.trim().length > 0)));
+check("debugging: there are exactly four communication patterns", d3.communication.length === 4);
+check("debugging: there are exactly five recovery scenarios", d3.recovery.length === 5);
+check("debugging: there are exactly six validation items", d3.validation.length === 6);
+check("debugging: there are exactly four closing items", d3.closing.length === 4);
+check("debugging: there are exactly three questions to ask", d3.questionsToAsk.length === 3);
+check("debugging: there are exactly six strong signals", d3.signals.strong.length === 6);
+check("debugging: there are exactly six concern signals", d3.signals.concern.length === 6);
+check("debugging: there are exactly seven failure modes", d3.failureModes.length === 7);
+check("debugging: there are exactly three seniority entries", d3.seniority.length === 3);
+check("debugging: seniority levels appear in the exact required order", arraysEqual(d3.seniority.map((entry) => entry.level), ["SDE I / entry level", "SDE II / mid level", "Senior+"]));
+check("debugging: remote contains exactly three items", d3.environment.remote.length === 3);
+check("debugging: onsite contains exactly three items", d3.environment.onsite.length === 3);
+check("debugging: accessibility contains exactly four items", d3.environment.accessibility.length === 4);
+check("debugging: there are exactly four company modifier rules", d3.companyModifierRules.length === 4);
+check("debugging: there are exactly five interaction examples", d3.interactions.length === 5);
+check("debugging: every interaction is classified as illustrative", d3.interactions.every((example) => example.classification === "illustrative"));
+check("debugging: interaction IDs are unique", new Set(d3.interactions.map((example) => example.id)).size === d3.interactions.length);
+check("debugging: integrity contains exactly four statements", d3.integrity.length === 4);
+
+// --- Debugging semantic content assertions ---------------------------------
+const debuggingSerialized = JSON.stringify(d3).toLowerCase();
+for (const concept of [
+  "expected behavior", "observed", "reproduce", "localize", "hypothes", "discriminat",
+  "falsif", "root cause", "original", "regress", "blast radius", "monitor", "rollback", "uncertain",
+]) check(`debugging content includes concept: ${concept}`, debuggingSerialized.includes(concept));
+check("debugging integrity disclaimer about exploitation is present and intact", d3.integrity.some((statement) => statement.includes("It does not teach exploitation")));
+
+// --- Dossier content integrity ------------------------------------------
+const serializedDossier = JSON.stringify([d, d2, d3]);
+check("dossier does not contain a company name", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(serializedDossier));
+check("dossier does not contain a proprietary question", !/leaked question|actual interview question|verbatim question/i.test(serializedDossier));
+check("dossier does not contain source code", !/```|function\s*\(|=>\s*\{|;\s*\n\s*(const|let|var)\s/.test(serializedDossier));
+check("dossier does not contain a named algorithm", !/\b(quicksort|mergesort|dijkstra|dynamic programming|binary search|breadth-first|depth-first|two pointers|sliding window)\b/i.test(serializedDossier));
+check("dossier does not contain a pattern curriculum", !/\bpattern (library|catalog|list|cheat sheet)\b/i.test(serializedDossier));
+for (const forbidden of [
+  "you will pass", "likely to pass", "pass probability", "readiness score", "percent ready",
+  "guaranteed", "secret rubric", "bar raiser tricks", "actual interview question", "leaked question",
+]) check(`dossier does not contain: ${forbidden}`, !serializedDossier.toLowerCase().includes(forbidden));
+check("dossier does not instruct generative-AI use during an assessment", !/chatgpt|use an ai tool|use an llm|generative ai/i.test(serializedDossier));
+check("dossier does not claim a universal number of questions", !/\b(exactly|always)\s+\d+\s+(problems?|questions?)\b/i.test(serializedDossier));
+check("dossier does not describe timing ranges as mandatory", !/mandatory (timing|schedule|allocation)|must (spend|take) exactly/i.test(serializedDossier));
+check("every time framework includes an explicit context-dependence assumption", [...d.timeFrameworks, ...d2.timeFrameworks, ...d3.timeFrameworks].every((framework) => /adaptable|assumes|context/i.test(framework.assumption)));
+check("no interaction claims to be a real company transcript", ![...d.interactions, ...d2.interactions, ...d3.interactions].some((example) => /actual transcript|real interview transcript|verbatim transcript/i.test(`${example.scenario} ${example.annotation}`)));
+check("no integrity statement implies legal advice", ![...d.integrity, ...d2.integrity, ...d3.integrity].some((statement) => /legal advice|constitutes legal/i.test(statement)));
+check("generic role labels are present and allowed", serializedDossier.includes("SDE I") && serializedDossier.includes("SDE II") && serializedDossier.includes("Senior+"));
+check("all three dossier titles are distinct", new Set([d.title, d2.title, d3.title]).size === 3);
+check("every dossier's integrity section disclaims live-assessment assistance rather than authorizing it", [d, d2, d3].every((dossier) => dossier.integrity.some((statement) => /does not (authorize external assistance during a live interview|provide assistance during a live assessment)/i.test(statement))));
+check("dossier does not contain a security-exploitation instruction", !/\b(exploit a vulnerability|how to exploit|sql injection payload|privilege escalation technique|bypass authentication)\b/i.test(serializedDossier));
+check("the debugging integrity disclaimer disclaiming exploitation teaching is not misflagged as an exploitation instruction", serializedDossier.toLowerCase().includes("it does not teach exploitation"));
+check("dossier does not duplicate a language or framework curriculum", !/\b(learn (java|python|javascript|typescript|react|django|spring) (syntax|basics)|framework tutorial)\b/i.test(serializedDossier));
+
+// --- Dossier module architecture -----------------------------------------
+for (const exported of ["RoundExecutionContentClassification", "RoundExecutionDossierFlowStep", "RoundExecutionTimePhase", "RoundExecutionTimeFramework", "RoundExecutionCommunicationPattern", "RoundExecutionRecoveryScenario", "RoundExecutionFailureMode", "RoundExecutionSeniorityCalibration", "RoundExecutionInteractionExample", "RoundExecutionDossier"]) {
+  check(`dossier module exports type ${exported}`, dossierModelSource.includes(`export type ${exported}`));
+}
+check("dossier module exports ROUND_EXECUTION_DOSSIERS", dossierModelSource.includes("export const ROUND_EXECUTION_DOSSIERS"));
+check("dossier module exports ROUND_EXECUTION_DOSSIER_BY_SLUG", dossierModelSource.includes("export const ROUND_EXECUTION_DOSSIER_BY_SLUG"));
+check("dossier module exports PUBLISHED_ROUND_EXECUTION_DOSSIERS", dossierModelSource.includes("export const PUBLISHED_ROUND_EXECUTION_DOSSIERS"));
+check("dossier module exports getRoundExecutionDossier", dossierModelSource.includes("export function getRoundExecutionDossier"));
+check("dossier module imports only the canonical slug type", dossierModelSource.includes('import type { RoundExecutionGuideSlug } from "./round-execution.ts"') && !dossierModelSource.includes("ROUND_EXECUTION_GUIDES }"));
+check("dossier module imports no React", !dossierModelSource.includes('from "react"'));
+check("dossier module imports no Next.js", !dossierModelSource.includes('from "next'));
+check("dossier module imports no Supabase", !/^import.*supabase/im.test(dossierModelSource) && !dossierModelSource.includes("createSupabase"));
+check("dossier module contains no direct table access", !dossierModelSource.includes(".from("));
+check("dossier module contains no authentication", !dossierModelSource.includes("getAuthenticatedActor") && !dossierModelSource.includes("auth.uid"));
+check("dossier module reads no environment variables", !dossierModelSource.includes("process.env"));
+check("dossier module does not call new Date()", !dossierModelSource.includes("new Date()"));
+check("dossier module does not call Date.now()", !dossierModelSource.includes("Date.now()"));
+check("dossier module does not call Math.random", !dossierModelSource.includes("Math.random"));
+check("dossier module does not call fetch", !dossierModelSource.includes("fetch("));
+check("dossier module does not use localStorage", !dossierModelSource.includes("localStorage"));
+check("dossier module does not add a score field", !/\bscore\s*[:=]/.test(dossierModelSource));
+check("dossier module does not add a weight field", !/\bweight\s*[:=]/.test(dossierModelSource));
+check("dossier module does not add a percentage field", !/\bpercentage\s*[:=]/.test(dossierModelSource));
+check("dossier module does not add a probability field", !/\bprobability\s*[:=]/.test(dossierModelSource));
+check("dossier module does not add a pass threshold field", !/pass\s*threshold/i.test(dossierModelSource));
+check("dossier module does not add a readiness level field", !/readinessLevel/.test(dossierModelSource));
+check("dossier module does not add a difficulty field", !/\bdifficulty\s*[:=]/.test(dossierModelSource));
+check("dossier module does not fabricate a fallback dossier", !dossierModelSource.includes("fallbackDossier") && !dossierModelSource.includes("defaultDossier"));
+
+// --- Dossier renderer component -------------------------------------------
+check("component exports RoundExecutionDossierView", dossierComponentSource.includes("export function RoundExecutionDossierView"));
+check("component is a Server Component", !dossierComponentSource.includes("use client"));
+check("component does not use React state", !dossierComponentSource.includes("useState"));
+check("component does not use effects", !dossierComponentSource.includes("useEffect"));
+check("component contains no form", !dossierComponentSource.includes("<form"));
+check("component contains no input", !dossierComponentSource.includes("<input"));
+check("component contains no checkbox", !dossierComponentSource.includes('type="checkbox"'));
+check("component contains no Server Action", !dossierComponentSource.includes('"use server"'));
+check("component does not import Supabase", !/^import.*supabase/im.test(dossierComponentSource) && !dossierComponentSource.includes("createSupabase"));
+check("component does not call a data query", !dossierComponentSource.includes("await "));
+check("component does not use dangerouslySetInnerHTML", !dossierComponentSource.includes("dangerouslySetInnerHTML"));
+check("component fails closed when guide and dossier slugs mismatch", dossierComponentSource.includes("guide.slug !== dossier.slug") && dossierComponentSource.includes("return null"));
+check("component uses SectionHeading", dossierComponentSource.includes("SectionHeading"));
+check("component uses StatusPill", dossierComponentSource.includes("StatusPill"));
+for (const anchor of ["evaluate", "before", "flow", "time-control", "communication-recovery", "validate-close", "signals", "seniority", "environment", "interactions", "boundaries"]) {
+  check(`component contains anchor #${anchor}`, dossierComponentSource.includes(`id="${anchor}"`) || dossierComponentSource.includes(`#${anchor}`));
+}
+check("component renders dossier.purpose", dossierComponentSource.includes("dossier.purpose"));
+check("component renders dossier.intendedEvaluation", dossierComponentSource.includes("dossier.intendedEvaluation"));
+check("component renders dossier.companyVariation", dossierComponentSource.includes("dossier.companyVariation"));
+check("component renders dossier.beforeRound", dossierComponentSource.includes("dossier.beforeRound"));
+check("component renders dossier.flow", dossierComponentSource.includes("dossier.flow"));
+check("component renders dossier.timeFrameworks", dossierComponentSource.includes("dossier.timeFrameworks"));
+check("component renders dossier.communication", dossierComponentSource.includes("dossier.communication"));
+check("component renders dossier.recovery", dossierComponentSource.includes("dossier.recovery"));
+check("component renders dossier.validation", dossierComponentSource.includes("dossier.validation"));
+check("component renders dossier.closing", dossierComponentSource.includes("dossier.closing"));
+check("component renders dossier.questionsToAsk", dossierComponentSource.includes("dossier.questionsToAsk"));
+check("component renders dossier.signals", dossierComponentSource.includes("dossier.signals"));
+check("component renders dossier.failureModes", dossierComponentSource.includes("dossier.failureModes"));
+check("component renders dossier.seniority", dossierComponentSource.includes("dossier.seniority"));
+check("component renders dossier.environment", dossierComponentSource.includes("dossier.environment"));
+check("component renders dossier.companyModifierRules", dossierComponentSource.includes("dossier.companyModifierRules"));
+check("component renders dossier.interactions", dossierComponentSource.includes("dossier.interactions"));
+check("component renders dossier.integrity", dossierComponentSource.includes("dossier.integrity"));
+check("component contains the time-control disclaimer", dossierComponentSource.includes("not universal interview rules or pass/fail timing thresholds"));
+check("component contains the signals disclaimer", dossierComponentSource.includes("not a scoring rubric, hiring decision, or probability of passing"));
+check("component contains the generic seniority disclaimer", dossierComponentSource.includes("Seniority changes the evidence emphasized; it does not remove the requirement to complete the round’s core task and validate the result."));
+check("component no longer contains the algorithmic-coding-specific seniority sentence", !dossierComponentSource.includes("does not remove the requirement to write correct code"));
+check("component contains the accessibility accommodation sentence", dossierComponentSource.includes("designated accommodations contact"));
+check("component contains the company-variation disclaimer", dossierComponentSource.includes("does not make candidate reports official policy"));
+check("component renders a generic dossier title", dossierComponentSource.includes("title={dossier.title}"));
+check("component renders a generic dossier description from purpose", dossierComponentSource.includes("description={dossier.purpose}"));
+check("component does not hardcode the algorithmic-coding title", !dossierComponentSource.includes("Algorithmic coding: from prompt to validated solution"));
+check("component renders the validate-the-result heading", dossierComponentSource.includes("Validate the result"));
+check("component no longer contains the algorithmic-coding-specific validation heading", !dossierComponentSource.includes("Validate the implementation"));
+check("component derives related-preparation links from guide.relatedHrefs", dossierComponentSource.includes("guide.relatedHrefs.map("));
+check("component uses roundExecutionRelatedLinkLabel for related-preparation links", dossierComponentSource.includes("roundExecutionRelatedLinkLabel(href)"));
+check("component imports roundExecutionRelatedLinkLabel from the presentation module", dossierComponentSource.includes('import { roundExecutionRelatedLinkLabel } from "@/lib/interview-playbook/round-execution-presentation"'));
+check("component no longer hardcodes /dsa in related preparation", !dossierComponentSource.includes('href="/dsa"'));
+check("component no longer hardcodes /dsa/practice in related preparation", !dossierComponentSource.includes('href="/dsa/practice"'));
+check('component links to "/companies"', dossierComponentSource.includes('href="/companies"'));
+check('component links to "/interview-tips/rounds"', dossierComponentSource.includes('href="/interview-tips/rounds"'));
+check('component links to "/interview-tips"', dossierComponentSource.includes('href="/interview-tips"'));
+check("component does not link to the private Playbook", !dossierComponentSource.includes('href="/interview-playbook"'));
+check("component contains no company-specific process claims", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(dossierComponentSource));
+check("component contains no universal minute allocation outside supplied dossier data", !/\bmust take \d+ minutes\b/i.test(dossierComponentSource));
+check("component does not add a score field", !/\bscore\s*[:=]/.test(dossierComponentSource));
+check("component does not add a probability field", !/\bprobability\s*[:=]/.test(dossierComponentSource));
+check("component does not add a fixed countdown timer", !/setInterval|setTimeout|useCountdown/.test(dossierComponentSource));
+
+// --- Detail-route integration assertions ----------------------------------
+check("detail page still exports generateStaticParams", roundsDetailPageSourceAfterDossier.includes("export function generateStaticParams"));
+check("detail page still uses V1_ROUND_EXECUTION_GUIDES for static params", roundsDetailPageSourceAfterDossier.includes("V1_ROUND_EXECUTION_GUIDES.map((guide) => ({ slug: guide.slug }))"));
+check("detail page still exports dynamicParams = false", roundsDetailPageSourceAfterDossier.includes("export const dynamicParams = false"));
+check("detail page still uses Promise-based params", roundsDetailPageSourceAfterDossier.includes("params: Promise<{ slug: string }>"));
+check("detail page still calls notFound() for invalid or post-v1 guides", roundsDetailPageSourceAfterDossier.includes("notFound()") && /!guide\s*\|\|\s*!guide\.v1/.test(roundsDetailPageSourceAfterDossier));
+check("detail page renders the quick reference before the dossier", roundsDetailPageSourceAfterDossier.indexOf("<RoundExecutionQuickReference") < roundsDetailPageSourceAfterDossier.indexOf("<RoundExecutionDossierView"));
+check("detail page renders the dossier conditionally", /\{dossier \? <RoundExecutionDossierView/.test(roundsDetailPageSourceAfterDossier));
+check("detail page does not render an empty dossier shell when absent", roundsDetailPageSourceAfterDossier.includes(": null"));
+check("detail page uses getRoundExecutionDossier", roundsDetailPageSourceAfterDossier.includes("getRoundExecutionDossier(guide.slug)"));
+check("detail page still requires no authentication", !roundsDetailPageSourceAfterDossier.includes("requireMemberProfile") && !roundsDetailPageSourceAfterDossier.includes("isAccountPlatformAvailable"));
+check("detail page still performs no direct Supabase query", !/^import.*supabase/im.test(roundsDetailPageSourceAfterDossier) && !roundsDetailPageSourceAfterDossier.includes(".from("));
+{
+  const paramSlugs = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
+  check("static params still generate exactly 15 v1 pages", paramSlugs.length === 15);
+  check("technical-presentation still excluded from static params", !paramSlugs.includes("technical-presentation"));
+  check("exactly algorithmic-coding, practical-coding, and debugging currently resolve a dossier among all v1 slugs", arraysEqual(
+    paramSlugs.filter((slug) => getRoundExecutionDossier(slug) !== null).sort(),
+    ["algorithmic-coding", "practical-coding", "debugging"].sort(),
+  ));
+  check("exactly twelve v1 routes remain quick-reference-only (no dossier)", paramSlugs.filter((slug) => getRoundExecutionDossier(slug) === null).length === 12);
+  check("code-review does not yet resolve a dossier", getRoundExecutionDossier("code-review") === null);
+  check("code-review remains a valid v1 route despite having no dossier", paramSlugs.includes("code-review"));
+}
+
+for (const [name, ok] of cases) assert.ok(ok, name);
+console.log(`Interview execution taxonomy qualification passed (${cases.length} cases).`);

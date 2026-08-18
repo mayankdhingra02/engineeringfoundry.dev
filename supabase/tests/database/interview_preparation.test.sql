@@ -1,0 +1,31 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(24);
+
+select has_table('public', 'interview_preparations', 'preparation table exists');
+select has_table('public', 'interview_preparation_custom_tasks', 'custom task table exists');
+select has_column('public', 'interview_preparations', 'round_id', 'preparation owns a round');
+select has_column('public', 'interview_preparations', 'completed_template_item_ids', 'stable checklist state exists');
+select has_column('public', 'interview_preparations', 'private_notes', 'private notes exist');
+select has_column('public', 'interview_preparations', 'topics_asked', 'reflection topics exist');
+select has_column('public', 'interview_preparations', 'went_well', 'reflection strengths exist');
+select has_column('public', 'interview_preparations', 'needs_improvement', 'reflection improvement exists');
+select has_column('public', 'interview_preparations', 'follow_up_notes', 'reflection follow-up exists');
+select has_column('public', 'interview_preparation_custom_tasks', 'completed', 'task completion exists');
+select has_column('public', 'interview_preparation_custom_tasks', 'position', 'task order exists');
+select col_is_pk('public', 'interview_preparations', 'id', 'preparation id is primary key');
+select col_is_pk('public', 'interview_preparation_custom_tasks', 'id', 'task id is primary key');
+select has_index('public', 'interview_preparation_custom_tasks', 'interview_preparation_tasks_round_idx', 'task round index exists');
+select ok((select relrowsecurity from pg_class where oid = 'public.interview_preparations'::regclass), 'preparation RLS active');
+select ok((select relrowsecurity from pg_class where oid = 'public.interview_preparation_custom_tasks'::regclass), 'task RLS active');
+select is((select count(*)::integer from pg_policies where schemaname = 'public' and tablename = 'interview_preparations'), 1, 'preparation owner policy only');
+select is((select count(*)::integer from pg_policies where schemaname = 'public' and tablename = 'interview_preparation_custom_tasks'), 1, 'task owner policy only');
+select has_function('public', 'save_interview_preparation', array['uuid','text','text[]','text','text','text','text'], 'save RPC exists');
+select has_function('public', 'add_interview_preparation_task', array['uuid','text'], 'task add RPC exists');
+select has_function('public', 'toggle_interview_preparation_task', array['uuid'], 'task toggle RPC exists');
+select has_function('public', 'delete_interview_preparation_task', array['uuid'], 'task delete RPC exists');
+select ok(has_function_privilege('authenticated', 'public.toggle_interview_preparation_task(uuid)', 'execute'), 'authenticated can toggle own task');
+select ok(has_function_privilege('authenticated', 'public.delete_interview_preparation_task(uuid)', 'execute'), 'authenticated can delete own task');
+
+select * from finish();
+rollback;

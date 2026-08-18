@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ company: 
 
 const generalPreparation = [
   { icon: Binary, title: "DSA", href: "/dsa", text: "Practice general coding patterns and problem-solving communication." },
-  { icon: Network, title: "System Design", href: "/system-design", text: "Practice requirements, architecture, tradeoffs, and reliability." },
+  { icon: Network, title: "System Design", href: "/system-design/start-here/introduction", text: "Practice requirements, architecture, tradeoffs, and reliability." },
   { icon: MessagesSquare, title: "Behavioral", href: "/behavioral", text: "Prepare evidence-based stories about decisions and collaboration." },
   { icon: BrainCircuit, title: "ML Design", href: "/ml-design", text: "Practice general data, modeling, serving, and monitoring tradeoffs." },
 ];
