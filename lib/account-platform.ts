@@ -12,3 +12,11 @@ export function areAccountsEnabled() {
 export function isAccountPlatformAvailable() {
   return areAccountsEnabled() && isSupabaseConfigured();
 }
+
+export function isGoogleAuthEnabled() {
+  return process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+}
+
+export function isGitHubAuthEnabled() {
+  return process.env.NEXT_PUBLIC_GITHUB_AUTH_ENABLED === "true";
+}

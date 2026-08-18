@@ -98,11 +98,13 @@ select throws_ok(
 );
 
 update public.profiles
-set username = 'member-a', display_name = 'Member A', is_public = true, onboarding_complete = true
+set username = 'member-a', display_name = 'Member A', is_public = true,
+    onboarding_complete = true, onboarding_completed_at = now()
 where id = '11111111-1111-4111-8111-111111111111';
 
 update public.profiles
-set username = 'member-b', display_name = 'Member B', is_public = false, onboarding_complete = true
+set username = 'member-b', display_name = 'Member B', is_public = false,
+    onboarding_complete = true, onboarding_completed_at = now()
 where id = '22222222-2222-4222-8222-222222222222';
 
 select throws_ok(
@@ -160,7 +162,7 @@ select is_empty(
 reset role;
 
 update public.profiles
-set is_public = true, onboarding_complete = false
+set is_public = true, onboarding_complete = false, onboarding_completed_at = null
 where id = '22222222-2222-4222-8222-222222222222';
 
 set local role anon;
@@ -175,7 +177,7 @@ select is_empty(
 reset role;
 
 update public.profiles
-set is_public = false, onboarding_complete = true
+set is_public = false, onboarding_complete = true, onboarding_completed_at = now()
 where id = '22222222-2222-4222-8222-222222222222';
 
 set local role authenticated;

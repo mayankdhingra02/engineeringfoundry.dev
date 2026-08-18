@@ -49,8 +49,78 @@ jobs:
         run: npm run test:experience-integrity
       - name: Test public launch integrity
         run: npm run test:public-launch-integrity
+      - name: Test authentication foundation
+        run: npm run test:auth-foundation
+      - name: Test Applications workspace
+        run: npm run test:application-tracker
+      - name: Test Behavioral workspace
+        run: npm run test:behavioral-workspace
+      - name: Test interview preparation hub
+        run: npm run test:interview-preparation-hub
+      - name: Test interview calendar and reminders
+        run: npm run test:interview-calendar-reminders
+      - name: Test reminder worker delivery outcomes
+        run: npm run test:interview-reminder-worker
+      - name: Test account lifecycle
+        run: npm run test:account-lifecycle
+      - name: Test production hardening
+        run: npm run test:production-hardening
+      - name: Test private-route privacy boundary
+        run: npm run test:private-route-privacy
+      # Mandatory launch guard: the application must not be able to offer a
+      # canonical ID the database would refuse to persist.
+      - name: Test canonical catalog integrity
+        run: npm run test:canonical-catalog-integrity
+      - name: Test authenticated persistence foundation
+        run: npm run test:persistence-foundation
       - name: Test UI density guardrails
         run: npm run test:ui-density
+      - name: Test typography readability
+        run: npm run test:typography-readability
+      - name: Test DSA persistent progress
+        run: npm run test:dsa-progress
+      - name: Test System Design practice workspace
+        run: npm run test:system-design-workspace
+      - name: Test homepage entry experience
+        run: npm run test:homepage-entry
+      - name: Test System Design learning architecture
+        run: npm run test:system-design-learning
+      - name: Test System Design entry experience
+        run: npm run test:system-design-entry
+      - name: Test System Design manifest
+        run: npm run test:system-design-manifest
+      - name: Test System Design recommendations
+        run: npm run test:system-design-recommendations
+      - name: Test System Design study plans
+        run: npm run test:system-design-study-plan
+      - name: Test System Design curriculum content
+        run: |
+          npm run test:system-design-foundations
+          npm run test:system-design-networking
+          npm run test:system-design-data-storage
+          npm run test:system-design-caching
+          npm run test:system-design-messaging
+          npm run test:system-design-reliability
+          npm run test:system-design-specialized
+          npm run test:system-design-technology
+          npm run test:system-design-practice
+          npm run test:system-design-release-audit
+      - name: Test DSA interview-preparation architecture
+        run: npm run test:dsa-interview-prep
+      - name: Test DSA roadmap architecture
+        run: npm run test:dsa-roadmap
+      - name: Test DSA level roadmaps and planning
+        run: |
+          npm run test:dsa-level-roadmaps
+          npm run test:dsa-roadmap-planning
+      - name: Test DSA study-plan architecture
+        run: npm run test:dsa-study-plans
+      - name: Test DSA language references
+        run: npm run test:dsa-languages
+      - name: Test DSA coding interview strategy
+        run: npm run test:dsa-strategy
+      - name: Test company interview guides
+        run: npm run test:company-interview-guide
       - name: Validate content
         run: npm run validate:content
       - name: Validate design content
@@ -71,3 +141,35 @@ jobs:
         run: npm run build
       - name: Smoke public routes
         run: npm run test:public-routes
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Start local Supabase
+        run: npx --yes supabase start
+      - name: Apply every migration from scratch
+        run: npx --yes supabase db reset --local
+      - name: Lint the public database schema
+        run: npx --yes supabase db lint --local --schema public --level warning --fail-on error
+      - name: Run database policy and integrity tests
+        run: npx --yes supabase test db
+      - name: Qualify two-user Data API isolation
+        run: |
+          eval "$(npx --yes supabase status -o env | sed -n 's/^ANON_KEY=/export NEXT_PUBLIC_SUPABASE_ANON_KEY=/p; s/^API_URL=/export NEXT_PUBLIC_SUPABASE_URL=/p; s/^SERVICE_ROLE_KEY=/export SUPABASE_SERVICE_ROLE_KEY=/p')"
+          npm run qualify:persistence-local
+          npm run qualify:account-lifecycle-local
+          npm run qualify:auth-local
+          npm run qualify:security-local
+      - name: Stop local Supabase
+        if: always()
+        run: npx --yes supabase stop
