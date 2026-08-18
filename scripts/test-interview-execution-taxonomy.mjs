@@ -41,8 +41,9 @@ const practicalDossierSource = readFileSync(join(root, "lib/interview-playbook/d
 const debuggingDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/debugging.ts"), "utf8");
 const codeReviewDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/code-review.ts"), "utf8");
 const lowLevelDesignDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/low-level-design.ts"), "utf8");
+const systemDesignDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/system-design.ts"), "utf8");
 const dossierRegistrySource = readFileSync(join(root, "lib/interview-playbook/dossiers/index.ts"), "utf8");
-const authoredDossierSource = [algorithmicDossierSource, practicalDossierSource, debuggingDossierSource, codeReviewDossierSource, lowLevelDesignDossierSource].join("\n");
+const authoredDossierSource = [algorithmicDossierSource, practicalDossierSource, debuggingDossierSource, codeReviewDossierSource, lowLevelDesignDossierSource, systemDesignDossierSource].join("\n");
 const allDossierModuleSource = [dossierCompatibilitySource, dossierSchemaSource, authoredDossierSource, dossierRegistrySource].join("\n");
 const dossierComponentSource = readFileSync(join(root, "components/interview-playbook/round-execution-dossier.tsx"), "utf8");
 const roundsDetailPageSourceAfterDossier = readFileSync(join(root, "app/interview-tips/rounds/[slug]/page.tsx"), "utf8");
@@ -446,9 +447,10 @@ const practicalCodingDossier = ROUND_EXECUTION_DOSSIERS[1];
 const debuggingDossier = ROUND_EXECUTION_DOSSIERS[2];
 const codeReviewDossier = ROUND_EXECUTION_DOSSIERS[3];
 const lowLevelDesignDossier = ROUND_EXECUTION_DOSSIERS[4];
+const systemDesignDossier = ROUND_EXECUTION_DOSSIERS[5];
 
-check("ROUND_EXECUTION_DOSSIERS contains exactly five dossiers", ROUND_EXECUTION_DOSSIERS.length === 5);
-check("the dossier order is exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design", arraysEqual(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug), ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design"]));
+check("ROUND_EXECUTION_DOSSIERS contains exactly six dossiers", ROUND_EXECUTION_DOSSIERS.length === 6);
+check("the dossier order is exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design, system-design", arraysEqual(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug), ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design", "system-design"]));
 check("the first dossier slug is algorithmic-coding", algorithmicCodingDossier?.slug === "algorithmic-coding");
 check("the first dossier status is published", algorithmicCodingDossier?.status === "published");
 check("the second dossier slug is practical-coding", practicalCodingDossier?.slug === "practical-coding");
@@ -459,15 +461,18 @@ check("the fourth dossier slug is code-review", codeReviewDossier?.slug === "cod
 check("the fourth dossier status is published", codeReviewDossier?.status === "published");
 check("the fifth dossier slug is low-level-design", lowLevelDesignDossier?.slug === "low-level-design");
 check("the fifth dossier status is published", lowLevelDesignDossier?.status === "published");
+check("the sixth dossier slug is system-design", systemDesignDossier?.slug === "system-design");
+check("the sixth dossier status is published", systemDesignDossier?.status === "published");
 check("dossier slugs are unique", new Set(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug)).size === ROUND_EXECUTION_DOSSIERS.length);
 check("every dossier has status published", ROUND_EXECUTION_DOSSIERS.every((dossier) => dossier.status === "published"));
-check("PUBLISHED_ROUND_EXECUTION_DOSSIERS contains exactly five dossiers", PUBLISHED_ROUND_EXECUTION_DOSSIERS.length === 5);
+check("PUBLISHED_ROUND_EXECUTION_DOSSIERS contains exactly six dossiers", PUBLISHED_ROUND_EXECUTION_DOSSIERS.length === 6);
 check('getRoundExecutionDossier("algorithmic-coding") returns the dossier', getRoundExecutionDossier("algorithmic-coding") === algorithmicCodingDossier);
 check('getRoundExecutionDossier("practical-coding") returns the dossier', getRoundExecutionDossier("practical-coding") === practicalCodingDossier);
 check('getRoundExecutionDossier("debugging") returns the dossier', getRoundExecutionDossier("debugging") === debuggingDossier);
 check('getRoundExecutionDossier("code-review") returns the dossier', getRoundExecutionDossier("code-review") === codeReviewDossier);
 check('getRoundExecutionDossier("low-level-design") returns the dossier', getRoundExecutionDossier("low-level-design") === lowLevelDesignDossier);
-check('getRoundExecutionDossier("system-design") returns null', getRoundExecutionDossier("system-design") === null);
+check('getRoundExecutionDossier("system-design") returns the dossier', getRoundExecutionDossier("system-design") === systemDesignDossier);
+check('getRoundExecutionDossier("ml-system-design") returns null', getRoundExecutionDossier("ml-system-design") === null);
 check('getRoundExecutionDossier("technical-presentation") returns null', getRoundExecutionDossier("technical-presentation") === null);
 check('getRoundExecutionDossier("not-a-guide") returns null', getRoundExecutionDossier("not-a-guide") === null);
 check("no dossier exists for a generic final round", getRoundExecutionDossier("final") === null);
@@ -479,6 +484,7 @@ check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the second dossier", ROUND_EXECU
 check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the third dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("debugging") === debuggingDossier);
 check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the fourth dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("code-review") === codeReviewDossier);
 check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the fifth dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("low-level-design") === lowLevelDesignDossier);
+check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the sixth dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("system-design") === systemDesignDossier);
 check("every dossier slug exists in V1_ROUND_EXECUTION_GUIDES", ROUND_EXECUTION_DOSSIERS.every((dossier) => V1_ROUND_EXECUTION_GUIDES.some((guide) => guide.slug === dossier.slug)));
 check("no dossier exists for technical-presentation", getRoundExecutionDossier("technical-presentation") === null);
 check("the debugging guide retains treatment complete in the canonical taxonomy", ROUND_EXECUTION_GUIDE_BY_SLUG.get("debugging")?.treatment === "complete");
@@ -490,15 +496,18 @@ check("code-review guide remains v1: true", codeReviewGuide?.v1 === true);
 const lowLevelDesignGuide = ROUND_EXECUTION_GUIDE_BY_SLUG.get("low-level-design");
 check("low-level-design guide remains treatment complete after dossier publication", lowLevelDesignGuide?.treatment === "complete");
 check("low-level-design guide remains v1: true", lowLevelDesignGuide?.v1 === true);
+const systemDesignGuide = ROUND_EXECUTION_GUIDE_BY_SLUG.get("system-design");
+check("system-design guide remains treatment complete after dossier publication", systemDesignGuide?.treatment === "complete");
+check("system-design guide remains v1: true", systemDesignGuide?.v1 === true);
 
 // --- Route-resolution coverage across all fifteen v1 guide slugs -----------
 {
   const v1Slugs = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
   const dossierBackedSlugs = v1Slugs.filter((slug) => getRoundExecutionDossier(slug) !== null);
   const quickReferenceOnlySlugs = v1Slugs.filter((slug) => getRoundExecutionDossier(slug) === null);
-  check("exactly five v1 slugs resolve a dossier", dossierBackedSlugs.length === 5);
-  check("the dossier-backed slugs are exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design", arraysEqual([...dossierBackedSlugs].sort(), ["algorithmic-coding", "code-review", "debugging", "low-level-design", "practical-coding"]));
-  check("exactly ten v1 slugs remain quick-reference-only", quickReferenceOnlySlugs.length === 10);
+  check("exactly six v1 slugs resolve a dossier", dossierBackedSlugs.length === 6);
+  check("the dossier-backed slugs are exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design, system-design", arraysEqual([...dossierBackedSlugs].sort(), ["algorithmic-coding", "code-review", "debugging", "low-level-design", "practical-coding", "system-design"]));
+  check("exactly nine v1 slugs remain quick-reference-only", quickReferenceOnlySlugs.length === 9);
   check("static params are unaffected by dossier coverage (still fifteen v1 guides)", v1Slugs.length === 15);
 }
 
@@ -724,8 +733,60 @@ for (const concept of [
 check("low-level-design integrity disclaimer about proprietary prompts is present and intact", d5.integrity.some((statement) => statement.includes("It does not reproduce proprietary prompts")));
 check("low-level-design integrity disclaimer about live-assessment assistance is present and intact", d5.integrity.some((statement) => statement.includes("It does not authorize external assistance during a live interview.")));
 
+// --- System Design dossier core content ---------------------------------------
+const d6 = systemDesignDossier;
+check("system-design: lastReviewed is exactly 2026-08-18", d6.lastReviewed === "2026-08-18");
+check("system-design: title is non-empty", d6.title.trim().length > 0);
+check("system-design: purpose is non-empty", d6.purpose.trim().length > 0);
+check("system-design: intendedEvaluation contains exactly seven items", d6.intendedEvaluation.length === 7);
+check("system-design: companyVariation contains exactly six items", d6.companyVariation.length === 6);
+check("system-design: beforeRound contains exactly four items", d6.beforeRound.length === 4);
+check("system-design: flow contains exactly seven steps", d6.flow.length === 7);
+check("system-design: flow IDs are exactly the required sequence", arraysEqual(d6.flow.map((step) => step.id), ["clarify-objective", "scope-requirements", "establish-baseline", "trace-flows", "deepen-critical-paths", "handle-tradeoffs-followups", "validate-close"]));
+check("system-design: flow IDs are unique", new Set(d6.flow.map((step) => step.id)).size === d6.flow.length);
+check("system-design: every flow step is complete", d6.flow.every((step) =>
+  step.title.trim().length > 0 && step.objective.trim().length > 0 && step.actions.length >= 3
+  && ["widely-applicable", "context-dependent"].includes(step.classification)));
+check("system-design: there are exactly two time frameworks", d6.timeFrameworks.length === 2);
+check("system-design: every time framework is context-dependent", d6.timeFrameworks.every((framework) => framework.classification === "context-dependent"));
+check("system-design: every time framework has exactly four phases and a non-empty label and assumption", d6.timeFrameworks.every((framework) => framework.phases.length === 4 && framework.label.trim().length > 0 && framework.assumption.trim().length > 0));
+check("system-design: every time phase is complete", d6.timeFrameworks.every((framework) => framework.phases.every((phase) =>
+  phase.label.trim().length > 0 && phase.range.trim().length > 0 && phase.objective.trim().length > 0 && phase.adjustment.trim().length > 0)));
+check("system-design: there are exactly four communication patterns", d6.communication.length === 4);
+check("system-design: there are exactly five recovery scenarios", d6.recovery.length === 5);
+check("system-design: there are exactly six validation items", d6.validation.length === 6);
+check("system-design: there are exactly four closing items", d6.closing.length === 4);
+check("system-design: there are exactly three questions to ask", d6.questionsToAsk.length === 3);
+check("system-design: there are exactly six strong signals", d6.signals.strong.length === 6);
+check("system-design: there are exactly six concern signals", d6.signals.concern.length === 6);
+check("system-design: there are exactly seven failure modes", d6.failureModes.length === 7);
+check("system-design: there are exactly three seniority entries", d6.seniority.length === 3);
+check("system-design: seniority levels appear in the exact required order", arraysEqual(d6.seniority.map((entry) => entry.level), ["SDE I / entry level", "SDE II / mid level", "Senior+"]));
+check("system-design: remote contains exactly three items", d6.environment.remote.length === 3);
+check("system-design: onsite contains exactly three items", d6.environment.onsite.length === 3);
+check("system-design: accessibility contains exactly four items", d6.environment.accessibility.length === 4);
+check("system-design: there are exactly four company modifier rules", d6.companyModifierRules.length === 4);
+check("system-design: there are exactly five interaction examples", d6.interactions.length === 5);
+check("system-design: every interaction is classified as illustrative", d6.interactions.every((example) => example.classification === "illustrative"));
+check("system-design: interaction IDs are unique", new Set(d6.interactions.map((example) => example.id)).size === d6.interactions.length);
+check("system-design: every interaction has non-empty title, scenario, weak, strong, and annotation", d6.interactions.every((example) =>
+  example.title.trim().length > 0 && example.scenario.trim().length > 0 && example.weak.trim().length > 0
+  && example.strong.trim().length > 0 && example.annotation.trim().length > 0));
+check("system-design: integrity contains exactly four statements", d6.integrity.length === 4);
+
+// --- System Design semantic content assertions ---------------------------------
+const systemDesignSerialized = JSON.stringify(d6).toLowerCase();
+for (const concept of [
+  "product objective", "primary user", "functional requirement", "non-functional", "scope", "assumption",
+  "scale", "estimat", "minimal", "end-to-end", "interface", "data boundar", "request", "flow",
+  "asynchronous", "bottleneck", "failure", "reliability", "availability", "consistency",
+  "durability", "latency", "cost", "trade-off", "redirection", "validat",
+]) check(`system-design content includes concept: ${concept}`, systemDesignSerialized.includes(concept));
+check("system-design integrity disclaimer about proprietary prompts is present and intact", d6.integrity.some((statement) => statement.includes("It does not reproduce proprietary prompts")));
+check("system-design integrity disclaimer about live-assessment assistance is present and intact", d6.integrity.some((statement) => statement.includes("It does not authorize external assistance during a live interview.")));
+
 // --- Dossier content integrity ------------------------------------------
-const serializedDossier = JSON.stringify([d, d2, d3, d4, d5]);
+const serializedDossier = JSON.stringify([d, d2, d3, d4, d5, d6]);
 check("dossier does not contain a company name", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(serializedDossier));
 check("dossier does not contain a proprietary question", !/leaked question|actual interview question|verbatim question/i.test(serializedDossier));
 check("dossier does not contain source code", !/```|function\s*\(|=>\s*\{|;\s*\n\s*(const|let|var)\s/.test(serializedDossier));
@@ -744,12 +805,12 @@ for (const forbidden of [
 check("dossier does not instruct generative-AI use during an assessment", !/chatgpt|use an ai tool|use an llm|generative ai/i.test(serializedDossier));
 check("dossier does not claim a universal number of questions", !/\b(exactly|always)\s+\d+\s+(problems?|questions?)\b/i.test(serializedDossier));
 check("dossier does not describe timing ranges as mandatory", !/mandatory (timing|schedule|allocation)|must (spend|take) exactly/i.test(serializedDossier));
-check("every time framework includes an explicit context-dependence assumption", [...d.timeFrameworks, ...d2.timeFrameworks, ...d3.timeFrameworks, ...d4.timeFrameworks, ...d5.timeFrameworks].every((framework) => /adaptable|assumes|context/i.test(framework.assumption)));
-check("no interaction claims to be a real company transcript", ![...d.interactions, ...d2.interactions, ...d3.interactions, ...d4.interactions, ...d5.interactions].some((example) => /actual transcript|real interview transcript|verbatim transcript/i.test(`${example.scenario} ${example.annotation}`)));
-check("no integrity statement implies legal advice", ![...d.integrity, ...d2.integrity, ...d3.integrity, ...d4.integrity, ...d5.integrity].some((statement) => /legal advice|constitutes legal/i.test(statement)));
+check("every time framework includes an explicit context-dependence assumption", [...d.timeFrameworks, ...d2.timeFrameworks, ...d3.timeFrameworks, ...d4.timeFrameworks, ...d5.timeFrameworks, ...d6.timeFrameworks].every((framework) => /adaptable|assumes|context/i.test(framework.assumption)));
+check("no interaction claims to be a real company transcript", ![...d.interactions, ...d2.interactions, ...d3.interactions, ...d4.interactions, ...d5.interactions, ...d6.interactions].some((example) => /actual transcript|real interview transcript|verbatim transcript/i.test(`${example.scenario} ${example.annotation}`)));
+check("no integrity statement implies legal advice", ![...d.integrity, ...d2.integrity, ...d3.integrity, ...d4.integrity, ...d5.integrity, ...d6.integrity].some((statement) => /legal advice|constitutes legal/i.test(statement)));
 check("generic role labels are present and allowed", serializedDossier.includes("SDE I") && serializedDossier.includes("SDE II") && serializedDossier.includes("Senior+"));
-check("all five dossier titles are distinct", new Set([d.title, d2.title, d3.title, d4.title, d5.title]).size === 5);
-check("every dossier's integrity section disclaims live-assessment assistance rather than authorizing it", [d, d2, d3, d4, d5].every((dossier) => dossier.integrity.some((statement) => /does not (authorize external assistance during a live interview|provide assistance during a live assessment)/i.test(statement))));
+check("all six dossier titles are distinct", new Set([d.title, d2.title, d3.title, d4.title, d5.title, d6.title]).size === 6);
+check("every dossier's integrity section disclaims live-assessment assistance rather than authorizing it", [d, d2, d3, d4, d5, d6].every((dossier) => dossier.integrity.some((statement) => /does not (authorize external assistance during a live interview|provide assistance during a live assessment)/i.test(statement))));
 check("dossier does not contain a security-exploitation instruction", !/\b(exploit a vulnerability|how to exploit|sql injection payload|privilege escalation technique|bypass authentication)\b/i.test(serializedDossier));
 check("the debugging integrity disclaimer disclaiming exploitation teaching is not misflagged as an exploitation instruction", serializedDossier.toLowerCase().includes("it does not teach exploitation"));
 check("dossier does not duplicate a language or framework curriculum", !/\b(learn (java|python|javascript|typescript|react|django|spring) (syntax|basics)|framework tutorial)\b/i.test(serializedDossier));
@@ -761,10 +822,14 @@ check("dossier does not contain a UML curriculum", !/\buml (tutorial|curriculum|
 check("dossier does not contain a design-pattern catalog", !/\bdesign[- ]pattern (catalog|library|cheat sheet|list of patterns)\b/i.test(serializedDossier));
 check("ordinary low-level-design vocabulary (class, object, interface, pattern, composition, inheritance, state, design) is not itself rejected", ["class", "object", "interface", "pattern", "composition", "inheritance", "state", "design"].every((word) => new RegExp(`\\b${word}\\b`, "i").test(lowLevelDesignSerialized)));
 check("the low-level-design integrity disclaimer about proprietary prompts is not misflagged as a proprietary prompt itself", serializedDossier.toLowerCase().includes("it does not reproduce proprietary prompts"));
+check("dossier does not contain a cloud-provider-specific tutorial", !/\b(aws|amazon web services|google cloud platform|\bgcp\b|microsoft azure) (tutorial|walkthrough|console guide|certification course)\b/i.test(serializedDossier));
+check("dossier does not contain a System Design technology-catalog curriculum", !/\bsystem design (curriculum|technology catalog|textbook)\b/i.test(serializedDossier));
+check("ordinary system-design vocabulary (API, storage, cache, queue, replication, partitioning, consistency, availability, latency, durability, reliability) is not itself rejected", ["API", "storage", "cach", "queue", "replicat", "partition", "consistency", "availability", "latency", "durability", "reliability"].every((word) => new RegExp(`\\b${word}`, "i").test(systemDesignSerialized)));
+check("the system-design integrity disclaimer about proprietary prompts is not misflagged as a proprietary prompt itself", serializedDossier.toLowerCase().includes("it does not reproduce proprietary prompts"));
 
 // --- Dossier compatibility entry point -------------------------------------
 check("compatibility entry point re-exports the dossier registry", dossierCompatibilitySource.includes('export * from "./dossiers/index.ts"'));
-check("compatibility entry point contains no dossier object", !/slug:\s*"(algorithmic-coding|practical-coding|debugging|code-review|low-level-design)"/.test(dossierCompatibilitySource));
+check("compatibility entry point contains no dossier object", !/slug:\s*"(algorithmic-coding|practical-coding|debugging|code-review|low-level-design|system-design)"/.test(dossierCompatibilitySource));
 check("compatibility entry point contains no schema definition", !dossierCompatibilitySource.includes("export type RoundExecutionDossier") && !dossierCompatibilitySource.includes("export type RoundExecutionDossierFlowStep"));
 check("compatibility entry point imports no React", !dossierCompatibilitySource.includes('from "react"'));
 check("compatibility entry point imports no Next.js", !dossierCompatibilitySource.includes('from "next'));
@@ -782,7 +847,7 @@ for (const exported of ["RoundExecutionContentClassification", "RoundExecutionDo
 }
 check("dossier schema imports only the canonical slug type", dossierSchemaSource.includes('import type { RoundExecutionGuideSlug } from "../round-execution.ts"') && !dossierSchemaSource.includes("ROUND_EXECUTION_GUIDES }"));
 check("dossier schema contains no runtime dossier registry", !dossierSchemaSource.includes("ROUND_EXECUTION_DOSSIERS") && !dossierSchemaSource.includes("export function getRoundExecutionDossier"));
-check("dossier schema contains no authored guide content", !/slug:\s*"(algorithmic-coding|practical-coding|debugging|code-review|low-level-design)"/.test(dossierSchemaSource));
+check("dossier schema contains no authored guide content", !/slug:\s*"(algorithmic-coding|practical-coding|debugging|code-review|low-level-design|system-design)"/.test(dossierSchemaSource));
 check("dossier schema imports no React", !dossierSchemaSource.includes('from "react"'));
 check("dossier schema imports no Next.js", !dossierSchemaSource.includes('from "next'));
 check("dossier schema imports no Supabase", !/^import.*supabase/im.test(dossierSchemaSource) && !dossierSchemaSource.includes("createSupabase"));
@@ -795,11 +860,12 @@ check("dossier schema does not call Math.random", !dossierSchemaSource.includes(
 
 // --- Per-dossier files -------------------------------------------------------
 const perDossierFiles = [
-  { name: "algorithmic-coding.ts", source: algorithmicDossierSource, exportName: "algorithmicCodingDossier", slug: "algorithmic-coding", otherSlugs: ["practical-coding", "debugging", "code-review", "low-level-design"], otherFiles: ["practical-coding.ts", "debugging.ts", "code-review.ts", "low-level-design.ts"] },
-  { name: "practical-coding.ts", source: practicalDossierSource, exportName: "practicalCodingDossier", slug: "practical-coding", otherSlugs: ["algorithmic-coding", "debugging", "code-review", "low-level-design"], otherFiles: ["algorithmic-coding.ts", "debugging.ts", "code-review.ts", "low-level-design.ts"] },
-  { name: "debugging.ts", source: debuggingDossierSource, exportName: "debuggingDossier", slug: "debugging", otherSlugs: ["algorithmic-coding", "practical-coding", "code-review", "low-level-design"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts", "code-review.ts", "low-level-design.ts"] },
-  { name: "code-review.ts", source: codeReviewDossierSource, exportName: "codeReviewDossier", slug: "code-review", otherSlugs: ["algorithmic-coding", "practical-coding", "debugging", "low-level-design"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts", "debugging.ts", "low-level-design.ts"] },
-  { name: "low-level-design.ts", source: lowLevelDesignDossierSource, exportName: "lowLevelDesignDossier", slug: "low-level-design", otherSlugs: ["algorithmic-coding", "practical-coding", "debugging", "code-review"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts", "debugging.ts", "code-review.ts"] },
+  { name: "algorithmic-coding.ts", source: algorithmicDossierSource, exportName: "algorithmicCodingDossier", slug: "algorithmic-coding", otherSlugs: ["practical-coding", "debugging", "code-review", "low-level-design", "system-design"], otherFiles: ["practical-coding.ts", "debugging.ts", "code-review.ts", "low-level-design.ts", "system-design.ts"] },
+  { name: "practical-coding.ts", source: practicalDossierSource, exportName: "practicalCodingDossier", slug: "practical-coding", otherSlugs: ["algorithmic-coding", "debugging", "code-review", "low-level-design", "system-design"], otherFiles: ["algorithmic-coding.ts", "debugging.ts", "code-review.ts", "low-level-design.ts", "system-design.ts"] },
+  { name: "debugging.ts", source: debuggingDossierSource, exportName: "debuggingDossier", slug: "debugging", otherSlugs: ["algorithmic-coding", "practical-coding", "code-review", "low-level-design", "system-design"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts", "code-review.ts", "low-level-design.ts", "system-design.ts"] },
+  { name: "code-review.ts", source: codeReviewDossierSource, exportName: "codeReviewDossier", slug: "code-review", otherSlugs: ["algorithmic-coding", "practical-coding", "debugging", "low-level-design", "system-design"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts", "debugging.ts", "low-level-design.ts", "system-design.ts"] },
+  { name: "low-level-design.ts", source: lowLevelDesignDossierSource, exportName: "lowLevelDesignDossier", slug: "low-level-design", otherSlugs: ["algorithmic-coding", "practical-coding", "debugging", "code-review", "system-design"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts", "debugging.ts", "code-review.ts", "system-design.ts"] },
+  { name: "system-design.ts", source: systemDesignDossierSource, exportName: "systemDesignDossier", slug: "system-design", otherSlugs: ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts", "debugging.ts", "code-review.ts", "low-level-design.ts"] },
 ];
 for (const file of perDossierFiles) {
   check(`${file.name} imports RoundExecutionDossier from ./schema.ts`, file.source.includes('import type { RoundExecutionDossier } from "./schema.ts"'));
@@ -830,19 +896,22 @@ check("registry imports practicalCodingDossier from ./practical-coding.ts", doss
 check("registry imports debuggingDossier from ./debugging.ts", dossierRegistrySource.includes('import { debuggingDossier } from "./debugging.ts"'));
 check("registry imports codeReviewDossier from ./code-review.ts", dossierRegistrySource.includes('import { codeReviewDossier } from "./code-review.ts"'));
 check("registry imports lowLevelDesignDossier from ./low-level-design.ts", dossierRegistrySource.includes('import { lowLevelDesignDossier } from "./low-level-design.ts"'));
-check("registry uses the canonical dossier order", /ROUND_EXECUTION_DOSSIERS[\s\S]{0,60}=[\s\S]{0,280}algorithmicCodingDossier,\s*practicalCodingDossier,\s*debuggingDossier,\s*codeReviewDossier,\s*lowLevelDesignDossier/.test(dossierRegistrySource));
+check("registry imports systemDesignDossier from ./system-design.ts", dossierRegistrySource.includes('import { systemDesignDossier } from "./system-design.ts"'));
+check("registry uses the canonical dossier order", /ROUND_EXECUTION_DOSSIERS[\s\S]{0,60}=[\s\S]{0,340}algorithmicCodingDossier,\s*practicalCodingDossier,\s*debuggingDossier,\s*codeReviewDossier,\s*lowLevelDesignDossier,\s*systemDesignDossier/.test(dossierRegistrySource));
 check("registry registers codeReviewDossier after debuggingDossier", dossierRegistrySource.indexOf("debuggingDossier,") < dossierRegistrySource.indexOf("codeReviewDossier,"));
 check("registry registers lowLevelDesignDossier after codeReviewDossier", dossierRegistrySource.indexOf("codeReviewDossier,") < dossierRegistrySource.indexOf("lowLevelDesignDossier,"));
+check("registry registers systemDesignDossier after lowLevelDesignDossier", dossierRegistrySource.indexOf("lowLevelDesignDossier,") < dossierRegistrySource.indexOf("systemDesignDossier,"));
 check("registry exports ROUND_EXECUTION_DOSSIERS", dossierRegistrySource.includes("export const ROUND_EXECUTION_DOSSIERS"));
 check("registry exports ROUND_EXECUTION_DOSSIER_BY_SLUG", dossierRegistrySource.includes("export const ROUND_EXECUTION_DOSSIER_BY_SLUG"));
 check("registry exports PUBLISHED_ROUND_EXECUTION_DOSSIERS", dossierRegistrySource.includes("export const PUBLISHED_ROUND_EXECUTION_DOSSIERS"));
 check("registry exports getRoundExecutionDossier", dossierRegistrySource.includes("export function getRoundExecutionDossier"));
 check("registry re-exports the schema types", dossierRegistrySource.includes("export type {") && dossierRegistrySource.includes('from "./schema.ts"'));
-check("registry re-exports all five named dossier constants", dossierRegistrySource.includes("export { algorithmicCodingDossier, practicalCodingDossier, debuggingDossier, codeReviewDossier, lowLevelDesignDossier }"));
-check("registry contains exactly five registry entries", /ROUND_EXECUTION_DOSSIERS[\s\S]{0,60}=\s*\[([\s\S]{0,280}?)\];/.exec(dossierRegistrySource)?.[1]?.split(",").map((entry) => entry.trim()).filter(Boolean).length === 5);
-check("registry preserves the other four imports and exports alongside the new one", ["algorithmicCodingDossier", "practicalCodingDossier", "debuggingDossier", "codeReviewDossier"].every((name) => dossierRegistrySource.includes(name)));
+check("registry re-exports all six named dossier constants", dossierRegistrySource.includes("export { algorithmicCodingDossier, practicalCodingDossier, debuggingDossier, codeReviewDossier, lowLevelDesignDossier, systemDesignDossier }"));
+check("registry contains exactly six registry entries", /ROUND_EXECUTION_DOSSIERS[\s\S]{0,60}=\s*\[([\s\S]{0,340}?)\];/.exec(dossierRegistrySource)?.[1]?.split(",").map((entry) => entry.trim()).filter(Boolean).length === 6);
+check("registry preserves the other five imports and exports alongside the new one", ["algorithmicCodingDossier", "practicalCodingDossier", "debuggingDossier", "codeReviewDossier", "lowLevelDesignDossier"].every((name) => dossierRegistrySource.includes(name)));
 check("registry adds no fallback dossier", !dossierRegistrySource.includes("fallbackDossier") && !dossierRegistrySource.includes("defaultDossier"));
 check("registry adds no dynamic file discovery", !dossierRegistrySource.includes("readdirSync") && !dossierRegistrySource.includes("readdir(") && !dossierRegistrySource.includes("import.meta.glob"));
+check("registry adds no ML System Design dossier", !dossierRegistrySource.includes("mlSystemDesignDossier"));
 check("registry adds no Technical Presentation dossier", !dossierRegistrySource.includes("technicalPresentationDossier"));
 check("registry adds no generic final/onsite/bar-raiser/mixed-signal dossier", !/slug:\s*"(final|onsite|bar-raiser|mixed-signal)"/.test(dossierRegistrySource));
 
@@ -936,16 +1005,18 @@ check("detail page still performs no direct Supabase query", !/^import.*supabase
   const paramSlugs = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
   check("static params still generate exactly 15 v1 pages", paramSlugs.length === 15);
   check("technical-presentation still excluded from static params", !paramSlugs.includes("technical-presentation"));
-  check("exactly algorithmic-coding, practical-coding, debugging, code-review, and low-level-design currently resolve a dossier among all v1 slugs", arraysEqual(
+  check("exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design, and system-design currently resolve a dossier among all v1 slugs", arraysEqual(
     paramSlugs.filter((slug) => getRoundExecutionDossier(slug) !== null).sort(),
-    ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design"].sort(),
+    ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design", "system-design"].sort(),
   ));
-  check("exactly ten v1 routes remain quick-reference-only (no dossier)", paramSlugs.filter((slug) => getRoundExecutionDossier(slug) === null).length === 10);
+  check("exactly nine v1 routes remain quick-reference-only (no dossier)", paramSlugs.filter((slug) => getRoundExecutionDossier(slug) === null).length === 9);
   check("code-review still resolves a dossier", getRoundExecutionDossier("code-review") !== null);
   check("code-review remains a valid v1 route", paramSlugs.includes("code-review"));
-  check("low-level-design now resolves a dossier", getRoundExecutionDossier("low-level-design") !== null);
+  check("low-level-design still resolves a dossier", getRoundExecutionDossier("low-level-design") !== null);
   check("low-level-design remains a valid v1 route", paramSlugs.includes("low-level-design"));
-  check("a valid v1 route does not require a dossier (ten still resolve null)", paramSlugs.filter((slug) => getRoundExecutionDossier(slug) === null).every((slug) => V1_ROUND_EXECUTION_GUIDES.some((guide) => guide.slug === slug)));
+  check("system-design now resolves a dossier", getRoundExecutionDossier("system-design") !== null);
+  check("system-design remains a valid v1 route", paramSlugs.includes("system-design"));
+  check("a valid v1 route does not require a dossier (nine still resolve null)", paramSlugs.filter((slug) => getRoundExecutionDossier(slug) === null).every((slug) => V1_ROUND_EXECUTION_GUIDES.some((guide) => guide.slug === slug)));
 }
 
 for (const [name, ok] of cases) assert.ok(ok, name);

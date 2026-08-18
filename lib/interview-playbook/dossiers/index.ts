@@ -16,6 +16,7 @@ import { practicalCodingDossier } from "./practical-coding.ts";
 import { debuggingDossier } from "./debugging.ts";
 import { codeReviewDossier } from "./code-review.ts";
 import { lowLevelDesignDossier } from "./low-level-design.ts";
+import { systemDesignDossier } from "./system-design.ts";
 
 export type {
   RoundExecutionContentClassification,
@@ -30,7 +31,7 @@ export type {
   RoundExecutionDossier,
 } from "./schema.ts";
 
-export { algorithmicCodingDossier, practicalCodingDossier, debuggingDossier, codeReviewDossier, lowLevelDesignDossier };
+export { algorithmicCodingDossier, practicalCodingDossier, debuggingDossier, codeReviewDossier, lowLevelDesignDossier, systemDesignDossier };
 
 export const ROUND_EXECUTION_DOSSIERS: readonly RoundExecutionDossier[] = [
   algorithmicCodingDossier,
@@ -38,6 +39,7 @@ export const ROUND_EXECUTION_DOSSIERS: readonly RoundExecutionDossier[] = [
   debuggingDossier,
   codeReviewDossier,
   lowLevelDesignDossier,
+  systemDesignDossier,
 ];
 
 export const ROUND_EXECUTION_DOSSIER_BY_SLUG: ReadonlyMap<RoundExecutionGuideSlug, RoundExecutionDossier> = new Map(
