@@ -40,3 +40,9 @@ yarn-error.log*
 /.wrangler/
 /outputs/
 /work/
+
+# AI-tool working state (agent configs, design-review notes, QA screenshots)
+/.agents/
+/.codex/
+/.impeccable/
+/artifacts/
