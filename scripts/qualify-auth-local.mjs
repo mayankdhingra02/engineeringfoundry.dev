@@ -90,9 +90,14 @@ await check("User B can complete their own profile", async () => {
     username: "qualification-b",
     display_name: "Qualification B",
     is_public: true,
-    onboarding_complete: true,
   }).eq("id", b.user.id).select("username").maybeSingle();
   expect(!update.error && update.data?.username === "qualification-b", update.error?.message ?? "no row updated");
+  const completion = await b.authClient.rpc("complete_account_onboarding", {
+    preferred_role_level_value: null,
+    primary_preparation_focus_value: null,
+    preferred_timezone_value: null,
+  });
+  expect(!completion.error && completion.data?.onboarding_complete, completion.error?.message ?? "onboarding did not complete");
 });
 
 await check("User A can complete their own profile", async () => {
@@ -100,17 +105,23 @@ await check("User A can complete their own profile", async () => {
     username: "qualification-a",
     display_name: "Qualification A",
     is_public: true,
-    onboarding_complete: true,
   }).eq("id", a.user.id).select("username").maybeSingle();
   expect(!update.error && update.data?.username === "qualification-a", update.error?.message ?? "no row updated");
+  const completion = await a.authClient.rpc("complete_account_onboarding", {
+    preferred_role_level_value: null,
+    primary_preparation_focus_value: null,
+    preferred_timezone_value: null,
+  });
+  expect(!completion.error && completion.data?.onboarding_complete, completion.error?.message ?? "onboarding did not complete");
 });
 
-await check("incomplete user can retain onboarding_complete=false", async () => {
+await check("profile onboarding boolean and timestamp remain consistent", async () => {
   const update = await c.authClient.from("profiles").update({
     username: "qualification-incomplete",
     display_name: "Qualification Incomplete",
-  }).eq("id", c.user.id).select("onboarding_complete").maybeSingle();
-  expect(!update.error && update.data?.onboarding_complete === false, update.error?.message ?? "unexpected onboarding state");
+  }).eq("id", c.user.id).select("onboarding_complete,onboarding_completed_at").maybeSingle();
+  expect(!update.error && update.data, update.error?.message ?? "unexpected onboarding state");
+  expect(update.data.onboarding_complete === Boolean(update.data.onboarding_completed_at), "onboarding state is inconsistent");
 });
 
 await check("reserved username admin is rejected by the database", async () => {

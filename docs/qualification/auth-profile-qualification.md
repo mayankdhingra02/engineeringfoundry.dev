@@ -6,6 +6,8 @@
 
 The local authentication and database foundation passed the executable security checks described below. A dedicated hosted Supabase project was not connected, so hosted migrations, hosted authentication, provider OAuth, production deployment, and final edge cache-safety verification remain blocked. Local success is not treated as production qualification.
 
+This report is historical evidence for the profile foundation only: migrations `202608130001_create_profiles.sql` and `202608130002_auth_profile_hardening.sql`. Application, Behavioral, and preparation-progress migrations added afterward are **not hosted-qualified** by these results. The account flag must stay disabled until every currently committed private schema has been applied and re-qualified in the intended hosted project; see [`../authenticated-workspace.md`](../authenticated-workspace.md).
+
 ## Test metadata
 
 | Item | Value |
@@ -135,7 +137,7 @@ No UUID, email, timestamps, visibility flags, onboarding flag, or provider data 
 ## Exact owner actions required
 
 1. Approve the pending read-only GitHub email authorization for the Supabase dashboard (or sign in to Supabase another way), then create or select a dedicated Engineering Foundry project.
-2. Authenticate the CLI locally without sharing the token in chat, link the repository to that project, run `npx supabase db push --dry-run`, verify only migrations 001 and 002, then run `npx supabase db push` and verify migration history.
+2. Authenticate the CLI locally without sharing the token in chat, link the repository to that project, run `npx supabase db push --dry-run`, review every currently committed migration, then run `npx supabase db push` and verify migration history. The 2026-08-13 evidence above covered only migrations 001 and 002; it must not be used as qualification evidence for later private schemas.
 3. Configure Supabase Auth with Site URL `https://engineeringfoundry.dev` and exact redirects `https://engineeringfoundry.dev/auth/callback` and `http://localhost:3000/auth/callback`; keep email confirmation enabled.
 4. Put only the hosted project URL and public/publishable key in local and production environment configuration. Do not add a service-role key.
 5. Configure Google and GitHub provider applications with the provider callback URLs shown by Supabase; keep client secrets outside the repository.

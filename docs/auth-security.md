@@ -1,6 +1,6 @@
 # Authentication and profile security
 
-This document describes the enforceable boundary introduced by the authentication foundation and the `202608130002_auth_profile_hardening.sql` migration. Application checks improve the user experience; Postgres grants, constraints, functions, and Row Level Security remain the final authority.
+This document describes the enforceable boundary introduced by the authentication foundation and extended by `202608130002_auth_profile_hardening.sql` and `202608150001_create_account_lifecycle.sql`. Application checks improve the user experience; Postgres grants, constraints, functions, and Row Level Security remain the final authority.
 
 ## Data-access model
 
@@ -19,6 +19,8 @@ The public return shape is exactly: `username`, `display_name`, `bio`, `current_
 | `public.set_updated_at()` | Security invoker; empty `search_path` | Revoked | Revoked | Revoked | Trigger-only timestamp maintenance |
 | `public.handle_new_user()` | Security definer; empty `search_path` | Revoked | Revoked | Revoked | Trigger-only profile creation |
 | `public.get_public_profile(text)` | Stable security definer; empty `search_path` | Revoked | Granted | Granted | Minimal public profile lookup |
+| `public.complete_account_onboarding(text,text,text)` | Security definer; empty `search_path`; actor-derived | Revoked | Revoked | Granted | Atomic onboarding completion and minimal preference seed |
+| `public.save_account_preparation_preferences(text,text,text)` | Security definer; empty `search_path`; actor-derived | Revoked | Revoked | Granted | Save the caller's preparation defaults |
 
 Revoking direct execution from a trigger function does not disable its trigger. PostgreSQL invokes the trigger as part of the table operation; API clients do not need direct `EXECUTE` permission.
 
@@ -74,6 +76,56 @@ supabase test db
 ```
 
 `supabase db reset` destroys only the local Supabase database. Do not point local destructive commands at a production project.
+
+Account export and deletion add trusted server boundaries above RLS. Neither accepts a target user identifier: export resolves the cookie actor and emits only explicitly selected safe fields, while deletion passes that actor's ID to a server-only Auth admin client. See [`account-lifecycle.md`](account-lifecycle.md) for the export schema, recovery redirect rules, credential-safe form fallback, and full deletion cascade.
+
+## Fresh verification for destructive actions
+
+Holding an unlocked session is not the same as proving current credentials. Phase 9 added `lib/auth/reauthentication.ts` for actions where that distinction matters.
+
+Verification runs against an **isolated Supabase client** created with `persistSession: false`. That client keeps its session in memory and never touches cookie storage, so confirming a password cannot rewrite or invalidate the caller's active session. The throwaway session is signed out locally afterwards, and the verified identity is compared against the caller's user ID so valid credentials for a different account are rejected.
+
+| Action | Password-capable account | OAuth-only account |
+| --- | --- | --- |
+| Password change | Current password verified through the isolated client | Directed to password recovery |
+| Permanent deletion | Current password **and** the typed `DELETE` confirmation | Typed `DELETE` confirmation only |
+
+OAuth-only accounts deliberately keep confirmation rather than reauthentication. There is no password to verify, and a prompt that validates nothing would be security theater. The residual risk is explicit: an attacker with an unlocked, already-signed-in browser belonging to an OAuth-only user can delete that account. Deletion remains irreversible, the confirmation remains exact, and the product does not claim more assurance than it has.
+
+Supabase Auth rate limits these verification attempts. Engineering Foundry deliberately adds no second limiter, because duplicating a provider control it does not own could lock users out of authentication.
+
+Before Phase 9 the password-change action verified by calling `signInWithPassword` on the cookie-backed server client, which issued a new session as a side effect of a check. That is no longer the case.
+
+## Response security headers
+
+`lib/security/headers.ts` is the single definition, applied to every route by `next.config.ts` and covered by `npm run test:production-hardening`.
+
+Enforced: `Content-Security-Policy`, `Strict-Transport-Security` (production only), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Cross-Origin-Opener-Policy: same-origin`, `X-Permitted-Cross-Domain-Policies: none`, and `Permissions-Policy`.
+
+### Why the CSP allows inline scripts
+
+The policy is an enforced baseline, not a strict CSP, and the reason is deliberate.
+
+A nonce-based CSP in Next.js requires generating a per-request nonce in the proxy, which opts every page into dynamic rendering. Engineering Foundry statically generates the great majority of its pages, so that would convert a mostly-static curriculum site into a fully dynamic one. Next.js also injects its own inline bootstrap and streaming-payload scripts, which have no stable hash.
+
+So `script-src` retains `'unsafe-inline'` and is not treated as the XSS boundary; React's escaping and the absence of `dangerouslySetInnerHTML` on user content are. `'unsafe-eval'` is permitted in development only, for hot module replacement.
+
+The directives that do carry weight here are enforced strictly:
+
+- `frame-ancestors 'none'` prevents clickjacking of the authenticated workspace.
+- `base-uri 'self'` prevents base-tag injection.
+- `form-action 'self'` prevents a form posting credentials to another origin.
+- `object-src 'none'` and `frame-src 'none'` remove plugin and embed surface.
+- `connect-src` is an allowlist of the configured Supabase project and, when configured, PostHog — this bounds where a script could exfiltrate private preparation data.
+- `img-src` is restricted to first-party, `data:`, and `blob:`. Inline styles remain permitted because Mermaid injects a style block into rendered SVG.
+
+Report-only was considered and rejected: with no error-monitoring vendor in this project there is nowhere to send violation reports, so a report-only policy would produce neither signal nor protection.
+
+## Rate limiting
+
+Supabase Auth owns brute-force protection for sign-in, sign-up, recovery, and credential verification. Engineering Foundry throttles only operations it makes expensive itself.
+
+Account export is the one such operation today: five requests per fifteen minutes per account. The budget lives in `public.account_action_rate_limits`, keyed by `auth.uid()` through a `SECURITY DEFINER` RPC that takes no user parameter, so a client can neither spend another account's budget nor reset its own by clearing cookies. Concurrent requests serialize on a row lock. See [`account-lifecycle.md`](account-lifecycle.md).
 
 ## Real-project verification
 

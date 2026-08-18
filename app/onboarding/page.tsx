@@ -1,10 +1,38 @@
+/*
+THESIS: Setup is one useful routing decision, not a profile questionnaire or tutorial.
+OWN-WORLD: Warm paper, one white operating surface, quiet rules, rust action, and semantic radio controls.
+STORY: Choose a level, timing, focus, and shared reminder timezone; arrive directly at useful preparation.
+FIRST VIEWPORT: A compact welcome sits beside one continuous form; the preparation level leads and the action closes the same surface.
+FORM: Direct code-led extension of the established authenticated workspace, phase8-account-extension.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+*/
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AccountUnavailable } from "@/components/account-unavailable";
-import { ProfileForm } from "@/features/profile/profile-form";
+import { OnboardingForm } from "@/features/account/onboarding-form";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/queries";
 import { safeInternalPath } from "@/lib/auth/redirects";
-export const metadata: Metadata = { title: "Set Up Your Profile", robots: { index: false, follow: false } };
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = { title: "Start Your Preparation", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
-export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) { if (!isAccountPlatformAvailable()) return <AccountUnavailable />; const user = await getCurrentUser(); if (!user) redirect("/sign-in?next=/onboarding"); const profile = await getCurrentProfile(); if (!profile) redirect("/auth/error?reason=profile"); const next = safeInternalPath((await searchParams).next); if (profile.onboarding_complete) redirect(next); return <section className="auth-section onboarding-section"><div className="page-width"><div className="onboarding-heading"><span>Welcome to Engineering Foundry</span><h1>Build your engineering identity.</h1><p>Your profile connects future preparation, community, and career workflows to an account you control.</p></div><ProfileForm profile={profile} mode="onboarding" next={next} userId={user.id} /></div></section>; }
+
+export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  if (!isAccountPlatformAvailable()) return <AccountUnavailable />;
+  const user = await getCurrentUser();
+  if (!user) redirect("/signin?next=/onboarding");
+  const profile = await getCurrentProfile();
+  if (!profile) redirect("/auth/error?reason=profile");
+  const next = safeInternalPath((await searchParams).next);
+  if (profile.onboarding_complete) redirect(next);
+  const supabase = await createSupabaseServerClient();
+  const { data: reminderPreference } = supabase
+    ? await supabase.from("interview_reminder_preferences").select("preferred_timezone").eq("user_id", user.id).maybeSingle()
+    : { data: null };
+
+  return <section className="onboarding-page"><div className="page-width onboarding-shell">
+    <header className="onboarding-intro"><h1>Start with the work that matters now.</h1><p>Three quick choices help Engineering Foundry point you to the right preparation. Every track stays available, and you can change these later.</p><ul><li>No resume or work-history questions</li><li>No permanent role lock-in</li><li>About one minute</li></ul></header>
+    <OnboardingForm next={next} savedTimezone={reminderPreference?.preferred_timezone ?? null} />
+  </div></section>;
+}
