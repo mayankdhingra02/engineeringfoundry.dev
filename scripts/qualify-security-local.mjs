@@ -10,9 +10,12 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
-process.loadEnvFile?.(".env.local");
+if (existsSync(".env.local")) {
+  process.loadEnvFile?.(".env.local");
+}
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const password = "Phase9Qualification123!";
