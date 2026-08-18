@@ -34,7 +34,14 @@ const roundsDetailPageSource = readFileSync(join(root, "app/interview-tips/round
 const interviewPlaybookComponentSource = readFileSync(join(root, "components/interview-playbook.tsx"), "utf8");
 const sitemapExists = exists("app/sitemap.ts");
 const sitemapSource = sitemapExists ? readFileSync(join(root, "app/sitemap.ts"), "utf8") : null;
-const dossierModelSource = readFileSync(join(root, "lib/interview-playbook/round-execution-dossiers.ts"), "utf8");
+const dossierCompatibilitySource = readFileSync(join(root, "lib/interview-playbook/round-execution-dossiers.ts"), "utf8");
+const dossierSchemaSource = readFileSync(join(root, "lib/interview-playbook/dossiers/schema.ts"), "utf8");
+const algorithmicDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/algorithmic-coding.ts"), "utf8");
+const practicalDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/practical-coding.ts"), "utf8");
+const debuggingDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/debugging.ts"), "utf8");
+const dossierRegistrySource = readFileSync(join(root, "lib/interview-playbook/dossiers/index.ts"), "utf8");
+const authoredDossierSource = [algorithmicDossierSource, practicalDossierSource, debuggingDossierSource].join("\n");
+const allDossierModuleSource = [dossierCompatibilitySource, dossierSchemaSource, authoredDossierSource, dossierRegistrySource].join("\n");
 const dossierComponentSource = readFileSync(join(root, "components/interview-playbook/round-execution-dossier.tsx"), "utf8");
 const roundsDetailPageSourceAfterDossier = readFileSync(join(root, "app/interview-tips/rounds/[slug]/page.tsx"), "utf8");
 
@@ -585,34 +592,89 @@ check("dossier does not contain a security-exploitation instruction", !/\b(explo
 check("the debugging integrity disclaimer disclaiming exploitation teaching is not misflagged as an exploitation instruction", serializedDossier.toLowerCase().includes("it does not teach exploitation"));
 check("dossier does not duplicate a language or framework curriculum", !/\b(learn (java|python|javascript|typescript|react|django|spring) (syntax|basics)|framework tutorial)\b/i.test(serializedDossier));
 
-// --- Dossier module architecture -----------------------------------------
+// --- Dossier compatibility entry point -------------------------------------
+check("compatibility entry point re-exports the dossier registry", dossierCompatibilitySource.includes('export * from "./dossiers/index.ts"'));
+check("compatibility entry point contains no dossier object", !/slug:\s*"(algorithmic-coding|practical-coding|debugging)"/.test(dossierCompatibilitySource));
+check("compatibility entry point contains no schema definition", !dossierCompatibilitySource.includes("export type RoundExecutionDossier") && !dossierCompatibilitySource.includes("export type RoundExecutionDossierFlowStep"));
+check("compatibility entry point imports no React", !dossierCompatibilitySource.includes('from "react"'));
+check("compatibility entry point imports no Next.js", !dossierCompatibilitySource.includes('from "next'));
+check("compatibility entry point imports no Supabase", !/^import.*supabase/im.test(dossierCompatibilitySource) && !dossierCompatibilitySource.includes("createSupabase"));
+check("compatibility entry point contains no direct table access", !dossierCompatibilitySource.includes(".from("));
+check("compatibility entry point contains no authentication", !dossierCompatibilitySource.includes("getAuthenticatedActor") && !dossierCompatibilitySource.includes("auth.uid"));
+check("compatibility entry point reads no environment variables", !dossierCompatibilitySource.includes("process.env"));
+check("compatibility entry point does not call new Date()", !dossierCompatibilitySource.includes("new Date()"));
+check("compatibility entry point does not call Date.now()", !dossierCompatibilitySource.includes("Date.now()"));
+check("compatibility entry point does not call Math.random", !dossierCompatibilitySource.includes("Math.random"));
+
+// --- Dossier schema ---------------------------------------------------------
 for (const exported of ["RoundExecutionContentClassification", "RoundExecutionDossierFlowStep", "RoundExecutionTimePhase", "RoundExecutionTimeFramework", "RoundExecutionCommunicationPattern", "RoundExecutionRecoveryScenario", "RoundExecutionFailureMode", "RoundExecutionSeniorityCalibration", "RoundExecutionInteractionExample", "RoundExecutionDossier"]) {
-  check(`dossier module exports type ${exported}`, dossierModelSource.includes(`export type ${exported}`));
+  check(`dossier schema exports type ${exported}`, dossierSchemaSource.includes(`export type ${exported}`));
 }
-check("dossier module exports ROUND_EXECUTION_DOSSIERS", dossierModelSource.includes("export const ROUND_EXECUTION_DOSSIERS"));
-check("dossier module exports ROUND_EXECUTION_DOSSIER_BY_SLUG", dossierModelSource.includes("export const ROUND_EXECUTION_DOSSIER_BY_SLUG"));
-check("dossier module exports PUBLISHED_ROUND_EXECUTION_DOSSIERS", dossierModelSource.includes("export const PUBLISHED_ROUND_EXECUTION_DOSSIERS"));
-check("dossier module exports getRoundExecutionDossier", dossierModelSource.includes("export function getRoundExecutionDossier"));
-check("dossier module imports only the canonical slug type", dossierModelSource.includes('import type { RoundExecutionGuideSlug } from "./round-execution.ts"') && !dossierModelSource.includes("ROUND_EXECUTION_GUIDES }"));
-check("dossier module imports no React", !dossierModelSource.includes('from "react"'));
-check("dossier module imports no Next.js", !dossierModelSource.includes('from "next'));
-check("dossier module imports no Supabase", !/^import.*supabase/im.test(dossierModelSource) && !dossierModelSource.includes("createSupabase"));
-check("dossier module contains no direct table access", !dossierModelSource.includes(".from("));
-check("dossier module contains no authentication", !dossierModelSource.includes("getAuthenticatedActor") && !dossierModelSource.includes("auth.uid"));
-check("dossier module reads no environment variables", !dossierModelSource.includes("process.env"));
-check("dossier module does not call new Date()", !dossierModelSource.includes("new Date()"));
-check("dossier module does not call Date.now()", !dossierModelSource.includes("Date.now()"));
-check("dossier module does not call Math.random", !dossierModelSource.includes("Math.random"));
-check("dossier module does not call fetch", !dossierModelSource.includes("fetch("));
-check("dossier module does not use localStorage", !dossierModelSource.includes("localStorage"));
-check("dossier module does not add a score field", !/\bscore\s*[:=]/.test(dossierModelSource));
-check("dossier module does not add a weight field", !/\bweight\s*[:=]/.test(dossierModelSource));
-check("dossier module does not add a percentage field", !/\bpercentage\s*[:=]/.test(dossierModelSource));
-check("dossier module does not add a probability field", !/\bprobability\s*[:=]/.test(dossierModelSource));
-check("dossier module does not add a pass threshold field", !/pass\s*threshold/i.test(dossierModelSource));
-check("dossier module does not add a readiness level field", !/readinessLevel/.test(dossierModelSource));
-check("dossier module does not add a difficulty field", !/\bdifficulty\s*[:=]/.test(dossierModelSource));
-check("dossier module does not fabricate a fallback dossier", !dossierModelSource.includes("fallbackDossier") && !dossierModelSource.includes("defaultDossier"));
+check("dossier schema imports only the canonical slug type", dossierSchemaSource.includes('import type { RoundExecutionGuideSlug } from "../round-execution.ts"') && !dossierSchemaSource.includes("ROUND_EXECUTION_GUIDES }"));
+check("dossier schema contains no runtime dossier registry", !dossierSchemaSource.includes("ROUND_EXECUTION_DOSSIERS") && !dossierSchemaSource.includes("export function getRoundExecutionDossier"));
+check("dossier schema contains no authored guide content", !/slug:\s*"(algorithmic-coding|practical-coding|debugging)"/.test(dossierSchemaSource));
+check("dossier schema imports no React", !dossierSchemaSource.includes('from "react"'));
+check("dossier schema imports no Next.js", !dossierSchemaSource.includes('from "next'));
+check("dossier schema imports no Supabase", !/^import.*supabase/im.test(dossierSchemaSource) && !dossierSchemaSource.includes("createSupabase"));
+check("dossier schema contains no direct table access", !dossierSchemaSource.includes(".from("));
+check("dossier schema contains no authentication", !dossierSchemaSource.includes("getAuthenticatedActor") && !dossierSchemaSource.includes("auth.uid"));
+check("dossier schema reads no environment variables", !dossierSchemaSource.includes("process.env"));
+check("dossier schema does not call new Date()", !dossierSchemaSource.includes("new Date()"));
+check("dossier schema does not call Date.now()", !dossierSchemaSource.includes("Date.now()"));
+check("dossier schema does not call Math.random", !dossierSchemaSource.includes("Math.random"));
+
+// --- Per-dossier files -------------------------------------------------------
+const perDossierFiles = [
+  { name: "algorithmic-coding.ts", source: algorithmicDossierSource, exportName: "algorithmicCodingDossier", slug: "algorithmic-coding", otherSlugs: ["practical-coding", "debugging"], otherFiles: ["practical-coding.ts", "debugging.ts"] },
+  { name: "practical-coding.ts", source: practicalDossierSource, exportName: "practicalCodingDossier", slug: "practical-coding", otherSlugs: ["algorithmic-coding", "debugging"], otherFiles: ["algorithmic-coding.ts", "debugging.ts"] },
+  { name: "debugging.ts", source: debuggingDossierSource, exportName: "debuggingDossier", slug: "debugging", otherSlugs: ["algorithmic-coding", "practical-coding"], otherFiles: ["algorithmic-coding.ts", "practical-coding.ts"] },
+];
+for (const file of perDossierFiles) {
+  check(`${file.name} imports RoundExecutionDossier from ./schema.ts`, file.source.includes('import type { RoundExecutionDossier } from "./schema.ts"'));
+  check(`${file.name} exports exactly its named dossier constant (${file.exportName})`, file.source.includes(`export const ${file.exportName}: RoundExecutionDossier`) && [...file.source.matchAll(/^export const (\w+)/gm)].every((match) => match[1] === file.exportName));
+  check(`${file.name} contains its expected slug`, file.source.includes(`slug: "${file.slug}"`));
+  check(`${file.name} does not contain either other dossier's slug`, file.otherSlugs.every((otherSlug) => !file.source.includes(`slug: "${otherSlug}"`)));
+  check(`${file.name} does not create a registry`, !file.source.includes("ROUND_EXECUTION_DOSSIERS") && !file.source.includes("export function getRoundExecutionDossier"));
+  check(`${file.name} does not import another dossier file`, file.otherFiles.every((otherFile) => !file.source.includes(otherFile)));
+  check(`${file.name} imports no React`, !file.source.includes('from "react"'));
+  check(`${file.name} imports no Next.js`, !file.source.includes('from "next'));
+  check(`${file.name} imports no Supabase`, !/^import.*supabase/im.test(file.source) && !file.source.includes("createSupabase"));
+  check(`${file.name} contains no direct table access`, !file.source.includes(".from("));
+  check(`${file.name} contains no authentication`, !file.source.includes("getAuthenticatedActor") && !file.source.includes("auth.uid"));
+  check(`${file.name} reads no environment variables`, !file.source.includes("process.env"));
+  check(`${file.name} does not call new Date()`, !file.source.includes("new Date()"));
+  check(`${file.name} does not call Date.now()`, !file.source.includes("Date.now()"));
+  check(`${file.name} does not call Math.random`, !file.source.includes("Math.random"));
+}
+
+// --- Dossier registry --------------------------------------------------------
+check("registry imports algorithmicCodingDossier from ./algorithmic-coding.ts", dossierRegistrySource.includes('import { algorithmicCodingDossier } from "./algorithmic-coding.ts"'));
+check("registry imports practicalCodingDossier from ./practical-coding.ts", dossierRegistrySource.includes('import { practicalCodingDossier } from "./practical-coding.ts"'));
+check("registry imports debuggingDossier from ./debugging.ts", dossierRegistrySource.includes('import { debuggingDossier } from "./debugging.ts"'));
+check("registry uses the canonical dossier order", /ROUND_EXECUTION_DOSSIERS[\s\S]{0,60}=[\s\S]{0,160}algorithmicCodingDossier,\s*practicalCodingDossier,\s*debuggingDossier/.test(dossierRegistrySource));
+check("registry exports ROUND_EXECUTION_DOSSIERS", dossierRegistrySource.includes("export const ROUND_EXECUTION_DOSSIERS"));
+check("registry exports ROUND_EXECUTION_DOSSIER_BY_SLUG", dossierRegistrySource.includes("export const ROUND_EXECUTION_DOSSIER_BY_SLUG"));
+check("registry exports PUBLISHED_ROUND_EXECUTION_DOSSIERS", dossierRegistrySource.includes("export const PUBLISHED_ROUND_EXECUTION_DOSSIERS"));
+check("registry exports getRoundExecutionDossier", dossierRegistrySource.includes("export function getRoundExecutionDossier"));
+check("registry re-exports the schema types", dossierRegistrySource.includes("export type {") && dossierRegistrySource.includes('from "./schema.ts"'));
+check("registry re-exports all three named dossier constants", dossierRegistrySource.includes("export { algorithmicCodingDossier, practicalCodingDossier, debuggingDossier }"));
+check("registry adds no fallback dossier", !dossierRegistrySource.includes("fallbackDossier") && !dossierRegistrySource.includes("defaultDossier"));
+check("registry adds no dynamic file discovery", !dossierRegistrySource.includes("readdirSync") && !dossierRegistrySource.includes("readdir(") && !dossierRegistrySource.includes("import.meta.glob"));
+check("registry adds no Code Review dossier", !dossierRegistrySource.includes("codeReviewDossier") && !dossierRegistrySource.includes('"code-review"'));
+check("registry adds no Technical Presentation dossier", !dossierRegistrySource.includes("technicalPresentationDossier"));
+check("registry adds no generic final/onsite/bar-raiser/mixed-signal dossier", !/slug:\s*"(final|onsite|bar-raiser|mixed-signal)"/.test(dossierRegistrySource));
+
+// --- Dossier module invariants (apply across the whole split module) --------
+check("dossier module does not call fetch", !allDossierModuleSource.includes("fetch("));
+check("dossier module does not use localStorage", !allDossierModuleSource.includes("localStorage"));
+check("dossier module does not add a score field", !/\bscore\s*[:=]/.test(allDossierModuleSource));
+check("dossier module does not add a weight field", !/\bweight\s*[:=]/.test(allDossierModuleSource));
+check("dossier module does not add a percentage field", !/\bpercentage\s*[:=]/.test(allDossierModuleSource));
+check("dossier module does not add a probability field", !/\bprobability\s*[:=]/.test(allDossierModuleSource));
+check("dossier module does not add a pass threshold field", !/pass\s*threshold/i.test(allDossierModuleSource));
+check("dossier module does not add a readiness level field", !/readinessLevel/.test(allDossierModuleSource));
+check("dossier module does not add a difficulty field", !/\bdifficulty\s*[:=]/.test(allDossierModuleSource));
+check("dossier module does not fabricate a fallback dossier", !allDossierModuleSource.includes("fallbackDossier") && !allDossierModuleSource.includes("defaultDossier"));
 
 // --- Dossier renderer component -------------------------------------------
 check("component exports RoundExecutionDossierView", dossierComponentSource.includes("export function RoundExecutionDossierView"));
