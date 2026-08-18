@@ -1,14 +1,72 @@
 [
-  { "id": "leadership", "name": "Leadership", "summary": "Setting direction, creating clarity, and helping others move without relying on title." },
-  { "id": "ownership", "name": "Ownership", "summary": "Taking responsibility for outcomes, gaps, and follow-through beyond the easiest boundary." },
-  { "id": "collaboration", "name": "Collaboration", "summary": "Working productively with teammates who bring different context, skills, or working styles." },
-  { "id": "conflict-influence", "name": "Conflict & Influence", "summary": "Navigating disagreement and building commitment through evidence, listening, and tradeoffs." },
-  { "id": "ambiguity", "name": "Ambiguity", "summary": "Making responsible progress when requirements, data, or ownership are incomplete." },
-  { "id": "failure-growth", "name": "Failure & Growth", "summary": "Owning a miss, learning specifically, and changing later behavior." },
-  { "id": "execution-prioritization", "name": "Execution & Prioritization", "summary": "Choosing what matters, managing constraints, and delivering with appropriate quality." },
-  { "id": "mentorship", "name": "Mentorship", "summary": "Helping another person grow through context, feedback, and increasing independence." },
-  { "id": "technical-judgment", "name": "Technical Judgment", "summary": "Making engineering decisions under real constraints and revisiting them when evidence changes." },
-  { "id": "customer-impact", "name": "Customer Impact", "summary": "Connecting technical work to a concrete user need while protecting trust and quality." },
-  { "id": "cross-functional", "name": "Cross-functional Work", "summary": "Aligning engineering choices with partners who own different goals and vocabulary." },
-  { "id": "incident-quality", "name": "Incident & Quality", "summary": "Responding calmly to failures and improving the system rather than assigning blame." }
+  {
+    "id": "leadership",
+    "name": "Leadership",
+    "summary": "Setting direction, creating clarity, and helping others move without relying on title."
+  },
+  {
+    "id": "ownership",
+    "name": "Ownership",
+    "summary": "Taking responsibility for outcomes, gaps, and follow-through beyond the easiest boundary."
+  },
+  {
+    "id": "collaboration",
+    "name": "Collaboration",
+    "summary": "Working productively with teammates who bring different context, skills, or working styles."
+  },
+  {
+    "id": "conflict-influence",
+    "name": "Conflict & Influence",
+    "summary": "Navigating disagreement and building commitment through evidence, listening, and tradeoffs."
+  },
+  {
+    "id": "ambiguity",
+    "name": "Ambiguity",
+    "summary": "Making responsible progress when requirements, data, or ownership are incomplete."
+  },
+  {
+    "id": "failure-growth",
+    "name": "Failure & Growth",
+    "summary": "Owning a miss, learning specifically, and changing later behavior."
+  },
+  {
+    "id": "execution-prioritization",
+    "name": "Execution & Prioritization",
+    "summary": "Choosing what matters, managing constraints, and delivering with appropriate quality."
+  },
+  {
+    "id": "mentorship",
+    "name": "Mentorship",
+    "summary": "Helping another person grow through context, feedback, and increasing independence."
+  },
+  {
+    "id": "technical-judgment",
+    "name": "Technical Judgment",
+    "summary": "Making engineering decisions under real constraints and revisiting them when evidence changes."
+  },
+  {
+    "id": "customer-impact",
+    "name": "Customer Impact",
+    "summary": "Connecting technical work to a concrete user need while protecting trust and quality."
+  },
+  {
+    "id": "cross-functional",
+    "name": "Cross-functional Work",
+    "summary": "Aligning engineering choices with partners who own different goals and vocabulary."
+  },
+  {
+    "id": "incident-quality",
+    "name": "Incident & Quality",
+    "summary": "Responding calmly to failures and improving the system rather than assigning blame."
+  },
+  {
+    "id": "communication",
+    "name": "Communication",
+    "summary": "Explaining technical work clearly, adjusting for the audience, and keeping people aligned."
+  },
+  {
+    "id": "learning",
+    "name": "Learning",
+    "summary": "Absorbing unfamiliar systems, acting on feedback, and turning gaps into durable capability."
+  }
 ]

@@ -1,0 +1,40 @@
+/*
+THESIS: The behavioral workspace is a private preparation notebook organized around reusable evidence, not an answer factory.
+OWN-WORLD: Warm paper, ruled lists, rust actions, and quiet green readiness states extend the established Operate workspace.
+STORY: Find the next behavioral interview, spot coverage gaps, open the right story, then refine question-specific framing.
+FIRST VIEWPORT: Direct title and navigation, four compact facts, then the next-review cue and company focus.
+FORM: Code-led extension of existing private-workspace components; completeness is deterministic and visible at save time.
+FINISH: Mobile reading, private ownership, regression checks, finish review, and reusable documentation are part of the feature.
+*/
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight, BookOpenText, CalendarDays, LibraryBig } from "lucide-react";
+import { AccountUnavailable } from "@/components/account-unavailable";
+import { BehavioralWorkspaceHeader } from "@/features/behavioral/workspace-header";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
+import { formatCountdown, formatInterviewDate } from "@/lib/applications/format";
+import { requireMemberProfile } from "@/lib/auth/guards";
+import { behavioralSummary, getBehavioralWorkspaceData, preparationStatus } from "@/lib/behavioral/queries";
+
+export const metadata: Metadata = { title: "Behavioral workspace", description: "Private STAR stories, questions, and answer variants.", robots: { index: false, follow: false } };
+export const dynamic = "force-dynamic";
+
+export default async function BehavioralWorkspacePage({ searchParams }: { searchParams: Promise<{ application?: string; company?: string }> }) {
+  if (!isAccountPlatformAvailable()) return <AccountUnavailable />;
+  await requireMemberProfile("/behavioral/workspace"); const { application, company } = await searchParams;
+  const data = await getBehavioralWorkspaceData(); const summary = behavioralSummary(data);
+  const selectedApplication = data.applications.find((item) => item.id === application);
+  const selectedCompany = selectedApplication ? [selectedApplication.company_slug, selectedApplication.company_name] as const : data.applications.map((item) => [item.company_slug, item.company_name] as const).find(([slug]) => slug === company);
+  const companyQuestions = data.questions.filter((question) => question.source === "curated" || question.companySlug === selectedCompany?.[0]);
+  const matchingAnswers = selectedCompany ? data.answers.filter((answer) => selectedApplication ? answer.application_id === selectedApplication.id || (!answer.application_id && (!answer.company_slug || answer.company_slug === selectedCompany[0])) : !answer.company_slug || answer.company_slug === selectedCompany[0]) : [];
+  const companyStatuses = selectedCompany ? companyQuestions.map((question) => ({ question, status: preparationStatus(question, { ...data, answers: matchingAnswers }) })) : [];
+  const companyReady = companyStatuses.filter(({ status }) => status === "Ready").length; const companyMissing = companyStatuses.filter(({ status }) => status === "Not started").length;
+  const nextInterview = data.upcomingInterviews[0];
+  return <div className="behavioral-workspace"><div className="page-width"><BehavioralWorkspaceHeader title="Behavioral preparation" description="Build reusable STAR stories, connect them to questions, and tailor answer versions to each interview." />
+    <section className="behavioral-summary-grid" aria-label="Workspace summary"><article><span><LibraryBig size={18} />Stories</span><strong>{summary.stories}</strong><p>{Math.max(summary.stories - summary.readyStories, 0)} still need detail</p><Link href="/behavioral/stories">Open stories<ArrowRight size={14} /></Link></article><article><span><LibraryBig size={18} />Ready stories</span><strong>{summary.readyStories}</strong><p>based on visible STAR completeness</p><Link href="/behavioral/stories?status=Ready">Review ready stories<ArrowRight size={14} /></Link></article><article><span><BookOpenText size={18} />Questions covered</span><strong>{summary.prepared}/{summary.totalQuestions}</strong><p>{summary.totalQuestions - summary.prepared} still need a story</p><Link href="/behavioral/questions?coverage=Needs+story">Close coverage gaps<ArrowRight size={14} /></Link></article><article><span><CalendarDays size={18} />Upcoming interviews</span><strong>{summary.upcomingInterviews}</strong><p>behavioral, manager, bar raiser, or onsite</p><Link href="#next-review">Review next interview<ArrowRight size={14} /></Link></article></section>
+    <section className="behavioral-next-review" id="next-review"><div><h2>{nextInterview ? `Review for ${nextInterview.application.company_name}` : "Your next review"}</h2>{nextInterview ? <p>{nextInterview.round_name} · {formatInterviewDate(nextInterview.scheduled_at, nextInterview.timezone)} · {formatCountdown(nextInterview.scheduled_at, nextInterview.timezone)}</p> : <p>Add an upcoming behavioral-style round in the application tracker and it will appear here.</p>}</div>{nextInterview ? <Link className="button button-sm" href={`/behavioral/workspace?application=${nextInterview.application.id}`}>Focus this interview</Link> : <Link className="button button-secondary button-sm" href="/applications">Open applications</Link>}</section>
+    <section className="behavioral-company-prep" id="company-prep"><div className="behavioral-section-heading"><div><h2>Focus a live interview loop</h2><p>Choose an application to see its private variants alongside your reusable story coverage.</p></div><form><label htmlFor="application-focus">Application</label><select id="application-focus" name="application" defaultValue={selectedApplication?.id ?? ""}><option value="">Choose an application</option>{data.applications.map((item) => <option key={item.id} value={item.id}>{item.company_name} · {item.role_title}</option>)}</select><button className="button button-secondary button-sm">View prep</button></form></div>
+      {selectedCompany ? <><div className="company-prep-result"><div><strong>{selectedCompany[1]}{selectedApplication ? ` · ${selectedApplication.role_title}` : ""}</strong><span>{companyReady} ready · {companyMissing} need a story · {matchingAnswers.filter((answer) => selectedApplication ? answer.application_id === selectedApplication.id : answer.company_slug === selectedCompany[0]).length} tailored answer variants</span></div><Link className="button button-sm" href={`/behavioral/questions?company=${selectedCompany[0]}${selectedApplication ? `&application=${selectedApplication.id}` : ""}`}>Open all questions</Link></div><div className="company-prep-question-list">{companyStatuses.slice(0, 8).map(({ question, status }) => <Link key={question.id} href={`/behavioral/questions/${question.id}?company=${selectedCompany[0]}${selectedApplication ? `&application=${selectedApplication.id}` : ""}`}><div><strong>{question.prompt}</strong><span>{question.category} · {data.links.filter((link) => question.source === "curated" ? link.curated_question_id === question.id : link.custom_question_id === question.id).length} linked stories</span></div><span className={`behavioral-status status-${status.toLowerCase().replaceAll(" ", "-")}`}>{status}</span></Link>)}</div></> : <p className="behavioral-empty-inline">Choose an application to tailor your behavioral preparation. Your general stories remain available everywhere.</p>}
+    </section>
+  </div></div>;
+}

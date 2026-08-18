@@ -13,5 +13,5 @@ export const metadata = createPageMetadata({
 });
 
 export default function BehavioralPage() {
-  return <Suspense fallback={<div className="page-loading" aria-label="Loading behavioral practice" />}><BehavioralPractice /></Suspense>;
+  return <Suspense fallback={<div className="page-loading" role="status" aria-live="polite"><span className="sr-only">Loading behavioral practice…</span></div>}><BehavioralPractice /></Suspense>;
 }
