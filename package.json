@@ -22,7 +22,7 @@
     "test:public-launch-integrity": "node scripts/test-public-launch-integrity.mjs",
     "test:auth-foundation": "node --experimental-strip-types --no-warnings scripts/test-auth-foundation.mjs",
     "test:application-tracker": "node --experimental-strip-types --no-warnings scripts/test-application-tracker.mjs",
-    "test:behavioral-workspace": "node scripts/test-behavioral-workspace.mjs",
+    "test:behavioral-workspace": "node --experimental-strip-types --no-warnings scripts/test-behavioral-workspace.mjs",
     "test:interview-preparation-hub": "node --experimental-strip-types --no-warnings scripts/test-interview-preparation-hub.mjs",
     "test:interview-execution-taxonomy": "node --experimental-strip-types --no-warnings scripts/test-interview-execution-taxonomy.mjs",
     "test:interview-calendar-reminders": "node --experimental-strip-types --no-warnings scripts/test-interview-calendar-reminders.mjs",
