@@ -219,7 +219,7 @@ if (accountControl.indexOf("href=\"/dashboard\" onClick={() => setOpen(false)}")
 for (const existingHref of ['href="/dashboard"', 'href="/applications"', 'href="/calendar"', 'href="/settings"']) {
   requireText(accountControl, existingHref, `Signed-in account navigation lost an existing link: ${existingHref}.`);
 }
-const signedOutBlockMatch = accountControl.match(/if \(!account\) \{[\s\S]*?\n  \}\n/);
+const signedOutBlockMatch = accountControl.match(/if \(!account\) \{[\s\S]*?\n {2}\}\n/);
 if (signedOutBlockMatch && signedOutBlockMatch[0].includes("/interview-playbook")) {
   failures.push("The private Playbook link leaked into the signed-out account navigation.");
 }

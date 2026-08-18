@@ -11,6 +11,24 @@ export function isActiveApplication(status: string) {
   return !TERMINAL_STATUSES.has(status);
 }
 
+/**
+ * Whether an application currently has a live interview process, as opposed
+ * to merely being open. `isActiveApplication` owns the open-pipeline
+ * definition (not terminal); this owns the narrower question of whether an
+ * actual interview is underway or imminent — a Wishlist or Applied role with
+ * no round is open but has no process to prepare for yet.
+ */
+export function isActiveInterviewProcess(
+  application: {
+    status: string;
+    interview_rounds?: readonly { status: string }[];
+  },
+): boolean {
+  if (!isActiveApplication(application.status)) return false;
+  if (application.status === "Recruiter Screen" || application.status === "Interviewing") return true;
+  return (application.interview_rounds ?? []).some((round) => UPCOMING_INTERVIEW_STATUSES.has(round.status));
+}
+
 export function daysSince(value: string, now = new Date()) {
   const then = new Date(value);
   if (Number.isNaN(then.getTime())) return 0;

@@ -1,7 +1,15 @@
 import type { RoadmapLevel } from "@/data/dsa/level-roadmaps";
+import {
+  resolveRoundExecution,
+  type InterviewRoundModality,
+  type InterviewRoundSignal,
+  type InterviewRoundStage,
+  type RoundExecutionCompositionShell,
+  type RoundExecutionGuideSlug,
+  type RoundExecutionResolutionConfidence,
+} from "../interview-playbook/round-execution.ts";
 
 export type PreparationModule = "dsa" | "behavioral" | "system-design" | "company";
-export type RoundPreparationKind = "coding" | "system-design" | "behavioral" | "hiring-manager" | "onsite" | "recruiter" | "general";
 
 export type ChecklistTemplate = { id: string; label: string; module: PreparationModule | "logistics" };
 
@@ -31,30 +39,59 @@ const logistics: readonly ChecklistTemplate[] = [
   { id: "logistics-environment", label: "Prepare your interview environment", module: "logistics" },
 ];
 
-const mapping: Record<RoundPreparationKind, readonly PreparationModule[]> = {
-  coding: ["dsa", "company"],
-  "system-design": ["system-design", "company"],
-  behavioral: ["behavioral", "company"],
-  "hiring-manager": ["behavioral", "system-design", "company"],
-  onsite: ["dsa", "behavioral", "system-design", "company"],
-  recruiter: ["behavioral", "company"],
-  general: ["behavioral", "company"],
-};
+/**
+ * Cross-application context for a single round, resolved once from the
+ * canonical taxonomy in `lib/interview-playbook/round-execution.ts`. This is
+ * the sole source of truth for which specialist learning modules apply and
+ * which public execution guides to link — no separate regex-based mapping.
+ */
+export type RoundPreparationContext = Readonly<{
+  stage: InterviewRoundStage;
+  modality: InterviewRoundModality;
+  signals: readonly InterviewRoundSignal[];
+  guideSlugs: readonly RoundExecutionGuideSlug[];
+  executionGuideSlugs: readonly RoundExecutionGuideSlug[];
+  shell: RoundExecutionCompositionShell;
+  confidence: RoundExecutionResolutionConfidence;
+  modules: readonly PreparationModule[];
+  needsSignalClarification: boolean;
+  clarificationPrompt: string | null;
+}>;
 
-export function preparationKind(roundType: string): RoundPreparationKind {
-  const value = roundType.trim().toLowerCase();
-  if (/(coding|dsa|machine coding|debug|take-home)/.test(value)) return "coding";
-  if (/system design|architecture/.test(value)) return "system-design";
-  if (/behavioral|bar raiser/.test(value)) return "behavioral";
-  if (/hiring manager/.test(value)) return "hiring-manager";
-  if (/onsite/.test(value)) return "onsite";
-  if (/recruiter/.test(value)) return "recruiter";
-  if (/domain|technical/.test(value)) return "coding";
-  return "general";
+/** Stable module order; only these three signals map to an existing specialist module. */
+const MODULE_ORDER: readonly PreparationModule[] = ["dsa", "behavioral", "system-design", "company"];
+
+export function resolveRoundPreparationContext(roundType: string): RoundPreparationContext {
+  const resolution = resolveRoundExecution(roundType);
+
+  const applicableModules = new Set<PreparationModule>(["company"]);
+  if (resolution.signals.includes("algorithmic-coding")) applicableModules.add("dsa");
+  if (resolution.signals.includes("behavioral")) applicableModules.add("behavioral");
+  if (resolution.signals.includes("system-design")) applicableModules.add("system-design");
+  const modules = MODULE_ORDER.filter((module) => applicableModules.has(module));
+
+  const executionGuideSlugs: RoundExecutionGuideSlug[] = [];
+  if (resolution.shell === "technical-screen") executionGuideSlugs.push("technical-screen");
+  for (const slug of resolution.guideSlugs) {
+    if (!executionGuideSlugs.includes(slug)) executionGuideSlugs.push(slug);
+  }
+
+  return {
+    stage: resolution.stage,
+    modality: resolution.modality,
+    signals: resolution.signals,
+    guideSlugs: resolution.guideSlugs,
+    executionGuideSlugs,
+    shell: resolution.shell,
+    confidence: resolution.confidence,
+    modules,
+    needsSignalClarification: resolution.needsSignalClarification,
+    clarificationPrompt: resolution.clarificationPrompt,
+  };
 }
 
 export function modulesForRound(roundType: string) {
-  return mapping[preparationKind(roundType)];
+  return resolveRoundPreparationContext(roundType).modules;
 }
 
 export function checklistForRound(roundType: string): ChecklistTemplate[] {

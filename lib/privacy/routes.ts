@@ -35,6 +35,7 @@ export const PRIVATE_ROUTE_PREFIXES = [
   "/calendar",
   "/dashboard",
   "/forgot-password",
+  "/interview-playbook",
   "/interviews",
   "/onboarding",
   "/reset-password",

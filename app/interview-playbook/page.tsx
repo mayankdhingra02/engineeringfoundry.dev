@@ -41,6 +41,7 @@ function preparationCountText(preparation: InterviewPlaybookPreparationCount) {
 }
 
 function queueStateLabel(round: InterviewPlaybookRoundSummary) {
+  if (round.needsSignalClarification) return "Focus unconfirmed";
   return round.state === "upcoming" ? "Scheduled" : "Date needed";
 }
 
@@ -66,7 +67,8 @@ export default async function InterviewPlaybookPage() {
 
   const overdueRounds = overview.overdueRounds.slice(0, 3);
 
-  const firstActiveApplicationWithoutRound = overview.activeApplications.find((application) => application.nextRound === null) ?? null;
+  const firstActiveInterviewProcessWithoutRound = overview.activeInterviewProcesses.find((application) => application.nextRound === null) ?? null;
+  const firstPreInterviewApplication = overview.preInterviewApplications[0] ?? null;
 
   function renderDominantAction() {
     // Branch A: a primary round and its detailed action both exist.
@@ -74,10 +76,11 @@ export default async function InterviewPlaybookPage() {
       const selectionLabel = primaryAction.reason === "next-scheduled-round" ? "Next scheduled round" : "Round date not set";
       return <section className="prep-next-action" aria-labelledby="playbook-primary-heading">
         <div>
-          <StatusPill tone="accent">{selectionLabel}</StatusPill>
+          {primaryRound.needsSignalClarification ? <StatusPill tone="warning">Focus unconfirmed</StatusPill> : <StatusPill tone="accent">{selectionLabel}</StatusPill>}
           <h2 id="playbook-primary-heading">{primaryRound.companyName} — {primaryRound.roleTitle}</h2>
           <p>{primaryRound.roundName} · {primaryRound.roundType} · {scheduleText(primaryRound)}</p>
           <p>{preparationCountText(primaryRound.preparation)}</p>
+          {primaryRound.needsSignalClarification && <p>{primaryRound.clarificationPrompt} <Link className="text-link" href={`/applications/${primaryRound.applicationId}/rounds/${primaryRound.id}/edit`}>Update round details</Link></p>}
         </div>
         <div>
           <Link className="button" href={primaryAction.href}>{primaryAction.label}<ArrowRight size={15} /></Link>
@@ -115,21 +118,35 @@ export default async function InterviewPlaybookPage() {
       </section>;
     }
 
-    // Branch D: an active process exists, but no round is scheduled or planned yet.
-    if (firstActiveApplicationWithoutRound) {
+    // Branch D: an active interview process exists, but no round is scheduled or planned yet.
+    if (firstActiveInterviewProcessWithoutRound) {
       return <section className="prep-next-action" aria-labelledby="playbook-primary-heading">
         <div>
           <h2 id="playbook-primary-heading">Add the next known interview round</h2>
-          <p>{firstActiveApplicationWithoutRound.companyName} — {firstActiveApplicationWithoutRound.roleTitle}</p>
-          <p>This application is active, but no scheduled or planned round is available yet.</p>
+          <p>{firstActiveInterviewProcessWithoutRound.companyName} — {firstActiveInterviewProcessWithoutRound.roleTitle}</p>
+          <p>This interview process is active, but no scheduled or planned round is available yet.</p>
         </div>
         <div>
-          <Link className="button" href={firstActiveApplicationWithoutRound.applicationHref}>Review application<ArrowRight size={15} /></Link>
+          <Link className="button" href={firstActiveInterviewProcessWithoutRound.applicationHref}>Review application<ArrowRight size={15} /></Link>
         </div>
       </section>;
     }
 
-    // Branch E: applications exist, but none are currently active.
+    // Branch E: no active interview process yet, but an open pre-interview application exists.
+    if (firstPreInterviewApplication) {
+      return <section className="prep-next-action" aria-labelledby="playbook-primary-heading">
+        <div>
+          <h2 id="playbook-primary-heading">Keep preparing while the interview process is not confirmed.</h2>
+          <p>{firstPreInterviewApplication.companyName} — {firstPreInterviewApplication.roleTitle}</p>
+        </div>
+        <div>
+          <Link className="button" href="/prepare">Choose a general preparation track<ArrowRight size={15} /></Link>
+          <Link className="text-link" href={firstPreInterviewApplication.applicationHref}>Review application</Link>
+        </div>
+      </section>;
+    }
+
+    // Branch F: applications exist, but none are currently open.
     if (overview.applications.length > 0) {
       return <section className="prep-next-action" aria-labelledby="playbook-primary-heading">
         <div>
@@ -143,7 +160,7 @@ export default async function InterviewPlaybookPage() {
       </section>;
     }
 
-    // Branch F: first-use state — no applications tracked at all.
+    // Branch G: first-use state — no applications tracked at all.
     return <section className="prep-next-action" aria-labelledby="playbook-primary-heading">
       <div>
         <h2 id="playbook-primary-heading">Start with the interview process you are pursuing.</h2>
@@ -171,9 +188,9 @@ export default async function InterviewPlaybookPage() {
     </header>
 
     {overview.applications.length > 0 && <section className="pipeline-summary" aria-label="Interview playbook overview">
-      <article><span><BriefcaseBusiness size={17} aria-hidden="true" /></span><div><strong>{overview.activeApplications.length}</strong><p>Active applications</p></div></article>
+      <article><span><BriefcaseBusiness size={17} aria-hidden="true" /></span><div><strong>{overview.openApplications.length}</strong><p>Open applications</p></div></article>
+      <article><span><CalendarClock size={17} aria-hidden="true" /></span><div><strong>{overview.activeInterviewProcesses.length}</strong><p>Active interview processes</p></div></article>
       <article><span><CalendarDays size={17} aria-hidden="true" /></span><div><strong>{overview.upcomingRounds.length}</strong><p>Scheduled rounds</p></div></article>
-      <article><span><CalendarClock size={17} aria-hidden="true" /></span><div><strong>{overview.unscheduledRounds.length}</strong><p>Dates to confirm</p></div></article>
       <article><span><CircleAlert size={17} aria-hidden="true" /></span><div><strong>{overview.overdueRounds.length}</strong><p>Need an update</p></div></article>
     </section>}
 
@@ -183,7 +200,7 @@ export default async function InterviewPlaybookPage() {
       <InterviewPlaybookFinalPreparationMode guidance={primaryTiming.guidance} round={primaryRound} />
     ) : null}
 
-    {overview.activeApplications.length > 0 && <section className="prep-module">
+    {overview.activeInterviewProcesses.length > 0 && <section className="prep-module">
       <header>
         <ListChecks size={21} aria-hidden="true" />
         <div>

@@ -57,6 +57,8 @@ jobs:
         run: npm run test:behavioral-workspace
       - name: Test interview preparation hub
         run: npm run test:interview-preparation-hub
+      - name: Test interview execution taxonomy
+        run: npm run test:interview-execution-taxonomy
       - name: Test interview calendar and reminders
         run: npm run test:interview-calendar-reminders
       - name: Test reminder worker delivery outcomes
