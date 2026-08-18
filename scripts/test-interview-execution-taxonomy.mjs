@@ -51,6 +51,22 @@ const cases = [];
 const check = (name, ok) => cases.push([name, Boolean(ok)]);
 const arraysEqual = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => v === b[i]);
 
+/**
+ * True when `text` contains a "pattern library/catalog/list/cheat sheet"
+ * phrase that is not itself an anti-goal disclaimer. The negation cue must
+ * sit immediately before the matched phrase (allowing up to 40 characters of
+ * intervening words, but no sentence boundary) rather than merely appearing
+ * somewhere in the look-behind window, so unrelated negation earlier in the
+ * text cannot mask a later positive curriculum claim.
+ */
+function hasUnqualifiedPatternCurriculum(text) {
+  return [...text.matchAll(/\bpattern (library|catalog|list|cheat sheet)\b/gi)].some((match) => {
+    const index = match.index ?? 0;
+    const prefix = text.slice(Math.max(0, index - 60), index);
+    return !/\b(not a|not the|without turning|do not memorize|avoid a|never a)\b[^.!?]{0,40}$/i.test(prefix);
+  });
+}
+
 // --- Catalog tests -----------------------------------------------------
 const REQUIRED_ORDER = [
   "recruiter-screen", "online-assessment", "take-home", "technical-screen",
@@ -714,7 +730,13 @@ check("dossier does not contain a company name", !/\b(google|meta|amazon|microso
 check("dossier does not contain a proprietary question", !/leaked question|actual interview question|verbatim question/i.test(serializedDossier));
 check("dossier does not contain source code", !/```|function\s*\(|=>\s*\{|;\s*\n\s*(const|let|var)\s/.test(serializedDossier));
 check("dossier does not contain a named algorithm", !/\b(quicksort|mergesort|dijkstra|dynamic programming|binary search|breadth-first|depth-first|two pointers|sliding window)\b/i.test(serializedDossier));
-check("dossier does not contain an unqualified pattern curriculum (negated anti-goal phrasing such as 'without turning ... into a pattern catalog' is allowed)", ![...serializedDossier.matchAll(/\bpattern (library|catalog|list|cheat sheet)\b/gi)].some((match) => !/\b(not a|not the|without turning|do not memorize|avoid a|never a)\b/i.test(serializedDossier.slice(Math.max(0, match.index - 60), match.index))));
+check("dossier does not contain an unqualified pattern curriculum", !hasUnqualifiedPatternCurriculum(serializedDossier));
+
+// --- Pattern-curriculum detector: automated positive/negative controls -----
+check("pattern-curriculum detector allows without-turning anti-goal phrasing", !hasUnqualifiedPatternCurriculum("This remains execution guidance without turning the interview into a pattern catalog."));
+check("pattern-curriculum detector allows do-not-memorize anti-goal phrasing", !hasUnqualifiedPatternCurriculum("Do not memorize a pattern list as the interview plan."));
+check("pattern-curriculum detector rejects a direct positive claim", hasUnqualifiedPatternCurriculum("This guide includes a complete design pattern catalog for the interview."));
+check("pattern-curriculum detector does not let unrelated negation mask a positive claim", hasUnqualifiedPatternCurriculum("Do not memorize syntax. This guide includes a pattern catalog."));
 for (const forbidden of [
   "you will pass", "likely to pass", "pass probability", "readiness score", "percent ready",
   "guaranteed", "secret rubric", "bar raiser tricks", "actual interview question", "leaked question",
