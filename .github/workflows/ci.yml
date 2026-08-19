@@ -63,6 +63,8 @@ jobs:
         run: npm run test:interview-playbook-diagnostic
       - name: Test Interview Playbook adaptive planning engine
         run: npm run test:interview-playbook-planning
+      - name: Test Interview Playbook planner product integration
+        run: npm run test:interview-playbook-planner-integration
       - name: Test interview calendar and reminders
         run: npm run test:interview-calendar-reminders
       - name: Test reminder worker delivery outcomes
