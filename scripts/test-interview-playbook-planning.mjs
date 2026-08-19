@@ -457,9 +457,19 @@ check("fractional positive value rounds upward: 1.1 -> three-day (crosses bounda
   check("availableHoursPerWeek=0: evidence state unchanged", dim.evidenceState === "needs-repair");
 }
 {
-  const diag = baseDiagnostic();
-  const plan = buildAdaptiveInterviewPlan({ diagnostic: diag, targets: [target({ id: "t", daysUntil: 5, areas: [], needsSignalClarification: false })] });
-  check("availableHoursPerWeek=0 does not remove choose-scope/clarify-target category", plan.actions.some((a) => a.kind === "clarify-target"));
+  const diag = baseDiagnostic({ availableHoursPerWeek: 0 });
+  const plan = buildAdaptiveInterviewPlan({
+    diagnostic: diag,
+    targets: [target({ id: "t", daysUntil: 5, areas: [], needsSignalClarification: false })],
+  });
+  check("availableHoursPerWeek=0 + clarification target: warning no-available-capacity", plan.warnings.includes("no-available-capacity"));
+  check("availableHoursPerWeek=0 does not remove clarify-target", plan.actions.some((a) => a.kind === "clarify-target"));
+  check("availableHoursPerWeek=0 does not remove choose-scope", plan.actions.some((a) => a.kind === "choose-scope"));
+  for (const suppressedKind of ["complete-coverage", "baseline-check", "learn", "worked-example", "targeted-repair", "practice", "review", "mock"]) {
+    check(`availableHoursPerWeek=0 + clarification target: ${suppressedKind} suppressed`, !kinds(plan).includes(suppressedKind));
+  }
+  check("availableHoursPerWeek=0 + clarification target: taper may remain (target is scheduled)", plan.actions.some((a) => a.kind === "taper"));
+  check("availableHoursPerWeek=0 + clarification target: rest may remain (target is scheduled)", plan.actions.some((a) => a.kind === "rest"));
 }
 {
   const diagFreeText = baseDiagnostic({
@@ -830,7 +840,8 @@ check("warnings match exactly", arraysEqual(INTERVIEW_PLAN_WARNINGS, [
     targets: [target({ id: "t", daysUntil: 3, areas: ["system-design"], needsSignalClarification: false })],
   });
   const mlDeferrals = plan.deferred.filter((d) => d.area === "ml-system-design");
-  check("an area produces at most one deferral record even under overlapping conditions", mlDeferrals.length <= 1);
+  check("the intended ml-system-design deferral exists exactly once under overlapping conditions", mlDeferrals.length === 1);
+  check("the surviving deferral reason is explicit-priority-outside-urgent-target, not zero-capacity", mlDeferrals[0]?.reason === "explicit-priority-outside-urgent-target");
   const deferredAreaSet = new Set(plan.deferred.map((d) => d.area));
   check("deferred array itself contains no area twice", deferredAreaSet.size === plan.deferred.length);
 }
