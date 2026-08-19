@@ -18,6 +18,7 @@ import { codeReviewDossier } from "./code-review.ts";
 import { lowLevelDesignDossier } from "./low-level-design.ts";
 import { systemDesignDossier } from "./system-design.ts";
 import { mlSystemDesignDossier } from "./ml-system-design.ts";
+import { behavioralDossier } from "./behavioral.ts";
 
 export type {
   RoundExecutionContentClassification,
@@ -40,6 +41,7 @@ export {
   lowLevelDesignDossier,
   systemDesignDossier,
   mlSystemDesignDossier,
+  behavioralDossier,
 };
 
 export const ROUND_EXECUTION_DOSSIERS: readonly RoundExecutionDossier[] = [
@@ -50,6 +52,7 @@ export const ROUND_EXECUTION_DOSSIERS: readonly RoundExecutionDossier[] = [
   lowLevelDesignDossier,
   systemDesignDossier,
   mlSystemDesignDossier,
+  behavioralDossier,
 ];
 
 export const ROUND_EXECUTION_DOSSIER_BY_SLUG: ReadonlyMap<RoundExecutionGuideSlug, RoundExecutionDossier> = new Map(
