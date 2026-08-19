@@ -24,7 +24,9 @@ import {
   buildInterviewPlaybookPlanningProjection,
   type InterviewPlaybookPresentedPlanAction,
 } from "@/lib/interview-playbook/planner-integration";
+import { getInterviewPlaybookDiagnosticInputs } from "@/lib/interview-playbook/diagnostic-inputs.ts";
 import { InterviewPlaybookFinalPreparationMode } from "@/components/interview-playbook/final-preparation-mode";
+import { InterviewPlaybookDiagnosticInputForm } from "@/components/interview-playbook/diagnostic-input-form";
 
 export const metadata: Metadata = {
   title: "Interview Playbook",
@@ -57,6 +59,13 @@ function strategyStageLabel(stage: InterviewPlaybookPresentedPlanAction["stage"]
   return "Later";
 }
 
+/** Describes exactly what fed the plan below — round signals alone, or round signals plus the candidate's own saved inputs. */
+function planningSourceCopy(sourceMode: "round-context-only" | "round-context-and-user-inputs") {
+  return sourceMode === "round-context-and-user-inputs"
+    ? "Built from confirmed active round signals, interview timing, and the hours, confidence, priorities, and coverage you saved below. Evidence state still comes only from observed practice, never from these self-reported inputs."
+    : "Built from confirmed active round signals and interview timing. This view does not infer performance evidence, confidence, or available study time.";
+}
+
 export default async function InterviewPlaybookPage() {
   if (!isAccountPlatformAvailable()) return <AccountUnavailable />;
   await requireMemberProfile("/interview-playbook");
@@ -65,12 +74,21 @@ export default async function InterviewPlaybookPage() {
   // timing model must agree on "now," or a round could look upcoming to one and
   // already passed to the other.
   const now = new Date();
-  const overview = await getInterviewPlaybookOverview(now);
+  const [overview, diagnosticInputs] = await Promise.all([
+    getInterviewPlaybookOverview(now),
+    getInterviewPlaybookDiagnosticInputs(),
+  ]);
   // Read-only round-context projection: converts confirmed round signals into
-  // the merged adaptive planner's targets under an intentionally neutral
-  // diagnostic. It never infers evidence, confidence, or available time from
-  // any existing product surface — see planner-integration.ts.
-  const planningProjection = buildInterviewPlaybookPlanningProjection({ overview, now });
+  // the merged adaptive planner's targets. When the user has saved diagnostic
+  // inputs below, their real hours/confidence/priorities/constraints/coverage
+  // are used; otherwise this stays the intentionally neutral Phase 3A
+  // diagnostic. Neither path infers evidence from any other product surface —
+  // see planner-integration.ts and diagnostic-inputs.ts.
+  const planningProjection = buildInterviewPlaybookPlanningProjection({
+    overview,
+    now,
+    diagnosticInput: diagnosticInputs.hasSavedInputs ? diagnosticInputs.diagnosticInput : undefined,
+  });
 
   const primaryRound = overview.primaryRound;
   const primaryAction = overview.primaryAction;
@@ -217,6 +235,15 @@ export default async function InterviewPlaybookPage() {
       <InterviewPlaybookFinalPreparationMode guidance={primaryTiming.guidance} round={primaryRound} />
     ) : null}
 
+    <InterviewPlaybookDiagnosticInputForm
+      hasSavedInputs={diagnosticInputs.hasSavedInputs}
+      availableHoursPerWeek={diagnosticInputs.availableHoursPerWeek}
+      confidenceByArea={diagnosticInputs.confidenceByArea}
+      priorities={diagnosticInputs.priorities}
+      constraints={diagnosticInputs.constraints}
+      coverage={diagnosticInputs.coverage}
+    />
+
     {planningProjection && <section className="prep-module" aria-labelledby="playbook-strategy-heading">
       <header>
         <Compass size={21} aria-hidden="true" />
@@ -225,7 +252,10 @@ export default async function InterviewPlaybookPage() {
           <p>Broader strategy across the confirmed active interview rounds.</p>
         </div>
       </header>
-      <p className="prep-privacy">Built from confirmed active round signals and interview timing. This view does not infer performance evidence, confidence, or available study time.</p>
+      <p className="prep-privacy">{planningSourceCopy(planningProjection.sourceMode)}</p>
+      {diagnosticInputs.hasSavedInputs && diagnosticInputs.availableHoursPerWeek === 0 && (
+        <p className="prep-privacy">You saved 0 available hours per week, so new preparation actions stay suppressed until you add capacity above.</p>
+      )}
       <ol>
         {planningProjection.actions.map((action, index) => <li key={`${action.kind}-${action.area ?? "none"}-${index}`}>
           {action.href ? <Link href={action.href}>

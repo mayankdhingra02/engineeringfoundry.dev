@@ -72,13 +72,19 @@ assert.ok(!exportRoute.includes("searchParams") && !exportRoute.includes("userId
 for (const forbidden of ["access_token", "refresh_token", "encrypted_password", "service_role", "claim_token", "provider_message_id", "last_error_code"]) {
   assert.ok(!exporter.includes(`"${forbidden}`), `export includes operational secret field ${forbidden}`);
 }
-for (const section of ["applications", "interview_rounds", "interview_preparation", "behavioral", "dsa", "system_design", "calendar"]) {
+for (const section of ["applications", "interview_rounds", "interview_preparation", "behavioral", "dsa", "system_design", "calendar", "interview_playbook"]) {
   assert.ok(exporter.includes(section), `export lacks ${section}`);
 }
 for (const field of ["opening_framing", "details_to_emphasize", "details_to_avoid"]) {
   assert.ok(exporter.includes(field), `behavioral export omits ${field}`);
 }
 assert.match(exporter, /collectAccountExportRows[\s\S]*\.range\(from, to\)/, "export queries do not paginate past the PostgREST row cap");
+
+// Phase 3B1: the interview_playbook section adds four owner-scoped subsections.
+for (const subsection of ["diagnostic_settings", "confidence", "priorities", "constraints"]) {
+  assert.ok(exporter.includes(subsection), `interview_playbook export omits ${subsection}`);
+}
+assert.ok(exporter.includes('EXPORT_VERSION = "1.1"'), "export version was not bumped for the interview_playbook section");
 
 for (const destination of ["/dashboard", "/applications", "/calendar", "/settings"]) {
   assert.ok(accountControl.includes(`href="${destination}"`), `account navigation lacks ${destination}`);

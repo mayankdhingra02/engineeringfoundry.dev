@@ -317,7 +317,7 @@ for (const nonArea of [
 
 // --- Page integration source assertions -------------------------------------
 check("page imports buildInterviewPlaybookPlanningProjection", pageSource.includes("buildInterviewPlaybookPlanningProjection"));
-check("page calls the projection with overview and now", /buildInterviewPlaybookPlanningProjection\(\{\s*overview,\s*now\s*\}\)/.test(pageSource));
+check("page calls the projection with overview and now", /buildInterviewPlaybookPlanningProjection\(\{\s*overview,\s*now,?[\s\S]*?\}\)/.test(pageSource));
 check("page still calls getInterviewPlaybookOverview(now)", pageSource.includes("getInterviewPlaybookOverview(now)"));
 check("page still uses overview.primaryAction", pageSource.includes("overview.primaryAction"));
 check("page still uses primaryAction", pageSource.includes("primaryAction"));
