@@ -8,6 +8,7 @@ import {
   CalendarClock,
   CalendarDays,
   CircleAlert,
+  Compass,
   ListChecks,
   MessagesSquare,
 } from "lucide-react";
@@ -19,6 +20,10 @@ import { requireMemberProfile } from "@/lib/auth/guards";
 import { getInterviewPlaybookOverview } from "@/lib/interview-playbook/queries";
 import type { InterviewPlaybookPreparationCount, InterviewPlaybookRoundSummary } from "@/lib/interview-playbook/overview";
 import { resolveInterviewPlaybookTiming } from "@/lib/interview-playbook/timing";
+import {
+  buildInterviewPlaybookPlanningProjection,
+  type InterviewPlaybookPresentedPlanAction,
+} from "@/lib/interview-playbook/planner-integration";
 import { InterviewPlaybookFinalPreparationMode } from "@/components/interview-playbook/final-preparation-mode";
 
 export const metadata: Metadata = {
@@ -45,6 +50,13 @@ function queueStateLabel(round: InterviewPlaybookRoundSummary) {
   return round.state === "upcoming" ? "Scheduled" : "Date needed";
 }
 
+/** The presentation layer already excludes `final-phase`, so only these three stages ever reach the page. */
+function strategyStageLabel(stage: InterviewPlaybookPresentedPlanAction["stage"]) {
+  if (stage === "now") return "Now";
+  if (stage === "next") return "Next";
+  return "Later";
+}
+
 export default async function InterviewPlaybookPage() {
   if (!isAccountPlatformAvailable()) return <AccountUnavailable />;
   await requireMemberProfile("/interview-playbook");
@@ -54,6 +66,11 @@ export default async function InterviewPlaybookPage() {
   // already passed to the other.
   const now = new Date();
   const overview = await getInterviewPlaybookOverview(now);
+  // Read-only round-context projection: converts confirmed round signals into
+  // the merged adaptive planner's targets under an intentionally neutral
+  // diagnostic. It never infers evidence, confidence, or available time from
+  // any existing product surface — see planner-integration.ts.
+  const planningProjection = buildInterviewPlaybookPlanningProjection({ overview, now });
 
   const primaryRound = overview.primaryRound;
   const primaryAction = overview.primaryAction;
@@ -199,6 +216,47 @@ export default async function InterviewPlaybookPage() {
     {primaryRound && primaryAction && primaryTiming?.guidance ? (
       <InterviewPlaybookFinalPreparationMode guidance={primaryTiming.guidance} round={primaryRound} />
     ) : null}
+
+    {planningProjection && <section className="prep-module" aria-labelledby="playbook-strategy-heading">
+      <header>
+        <Compass size={21} aria-hidden="true" />
+        <div>
+          <h2 id="playbook-strategy-heading">Adaptive preparation strategy</h2>
+          <p>Broader strategy across the confirmed active interview rounds.</p>
+        </div>
+      </header>
+      <p className="prep-privacy">Built from confirmed active round signals and interview timing. This view does not infer performance evidence, confidence, or available study time.</p>
+      <ol>
+        {planningProjection.actions.map((action, index) => <li key={`${action.kind}-${action.area ?? "none"}-${index}`}>
+          {action.href ? <Link href={action.href}>
+            <span>
+              <strong>{action.title}</strong>
+              <small>{action.description}</small>
+            </span>
+            <span className="prep-item-state">{strategyStageLabel(action.stage)}<ArrowRight size={14} aria-hidden="true" /></span>
+          </Link> : <div>
+            <span>
+              <strong>{action.title}</strong>
+              <small>{action.description}</small>
+            </span>
+            <span className="prep-item-state">{strategyStageLabel(action.stage)}</span>
+          </div>}
+        </li>)}
+      </ol>
+      {planningProjection.hiddenActionCount > 0 && <p className="prep-privacy">{planningProjection.hiddenActionCount} additional strategy action{planningProjection.hiddenActionCount === 1 ? "" : "s"} become relevant later.</p>}
+      {planningProjection.deferred.length > 0 && <div>
+        <h3>Intentionally deferred</h3>
+        <ol>
+          {planningProjection.deferred.map((deferral, index) => <li key={`${deferral.area}-${index}`}>
+            <span>
+              <strong>{deferral.title}</strong>
+              <small>{deferral.description}</small>
+            </span>
+          </li>)}
+        </ol>
+        {planningProjection.hiddenDeferralCount > 0 && <p className="prep-privacy">{planningProjection.hiddenDeferralCount} more area{planningProjection.hiddenDeferralCount === 1 ? "" : "s"} are intentionally deferred.</p>}
+      </div>}
+    </section>}
 
     {overview.activeInterviewProcesses.length > 0 && <section className="prep-module">
       <header>
