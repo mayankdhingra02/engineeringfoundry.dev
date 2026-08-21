@@ -47,6 +47,7 @@ export function parseAnswerForm(formData: FormData) {
   const title = text(formData, "title"); const answer_text = text(formData, "answer_text"); const notes = optional(formData, "notes");
   const opening_framing = optional(formData, "opening_framing"); const details_to_emphasize = optional(formData, "details_to_emphasize");
   const details_to_avoid = optional(formData, "details_to_avoid"); const is_primary = formData.get("is_primary") === "on";
+  const factIntegrityConfirmed = formData.get("fact_integrity_confirmed") === "on";
   const status = text(formData, "status") || "Draft"; const company_slug = normalizeCompanySlug(text(formData, "company_slug"));
   const story_id = optional(formData, "story_id"); const application_id = optional(formData, "application_id");
   if (!title || title.length > 200) errors.title = "Add a title up to 200 characters.";
@@ -59,5 +60,5 @@ export function parseAnswerForm(formData: FormData) {
   limited(details_to_emphasize, 20000, "Details to emphasize", errors, "details_to_emphasize");
   limited(details_to_avoid, 20000, "Details to avoid", errors, "details_to_avoid");
   limited(notes, 50000, "Notes", errors, "notes");
-  return { data: Object.keys(errors).length ? null : { title, answer_text, opening_framing, details_to_emphasize, details_to_avoid, notes, status, company_slug, story_id, application_id }, isPrimary: is_primary, errors };
+  return { data: Object.keys(errors).length ? null : { title, answer_text, opening_framing, details_to_emphasize, details_to_avoid, notes, status, company_slug, story_id, application_id }, isPrimary: is_primary, factIntegrityConfirmed, errors };
 }

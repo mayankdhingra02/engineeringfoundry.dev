@@ -20,7 +20,9 @@ const reuse = buildBehavioralCoverageMap({ questions: Array.from({ length: 6 }, 
 check("coverage surfaces gentle overuse after six linked questions", reuse.overusedStories[0]?.questionCount === 6);
 
 check("matching source metric is not flagged", reviewAnswerFacts(story, { answer_text: "We improved latency by 20%." }).length === 0);
-check("unmatched metric is flagged", reviewAnswerFacts(story, { answer_text: "We improved latency by 50%." }).some((finding) => finding.kind === "unsupported-metric"));
+check("unmatched metric is flagged", reviewAnswerFacts(story, { answer_text: "We improved latency by 50%." }).some((finding) => finding.kind === "unsupported-numeric-claim"));
+check("worded ratio contradiction is flagged", reviewAnswerFacts(story, { answer_text: "I cut latency in half." }).some((finding) => finding.kind === "unsupported-numeric-claim"));
+check("new responsibility cue is surfaced", reviewAnswerFacts(story, { answer_text: "I led the recovery." }).some((finding) => finding.kind === "possible-new-claim"));
 check("missing source is flagged", reviewAnswerFacts(undefined, { answer_text: "An answer without a story." }).some((finding) => finding.kind === "missing-source"));
 
 const answerForm = read("features/behavioral/answer-form.tsx");
@@ -34,6 +36,8 @@ for (const marker of ["buildBehavioralCoverageMap", "Content coverage", "Build n
 check("workspace does not claim a readiness score", !/readiness score/i.test(workspace));
 const validation = read("lib/behavioral/validation.ts");
 check("answer validation requires a source story", validation.includes("Choose the source story for this answer variant."));
+const actions = read("features/behavioral/actions.ts");
+check("answer actions require source-story confirmation for detected claims", actions.includes("hasConfirmedAnswerFacts") && actions.includes("fact_integrity_confirmed"));
 const analytics = read("lib/analytics.ts");
 check("no new private Behavioral analytics event was added", !analytics.includes("behavioral_answer_variant_created"));
 const publicPage = read("components/behavioral-practice.tsx");

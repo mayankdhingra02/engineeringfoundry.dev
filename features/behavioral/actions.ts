@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { findCuratedQuestion } from "@/lib/behavioral/catalog";
+import { reviewAnswerFacts } from "@/lib/behavioral/fact-integrity";
 import { parseAnswerForm, parseQuestionForm, parseStoryForm, type BehavioralFieldErrors } from "@/lib/behavioral/validation";
 import { getAuthenticatedActor, type AuthenticatedActor } from "@/lib/auth/actor";
 
@@ -24,6 +25,24 @@ async function ownsStory(current: AuthenticatedActor, storyId: string) {
   if (!UUID_PATTERN.test(storyId)) return false;
   const { data, error } = await current.supabase.from("behavioral_stories").select("id").eq("id", storyId).eq("user_id", current.user.id).maybeSingle();
   return !error && Boolean(data);
+}
+
+async function ownedFactSourceStory(current: AuthenticatedActor, storyId: string) {
+  if (!UUID_PATTERN.test(storyId)) return null;
+  const { data, error } = await current.supabase
+    .from("behavioral_stories")
+    .select("id,title,situation,task,action,result,reflection,short_summary")
+    .eq("id", storyId)
+    .eq("user_id", current.user.id)
+    .maybeSingle();
+  return error ? null : data;
+}
+
+async function hasConfirmedAnswerFacts(current: AuthenticatedActor, storyId: string | null, draft: Parameters<typeof reviewAnswerFacts>[1], confirmed: boolean) {
+  if (!storyId) return false;
+  const source = await ownedFactSourceStory(current, storyId);
+  if (!source) return false;
+  return reviewAnswerFacts(source, draft).length === 0 || confirmed;
 }
 
 async function ownsAnswerRelationships(current: AuthenticatedActor, input: { story_id: string | null; application_id: string | null }) {
@@ -163,6 +182,7 @@ export async function createAnswerAction(questionId: string, _: BehavioralAction
   const reference = await ownedQuestion(current, questionId); if (!reference) return { status: "error", message: "This question could not be found." };
   const parsed = parseAnswerForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
   if (!await ownsAnswerRelationships(current, parsed.data)) return { status: "error", message: "A linked story or application is no longer available." };
+  if (!await hasConfirmedAnswerFacts(current, parsed.data.story_id, parsed.data, parsed.factIntegrityConfirmed)) return { status: "error", message: "Review the source-story consistency prompts before saving this variant.", fieldErrors: { fact_integrity_confirmed: "Confirm the source story or update it first before saving these factual changes." } };
   const { data: answer, error } = await current.supabase.from("behavioral_answers").insert({ ...parsed.data, ...reference, user_id: current.user.id }).select("id").maybeSingle();
   if (error || !answer) return { status: "error", message: "We couldn't save this preparation. Check linked records and try again." };
   if (parsed.isPrimary) {
@@ -181,6 +201,7 @@ export async function updateAnswerAction(questionId: string, answerId: string, _
   if (!UUID_PATTERN.test(answerId) || !reference || !await answerMatchesOwnedQuestion(current, answerId, reference)) return { status: "error", message: "This answer could not be found." };
   const parsed = parseAnswerForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
   if (!await ownsAnswerRelationships(current, parsed.data)) return { status: "error", message: "A linked story or application is no longer available." };
+  if (!await hasConfirmedAnswerFacts(current, parsed.data.story_id, parsed.data, parsed.factIntegrityConfirmed)) return { status: "error", message: "Review the source-story consistency prompts before saving this variant.", fieldErrors: { fact_integrity_confirmed: "Confirm the source story or update it first before saving these factual changes." } };
   const { data, error } = await current.supabase.from("behavioral_answers").update(parsed.data).eq("id", answerId).eq("user_id", current.user.id).select("id").maybeSingle();
   if (error || !data) return { status: "error", message: "We couldn't update this answer." };
   const { data: primarySet, error: primaryError } = await current.supabase.rpc("set_behavioral_primary_answer", { target_answer_id: answerId, make_primary: parsed.isPrimary });
