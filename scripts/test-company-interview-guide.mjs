@@ -11,7 +11,7 @@ const workspace = fs.readFileSync("features/company-guides/company-guide-workspa
 const questionBank = fs.readFileSync("features/company-guides/question-bank.tsx", "utf8");
 const evidenceBadge = fs.readFileSync("features/company-guides/evidence-badge.tsx", "utf8");
 
-assert.match(route, /amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide/, "Amazon, Google, Meta, and Walmart must use the same guide workspace registry");
+assert.match(route, /priorityCompanyGuideBySlug/, "Priority company guides must use the shared P0.4 registry");
 assert.match(route, /Amazon SDE Interview Guide 2026/, "Amazon must have dedicated SEO metadata");
 assert.match(route, /Google Software Engineer Interview Guide 2026/, "Google must have dedicated SEO metadata");
 assert.match(route, /Meta Software Engineer Interview Guide 2026/, "Meta must have dedicated SEO metadata");

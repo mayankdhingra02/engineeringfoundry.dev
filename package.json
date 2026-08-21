@@ -81,6 +81,7 @@
     "test:dsa-languages": "node scripts/test-dsa-languages.mjs",
     "test:dsa-strategy": "node scripts/test-dsa-strategy.mjs",
     "test:company-interview-guide": "node scripts/test-company-interview-guide.mjs",
+    "test:company-guides": "node scripts/test-company-guides.mjs",
     "test:public-routes": "node scripts/smoke-public-routes.mjs",
     "validate:content": "node scripts/validate-content.mjs",
     "validate:design-content": "node scripts/validate-design-content.mjs",

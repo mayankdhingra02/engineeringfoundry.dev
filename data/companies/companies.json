@@ -3,7 +3,12 @@
   {"id":"meta","name":"Meta","slug":"meta","description":"A structured E3, E4, and E5 software engineering interview workspace centered on fast coding execution, design-track calibration, and clearly labeled evidence.","guideStatus":"available","claims":[]},
   {"id":"amazon","name":"Amazon","slug":"amazon","description":"A structured SDE I, SDE II, and Senior SDE preparation workspace grounded in official guidance and clearly labeled candidate reports.","guideStatus":"available","claims":[]},
   {"id":"walmart","name":"Walmart","slug":"walmart","description":"A geography-aware Walmart Global Tech interview workspace for Early, Mid, and Senior preparation across coding, design, backend engineering, and behavioral evidence.","guideStatus":"available","claims":[]},
-  {"id":"microsoft","name":"Microsoft","slug":"microsoft","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]},
+  {"id":"microsoft","name":"Microsoft","slug":"microsoft","description":"A source-aware Microsoft engineering interview guide covering problem solving, design, coding, testing, and values.","guideStatus":"available","claims":[]},
+  {"id":"nvidia","name":"NVIDIA","slug":"nvidia","description":"A role-aware software, systems, GPU, and ML interview preparation guide grounded in NVIDIA’s public hiring guidance.","guideStatus":"available","claims":[]},
+  {"id":"openai","name":"OpenAI","slug":"openai","description":"A source-aware, role-specific guide for software, infrastructure, and ML-oriented preparation.","guideStatus":"available","claims":[]},
+  {"id":"anthropic","name":"Anthropic","slug":"anthropic","description":"A careful guide for technical roles that keeps engineering, research, and ML scope distinct.","guideStatus":"available","claims":[]},
+  {"id":"atlassian","name":"Atlassian","slug":"atlassian","description":"An engineering guide connecting technical preparation, project depth, and Atlassian’s published values interview.","guideStatus":"available","claims":[]},
+  {"id":"uber","name":"Uber","slug":"uber","description":"A role-aware engineering guide that directs candidates to Uber’s official specialty interview guidance.","guideStatus":"available","claims":[]},
   {"id":"apple","name":"Apple","slug":"apple","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]},
   {"id":"linkedin","name":"LinkedIn","slug":"linkedin","description":"A neutral preparation hub that will aggregate attributed public resources and reviewed community context.","guideStatus":"curating","claims":[]}
 ]

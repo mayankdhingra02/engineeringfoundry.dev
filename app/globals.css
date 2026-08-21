@@ -964,12 +964,25 @@ button.flow-card { cursor: pointer; }
   .company-pipeline li, .company-pipeline.compact li { min-width: 156px; min-height: 112px; scroll-snap-align: start; border-right: 1px solid var(--line); border-bottom: 0; }
   .company-pipeline li:last-child, .company-pipeline.compact li:last-child { border-right: 0; }
   .company-pipeline li > svg { display: block; }
-  .company-guide-section { padding-block: 40px; }
+.company-guide-section { padding-block: 40px; }
   .company-reference-panel > summary { min-height: 72px; padding: 13px; }
   .company-reference-panel > .company-detail-body { padding: 16px 13px 14px; }
   .company-action-row { display: grid; grid-template-columns: 1fr; }
   .company-action-row .button { width: 100%; justify-content: center; }
 }
+
+/* P0.4 company guides: compact reading surface with explicit evidence boundaries. */
+.company-v1-hero { padding: 42px 0 34px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.company-v1-hero h1 { max-width: 18ch; margin: 14px 0 9px; font-size: clamp(2.1rem, 4vw, 3.35rem); letter-spacing: -.04em; line-height: 1.03; }
+.company-v1-hero p, .company-v1-layout > section > p { max-width: 72ch; color: var(--muted); }
+.company-v1-meta { margin: 16px 0; display: flex; flex-wrap: wrap; gap: 7px; }.company-v1-meta span, .company-v1-evidence, .company-v1-relevance { padding: 5px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: var(--type-meta); font-weight: 700; }
+.company-v1-nav { position: sticky; top: var(--global-header-height); z-index: 20; border-bottom: 1px solid var(--line); background: var(--bg); }.company-v1-nav > div { min-height: 50px; display: flex; align-items: center; gap: 14px; overflow-x: auto; }.company-v1-nav a { min-height: 44px; display: inline-flex; align-items: center; white-space: nowrap; color: var(--muted); font-size: var(--type-small); font-weight: 700; }.company-v1-nav a:hover { color: var(--accent); }
+.company-v1-layout { padding-bottom: 80px; }.company-v1-layout > section { padding: 42px 0; border-bottom: 1px solid var(--line); }.company-v1-layout h2 { margin: 0 0 10px; font-size: clamp(1.6rem, 3vw, 2.25rem); letter-spacing: -.035em; }.company-v1-layout h3 { margin: 0; font-size: 1rem; }
+.company-v1-boundary { margin-top: 22px; max-width: 760px; padding: 16px; display: flex; gap: 11px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface-2); }.company-v1-boundary svg { flex: none; color: var(--green); }.company-v1-boundary p { margin: 4px 0 0; color: var(--muted); font-size: var(--type-small); }
+.company-v1-domains, .company-v1-levels, .company-v1-experiences, .company-v1-sources { margin-top: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }.company-v1-domains article, .company-v1-levels article, .company-v1-experiences article, .company-v1-sources article, .company-v1-two-up > article { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }.company-v1-domains article > div { display: flex; flex-wrap: wrap; gap: 6px; }.company-v1-domains h3, .company-v1-sources h3 { margin-top: 14px; }.company-v1-domains p, .company-v1-levels p, .company-v1-experiences p, .company-v1-sources p { color: var(--muted); font-size: var(--type-small); line-height: 1.6; }.company-v1-evidence.official { color: var(--green); background: var(--green-soft); }.company-v1-evidence.candidate { color: var(--accent); background: var(--accent-soft); }.company-v1-evidence.recommendation { color: var(--text); background: var(--surface-2); }.company-v1-relevance { color: var(--muted); text-transform: capitalize; }.company-v1-domains .text-link, .company-v1-sources a { margin-top: 12px; display: inline-flex; align-items: center; gap: 5px; font-size: var(--type-small); font-weight: 700; }
+.company-v1-levels { grid-template-columns: repeat(4, minmax(0, 1fr)); }.company-v1-levels strong { display: block; margin-top: 8px; }.company-v1-levels ul { padding-left: 18px; color: var(--muted); font-size: var(--type-small); }.company-v1-two-up { margin-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }.company-v1-two-up p, .company-v1-two-up li { color: var(--muted); font-size: var(--type-small); line-height: 1.6; }.company-v1-two-up .button { margin-top: 14px; }
+.company-v1-experiences { grid-template-columns: repeat(3, minmax(0, 1fr)); }.company-v1-experiences small { color: var(--muted); font-size: var(--type-meta); }.company-v1-sources { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 800px) { .company-v1-hero { padding-block: 28px; }.company-v1-domains, .company-v1-levels, .company-v1-experiences, .company-v1-two-up { grid-template-columns: 1fr; }.company-v1-layout > section { padding-block: 34px; }.company-v1-nav { top: var(--global-header-height); }.company-v1-nav > div { padding-inline: 16px; margin-inline: -16px; } }
 
 /* Phase 8 — account lifecycle surfaces */
 .onboarding-page, .settings-page { min-height: calc(100vh - var(--header-height)); background: var(--bg); }
