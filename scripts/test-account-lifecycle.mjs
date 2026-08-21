@@ -72,7 +72,7 @@ assert.ok(!exportRoute.includes("searchParams") && !exportRoute.includes("userId
 for (const forbidden of ["access_token", "refresh_token", "encrypted_password", "service_role", "claim_token", "provider_message_id", "last_error_code"]) {
   assert.ok(!exporter.includes(`"${forbidden}`), `export includes operational secret field ${forbidden}`);
 }
-for (const section of ["applications", "interview_rounds", "interview_preparation", "behavioral", "dsa", "system_design", "calendar", "interview_playbook", "mock_interviews"]) {
+for (const section of ["applications", "interview_rounds", "interview_preparation", "behavioral", "dsa", "system_design", "calendar", "interview_playbook", "mock_interviews", "interview_experiences"]) {
   assert.ok(exporter.includes(section), `export lacks ${section}`);
 }
 for (const field of ["opening_framing", "details_to_emphasize", "details_to_avoid"]) {
@@ -84,7 +84,7 @@ assert.match(exporter, /collectAccountExportRows[\s\S]*\.range\(from, to\)/, "ex
 for (const subsection of ["diagnostic_settings", "confidence", "priorities", "constraints"]) {
   assert.ok(exporter.includes(subsection), `interview_playbook export omits ${subsection}`);
 }
-assert.ok(exporter.includes('EXPORT_VERSION = "1.2"'), "export version was not bumped for mock interview reviews");
+assert.ok(exporter.includes('EXPORT_VERSION = "1.3"'), "export version was not bumped for Interview Experiences v1");
 for (const field of ["strength", "improvement", "follow_up_practice", "mock_interview_sessions!inner(user_id)"]) assert.ok(exporter.includes(field), `mock export omits ownership-safe ${field}`);
 
 for (const destination of ["/dashboard", "/applications", "/calendar", "/settings"]) {
