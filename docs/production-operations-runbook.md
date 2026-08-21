@@ -75,6 +75,8 @@ Run after deployment, recording tester/date/evidence without private payloads.
 
 **Analytics:** only if configured, verify a public pageview; navigate private routes and confirm no private pageviews, query strings, tokens, email, notes, stories, answers, application data, mock ratings/notes, or experience draft text arrive in PostHog.
 
+**P0.9 analytics and evidence:** follow `docs/analytics-launch-operations.md` before enabling PostHog. Verify identify/reset after a real sign-in/sign-out, create the four specified dashboards only after their events are observed, and commit the first real aggregate monthly snapshot only after the month closes. `docs/impact-ledger/` templates are not evidence and must never be counted as adoption, testimonials, outcomes, or impact.
+
 ## Incident and rollback
 
 1. For account/auth risk, set `NEXT_PUBLIC_ACCOUNTS_ENABLED=false` and redeploy. Public learning remains available; data is retained.

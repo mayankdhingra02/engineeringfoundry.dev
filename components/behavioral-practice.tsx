@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ChevronRight, ListFilter, MessageSquareQuote, RefreshCw, Search, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   activeBehavioralQuestions,
@@ -40,9 +40,13 @@ export function BehavioralPractice() {
   }), [category, query, scope, storyType]);
 
   const selected = activeBehavioralQuestions.find((question) => question.id === selectedId) ?? activeBehavioralQuestions[0];
+  const startedQuestions = useRef(new Set<string>());
 
   useEffect(() => {
     track("behavioral_question_viewed", { question_id: selected.id, category: selected.category, scope: selected.scope[0] });
+    if (startedQuestions.current.has(selected.id)) return;
+    startedQuestions.current.add(selected.id);
+    track("behavioral_practice_started", { track: "behavioral", question_id: selected.id, category: selected.category.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-|-$/g, "") });
   }, [selected]);
 
   function chooseQuestion(question: BehavioralQuestion) {

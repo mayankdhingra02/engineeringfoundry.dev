@@ -58,17 +58,50 @@ Engineering Foundry supports optional PostHog product analytics. It remains full
 | `experience_guidance_opened` | Privacy and writing guidance is first opened | `placement`, `source_route` | Active | Privacy-guidance engagement |
 | `experience_community_clicked` | The experience-workspace community CTA is opened | `placement`, `source_route` | Active | Community acquisition |
 | `experience_company_workspace_viewed` | One of six registered company workspaces renders | `company_slug`, `source_route` | Active | Company-workspace interest |
-| `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Disabled in public launch; requires account qualification | Account acquisition funnel |
-| `sign_in_completed` | Supabase confirms authentication | `method` | Disabled in public launch; requires account qualification | Account activation |
-| `sign_out_completed` | Supabase successfully clears the session | None | Disabled in public launch; requires account qualification | Session lifecycle |
-| `profile_onboarding_started` | An authenticated user opens profile onboarding | None | Disabled in public launch; requires account qualification | Onboarding funnel |
-| `profile_onboarding_completed` | A valid profile is saved for the first time | `profile_visibility` | Disabled in public launch; requires account qualification | Onboarding conversion |
-| `profile_updated` | An authenticated user saves profile settings | `profile_visibility`, `username_changed` | Disabled in public launch; requires account qualification | Profile maintenance |
-| `public_profile_viewed` | A public, completed profile renders | `username` | Disabled in public launch; requires account qualification | Profile engagement |
-| `roadmap_step_completed` | A signed-in user completes a roadmap step | Roadmap and step identifiers | Future | Preparation progress |
-| `account_created` | Email signup returns a confirmed new session | `method=email` | Disabled in public launch; requires account qualification | Account conversion |
+| `account_signup_started` | A real sign-up method is selected or submitted | `method`, `demo=false` | Active only when accounts are enabled | Account acquisition funnel |
+| `sign_in_completed` | Supabase confirms authentication | `method` | Active only after Supabase confirms authentication | Account activation |
+| `sign_out_completed` | Supabase successfully clears the session | None | Active only after sign-out succeeds | Session lifecycle |
+| `profile_onboarding_started` | An authenticated user opens profile onboarding | None | Active only when accounts are enabled | Onboarding funnel |
+| `profile_onboarding_completed` | A valid profile is saved for the first time | `profile_visibility` | Active only after the profile save succeeds | Onboarding conversion |
+| `profile_updated` | An authenticated user saves profile settings | `profile_visibility`, `username_changed` | Active only after the profile save succeeds | Profile maintenance |
+| `public_profile_viewed` | A public, completed profile renders | `username` | Active only when a public profile is rendered | Profile engagement |
+| `roadmap_step_completed` | — | — | Not implemented; excluded from dashboards | — |
+| `account_created` | Email signup returns a confirmed new session | `method=email` | Active only after a confirmed new email session | Account conversion |
 
 Local referral-tool events measure preparation activity and must not be interpreted as requests sent, referrers registered, matches made, or referrals completed. Account events require real Supabase outcomes.
+
+## P0.9 activation events — `analytics-definition-v1`
+
+These are the fixed event families used by the launch funnels. Each event has a runtime property allowlist in `lib/analytics/launch-metrics.ts`; unlisted properties are removed before the global private-data sanitizer runs.
+
+| Event | Fires when | Fixed properties | Meaning |
+| --- | --- | --- | --- |
+| `dsa_practice_started` | A canonical DSA source/practice link is opened | `track`, `problem_id`, `source` | A user deliberately starts canonical DSA practice |
+| `system_design_practice_started` | A canonical System Design practice renders | `track`, `problem_id`, `difficulty`, `domain` | A user opens substantive System Design practice |
+| `ml_design_practice_started` | A canonical ML Design practice renders | `track`, `problem_id`, `difficulty`, `domain` | A user opens substantive ML Design practice |
+| `behavioral_practice_started` | A canonical Behavioral prompt first becomes active | `track`, `question_id`, `category` | A user opens a prompt to practice; no story or answer is sent |
+| `low_level_design_lesson_opened` | A canonical LLD lesson renders | `track`, `lesson_id` | A user opens substantive LLD curriculum |
+| `low_level_design_practice_started` | A canonical LLD practice renders | `track`, `practice_id` | A user starts an original LLD practice design |
+| `preparation_activity_recorded` | A canonical DSA, System Design, ML Design, or Behavioral activity is successfully persisted or safely recorded locally | `track`, `item_id`, `status`, `persistence` | Self-recorded activity, never mastery or readiness |
+| `low_level_design_activity_recorded` | A canonical LLD activity is recorded locally | `track`, `item_id`, `status`, `persistence` | Local self-recorded activity, never mastery or durable account progress |
+| `continuation_presented` / `continuation_selected` | A real P0.2 continuation is visible / chosen | `track`, `continuation_source`, `authenticated` | Continuation usage with coarse account/local source only |
+| `study_plan_activated` / `study_plan_resumed` | A DSA or System Design plan is successfully saved / then chosen from an active-plan continuation | fixed `track`, `plan_id` or `continuation_source`, `persistence`/`authenticated` | Active plan use; not completion |
+| `mock_review_saved` | A valid self-review/rating save succeeds | `track`, `mode`, `prompt_id`, `rubric_id` | Persisted self-review, not observed interview performance |
+| `salary_negotiation_module_viewed` / `offer_comparison_opened` | Public module or the private in-memory worksheet opens | `module_id` or fixed `surface` | Discovery only; compensation and worksheet fields are excluded |
+| `interview_experience_submission_started` / `interview_experience_submitted` | The signed-in contribution form renders / a report is successfully submitted | fixed `source` | Workflow usage only; no report fields or identity values |
+
+### First useful action
+
+`first useful action` is the first occurrence per person (or anonymous device before identification) of one of the event IDs in `FIRST_USEFUL_ACTION_EVENTS` in `lib/analytics/launch-metrics.ts`. It is a deliberate canonical preparation start or successfully recorded preparation activity. It excludes `$pageview`, navigation, search, account creation, profile onboarding, filters, and every passive render that is not a substantive canonical preparation surface.
+
+Completion means **the user recorded preparation activity complete**. It does not mean mastered, passed, interview-ready, or an observed performance result. Persisted events are emitted only after the relevant Supabase mutation succeeds; local events use only canonical content IDs and never include local progress payloads.
+
+### Audited legacy roadmap events
+
+| Event | Status after audit | Notes |
+| --- | --- | --- |
+| `roadmap_level_selected`, `roadmap_plan_selected`, `company_overlay_selected`, `roadmap_topic_opened`, `roadmap_problem_opened`, `roadmap_problem_marked_review`, `roadmap_hint_revealed`, `mixed_set_started`, `timed_practice_started`, `roadmap_filter_changed` | Implemented | Existing DSA-roadmap discovery events. They are not first-useful-action completions. |
+| `resource_clicked`, `roadmap_problem_completed`, `mixed_set_completed` | Registered but not implemented | Excluded from all P0.9 dashboards until a real call site exists. `resource_opened` is the active resource event. |
 
 ## Intended product metrics
 
@@ -87,7 +120,7 @@ Local referral-tool events measure preparation activity and must not be interpre
 - Topic-guide views, question-filter changes, source inspection, and preparation-path navigation
 - Engaged visitors can be derived from meaningful preparation events, including opening design or behavioral guidance, practicing a behavioral prompt, using an interview checklist, or opening a substantive resource, without sending raw search queries, story text, answer drafts, or personal notes
 - Roadmap views by preparation track
-- Roadmap progress and completion after persistence is implemented
+- Persisted DSA/System Design, ML Design, and Behavioral self-recorded activity; local LLD activity remains intentionally separate from durable account progress
 - Resource clicks by category and type
 
 ### Community
@@ -104,7 +137,7 @@ Local referral-tool events measure preparation activity and must not be interpre
 - Community Hub pathway and Discord clicks; `1,000+ community members` is a verified membership statement, not an analytics-derived active-user metric
 - Official challenge submissions, judging, winners, rankings, and recognition remain future metrics because those systems do not exist
 - Interview builder opens, rounds added, guidance opens, summary generation, and summary copies; these are local writing actions, not submissions or published experiences
-- Interview experiences submitted remains a future metric available only after authenticated submission and moderation exist
+- Authenticated Interview Experience contribution starts and submissions; public visibility still requires the existing approval and publication-consent boundary
 
 ### Outcomes — future and self-reported
 

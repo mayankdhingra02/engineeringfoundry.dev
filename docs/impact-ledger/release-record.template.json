@@ -1,0 +1,12 @@
+{
+  "record_kind": "template",
+  "release": "vX.Y.Z or deployment label",
+  "date": "YYYY-MM-DD",
+  "git_sha": "full commit SHA",
+  "major_capabilities": ["Describe only shipped, verifiable capability changes"],
+  "deployment": { "environment": "production", "url": "https://<production-domain>" },
+  "ci_run": "CI run URL",
+  "latest_migration": "migration filename or no schema change",
+  "owner_verification": { "verified_by": "name or role", "verified_at": "YYYY-MM-DD" },
+  "notes": "TEMPLATE ONLY — never include secrets, private user data, or raw exports."
+}

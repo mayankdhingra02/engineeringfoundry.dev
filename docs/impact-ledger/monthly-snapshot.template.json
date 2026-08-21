@@ -1,0 +1,28 @@
+{
+  "record_kind": "template",
+  "analytics_definition_version": "analytics-definition-v1",
+  "month": "YYYY-MM",
+  "measurement_window": {
+    "start": "YYYY-MM-01T00:00:00Z",
+    "end": "YYYY-MM-01T00:00:00Z"
+  },
+  "source_reference": "PostHog aggregate report URL or redacted export location",
+  "metrics": {
+    "unique_visitors": 0,
+    "registered_users": 0,
+    "first_useful_action_users": 0,
+    "engaged_users": 0,
+    "seven_day_returning_users": 0,
+    "seven_day_return_rate": 0,
+    "dsa_starts": 0,
+    "system_design_starts": 0,
+    "ml_design_starts": 0,
+    "behavioral_starts": 0,
+    "low_level_design_starts": 0,
+    "mock_starts": 0,
+    "mock_review_saves": 0,
+    "interview_experience_submissions": 0,
+    "interview_experience_approvals": 0
+  },
+  "notes": "TEMPLATE ONLY — replace with real, aggregate, reproducible values after the measurement month closes."
+}

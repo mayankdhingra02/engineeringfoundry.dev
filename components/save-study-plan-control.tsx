@@ -4,6 +4,7 @@ import { BookmarkCheck } from "lucide-react";
 import { useState } from "react";
 import { saveActiveStudyPlanAction, type SaveStudyPlanInput } from "@/features/preparation-progress/plan-actions";
 import { preparationProgressEvent, readLocalPreparationProgress, saveLocalPlan, writeLocalPreparationProgress } from "@/lib/preparation-progress/local";
+import { track } from "@/lib/analytics";
 
 export function SaveStudyPlanControl({ input, href, label }: { input: SaveStudyPlanInput; href: string; label: string }) {
   const [pending, setPending] = useState(false);
@@ -18,13 +19,16 @@ export function SaveStudyPlanControl({ input, href, label }: { input: SaveStudyP
         saved = result.saved;
         setMessage(result.message);
       } catch { setMessage("Saved in this browser. Sign in later to save it to your account."); }
+      let localSaved = false;
       if (!saved) {
         try {
           const current = readLocalPreparationProgress(window.localStorage);
           writeLocalPreparationProgress(window.localStorage, saveLocalPlan(current, { track: input.track, href, label }));
           window.dispatchEvent(new CustomEvent(preparationProgressEvent));
+          localSaved = true;
         } catch { /* Browser storage is optional; the selected plan remains visible this visit. */ }
       }
+      if (saved || localSaved) track("study_plan_activated", { track: input.track, plan_id: input.track === "dsa" ? `${input.level}-${input.duration}d` : `${input.level}-${input.preparationWindow}-${input.minutesPerDay}`, persistence: saved ? "account" : "local" });
     } finally { setPending(false); }
   }
 

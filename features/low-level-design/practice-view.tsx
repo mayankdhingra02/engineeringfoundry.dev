@@ -2,11 +2,12 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, Lightbulb } from "lucide-react";
 import type { LowLevelDesignPractice } from "@/data/low-level-design";
 import { LowLevelDesignProgressControl } from "./progress-control";
+import { AnalyticsEventOnMount } from "@/components/analytics-event";
 
 function List({ items }: { items: readonly string[] }) { return <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul>; }
 
 export function LowLevelDesignPracticeView({ problem }: { problem: LowLevelDesignPractice }) {
-  return <div className="lld-reading page-width">
+  return <div className="lld-reading page-width"><AnalyticsEventOnMount event="low_level_design_practice_started" properties={{ track: "low-level-design", practice_id: problem.id }} />
     <nav className="lld-breadcrumbs" aria-label="Breadcrumb"><Link href="/low-level-design"><ArrowLeft size={14} />Low-Level Design</Link><span>/ <Link href="/low-level-design/practice">Practice</Link> / {problem.title}</span></nav>
     <header className="lld-reading-header"><h1>{problem.title}</h1><p>{problem.summary}</p><div><span>Original practice design</span><LowLevelDesignProgressControl itemId={`practice:${problem.id}`} label="Record this practice attempt" /></div></header>
     <section className="lld-problem-prompt"><h2>The prompt</h2><p>{problem.prompt}</p></section>

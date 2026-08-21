@@ -5,6 +5,7 @@ import { Bookmark, LoaderCircle } from "lucide-react";
 import { useActionState, useEffect, useRef } from "react";
 import type { SystemDesignItemProgressRow } from "@/lib/supabase/database.types";
 import { saveSystemDesignProgressAction, type SystemDesignActionState } from "./actions";
+import { track } from "@/lib/analytics";
 
 const initial: SystemDesignActionState = { status: "idle", message: "" };
 const labels = { not_started: "Not started", reviewed: "Reviewed", review: "Needs review", comfortable: "Comfortable" } as const;
@@ -12,7 +13,15 @@ const labels = { not_started: "Not started", reviewed: "Reviewed", review: "Need
 export function SystemDesignProgressEditor({ itemId, itemType, progress, compact = false }: { itemId: string; itemType: "concept" | "design_problem"; progress: SystemDesignItemProgressRow | null; compact?: boolean }) {
   const [state, action, pending] = useActionState(saveSystemDesignProgressAction, initial);
   const details = useRef<HTMLDetailsElement>(null);
+  const recordedActions = useRef(new Set<string>());
   useEffect(() => { if (state.status === "error") details.current?.setAttribute("open", ""); }, [state.status]);
+  useEffect(() => {
+    if (!state.analytics || state.analytics.recordedStatus === "not_started") return;
+    const key = `${state.analytics.itemType}:${state.analytics.itemId}:${state.analytics.recordedStatus}`;
+    if (recordedActions.current.has(key)) return;
+    recordedActions.current.add(key);
+    track("preparation_activity_recorded", { track: "system-design", item_id: state.analytics.itemId, status: state.analytics.recordedStatus, persistence: "account" });
+  }, [state.analytics]);
   return <details ref={details} className={`sd-private-progress ${compact ? "compact" : ""}`}>
     <summary><span>{labels[progress?.status ?? "not_started"]}{progress?.confidence ? ` · ${progress.confidence} confidence` : ""}</span><Bookmark size={14} fill={progress?.bookmarked ? "currentColor" : "none"} aria-label={progress?.bookmarked ? "Bookmarked" : undefined} /></summary>
     <form action={action}>

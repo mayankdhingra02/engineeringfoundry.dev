@@ -135,6 +135,15 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] `/sitemap.xml` lists no private route
 - [ ] With analytics configured, navigate dashboard → application → interview preparation → calendar → behavioral story → System Design attempt, then confirm in PostHog's live event view that **no pageview and no round/application/story/attempt UUID was received**
 - [ ] Private pages return `noindex` metadata
+- [ ] If PostHog is enabled: follow `docs/analytics-launch-operations.md`; verify public path-only pageviews, private-route suppression, query/fragment stripping, safe identify/reset, and that autocapture/session recording/exception capture remain disabled
+- [ ] Confirm qualified legal/privacy review determines whether a functional analytics-consent control is required for the actual deployment jurisdictions before enabling PostHog
+
+### P0.9 analytics and launch evidence
+
+- [ ] Create the production PostHog project and configure only `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST`; do not commit values
+- [ ] Build the four dashboards from `docs/analytics-launch-operations.md` after verifying real event payloads; do not claim a dashboard exists before it is created
+- [ ] After the first complete measurement month, create one aggregate `docs/impact-ledger/snapshots/YYYY-MM.json`, validate it with `npm run validate:impact-ledger`, and keep `analytics_definition_version` unchanged
+- [ ] Record releases, independent evidence, and testimonials only with actual source links and required permission metadata; never convert feedback to a testimonial without explicit permission
 
 ### P0.8 feedback/admin operations
 

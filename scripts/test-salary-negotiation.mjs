@@ -58,6 +58,18 @@ assert.match(sitemap, /salaryNegotiationModules/, "sitemap must register publish
 assert.match(applications, /application\.status === "Offer"[\s\S]*\/salary-negotiation/, "actual offer-status applications need a bounded handoff");
 assert.match(playbook, /offerStageApplication[\s\S]*\/salary-negotiation/, "Playbook needs an actual-offer handoff without changing diagnostics");
 assert.match(worksheet, /useState[\s\S]*MAX_OFFERS = 4/, "worksheet must be bounded client state");
-assert.doesNotMatch(worksheet, /localStorage|sessionStorage|fetch\(|track\(|supabase|searchParams|router\.push/i, "private worksheet cannot persist, navigate values, or send analytics");
+assert.doesNotMatch(worksheet, /localStorage|sessionStorage|fetch\(|supabase|searchParams|router\.push/i, "private worksheet cannot persist or navigate values");
+const worksheetAnalytics = worksheet.match(/useEffect\(\(\) => \{\s*(track\([^;]+\);)\s*\}, \[\]\);/s);
+assert.ok(worksheetAnalytics, "worksheet may emit one mount-only analytics event");
+assert.equal(
+  worksheetAnalytics[1],
+  'track("offer_comparison_opened", { surface: "salary-negotiation" });',
+  "worksheet analytics must be the fixed, value-free open event",
+);
+assert.doesNotMatch(
+  worksheetAnalytics[1],
+  /label|baseSalary|targetBonus|signOn|equityGrantValue|vestingYears|otherGuaranteedCompensation/i,
+  "worksheet analytics cannot include private offer values",
+);
 assert.match(docs, /browser-session state only[\s\S]*does not use localStorage[\s\S]*analytics/i, "persistence/privacy decision must be documented");
 console.log("Salary Negotiation v1 qualification passed: eight modules, privacy, math, safeguards, discovery, and offer handoffs hold.");
