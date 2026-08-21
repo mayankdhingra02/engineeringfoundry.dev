@@ -3,7 +3,11 @@ export const siteConfig = {
   tagline: "Prepare. Practice. Build. Grow.",
   description:
     "Structured engineering interview preparation, practice, and community—all in one place.",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://engineeringfoundry.dev",
+  // Never invent a public production domain. Production configuration is
+  // validated by the account capability gate; this invalid sentinel prevents
+  // metadata/callback code from silently pointing at localhost or a guessed
+  // hosted origin if an owner deploys without NEXT_PUBLIC_SITE_URL.
+  url: process.env.NEXT_PUBLIC_SITE_URL?.trim() || (process.env.NODE_ENV === "production" ? "http://invalid.local" : "http://localhost:3000"),
   discordUrl: process.env.NEXT_PUBLIC_DISCORD_URL || "https://discord.gg/cNgNq3AFGX",
   githubIssuesUrl: "https://github.com/mayankdhingra02/engineeringfoundry.dev/issues",
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || null,

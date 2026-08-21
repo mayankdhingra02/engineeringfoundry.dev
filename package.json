@@ -37,6 +37,7 @@
     "test:interview-reminder-worker": "node --experimental-loader ./scripts/server-worker-test-loader.mjs --experimental-strip-types --no-warnings scripts/test-interview-reminder-worker.mjs",
     "test:account-lifecycle": "node --experimental-strip-types --no-warnings scripts/test-account-lifecycle.mjs",
     "test:production-hardening": "node --experimental-loader ./scripts/server-worker-test-loader.mjs --experimental-strip-types --no-warnings scripts/test-production-hardening.mjs",
+    "test:production-baseline": "node --experimental-strip-types --no-warnings scripts/test-production-baseline.mjs",
     "test:private-route-privacy": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-private-route-privacy.mjs",
     "test:canonical-catalog-integrity": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-canonical-catalog-integrity.mjs",
     "qualify:account-lifecycle-local": "node --experimental-loader ./scripts/server-worker-test-loader.mjs --experimental-strip-types --no-warnings scripts/qualify-account-lifecycle-local.mjs",

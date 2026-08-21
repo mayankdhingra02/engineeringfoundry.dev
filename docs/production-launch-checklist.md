@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 18 migrations are recorded, ending at `202608150002_create_account_action_rate_limits`
+4. [ ] `supabase migration list --linked` — confirm all 22 migrations are recorded, ending at `202608220001_create_interview_experiences_v1`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md` and `docs/authenticated-workspace.md`
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -115,7 +115,7 @@ Use two disposable accounts (User A and User B) against the production origin wi
 
 ### Ownership isolation (two users)
 
-- [ ] User A cannot read or mutate User B's applications, rounds, preparation, stories, answers, saved questions, progress, attempts, preferences, reminders, or throttle state
+- [ ] User A cannot read or mutate User B's applications, rounds, preparation, stories, answers, saved questions, progress, attempts, preferences, reminders, mock reviews, Interview Experience drafts, or throttle state
 - [ ] User A cannot attach a child record to User B's parent
 - [ ] User A cannot open `/interviews/<User B round id>/prepare`
 - [ ] User A cannot fetch User B's `.ics` or Google export
@@ -143,6 +143,7 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Password-capable accounts must re-enter the current password; an incorrect password deletes nothing
 - [ ] OAuth-only accounts require the typed `DELETE` confirmation
 - [ ] Auth identity and all owner-scoped rows are gone; User B is unaffected
+- [ ] Interview Experience draft/round rows and persisted mock review/rating rows are gone with User A; User B is unaffected
 - [ ] Stale session cannot reach private routes; export returns unauthorized
 - [ ] No reminder row remains for the worker to claim
 

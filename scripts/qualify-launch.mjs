@@ -27,6 +27,7 @@ const STATIC_STEPS = [
 
   // Phase 9 launch-safety guards.
   ["Production hardening", "npm", ["run", "test:production-hardening"]],
+  ["Production baseline", "npm", ["run", "test:production-baseline"]],
   ["Private-route privacy", "npm", ["run", "test:private-route-privacy"]],
   ["Canonical catalog integrity", "npm", ["run", "test:canonical-catalog-integrity"]],
 
