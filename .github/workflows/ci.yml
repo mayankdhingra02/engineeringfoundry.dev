@@ -55,6 +55,8 @@ jobs:
         run: npm run test:application-tracker
       - name: Test Behavioral workspace
         run: npm run test:behavioral-workspace
+      - name: Test Behavioral v1 polish
+        run: npm run test:behavioral-v1-polish
       - name: Test interview preparation hub
         run: npm run test:interview-preparation-hub
       - name: Test interview execution taxonomy

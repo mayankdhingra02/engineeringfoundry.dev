@@ -43,6 +43,7 @@ const analytics = read("lib/analytics.ts");
 check("no new private Behavioral analytics event was added", !analytics.includes("behavioral_answer_variant_created"));
 const publicPage = read("components/behavioral-practice.tsx");
 check("public entry points to the private workspace", publicPage.includes("Open private story workspace"));
+check("hosted CI runs the P0.7 regression", read(".github/workflows/ci.yml").includes("npm run test:behavioral-v1-polish"));
 
 if (failures.length) {
   console.error(`Behavioral v1 polish regression failed:\n- ${failures.join("\n- ")}`);
