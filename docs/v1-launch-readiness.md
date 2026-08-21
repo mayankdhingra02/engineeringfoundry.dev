@@ -2,72 +2,167 @@
 
 **Assessment date:** 2026-08-21
 **Repository baseline:** `948fb742456e2c0fcc65965304a3e7c5ba17434c` (`main`)
-**Assessment scope:** final repository release-candidate readiness, not a declaration that a hosted public launch has occurred.
+**Current P0.10 PR:** [#25](https://github.com/mayankdhingra02/engineeringfoundry.dev/pull/25), `feat/p0-final-launch-readiness` — CI green, **not yet merged**.
+
+This is the owner-facing release checklist. It separates what the repository has proved from work that only a deployment owner, provider, or qualified reviewer can complete. Checking a repository item does not complete a hosted-production action.
 
 ## Status language
 
-- **PASS — repository proven:** implemented and covered by the named source-level, local, database, build, or CI qualification.
-- **OWNER GATE — external verification required:** a deployment, account, legal, provider, or operational action that the repository cannot truthfully prove.
-- **DEFERRED P1:** deliberately outside v1; it is not shown as a launch promise.
+- `[x]` **Repository-proven:** implemented and covered by the named source-level, local, database, build, smoke, or CI qualification.
+- `[ ]` **OWNER GATE:** an intentionally unchecked production/manual/legal/provider action. Do not check it without dated evidence.
+- **DEFERRED P1:** intentionally outside v1; it is not a launch promise.
 
-Repository qualification can establish `REPOSITORY RC READY`; it cannot establish production DNS, HTTPS, backups, email delivery, legal sufficiency, or a live analytics configuration.
+Repository qualification can establish `REPOSITORY RC READY`; it cannot establish a public-production launch, production DNS/TLS, backups, legal sufficiency, provider delivery, or a live analytics configuration.
 
-## Public product surfaces
+## P0 checkpoint status
 
-| Surface | Launch status | Repository evidence | External/owner gate |
-| --- | --- | --- | --- |
-| Home and preparation hub | PASS — repository proven | `test:homepage-entry`, `test:public-launch-integrity`, public-route smoke | Verify deployed routes and headers |
-| DSA curriculum, questions, roadmaps, and progress | PASS — repository proven | catalog, roadmap, progress, and persistence regressions | Account progress requires hosted account qualification |
-| System Design curriculum, practice, and plans | PASS — repository proven | curriculum, manifest, workspace, plan, and link regressions | Verify hosted authenticated attempts |
-| ML Design | PASS — repository proven | canonical content validation and analytics contract | Verify public deploy rendering |
-| Low-Level Design lessons and practice | PASS — repository proven | `test:low-level-design` and content validators | Verify public deploy rendering |
-| Behavioral prompts and public guidance | PASS — repository proven | workspace and Behavioral v1 regressions | Verify hosted account writes before accounts are enabled |
-| Company guides and experience directory | PASS — repository proven | company-guide and Interview Experiences v1 regressions; provenance/integrity validators | Bootstrap moderation operator and exercise approved publication workflow |
-| Interview Execution Guide, checklists, and round guides | PASS — repository proven | public-launch and Playbook qualification | Verify public deploy rendering |
-| Mock Interview Practice Lab | PASS — repository proven | mock content/privacy and mock-review regressions | Verify hosted account persistence when enabled |
-| Salary Negotiation guidance and private worksheet | PASS — repository proven | `test:salary-negotiation`; worksheet stays in memory | Legal review of general guidance remains required |
-| Referrals, challenges, community, recognition, and write-up builder | PASS — repository proven | privacy/integrity/content validators | Maintain named public channels and moderation coverage |
-| Privacy, terms, contact, FAQ, and about | PASS — repository proven for current copy/links | public-link and launch-integrity checks | Qualified legal review; assign and verify contact ownership |
-| Visualization Lab Beta | DEFERRED P1 | No launch claim, route, or unreviewed execution surface is introduced | Requires deterministic reviewed traces, textual fallback, ten real integrations, and performance/mobile/CI proof before a future launch decision |
+| Checkpoint | Scope | Repository implementation | Production verification | Notes |
+| --- | --- | --- | --- | --- |
+| P0.1 | Production baseline, auth, deployment | Merged / repository-proven | OWNER GATE | Hosted Auth, DNS/TLS, backups, secrets, and provider checks remain external. |
+| P0.2 | Continuation, progress, study plans | Merged / repository-proven | OWNER GATE | Verify signed-in and anonymous behavior in the hosted environment. |
+| P0.3 | Interview Experiences v1 | Merged / repository-proven | OWNER GATE | Bootstrap moderation and verify public approval flow. |
+| P0.4 | Company Guides v1 | Merged / repository-proven | OWNER GATE | Continue source-freshness operation after deployment. |
+| P0.5 | Low-Level Design v1 | Merged / repository-proven | OWNER GATE | Verify deployed public routes and performance. |
+| P0.6 | Salary Negotiation v1 | Merged / repository-proven | OWNER GATE | Legal review of general guidance remains external. |
+| P0.7 | Behavioral v1 polish | Merged / repository-proven | OWNER GATE | Verify hosted private-workspace flows when accounts are enabled. |
+| P0.8 | Feedback and minimal admin operations | Merged / repository-proven | OWNER GATE | Operator bootstrap and edge protection remain external. |
+| P0.9 | Analytics and launch evidence | Merged / repository-proven | OWNER GATE | Consent decision, PostHog configuration, and real evidence are not repository claims. |
+| P0.10 | Content, accessibility, QA, launch operations | Complete in PR #25; CI green; **not yet merged** | OWNER GATE | This tracker and RC record are part of the pending PR; hosted verification remains external. |
 
-## Authenticated and operational surfaces
+## Homepage
 
-| Surface | Launch status | Repository evidence | External/owner gate |
-| --- | --- | --- | --- |
-| Sign-up, sign-in, recovery, callback, onboarding, settings | PASS — repository proven; feature-gated | auth foundation, lifecycle, production-baseline regressions | Supabase project, SMTP, redirects, enabled-provider verification |
-| Applications, interview preparation, calendar, and reminders | PASS — repository proven; feature-gated | calendar/reminder, private-route, persistence, and database qualifications | Scheduler, secret store, real calendar/email verification |
-| Private Behavioral stories, answers, saved questions, and plans | PASS — repository proven; feature-gated | workspace, v1 polish, persistence, and RLS checks | Two-account hosted qualification |
-| Account export and permanent deletion | PASS — repository proven; feature-gated | account-lifecycle, production-hardening, local lifecycle qualification | Service-role secret, real account export/deletion test |
-| Feedback and least-privilege admin operations | PASS — repository proven; feature-gated | feedback/admin regression and database policy suite | Bootstrap first operator; configure WAF/edge rate limit and operating ownership |
-| Analytics and impact ledger | PASS — repository proven; disabled unless configured | P0.9 event allowlists, privacy boundary, ledger validator | Legal/consent decision, production PostHog verification, real dashboard and month-end aggregates |
+- [x] Repository-proven: homepage continuation and entry experience are covered by `test:homepage-entry` and public-launch integrity checks.
+- [x] Repository-proven: public account controls fail closed while `NEXT_PUBLIC_ACCOUNTS_ENABLED=false`.
+- [ ] OWNER GATE: verify the deployed production origin, canonical URL, and public homepage smoke path.
+- [ ] OWNER GATE: complete mobile, keyboard/focus, text-resize, screen-reader, and Lighthouse/CWV checks on the deployed homepage.
 
-## Release-critical repository controls
+## Authentication
 
-| Control | Status | Evidence |
-| --- | --- | --- |
-| Content provenance and no fabricated public experiences | PASS — repository proven | company, experience, mock, referral, challenge, and public-launch validators |
-| Internal and curated public links | PASS — repository proven | `validate:public-links` and route smoke test |
-| Metadata, canonical URLs, sitemap, robots, and private noindex | PASS — repository proven | `test:public-launch-integrity`, `test:private-route-privacy` |
-| Keyboard/focus/form semantics and density/readability guards | PASS — repository proven | accessibility-aware public-launch regression, `test:ui-density`, `test:typography-readability` |
-| Mobile, visual, and assistive-technology acceptance | OWNER GATE — external/manual verification required | Existing implementation has static safeguards; no fresh browser evidence is represented by this record |
-| Security headers, secret boundaries, server actions, and rate limits | PASS — repository proven | `test:production-hardening` |
-| RLS, ownership isolation, export/deletion cascades | PASS — repository proven locally | schema lint, pgTAP, two-user local qualification |
-| Production backups, DNS, TLS, CSP console validation, monitoring, and rollback execution | OWNER GATE — external verification required | Procedures in `docs/production-launch-checklist.md` and `docs/production-operations-runbook.md` |
+- [x] Repository-proven: sign-up, sign-in, callback, recovery, onboarding, and account capability gates are qualified statically and locally.
+- [x] Repository-proven: account actions remain disabled until explicit production configuration is present.
+- [ ] OWNER GATE: configure the intended hosted Supabase project and exact production Auth callback/recovery redirects.
+- [ ] OWNER GATE: configure and exercise production SMTP, confirmation, email-change, and password-recovery delivery.
+- [ ] OWNER GATE: verify every enabled OAuth provider against the production callback; leave every unverified provider disabled.
 
-## P0.9 contract audit
+## Dashboard
 
-The P0.9 launch-analytics contract remains the canonical `analytics-definition-v1`: event-specific allowlists reject private/free-form properties; public-only pageviews suppress private routes; account registration is an end-of-window Supabase/Auth aggregate; and evidence templates are not evidence. The snapshot key is now `registered_accounts`, matching that published definition. There are no committed monthly snapshots, so this clarity repair does not rewrite historical evidence.
+- [x] Repository-proven: dashboard access, private metadata, and analytics-route suppression are covered by auth and privacy regressions.
+- [ ] OWNER GATE: run a hosted two-user dashboard isolation check with disposable accounts after accounts are enabled.
 
-## Required owner sign-off before enabling production accounts or analytics
+## Onboarding and Settings
 
-1. Complete every hosted item in `docs/production-launch-checklist.md`, including two disposable-account verification.
-2. Record a backup/PITR check, applied hosted migration list, deployment URL, and redacted CI links in the release record.
-3. Obtain qualified review of the Privacy and Terms drafts, and decide whether a functional analytics-consent control is required for the launch jurisdictions.
-4. Configure and test SMTP, exact Auth redirects, each enabled OAuth provider, required secrets, WAF/edge rate limits, and the named operator/contact owners.
-5. Verify production headers, sitemap/robots, canonical URLs, CSP console behavior, mobile/keyboard/screen-reader paths, and the public route smoke test against the deployed origin.
+- [x] Repository-proven: onboarding completion, account preferences, password reauthentication, global sign-out, and feature-unavailable states are covered by lifecycle tests.
+- [ ] OWNER GATE: verify real hosted onboarding, settings, password recovery/update, and sign-out flows with production Auth.
+
+## Applications
+
+- [x] Repository-proven: owner-scoped applications, rounds, preparation, and private noindex controls are covered by application, RLS, and privacy qualification.
+- [ ] OWNER GATE: verify two-user hosted application and round isolation, including inaccessible direct URLs.
+
+## Calendar and Reminders
+
+- [x] Repository-proven: calendar exports, reminder lifecycle, authorization, no-store responses, and no-provider behavior are covered by regression and database tests.
+- [ ] OWNER GATE: configure service-role and reminder-worker secrets in the production secret store.
+- [ ] OWNER GATE: configure an external HTTPS scheduler and verify unauthorized, configured/no-provider, and reschedule/cancel behavior.
+- [ ] OWNER GATE: open a production `.ics` export and verify its canonical preparation link and stored timezone.
+
+## DSA
+
+- [x] Repository-proven: canonical DSA content, level roadmaps, plans, persistent progress, and analytics identifiers are covered by catalog and progress checks.
+- [ ] OWNER GATE: verify the deployed DSA routes and signed-in progress/plan persistence with a hosted account.
+
+## System Design
+
+- [x] Repository-proven: curriculum, manifests, practice workspace, plans, canonical IDs, and curated links are covered by dedicated regressions.
+- [ ] OWNER GATE: verify deployed System Design routes, private attempts, and CSP behavior on Mermaid-containing content.
+
+## ML Design
+
+- [x] Repository-proven: canonical ML Design content and privacy-bounded analytics contract are covered by content and analytics qualification.
+- [ ] OWNER GATE: verify deployed ML Design rendering and public navigation on the production origin.
+
+## Behavioral
+
+- [x] Repository-proven: questions, stories, answer variants, coverage, and fact-integrity safeguards are covered by workspace and Behavioral v1 tests.
+- [ ] OWNER GATE: verify hosted private stories/answers and cross-account isolation after accounts are enabled.
+
+## Interview Playbook
+
+- [x] Repository-proven: diagnostic inputs, adaptive planning, DSA/System Design evidence boundaries, and mock-review export behavior are covered by Phase 3 regressions.
+- [ ] OWNER GATE: verify hosted Playbook persistence and private-route behavior with disposable accounts.
+
+## Mock Interviews
+
+- [x] Repository-proven: public Practice Lab content, in-memory draft boundary, and persisted self-review isolation are covered by mock and privacy regressions.
+- [ ] OWNER GATE: verify a production mock-review save/export/delete lifecycle when accounts are enabled.
+
+## Interview Experiences
+
+- [x] Repository-proven: public directory, contribution privacy, provenance, consent, moderation states, and no-fabrication constraints are covered by v1 and integrity tests.
+- [ ] OWNER GATE: bootstrap the first admin operator and exercise submitted → approved/needs-changes moderation with disposable reports.
+- [ ] OWNER GATE: verify only approved, consented reports become publicly readable and that correction/removal operations work.
+
+## Company Guides
+
+- [x] Repository-proven: guide separation, level overlays, provenance, verification metadata, and source-link rules are covered by company-guide validation.
+- [ ] OWNER GATE: assign an operator for the 180-day source-freshness review and verify the deployed guide links.
+
+## Low-Level Design
+
+- [x] Repository-proven: eight lessons, original practice designs, local activity boundary, and content validation are covered by `test:low-level-design`.
+- [ ] OWNER GATE: verify deployed lesson/practice routes and performance on representative mobile and desktop devices.
+
+## Salary Negotiation
+
+- [x] Repository-proven: eight modules, private in-memory worksheet, ethical anti-fabrication guidance, and content checks are covered by `test:salary-negotiation`.
+- [ ] OWNER GATE: obtain qualified review of the general legal/employment guidance before public deployment.
+
+## Feedback
+
+- [x] Repository-proven: private feedback receipt, consent, sanitization, RPC boundary, and database throttle are covered by feedback/admin qualification.
+- [ ] OWNER GATE: configure hosting-provider WAF or edge feedback rate limiting without retaining message bodies, cookies, query strings, or raw IP data in application logs.
+- [ ] OWNER GATE: assign a named owner for feedback triage and verify the production follow-up channel.
+
+## Admin Operations
+
+- [x] Repository-proven: least-privilege memberships, private/noindex admin routes, audit-event minimization, and read-only freshness reminders are covered by security and admin regressions.
+- [ ] OWNER GATE: bootstrap the initial `admin_memberships` operator in the trusted Supabase administration environment.
+- [ ] OWNER GATE: record an operational owner and escalation path for moderation, feedback triage, and incident response.
+
+## Search and Resources
+
+- [x] Repository-proven: global-search focus management, public-resource discovery, internal links, and curated external-link rules are covered by launch and link validation.
+- [ ] OWNER GATE: verify deployed search keyboard navigation, external destinations, and resource links from real production browsers.
+
+## Privacy, Terms, Contact, FAQ, About
+
+- [x] Repository-proven: legal pages state draft status; Contact exposes only configured/working channels; sitemap/robots/canonical metadata and private noindex are covered by regressions.
+- [ ] OWNER GATE: obtain qualified legal review of Privacy and Terms before public deployment.
+- [ ] OWNER GATE: assign and verify the production contact mailbox/community-channel owners before exposing any configured contact destination.
+- [ ] OWNER GATE: verify deployed headers/CSP, robots, sitemap, canonical/OG metadata, keyboard/focus/text-resize, and screen-reader behavior.
+
+## Analytics and Impact Ledger
+
+- [x] Repository-proven: `analytics-definition-v1`, property allowlists, public-only pageviews, `registered_accounts` ledger terminology, and zero fabricated evidence records are covered by analytics and ledger tests.
+- [x] Repository-proven: analytics is inactive without its public key and no consent UI is falsely represented as functional.
+- [ ] OWNER GATE: obtain a qualified analytics-consent decision for the actual launch jurisdictions before enabling PostHog.
+- [ ] OWNER GATE: create/configure the production PostHog project and verify public-only live payloads, safe identify/reset, and private-route suppression.
+- [ ] OWNER GATE: create the specified PostHog dashboards only after real events are observed; create the first aggregate snapshot only after a complete month.
+
+## Production / Release Operations
+
+- [x] Repository-proven: clean local reset applies all 25 migrations through `202608230002_add_feedback_export_rpc.sql`; schema lint, pgTAP, two-user qualification, export/deletion, security, static qualification, Webpack build, public smoke, and link validation passed for this RC.
+- [x] Repository-proven: rollback procedures preserve the feature-gate-first, forward-only-migration boundary in `docs/production-launch-checklist.md` and `docs/production-operations-runbook.md`.
+- [ ] OWNER GATE: set the production DNS/TLS/origin and verify `NEXT_PUBLIC_SITE_URL`, redirects, HSTS, response headers, and CSP console behavior.
+- [ ] OWNER GATE: enable and record backups/PITR, take a pre-migration backup, apply migrations only to the intended hosted Supabase project, and record the migration list.
+- [ ] OWNER GATE: run hosted two-user isolation plus production export/deletion exercises; retain only redacted evidence.
+- [ ] OWNER GATE: run deployed public-route smoke, mobile/desktop verification, keyboard/focus/text-resize and screen-reader checks, then record Lighthouse/CWV results.
+- [ ] OWNER GATE: monitor deployment, Auth, database, and application logs after launch; exercise the documented rollback path if a launch-critical incident occurs.
+
+## Deferred P1
+
+**Visualization Lab Beta — DEFERRED P1.** It is not included in this release candidate. A future launch decision requires reviewed deterministic traces, bounded/static artifacts, accessible textual fallback, ten real integrations, and green performance/mobile/CI evidence. Do not reopen implementation during P0.10.
 
 ## Readiness decision
 
-**Current repository decision: `REPOSITORY RC READY` only after the qualification recorded in the release-candidate record is green.**
-
-Do not represent this as a public-production launch. The owner gates above are blockers for enabling the account platform, analytics, and a full hosted v1 release. Public content may remain available with `NEXT_PUBLIC_ACCOUNTS_ENABLED=false` while those gates are completed.
+**Current repository decision: `REPOSITORY RC READY` after the recorded qualification and fresh PR CI.** This is not public launch completion, and it does not authorize production account or analytics enablement until every applicable unchecked OWNER GATE has dated evidence.
