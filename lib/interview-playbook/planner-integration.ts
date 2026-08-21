@@ -25,10 +25,14 @@
  * same neutral diagnostic, the same `"round-context-only"` source mode.
  * `evidence` inside `diagnosticInput` is always `[]` in this phase — no
  * performance evidence is collected until Phase 3B2+.
+ *
+ * Phase 3B2 accepts already-adapted DSA evidence. The adapter is responsible
+ * for preserving DSA's manual status as self-report; this composition layer
+ * permits it to affect only Algorithmic coding.
  */
 import type { InterviewPlaybookOverviewBase, InterviewPlaybookRoundSummary } from "./overview.ts";
 import { resolveInterviewPlaybookTiming } from "./timing.ts";
-import { INTERVIEW_PREPARATION_AREAS, type InterviewPreparationArea } from "./evidence.ts";
+import { INTERVIEW_PREPARATION_AREAS, type InterviewEvidenceItem, type InterviewPreparationArea } from "./evidence.ts";
 import { buildInterviewDiagnosticSnapshot, type BuildInterviewDiagnosticSnapshotInput } from "./diagnostic.ts";
 import {
   buildAdaptiveInterviewPlan,
@@ -47,7 +51,12 @@ import {
  * real `diagnosticInput`, so the plan additionally reflects the user's own
  * hours, confidence, priorities, constraints, and coverage.
  */
-export const INTERVIEW_PLAYBOOK_PLANNING_SOURCE_MODES = ["round-context-only", "round-context-and-user-inputs"] as const;
+export const INTERVIEW_PLAYBOOK_PLANNING_SOURCE_MODES = [
+  "round-context-only",
+  "round-context-and-user-inputs",
+  "round-context-and-dsa-self-report",
+  "round-context-user-inputs-and-dsa-self-report",
+] as const;
 
 export type InterviewPlaybookPlanningSourceMode = (typeof INTERVIEW_PLAYBOOK_PLANNING_SOURCE_MODES)[number];
 
@@ -69,6 +78,8 @@ export type BuildInterviewPlaybookPlanningProjectionInput = Readonly<{
   now: Date;
   /** Omit (or pass `undefined`) for the exact Phase 3A neutral-diagnostic behavior. */
   diagnosticInput?: BuildInterviewDiagnosticSnapshotInput;
+  /** Already-adapted DSA self-report; non-algorithmic items are ignored defensively. */
+  dsaEvidence?: readonly InterviewEvidenceItem[];
 }>;
 
 export type InterviewPlaybookPresentedPlanAction = Readonly<{
@@ -198,13 +209,13 @@ function buildRoundMetadataMap(
  * product surface (checklist completion, saved DSA/System Design progress,
  * Behavioral story content, application or round outcome) is read here.
  */
-function buildNeutralDiagnostic() {
+function buildNeutralDiagnostic(evidence: readonly InterviewEvidenceItem[] = []) {
   return buildInterviewDiagnosticSnapshot({
     availableHoursPerWeek: null,
     confidenceByArea: {},
     constraints: [],
     priorities: [],
-    evidence: [],
+    evidence,
     coverage: { behavioralStories: "unknown", projectDeepDive: "unknown" },
   });
 }
@@ -429,12 +440,20 @@ export function buildInterviewPlaybookPlanningProjection(
   if (targets.length === 0) return null;
 
   const roundMetadata = buildRoundMetadataMap(input.overview);
-  const diagnostic = input.diagnosticInput
-    ? buildInterviewDiagnosticSnapshot(input.diagnosticInput)
-    : buildNeutralDiagnostic();
+  const dsaEvidence = (input.dsaEvidence ?? []).filter((item) => item.area === "algorithmic-coding");
+  const diagnosticInput = input.diagnosticInput
+    ? { ...input.diagnosticInput, evidence: [...input.diagnosticInput.evidence, ...dsaEvidence] }
+    : undefined;
+  const diagnostic = diagnosticInput
+    ? buildInterviewDiagnosticSnapshot(diagnosticInput)
+    : buildNeutralDiagnostic(dsaEvidence);
   const sourceMode: InterviewPlaybookPlanningSourceMode = input.diagnosticInput
-    ? "round-context-and-user-inputs"
-    : "round-context-only";
+    ? dsaEvidence.length > 0
+      ? "round-context-user-inputs-and-dsa-self-report"
+      : "round-context-and-user-inputs"
+    : dsaEvidence.length > 0
+      ? "round-context-and-dsa-self-report"
+      : "round-context-only";
   const plan = buildAdaptiveInterviewPlan({ diagnostic, targets });
   const presentation = presentInterviewAdaptivePlan(plan, roundMetadata);
 

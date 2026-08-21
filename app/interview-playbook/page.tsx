@@ -25,6 +25,7 @@ import {
   type InterviewPlaybookPresentedPlanAction,
 } from "@/lib/interview-playbook/planner-integration";
 import { getInterviewPlaybookDiagnosticInputs } from "@/lib/interview-playbook/diagnostic-inputs.ts";
+import { getDsaInterviewEvidence } from "@/lib/interview-playbook/dsa-evidence-query.ts";
 import { InterviewPlaybookFinalPreparationMode } from "@/components/interview-playbook/final-preparation-mode";
 import { InterviewPlaybookDiagnosticInputForm } from "@/components/interview-playbook/diagnostic-input-form";
 
@@ -59,8 +60,14 @@ function strategyStageLabel(stage: InterviewPlaybookPresentedPlanAction["stage"]
   return "Later";
 }
 
-/** Describes exactly what fed the plan below — round signals alone, or round signals plus the candidate's own saved inputs. */
-function planningSourceCopy(sourceMode: "round-context-only" | "round-context-and-user-inputs") {
+/** Describes exactly what fed the plan below without describing self-report as observed performance. */
+function planningSourceCopy(sourceMode: "round-context-only" | "round-context-and-user-inputs" | "round-context-and-dsa-self-report" | "round-context-user-inputs-and-dsa-self-report") {
+  if (sourceMode === "round-context-user-inputs-and-dsa-self-report") {
+    return "Built from confirmed active round signals, interview timing, your saved planning inputs, and DSA practice you marked solved. DSA status is self-reported and still calls for stronger evidence.";
+  }
+  if (sourceMode === "round-context-and-dsa-self-report") {
+    return "Built from confirmed active round signals, interview timing, and DSA practice you marked solved. DSA status is self-reported and still calls for stronger evidence.";
+  }
   return sourceMode === "round-context-and-user-inputs"
     ? "Built from confirmed active round signals, interview timing, and the hours, confidence, priorities, and coverage you saved below. Evidence state still comes only from observed practice, never from these self-reported inputs."
     : "Built from confirmed active round signals and interview timing. This view does not infer performance evidence, confidence, or available study time.";
@@ -74,9 +81,10 @@ export default async function InterviewPlaybookPage() {
   // timing model must agree on "now," or a round could look upcoming to one and
   // already passed to the other.
   const now = new Date();
-  const [overview, diagnosticInputs] = await Promise.all([
+  const [overview, diagnosticInputs, dsaEvidence] = await Promise.all([
     getInterviewPlaybookOverview(now),
     getInterviewPlaybookDiagnosticInputs(),
+    getDsaInterviewEvidence(),
   ]);
   // Read-only round-context projection: converts confirmed round signals into
   // the merged adaptive planner's targets. When the user has saved diagnostic
@@ -88,6 +96,7 @@ export default async function InterviewPlaybookPage() {
     overview,
     now,
     diagnosticInput: diagnosticInputs.hasSavedInputs ? diagnosticInputs.diagnosticInput : undefined,
+    dsaEvidence,
   });
 
   const primaryRound = overview.primaryRound;
