@@ -1,4 +1,4 @@
-import { Bug, ExternalLink, Mail, MessagesSquare } from "lucide-react";
+import { Bug, ExternalLink, Mail, MessageSquareWarning, MessagesSquare } from "lucide-react";
 import { PageHero, SectionHeading } from "@/components/page-shell";
 import { TrackedLink } from "@/components/tracked-action";
 import { siteConfig } from "@/config/site";
@@ -16,7 +16,7 @@ export default function ContactPage() {
       <PageHero
         eyebrow="Contact"
         title="Choose a working channel."
-        description="Engineering Foundry does not collect contact-form submissions. Use the community for discussion or GitHub Issues for website and content reports."
+        description="Use the private feedback form for website reports, or choose a working community and support channel for discussion and public collaboration."
       />
       <section className="section">
         <div className="page-width">
@@ -26,6 +26,14 @@ export default function ContactPage() {
             description="These links open the actual destination. No message is stored or sent by this website."
           />
           <div className="contact-channel-grid">
+            <article className="contact-channel-card">
+              <span className="icon-well"><MessageSquareWarning size={21} aria-hidden="true" /></span>
+              <h2>Private website feedback</h2>
+              <p>Send bugs, source corrections, accessibility concerns, privacy or safety reports, and product suggestions without creating a public issue.</p>
+              <TrackedLink href="/feedback" event="contact_channel_clicked" properties={{ channel: "feedback", placement: "contact_page" }}>
+                Send private feedback
+              </TrackedLink>
+            </article>
             <article className="contact-channel-card">
               <span className="icon-well"><MessagesSquare size={21} aria-hidden="true" /></span>
               <h2>Community discussion</h2>

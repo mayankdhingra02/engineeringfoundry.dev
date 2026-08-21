@@ -29,7 +29,7 @@ Existing DSA and System Design owner-scoped progress stores remain the source of
 
 DSA and System Design each have one active plan in the existing owner-scoped preparation preferences. Saving another plan deliberately replaces that track's active choice. Signed-out users may keep the same safe plan choice in the browser; no ML or Behavioral plan is manufactured because those tracks have no canonical planning model.
 
-All new durable activity is included in account export schema `1.4` and is removed by the existing account-deletion cascade.
+All new durable activity is included in account export schema `1.5` and is removed by the existing account-deletion cascade.
 
 ## Momentum and Playbook links
 

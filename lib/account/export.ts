@@ -3,7 +3,7 @@ import "server-only";
 import type { AuthenticatedActor } from "@/lib/auth/actor";
 import { collectAccountExportRows } from "./export-pagination";
 
-const EXPORT_VERSION = "1.4";
+const EXPORT_VERSION = "1.5";
 
 function unwrap<T>(result: { data: T | null; error: { message: string } | null }, section: string): T {
   if (result.error) throw new Error(`Account export query failed: ${section}`);
@@ -12,7 +12,7 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 
 export async function buildAccountExport(actor: AuthenticatedActor) {
   const userId = actor.user.id;
-  const [profileResult, preparationPreferencesResult, interviewPreferencesResult, playbookDiagnosticSettingsResult, applications, interviewRounds, interviewPreparations, interviewPreparationTasks, customQuestions, stories, storyThemes, storyQuestionLinks, answers, savedQuestions, dsaProgress, dsaQuestionProgress, systemDesignProgress, systemDesignItemProgress, systemDesignAttempts, trackActivityProgress, reminders, calendarExports, playbookConfidence, playbookPriorities, playbookConstraints, mockSessions, mockRatings, experienceRecords, experienceRounds] = await Promise.all([
+  const [profileResult, preparationPreferencesResult, interviewPreferencesResult, playbookDiagnosticSettingsResult, applications, interviewRounds, interviewPreparations, interviewPreparationTasks, customQuestions, stories, storyThemes, storyQuestionLinks, answers, savedQuestions, dsaProgress, dsaQuestionProgress, systemDesignProgress, systemDesignItemProgress, systemDesignAttempts, trackActivityProgress, reminders, calendarExports, playbookConfidence, playbookPriorities, playbookConstraints, mockSessions, mockRatings, experienceRecords, experienceRounds, feedbackSubmissions] = await Promise.all([
     actor.supabase.from("profiles").select("username,display_name,bio,current_company,current_role,years_experience,linkedin_url,github_url,avatar_url,is_public,onboarding_complete,onboarding_completed_at,created_at,updated_at").eq("id", userId).maybeSingle(),
     actor.supabase.from("user_preparation_preferences").select("dsa_level,dsa_plan_id,dsa_company_slug,dsa_preferred_language_slug,dsa_interview_date,system_design_level,system_design_preparation_window,system_design_role,system_design_minutes_per_day,preferred_role_level,primary_preparation_focus,created_at,updated_at").eq("user_id", userId).maybeSingle(),
     actor.supabase.from("interview_reminder_preferences").select("preferred_timezone,in_app_enabled,prep_3_days_enabled,interview_1_day_enabled,interview_1_hour_enabled,email_enabled,created_at,updated_at").eq("user_id", userId).maybeSingle(),
@@ -44,6 +44,10 @@ export async function buildAccountExport(actor: AuthenticatedActor) {
     collectAccountExportRows("mock_interview_rubric_ratings", (from, to) => actor.supabase.from("mock_interview_rubric_ratings").select("session_id,dimension_id,rating,mock_interview_sessions!inner(user_id)").eq("mock_interview_sessions.user_id", userId).order("session_id").order("dimension_id").range(from, to)),
     collectAccountExportRows("interview_experiences", (from, to) => actor.supabase.from("interview_experiences").select("id,status,company_name,role_title,role_level,region,interview_date,summary,preparation_lessons,public_identity,publication_consent,submitted_at,reviewed_at,review_note,created_at,updated_at").eq("author_id", userId).order("created_at").order("id").range(from, to)),
     collectAccountExportRows("interview_experience_rounds", (from, to) => actor.supabase.from("interview_experience_rounds").select("experience_id,position,round_type,topic_labels,process_notes,interview_experiences!inner(author_id)").eq("interview_experiences.author_id", userId).order("experience_id").order("position").range(from, to)),
+    collectAccountExportRows("feedback_submissions", async (from, to) => {
+      const result = await actor.supabase.rpc("export_own_feedback_submissions");
+      return result.error ? result : { data: (result.data ?? []).slice(from, to + 1), error: null };
+    }),
   ]);
 
   const profile = unwrap(profileResult, "profile");
@@ -98,5 +102,6 @@ export async function buildAccountExport(actor: AuthenticatedActor) {
     },
     mock_interviews: { sessions: mockSessions, rubric_ratings: mockRatings },
     interview_experiences: { records: experienceRecords, rounds: experienceRounds },
+    feedback: { submissions: feedbackSubmissions },
   };
 }

@@ -123,12 +123,14 @@ await check("disposable account can populate every major private workspace", asy
   assert.ifError((await a.client.rpc("create_system_design_attempt", { target_problem_id: "url-shortener", target_application_id: applicationId, target_title: "Phase 8 disposable attempt", target_document: document })).error);
   const reminders = await a.client.from("interview_reminders").select("id").eq("round_id", roundId);
   assert.ok((reminders.data?.length ?? 0) > 0, "future interview did not create reminders");
+  const feedback = await a.client.rpc("submit_feedback_submission", { payload: { category: "bug", message: "Private lifecycle feedback", page_context: "/dashboard", contact_email: null, contact_consent: false }, anonymous_subject: null });
+  assert.ifError(feedback.error);
 });
 
 let exportPayload;
 await check("private JSON export contains owned Phase 1–7 data and excludes secrets", async () => {
   exportPayload = await buildAccountExport({ user: a.user, supabase: a.client });
-  assert.equal(exportPayload.export_version, "1.4");
+  assert.equal(exportPayload.export_version, "1.5");
   assert.equal(exportPayload.applications.length, 1);
   assert.equal(exportPayload.interview_rounds.length, 1);
   assert.equal(exportPayload.interview_preparation.records[0].private_notes, "Private preparation note");
@@ -140,6 +142,7 @@ await check("private JSON export contains owned Phase 1–7 data and excludes se
   assert.equal(exportPayload.system_design.item_progress[0].notes, "Private System Design note");
   assert.equal(exportPayload.system_design.attempts.length, 1);
   assert.equal(exportPayload.account.preparation_preferences.preferred_role_level, "sde2");
+  assert.equal(exportPayload.feedback.submissions[0].message, "Private lifecycle feedback");
   const serialized = JSON.stringify(exportPayload);
   for (const forbidden of ["access_token", "refresh_token", "encrypted_password", "claim_token", "provider_message_id", "service_role"]) assert.ok(!serialized.includes(forbidden), `export leaked ${forbidden}`);
 });
@@ -166,6 +169,8 @@ await check("privileged Auth deletion removes identity, private rows, reminders,
   assert.ok(staleUser.error || !staleUser.data.user, "deleted session still resolves an Auth user");
   const staleRead = await a.client.from("applications").select("id");
   assert.equal(staleRead.data?.length ?? 0, 0);
+  const feedbackActorAfterDeletion = execFileSync("docker", ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", "select coalesce(actor_id::text, 'null') from public.feedback_submissions where message = 'Private lifecycle feedback'"], { encoding: "utf8" }).trim();
+  assert.equal(feedbackActorAfterDeletion, "null", "feedback account linkage was retained after deletion");
   createdIds.splice(createdIds.indexOf(a.user.id), 1);
 });
 
