@@ -15,6 +15,7 @@ import { interviewPlaybookSections } from "@/data/interview-tips";
 import { activeMlDesignProblems, mlDesignConcepts } from "@/data/ml-design";
 import { activeResources } from "@/data/resources";
 import { systemDesignLessons } from "@/data/system-design/curriculum";
+import { lowLevelDesignLessons, lowLevelDesignPractice } from "@/data/low-level-design";
 import { track } from "@/lib/analytics";
 
 export const globalSearchOpenEvent = "engineering-foundry-open-search";
@@ -23,6 +24,7 @@ const staticResults = [
   { title: "Preparation hub", type: "Start here", href: "/prepare" },
   { title: "Interactive DSA interview roadmap", type: "Roadmap", href: "/dsa/roadmap" },
   { title: "System Design study planner", type: "Planner", href: "/system-design/plan" },
+  { title: "Low-Level Design curriculum", type: "Curriculum", href: "/low-level-design" },
   { title: "ML system design", type: "Roadmap", href: "/ml-design" },
   { title: "Mock Interview Practice Lab", type: "Practice", href: "/mock-interviews" },
   { title: "Referral Request Builder", type: "Career tool", href: "/referrals?mode=request" },
@@ -40,6 +42,8 @@ const suggestedResults = [
   { title: "Interactive DSA interview roadmap", type: "DSA roadmap", href: "/dsa/roadmap" },
   { title: "Introduction to System Design", type: "System Design lesson", href: "/system-design/start-here/introduction" },
   { title: "System Design practice library", type: "System Design practice", href: "/system-design/problems" },
+  { title: "Low-Level Design curriculum", type: "Low-Level Design", href: "/low-level-design" },
+  { title: "Low-Level Design practice library", type: "Low-Level Design practice", href: "/low-level-design/practice" },
   { title: "Company interview guides", type: "Company preparation", href: "/companies" },
 ] as const;
 
@@ -70,6 +74,8 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     ...companies.map((company) => ({ title: `${company.name} interview experience workspace`, type: "Private writing tool", href: `/interview-experiences/${company.slug}` })),
     ...activeChallenges.map((challenge) => ({ title: challenge.title, type: `${challenge.category} challenge`, href: `/challenges/${challenge.slug}` })),
     ...systemDesignLessons.map((lesson) => ({ title: lesson.navigationTitle ?? lesson.title, type: `System Design lesson · ${lesson.category}`, href: lesson.slug! })),
+    ...lowLevelDesignLessons.filter((lesson) => lesson.status === "published").map((lesson) => ({ title: lesson.title, type: "Low-Level Design lesson", href: `/low-level-design/lessons/${lesson.slug}` })),
+    ...lowLevelDesignPractice.filter((problem) => problem.status === "published").map((problem) => ({ title: problem.title, type: "Low-Level Design practice", href: `/low-level-design/practice/${problem.slug}` })),
     ...activeMlDesignProblems.map((problem) => ({ title: problem.title, type: "ML Design problem", href: `/ml-design/${problem.slug}` })),
     ...mlDesignConcepts.map((concept) => ({ title: concept.title, type: "ML Design concept", href: `/ml-design#concepts` })),
     ...behavioralCategories.map((category) => ({ title: category.name, type: "Behavioral category", href: `/behavioral?category=${encodeURIComponent(category.name)}` })),

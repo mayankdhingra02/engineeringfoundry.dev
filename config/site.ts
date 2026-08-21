@@ -14,6 +14,7 @@ export const siteConfig = {
   prepareNav: [
     { label: "DSA", href: "/dsa" },
     { label: "System Design", href: "/system-design/start-here/introduction" },
+    { label: "Low-Level Design", href: "/low-level-design" },
     { label: "Companies", href: "/companies" },
     { label: "ML Design", href: "/ml-design" },
     { label: "Behavioral", href: "/behavioral" },
@@ -38,7 +39,7 @@ export const siteConfig = {
 } as const;
 
 export const footerGroups = [
-  { title: "Prepare", links: [["DSA", "/dsa"], ["System Design", "/system-design/start-here/introduction"], ["Company Guides", "/companies"], ["ML Design", "/ml-design"], ["Behavioral", "/behavioral"], ["Interview Execution Guide", "/interview-tips"]] },
+  { title: "Prepare", links: [["DSA", "/dsa"], ["System Design", "/system-design/start-here/introduction"], ["Low-Level Design", "/low-level-design"], ["Company Guides", "/companies"], ["ML Design", "/ml-design"], ["Behavioral", "/behavioral"], ["Interview Execution Guide", "/interview-tips"]] },
   { title: "Practice", links: [["Mock Interviews", "/mock-interviews"], ["Challenges", "/challenges"]] },
   { title: "Career", links: [["Referrals", "/referrals"], ["Interview Experiences", "/interview-experiences"], ["Resources", "/resources"]] },
   { title: "Community", links: [["Community Hub", "/community"], ["Recognition", "/leaderboard"], ["Discord", siteConfig.discordUrl]] },

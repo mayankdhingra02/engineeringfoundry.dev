@@ -95,7 +95,7 @@ check("every guide has complete non-empty fields", ROUND_EXECUTION_GUIDES.every(
   && g.quickReference.firstMove.trim().length > 0 && g.quickReference.beforeDone.trim().length > 0
   && g.quickReference.biggestTrap.trim().length > 0 && g.ownerBoundary.trim().length > 0));
 check("every related href begins with /", ROUND_EXECUTION_GUIDES.every((g) => g.relatedHrefs.every((href) => href.startsWith("/"))));
-check("the Low-Level Design guide does not invent a route", !ROUND_EXECUTION_GUIDE_BY_SLUG.get("low-level-design").relatedHrefs.some((href) => href === "/low-level-design" || href === "/lld"));
+check("the Low-Level Design guide links the canonical curriculum, practice library, and existing mock surface", arraysEqual(ROUND_EXECUTION_GUIDE_BY_SLUG.get("low-level-design").relatedHrefs, ["/low-level-design", "/low-level-design/practice", "/mock-interviews"]));
 check("no guide contains a company-specific process claim", !ROUND_EXECUTION_GUIDES.some((g) => /\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(`${g.description} ${g.ownerBoundary} ${g.quickReference.firstMove} ${g.quickReference.beforeDone} ${g.quickReference.biggestTrap}`)));
 check("no guide claims a readiness score or passing probability", !ROUND_EXECUTION_GUIDES.some((g) => /readiness score|passing probability|percent ready|confidence score/i.test(`${g.description} ${g.ownerBoundary}`)));
 check("no guide contains a universal minute allocation", !ROUND_EXECUTION_GUIDES.some((g) => /\b\d+\s*minutes?\b/i.test(`${g.description} ${g.quickReference.firstMove} ${g.quickReference.beforeDone} ${g.quickReference.biggestTrap} ${g.ownerBoundary}`)));
@@ -247,7 +247,7 @@ check("does not calculate probability", !/probability\s*[:=]|passProbability/.te
 check("does not contain a numerical score", !/\bscore\s*[:=]\s*\d/.test(source));
 check("does not create a generic final guide", !/slug:\s*"final"/.test(source));
 check("does not create a bar-raiser guide", !/slug:\s*"bar-raiser"/.test(source));
-check("does not invent a Low-Level Design route", !source.includes('"/low-level-design"') && !source.includes('"/lld"'));
+check("uses only canonical Low-Level Design curriculum routes", source.includes('"/low-level-design"') && source.includes('"/low-level-design/practice"') && !source.includes('"/lld"'));
 check("does not contain a company name", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(source));
 check("does not contain proprietary question content", !/leaked question|actual interview question|verbatim question/i.test(source));
 check("does not import server-only", !source.includes('import "server-only"'));
