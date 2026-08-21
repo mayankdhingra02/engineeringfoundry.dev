@@ -81,6 +81,8 @@ jobs:
         run: npm run test:account-lifecycle
       - name: Test production hardening
         run: npm run test:production-hardening
+      - name: Test production baseline
+        run: npm run test:production-baseline
       - name: Test private-route privacy boundary
         run: npm run test:private-route-privacy
       # Mandatory launch guard: the application must not be able to offer a

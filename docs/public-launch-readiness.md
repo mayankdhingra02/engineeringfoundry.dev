@@ -90,7 +90,7 @@ The local managed sandbox prevents Turbopack's build worker from binding a port.
 - Canonicals, descriptions, Open Graph metadata, referenced OG images, and unknown dynamic-route 404 behavior were audited.
 - Internal application links and curated external-link rules are enforced by a lightweight validator. The configured Discord invite redirects to the matching Discord invite, and the public GitHub repository has Issues enabled.
 - Analytics events map to real preparation actions. Contact analytics contains only `channel` and `placement`; private free text is not sent.
-- Baseline headers added: `X-Content-Type-Options`, `Referrer-Policy`, and a conservative `Permissions-Policy`. CSP and HSTS are intentionally deferred until deployment behavior is known.
+- Production header policy now enforces CSP, HSTS (outside development), frame protection, referrer policy, MIME-sniffing protection, COOP, and Permissions-Policy. The exact hosted validation remains in `docs/production-launch-checklist.md`.
 - Accessibility checks covered labels, semantic controls, status behavior, visible focus, keyboard navigation, and dialog focus management. This is not a WCAG certification.
 
 ## Genuine public-launch blockers
