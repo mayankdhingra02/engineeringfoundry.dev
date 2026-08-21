@@ -25,7 +25,10 @@ const playbookTiming = read("lib/interview-playbook/timing.ts");
 const finalPreparationComponent = read("components/interview-playbook/final-preparation-mode.tsx");
 const design = read("DESIGN.md");
 const globals = read("app/globals.css");
-const prepCss = globals.split("/* Phase 6 — focused preparation flight plan */")[1].split(".page-hero")[0];
+// Phase-specific typography is bounded by its next feature block. New public
+// surfaces may appear before the legacy `.page-hero` marker without becoming
+// part of the private preparation hub's typography contract.
+const prepCss = globals.split("/* Phase 6 — focused preparation flight plan */")[1].split("/* Salary Negotiation v1")[0].split(".page-hero")[0];
 
 const nextActionApplicationId = "app-fixture-1";
 const nextActionDsaQuestion = { id: "two-sum", title: "Two Sum" };
