@@ -324,16 +324,16 @@ for (const coverageValue of ["not-started", "partial"]) {
   check("exact scenario B (3-day): ML System Design is deferred exactly once with explicit-priority-outside-urgent-target", mlDeferrals.length === 1);
 }
 
-// projection sourceMode expansion
+// projection source-description expansion
 {
   const overview = { upcomingRounds: [{ id: "r1", applicationId: "a1", companyName: "Acme", roleTitle: "SWE", roundName: "Round 1", roundType: "System Design", scheduledAt: "2026-09-10T00:00:00Z", timezone: "UTC", state: "upcoming", needsSignalClarification: false, executionGuideSlugs: ["system-design"], preparationHref: "/x", preparation: { completed: 0, total: 0 } }], unscheduledRounds: [] };
   const now = new Date("2026-08-19T12:00:00Z");
   const withoutInputs = buildInterviewPlaybookPlanningProjection({ overview, now });
   const withInputsOmitted = buildInterviewPlaybookPlanningProjection({ overview, now, diagnosticInput: undefined });
   const withInputs = buildInterviewPlaybookPlanningProjection({ overview, now, diagnosticInput: diagnosticInputOf({ confidenceByArea: { "system-design": "high" } }) });
-  check("sourceMode is 'round-context-only' when diagnosticInput is absent", withoutInputs.sourceMode === "round-context-only");
+  check("source description records absent diagnostic inputs", withoutInputs.sourceDescription.hasSavedDiagnosticInputs === false);
   check("omitting diagnosticInput is byte-identical to not passing the field at all", deepEqual(withoutInputs, withInputsOmitted));
-  check("sourceMode is 'round-context-and-user-inputs' when diagnosticInput is supplied", withInputs.sourceMode === "round-context-and-user-inputs");
+  check("source description records saved diagnostic inputs", withInputs.sourceDescription.hasSavedDiagnosticInputs === true);
 }
 
 // determinism
@@ -377,7 +377,7 @@ check("the component introduces no inline <style> tag", !componentSource.include
 // =====================================================================
 // 7. Page wiring
 // =====================================================================
-check("the page loads overview and diagnostic inputs together", /Promise\.all\(\[[\s\S]{0,120}getInterviewPlaybookOverview\(now\)[\s\S]{0,120}getInterviewPlaybookDiagnosticInputs\(\)[\s\S]{0,60}\]\)/.test(pageSource));
+check("the page loads overview and diagnostic inputs together", /Promise\.all\(\[[\s\S]{0,180}getInterviewPlaybookOverview\(now\)[\s\S]{0,180}getInterviewPlaybookDiagnosticInputs\(\)[\s\S]{0,180}\]\)/.test(pageSource));
 check("the page renders the diagnostic input form", pageSource.includes("<InterviewPlaybookDiagnosticInputForm"));
 check("the page still contains the original round-context-only limitation copy", pageSource.includes("does not infer performance evidence, confidence, or available study time"));
 check("the page preserves the checklist-completion-is-not-readiness copy", pageSource.includes("Checklist completion is planning progress, not interview readiness or a probability of passing."));

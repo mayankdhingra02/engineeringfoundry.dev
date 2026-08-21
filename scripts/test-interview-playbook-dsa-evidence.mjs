@@ -98,13 +98,16 @@ for (const dimension of explicitConfidence.dimensions.filter((dimension) => dime
 
 // --- Planner integration ----------------------------------------------------
 const baseline = buildInterviewPlaybookPlanningProjection({ overview, now: NOW });
-const emptyDsa = buildInterviewPlaybookPlanningProjection({ overview, now: NOW, dsaEvidence: [] });
-check("no DSA data preserves the existing neutral projection exactly", deepEqual(baseline, emptyDsa) && baseline?.sourceMode === "round-context-only");
-const withDsa = buildInterviewPlaybookPlanningProjection({ overview, now: NOW, dsaEvidence: solvedEvidence });
-check("DSA self-report has its own transparent source mode", withDsa?.sourceMode === "round-context-and-dsa-self-report");
+const emptyDsa = buildInterviewPlaybookPlanningProjection({ overview, now: NOW, evidence: [] });
+check("no DSA data preserves the existing neutral projection exactly", deepEqual(baseline, emptyDsa) && baseline?.sourceDescription.selfReportedEvidenceAreas.length === 0);
+const withDsa = buildInterviewPlaybookPlanningProjection({ overview, now: NOW, evidence: solvedEvidence });
+check("DSA self-report has a transparent source description", deepEqual(withDsa?.sourceDescription, {
+  hasSavedDiagnosticInputs: false,
+  selfReportedEvidenceAreas: ["algorithmic-coding"],
+}));
 check("self-reported DSA still produces an algorithmic baseline check", withDsa?.actions.some((action) => action.area === "algorithmic-coding" && action.kind === "baseline-check"));
 const nonAlgorithmicInjection = [{ ...solvedEvidence[0], area: "system-design" }];
-check("composition rejects DSA evidence for non-algorithmic areas", deepEqual(baseline, buildInterviewPlaybookPlanningProjection({ overview, now: NOW, dsaEvidence: nonAlgorithmicInjection })));
+check("generic composition preserves explicitly scoped evidence", buildInterviewPlaybookPlanningProjection({ overview: { upcomingRounds: [round({ executionGuideSlugs: ["system-design"] })], unscheduledRounds: [] }, now: NOW, evidence: nonAlgorithmicInjection })?.sourceDescription.selfReportedEvidenceAreas.includes("system-design"));
 const observedDiagnostic = neutralDiagnosticInput([{
   id: "observed-algorithmic-practice",
   area: "algorithmic-coding",

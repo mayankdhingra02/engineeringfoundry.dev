@@ -29,6 +29,7 @@
     "test:interview-playbook-planning": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-planning.mjs",
     "test:interview-playbook-planner-integration": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-planner-integration.mjs",
     "test:interview-playbook-dsa-evidence": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-dsa-evidence.mjs",
+    "test:interview-playbook-system-design-evidence": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-system-design-evidence.mjs",
     "test:interview-playbook-diagnostic-inputs": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-diagnostic-inputs.mjs",
     "test:interview-calendar-reminders": "node --experimental-strip-types --no-warnings scripts/test-interview-calendar-reminders.mjs",
     "test:interview-reminder-worker": "node --experimental-loader ./scripts/server-worker-test-loader.mjs --experimental-strip-types --no-warnings scripts/test-interview-reminder-worker.mjs",

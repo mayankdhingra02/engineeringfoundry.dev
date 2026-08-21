@@ -40,6 +40,7 @@ const STATIC_STEPS = [
   ["System Design workspace", "npm", ["run", "test:system-design-workspace"]],
   ["Interview preparation hub", "npm", ["run", "test:interview-preparation-hub"]],
   ["Interview Playbook DSA evidence boundary", "npm", ["run", "test:interview-playbook-dsa-evidence"]],
+  ["Interview Playbook System Design evidence boundary", "npm", ["run", "test:interview-playbook-system-design-evidence"]],
   ["Interview calendar and reminders", "npm", ["run", "test:interview-calendar-reminders"]],
   ["Reminder worker outcomes", "npm", ["run", "test:interview-reminder-worker"]],
 
