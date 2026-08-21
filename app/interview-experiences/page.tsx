@@ -4,15 +4,15 @@ import { ExperienceSubmission } from "@/features/interview-experiences/experienc
 import { ExperienceDirectory, type PublicExperience } from "@/features/interview-experiences/experience-directory";
 import { createPageMetadata } from "@/lib/metadata";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = createPageMetadata({ title: "Interview Experiences", description: "Read reviewed, contributor-submitted interview process reports and share a privacy-conscious experience for moderation.", path: "/interview-experiences" });
 
 export default async function InterviewExperiencesPage() {
+  const publicSupabase = await createSupabaseServerClient();
   const actor = await getAuthenticatedActor();
-  const [publicResult, ownResult] = actor ? await Promise.all([
-    actor.supabase.from("interview_experiences").select("id,company_name,role_title,role_level,region,interview_date,summary,preparation_lessons,public_identity,interview_experience_rounds(round_type,topic_labels,process_notes)").eq("status", "approved").eq("publication_consent", true).order("interview_date", { ascending: false, nullsFirst: false }).limit(30),
-    actor.supabase.from("interview_experiences").select("id,status,company_name,role_title,updated_at,review_note").order("updated_at", { ascending: false }).limit(20),
-  ]) : [{ data: [] }, { data: [] }];
+  const publicResult = publicSupabase ? await publicSupabase.from("interview_experiences").select("id,company_name,role_title,role_level,region,interview_date,summary,preparation_lessons,public_identity,interview_experience_rounds(round_type,topic_labels,process_notes)").eq("status", "approved").eq("publication_consent", true).order("interview_date", { ascending: false, nullsFirst: false }).limit(30) : { data: [] };
+  const ownResult = actor ? await actor.supabase.from("interview_experiences").select("id,status,company_name,role_title,role_level,region,interview_date,summary,preparation_lessons,public_identity,publication_consent,updated_at,review_note,interview_experience_rounds(round_type,topic_labels)").order("updated_at", { ascending: false }).limit(20) : { data: [] };
   const experiences = (publicResult.data ?? []) as unknown as PublicExperience[];
   const owned = ownResult.data ?? [];
   return <>

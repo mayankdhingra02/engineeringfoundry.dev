@@ -3410,6 +3410,14 @@ button.flow-card { cursor: pointer; }
 .experience-submission-intro > span { padding: 6px 8px; display: inline-flex; align-items: center; gap: 5px; border-radius: 6px; color: var(--green); background: var(--green-soft); font-size: var(--type-meta); font-weight: 720; white-space: nowrap; }
 .experience-submission .experience-safety-checklist { margin-top: 16px; display: grid; gap: 8px; }
 .experience-submission .experience-safety-checklist label { background: var(--surface); }
+.experience-preview { display: grid; gap: 14px; }
+.experience-preview h3 { margin: 0; font-size: 24px; letter-spacing: -.035em; }
+.experience-preview h4 { margin: 4px 0 -7px; font-size: 14px; }
+.experience-preview > div > p, .experience-preview > p { max-width: 72ch; margin: 6px 0 0; color: var(--text-secondary); line-height: 1.62; white-space: pre-wrap; }
+.experience-preview dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.experience-preview dl > div { padding: 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.experience-preview dt { color: var(--muted); font-size: var(--type-meta); font-weight: 700; }
+.experience-preview dd { margin: 4px 0 0; font-size: var(--type-small); }
 .experience-owned { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
 .experience-owned ul { margin: 14px 0 0; padding: 0; display: grid; gap: 8px; list-style: none; }
 .experience-owned li { padding: 13px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); }
@@ -3459,6 +3467,7 @@ button.flow-card { cursor: pointer; }
   .contact-channel-card { min-height: 210px; }
   .experience-page-principles, .experience-guidance > div, .experience-field-grid, .experience-topic-picker > div, .experience-safety-checklist > div { grid-template-columns: 1fr; }
   .experience-directory-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .experience-preview dl { grid-template-columns: 1fr; }
   .experience-directory-entry > header, .experience-submission-intro, .experience-owned li { align-items: flex-start; flex-direction: column; }
   .experience-field-grid .form-group.full { grid-column: auto; }
   .experience-builder-header, .experience-community-note { align-items: stretch; flex-direction: column; }
