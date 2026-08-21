@@ -271,7 +271,7 @@ export const ROUND_EXECUTION_GUIDES: readonly RoundExecutionGuideSummary[] = [
     },
     ownerBoundary:
       "The Playbook owns in-round scoping, responsibility discussion, diagram-to-code transition, and validation. The Low-Level Design section owns OO principles, patterns, and design exercises.",
-    relatedHrefs: ["/mock-interviews"],
+    relatedHrefs: ["/low-level-design", "/low-level-design/practice", "/mock-interviews"],
   },
   {
     slug: "system-design",

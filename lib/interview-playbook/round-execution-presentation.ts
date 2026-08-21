@@ -160,6 +160,8 @@ const RELATED_LINK_LABELS: Readonly<Record<string, string>> = {
   "/mock-interviews": "Mock interview lab",
   "/system-design/start-here/introduction": "System Design concepts",
   "/system-design/practice": "System Design practice",
+  "/low-level-design": "Low-Level Design curriculum",
+  "/low-level-design/practice": "Low-Level Design practice",
   "/ml-design": "ML System Design",
 };
 

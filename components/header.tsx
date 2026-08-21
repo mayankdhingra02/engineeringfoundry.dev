@@ -18,6 +18,7 @@ type NavItem = { readonly label: string; readonly href: string };
 const navDescriptions: Record<string, string> = {
   DSA: "Coding patterns and company-focused practice",
   "System Design": "Architecture concepts and design prompts",
+  "Low-Level Design": "Object design, interfaces, state, and practice",
   "ML Design": "Applied ML and AI system design",
   Behavioral: "Stories, leadership, and communication",
   "Interview Execution Guide": "Clarification, communication, recovery, validation, and interview-day guidance",

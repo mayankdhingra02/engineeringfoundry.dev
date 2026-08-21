@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Binary, BookOpenCheck, BrainCircuit, Building2, CheckCircle2, MessagesSquare, Network } from "lucide-react";
+import { ArrowRight, Binary, BookOpenCheck, BrainCircuit, Building2, CheckCircle2, MessagesSquare, Network, Puzzle } from "lucide-react";
 import { SectionHeading } from "@/components/page-shell";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -30,6 +30,15 @@ const preparationTracks = [
   },
   {
     index: "03",
+    icon: Puzzle,
+    title: "Low-Level Design",
+    description: "Turn requirements into responsibilities, interfaces, state transitions, and testable component designs.",
+    href: "/low-level-design",
+    cta: "Prepare for Low-Level Design",
+    highlights: ["Interview framework", "Eight focused lessons", "Original practice designs"],
+  },
+  {
+    index: "04",
     icon: Building2,
     title: "Company Interview Guides",
     description: "Translate a target company and level into a focused loop, practice priorities, story work, and preparation plan.",
@@ -38,7 +47,7 @@ const preparationTracks = [
     highlights: ["Level context", "Reported evidence", "Focused plans"],
   },
   {
-    index: "04",
+    index: "05",
     icon: BrainCircuit,
     title: "ML System Design",
     description: "Connect product goals to data, training, evaluation, serving, monitoring, and feedback loops.",
@@ -47,7 +56,7 @@ const preparationTracks = [
     highlights: ["ML architecture", "Evaluation", "Production systems"],
   },
   {
-    index: "05",
+    index: "06",
     icon: MessagesSquare,
     title: "Behavioral Interviews",
     description: "Develop concise evidence-based stories about impact, leadership, judgment, and collaboration.",
@@ -56,7 +65,7 @@ const preparationTracks = [
     highlights: ["Story frameworks", "Practice prompts", "Self-review"],
   },
   {
-    index: "06",
+    index: "07",
     icon: BookOpenCheck,
     title: "Interview Execution Guide",
     description: "Learn how to clarify, communicate, recover, validate, and close during common software-engineering interview rounds.",
