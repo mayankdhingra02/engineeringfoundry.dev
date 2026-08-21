@@ -26,6 +26,11 @@ export function storyReadiness(story: StoryContent): StoryReadiness {
   return meaningfulSections >= 2 || totalLength >= 80 ? "Needs detail" : "Draft";
 }
 
+/** Presentation wording only; stored completeness and planner semantics remain unchanged. */
+export function storyCompletenessLabel(readiness: StoryReadiness) {
+  return readiness === "Ready" ? "Content complete" : readiness;
+}
+
 const BEHAVIORAL_ROUND_PATTERN = /\b(behavioral|behavioural|hiring manager|bar raiser|onsite|virtual onsite)\b/i;
 
 export function isBehavioralRoundType(roundType: string) {

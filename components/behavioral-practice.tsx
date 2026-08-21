@@ -64,9 +64,9 @@ export function BehavioralPractice() {
   }
 
   return <>
-    <PageHero eyebrow="Behavioral interview practice" title="Build adaptable stories—not memorized scripts." description="Find original prompts by category, connect them to experiences you genuinely had, and practice making your decisions and impact clear.">
+    <PageHero eyebrow="Behavioral interview practice" title="Build adaptable stories—not memorized scripts." description="Start with real stories, cover the question categories they can answer, tailor truthful framing, then rehearse the version you need.">
       <a className="button" href="#explorer">Explore 35 prompts <ArrowRight size={16} /></a>
-      <a className="button button-secondary" href="#story-inventory">Build a story inventory</a>
+      <Link className="button button-secondary" href="/behavioral/workspace">Open private story workspace</Link>
     </PageHero>
 
     <section className="section behavioral-framework-section"><div className="page-width">

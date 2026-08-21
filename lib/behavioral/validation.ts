@@ -52,8 +52,8 @@ export function parseAnswerForm(formData: FormData) {
   if (!title || title.length > 200) errors.title = "Add a title up to 200 characters.";
   if (answer_text.length > 50000) errors.answer_text = "Keep the full rehearsal draft to 50,000 characters or fewer.";
   if (!ANSWER_STATUSES.includes(status as (typeof ANSWER_STATUSES)[number])) errors.status = "Choose a valid answer status.";
+  if (!story_id) errors.story_id = "Choose the source story for this answer variant.";
   if (story_id && !UUID_PATTERN.test(story_id)) errors.story_id = "Choose a valid story.";
-  if (is_primary && !story_id) errors.story_id = "Choose a story before making this the primary preparation.";
   if (application_id && !UUID_PATTERN.test(application_id)) errors.application_id = "Choose a valid application.";
   limited(opening_framing, 10000, "Opening framing", errors, "opening_framing");
   limited(details_to_emphasize, 20000, "Details to emphasize", errors, "details_to_emphasize");
