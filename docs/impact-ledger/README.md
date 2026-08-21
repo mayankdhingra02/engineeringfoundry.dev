@@ -29,6 +29,6 @@ Examples of acceptable evidence language when an actual source supports it: “1
 
 ## Validation
 
-Monthly snapshots require separate reproducible aggregate references for PostHog analytics, the authoritative Supabase/Auth registered-account count, and any product-data aggregate (for example, approved Interview Experiences). Do not commit person-level exports. `registered_users` is the end-of-window account total, never a `sign_in_completed` event count.
+Monthly snapshots require separate reproducible aggregate references for PostHog analytics, the authoritative Supabase/Auth registered-account count, and any product-data aggregate (for example, approved Interview Experiences). Do not commit person-level exports. `registered_accounts` is the end-of-window account total, never a `sign_in_completed` event count.
 
 Run `npm run validate:impact-ledger` to validate committed real JSON records. It rejects templates as real records, impossible/negative metric values, unknown definition versions, missing metric-family source references, and testimonials without explicit consent metadata. It deliberately does not calculate totals or generate claims.

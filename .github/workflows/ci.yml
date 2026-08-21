@@ -59,6 +59,8 @@ jobs:
         run: npm run test:behavioral-v1-polish
       - name: Test analytics and launch evidence
         run: npm run test:analytics-launch-evidence
+      - name: Test v1 launch readiness
+        run: npm run test:v1-launch-readiness
       - name: Validate impact ledger integrity
         run: npm run validate:impact-ledger
       - name: Test Feedback and admin operations
