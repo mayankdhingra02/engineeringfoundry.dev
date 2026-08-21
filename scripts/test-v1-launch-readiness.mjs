@@ -4,6 +4,7 @@ import { METRIC_IDS, METRIC_SOURCE_REFERENCES } from "./validate-impact-ledger.m
 
 const read = (path) => readFileSync(path, "utf8");
 const tracker = read("docs/v1-launch-readiness.md");
+const releaseCandidate = read("docs/releases/v1-release-candidate.md");
 const plan = read("docs/launch-finish-plan.md");
 const checklist = read("docs/production-launch-checklist.md");
 const operations = read("docs/production-operations-runbook.md");
@@ -22,6 +23,7 @@ assert.ok(plan.includes("Otherwise it moves to P1."), "launch plan must retain v
 assert.ok(checklist.includes("Local qualification is not hosted qualification."), "checklist must preserve hosted qualification boundary");
 assert.ok(operations.includes("DNS, SSL, managed backups"), "operations runbook must preserve external operations boundary");
 assert.ok(analytics.includes("does not implement a consent banner"), "analytics runbook must not claim an absent consent mechanism");
+for (const marker of ["RC date", "Base SHA", "Candidate SHA", "all 25 migrations", "Production Webpack build: **PASS — exit 0**", "Visualization Lab Beta is **DEFERRED P1**", "Required external release gates", "Rollback reference", "Not deployed or production-qualified"]) assert.ok(releaseCandidate.includes(marker), `release-candidate record must retain ${marker}`);
 
 assert.ok(METRIC_IDS.includes("registered_accounts"), "impact ledger must use the canonical registered-account metric");
 assert.ok(!METRIC_IDS.includes("registered_users"), "stale registered-users metric must not remain in the ledger schema");
