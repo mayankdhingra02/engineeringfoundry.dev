@@ -8,12 +8,15 @@ import { QuestionList } from "@/components/question-list";
 import { CompanyGuideV1Workspace, type CompanyGuidePublicExperience } from "@/features/company-guides/company-guide-v1";
 import { companies, getCompany } from "@/data/companies";
 import { priorityCompanyGuideBySlug } from "@/data/company-guides/v1";
+import { amazonGuide, googleGuide, metaGuide, walmartGuide } from "@/data/company-guides";
+import type { CompanyInterviewGuide } from "@/data/company-guides";
 import { questionsForCompany } from "@/data/dsa";
 import { createPageMetadata } from "@/lib/metadata";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamicParams = false;
 export function generateStaticParams() { return companies.map((company) => ({ slug: company.slug })); }
+const matureGuides: Partial<Record<string, CompanyInterviewGuide>> = { amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params; const company = getCompany(slug); if (!company) notFound();
@@ -36,7 +39,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
   if (interviewGuide) {
     const supabase = await createSupabaseServerClient();
     const result = supabase ? await supabase.from("interview_experiences").select("id,role_title,role_level,region,interview_date,summary,interview_experience_rounds(round_type,topic_labels)").eq("status", "approved").eq("publication_consent", true).eq("company_name", company.name).order("interview_date", { ascending: false, nullsFirst: false }).limit(6) : { data: [] };
-    return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} /><CompanyGuideV1Workspace guide={interviewGuide} experiences={(result.data ?? []) as unknown as CompanyGuidePublicExperience[]} /></>;
+    const matureGuide = matureGuides[company.slug];
+    return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} /><CompanyGuideV1Workspace guide={interviewGuide} experiences={(result.data ?? []) as unknown as CompanyGuidePublicExperience[]} matureGuide={matureGuide} /></>;
   }
   const associatedQuestions = questionsForCompany(company.slug);
   return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} />
