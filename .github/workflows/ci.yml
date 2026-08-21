@@ -57,6 +57,10 @@ jobs:
         run: npm run test:behavioral-workspace
       - name: Test Behavioral v1 polish
         run: npm run test:behavioral-v1-polish
+      - name: Test analytics and launch evidence
+        run: npm run test:analytics-launch-evidence
+      - name: Validate impact ledger integrity
+        run: npm run validate:impact-ledger
       - name: Test Feedback and admin operations
         run: npm run test:feedback-admin-operations
       - name: Test interview preparation hub

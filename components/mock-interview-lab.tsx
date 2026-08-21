@@ -205,6 +205,7 @@ export function MockInterviewLab() {
     setSaveState("saving");
     const result = await saveMockInterviewReview({ sessionId: sessionId.current, track: selectedPlan.track, mode, planId: selectedPlan.id, promptId: selectedPlan.content_reference.id, rubricId: selectedPlan.rubric_id, startedAt: startedAt.current, elapsedSeconds, strength: notes.strength, improvement: notes.improvement, followUp: notes.followUp, ratings: ratingsForSave });
     setSaveState(result.ok ? "saved" : "failed");
+    if (result.ok) track("mock_review_saved", analyticsProperties(selectedPlan, mode));
   }
 
   function trackGuidance(section: string, open: boolean) {

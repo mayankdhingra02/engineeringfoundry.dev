@@ -1,14 +1,23 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Bookmark, Save } from "lucide-react";
 import { updateDsaQuestionProgressAction, type DsaProgressActionState } from "./actions";
 import type { DsaQuestionProgressRow } from "@/lib/supabase/database.types";
+import { track } from "@/lib/analytics";
 
 const initialState: DsaProgressActionState = { status: "idle", message: "" };
 
 export function QuestionProgressEditor({ questionId, progress }: { questionId: string; progress: DsaQuestionProgressRow }) {
   const [state, action, pending] = useActionState(updateDsaQuestionProgressAction, initialState);
+  const recordedActions = useRef(new Set<string>());
+  useEffect(() => {
+    if (!state.analytics || state.analytics.recordedStatus === "not_started") return;
+    const key = `${state.analytics.questionId}:${state.analytics.recordedStatus}`;
+    if (recordedActions.current.has(key)) return;
+    recordedActions.current.add(key);
+    track("preparation_activity_recorded", { track: "dsa", item_id: state.analytics.questionId, status: state.analytics.recordedStatus, persistence: "account" });
+  }, [state.analytics]);
   return <form action={action} className="dsa-progress-editor">
     <input type="hidden" name="question_id" value={questionId} />
     <fieldset><legend>Practice status</legend><div className="dsa-choice-row">{(["not_started", "attempted", "solved", "review"] as const).map((status) => <label key={status}><input type="radio" name="status" value={status} defaultChecked={progress.status === status} /><span>{status.replace("_", " ")}</span></label>)}</div></fieldset>

@@ -6,7 +6,7 @@ import { canonicalDsaQuestionById } from "@/lib/dsa/catalog";
 import type { DsaConfidence, DsaQuestionStatus } from "@/lib/dsa/progress";
 import type { RoadmapLevel } from "@/data/dsa/level-roadmaps";
 
-export type DsaProgressActionState = { status: "idle" | "success" | "error"; message: string };
+export type DsaProgressActionState = { status: "idle" | "success" | "error"; message: string; analytics?: { questionId: string; recordedStatus: DsaQuestionStatus } };
 const statuses = new Set<DsaQuestionStatus>(["not_started", "attempted", "solved", "review"]);
 const confidences = new Set<DsaConfidence>(["low", "medium", "high"]);
 
@@ -35,7 +35,7 @@ async function save(questionId: string, values: { status: DsaQuestionStatus; con
   });
   if (error) return { status: "error", message: "We couldn't save this practice update." } satisfies DsaProgressActionState;
   refreshDsa(questionId);
-  return { status: "success", message: "Practice progress saved." } satisfies DsaProgressActionState;
+  return { status: "success", message: "Practice progress saved.", analytics: { questionId, recordedStatus: values.status } } satisfies DsaProgressActionState;
 }
 
 export async function updateDsaQuestionProgressAction(_: DsaProgressActionState, formData: FormData): Promise<DsaProgressActionState> {

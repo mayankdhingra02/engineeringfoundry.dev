@@ -56,11 +56,12 @@ export function DesignPracticePage({
   const basePath = track === "system" ? "/system-design/start-here/introduction" : "/ml-design";
   const viewEvent: AnalyticsEvent = track === "system" ? "system_design_problem_viewed" : "ml_design_problem_viewed";
   const guidanceEvent: AnalyticsEvent = track === "system" ? "system_design_guidance_opened" : "ml_design_guidance_opened";
-  const properties = { problem_id: id, difficulty, domain: domains[0] ?? "unknown", track: track === "system" ? "system-design" : "ml-design" };
+  const properties = { problem_id: id, difficulty: difficulty.toLowerCase(), domain: (domains[0] ?? "unknown").toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-|-$/g, "") || "unknown", track: track === "system" ? "system-design" : "ml-design" };
 
   return <>
     <AnalyticsEventOnMount event={viewEvent} properties={properties} />
     <AnalyticsEventOnMount event="design_problem_started" properties={properties} />
+    <AnalyticsEventOnMount event={track === "system" ? "system_design_practice_started" : "ml_design_practice_started"} properties={properties} />
     <PageHero eyebrow={track === "system" ? "System Design practice" : "ML System Design practice"} title={title} description={summary}>
       <StatusPill>{difficulty}</StatusPill>
       <span className="difficulty-note">Engineering Foundry preparation level</span>

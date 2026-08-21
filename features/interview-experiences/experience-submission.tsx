@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { CheckCircle2, Send, Trash2, Undo2 } from "lucide-react";
 import { experienceRoundTypes, experienceTopics } from "@/data/interview-experiences";
 import { manageInterviewExperience, saveInterviewExperience, type ExperienceSubmissionInput } from "@/app/interview-experiences/actions";
+import { track } from "@/lib/analytics";
 
 const initial: ExperienceSubmissionInput = { companyName: "", roleTitle: "", roleLevel: "", region: "", interviewDate: "", summary: "", preparationLessons: "", publicIdentity: "anonymous", publicationConsent: false, roundType: "", topics: [] };
 type OwnedExperience = { id: string; status: string; company_name: string; role_title: string; role_level: string | null; region: string | null; interview_date: string | null; summary: string; preparation_lessons: string | null; public_identity: "anonymous" | "username"; publication_consent: boolean; updated_at: string; review_note: string | null; interview_experience_rounds: { round_type: string; topic_labels: string[] }[] | null };
@@ -15,11 +16,20 @@ export function ExperienceSubmission({ signedIn, owned }: { signedIn: boolean; o
   const [view, setView] = useState<"form" | "preview">("form");
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
+  const submissionStarted = useRef(false);
+  useEffect(() => {
+    if (!signedIn || submissionStarted.current) return;
+    submissionStarted.current = true;
+    track("interview_experience_submission_started", { source: "directory_contribution" });
+  }, [signedIn]);
   const update = <K extends keyof ExperienceSubmissionInput>(key: K, value: ExperienceSubmissionInput[K]) => setInput((current) => ({ ...current, [key]: value }));
   const save = (submit: boolean) => startTransition(async () => {
     const result = await saveInterviewExperience(input, submit);
     setMessage(result.ok ? (submit ? "Submitted for privacy and moderation review. You can withdraw it while it is under review." : "Private draft saved. It is not public.") : result.error ?? "Your experience could not be saved.");
-    if (result.ok) { setInput(initial); setView("form"); }
+    if (result.ok) {
+      if (submit) track("interview_experience_submitted", { source: "directory_contribution" });
+      setInput(initial); setView("form");
+    }
   });
   const manage = (id: string, action: "withdraw" | "delete") => startTransition(async () => {
     const result = await manageInterviewExperience(id, action);

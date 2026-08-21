@@ -151,7 +151,7 @@ check("sanitizer removes every private property", sanitized && !("notes" in sani
 check("sanitizer returns undefined when nothing survives", sanitizeAnalyticsProperties({ notes: "private" }) === undefined);
 
 // 9. The capture paths apply the guard.
-check("track() sanitizes properties", analytics.includes("posthog.capture(event, sanitizeAnalyticsProperties(properties))"));
+check("track() sanitizes properties", analytics.includes("posthog.capture(event, sanitizeAnalyticsProperties(sanitizeP09AnalyticsProperties(event, properties)))"));
 check("identify() sanitizes properties", analytics.includes("posthog.identify(id, sanitizeAnalyticsProperties(properties))"));
 check("before_send applies the private-content guard", analytics.includes("isPrivateAnalyticsPropertyName(name)") && analytics.includes("isPrivateAnalyticsValue(value)"));
 check("private pageviews are suppressed", analytics.includes('event.event === "$pageview" && privateContext'));

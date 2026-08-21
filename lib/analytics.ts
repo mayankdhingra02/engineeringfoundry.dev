@@ -5,6 +5,7 @@ import {
   sanitizeAnalyticsProperties,
 } from "@/lib/privacy/analytics-properties";
 import { isPrivateRoute } from "@/lib/privacy/routes";
+import { sanitizeP09AnalyticsProperties } from "@/lib/analytics/launch-metrics";
 
 export type AnalyticsEvent =
   | "dsa_question_clicked"
@@ -79,7 +80,24 @@ export type AnalyticsEvent =
   | "behavioral_prompt_randomized"
   | "interview_checklist_used"
   | "interview_playbook_section_viewed"
-  | "resource_opened";
+  | "resource_opened"
+  | "dsa_practice_started"
+  | "system_design_practice_started"
+  | "ml_design_practice_started"
+  | "behavioral_practice_started"
+  | "low_level_design_lesson_opened"
+  | "low_level_design_practice_started"
+  | "preparation_activity_recorded"
+  | "low_level_design_activity_recorded"
+  | "continuation_presented"
+  | "continuation_selected"
+  | "study_plan_activated"
+  | "study_plan_resumed"
+  | "mock_review_saved"
+  | "salary_negotiation_module_viewed"
+  | "offer_comparison_opened"
+  | "interview_experience_submission_started"
+  | "interview_experience_submitted";
 
 export type EventProperties = Record<string, string | number | boolean | null | undefined>;
 
@@ -262,7 +280,7 @@ export function capturePageView(url: string) {
 export function track(event: AnalyticsEvent, properties?: EventProperties) {
   if (!initializeAnalytics()) return;
   try {
-    posthog.capture(event, sanitizeAnalyticsProperties(properties));
+    posthog.capture(event, sanitizeAnalyticsProperties(sanitizeP09AnalyticsProperties(event, properties)));
   } catch {
     // Product interactions must remain functional if analytics fails.
   }

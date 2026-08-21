@@ -2,11 +2,12 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, CircleAlert, Lightbulb, Scale, TriangleAlert } from "lucide-react";
 import type { LowLevelDesignLesson } from "@/data/low-level-design";
 import { LowLevelDesignProgressControl } from "./progress-control";
+import { AnalyticsEventOnMount } from "@/components/analytics-event";
 
 export function LowLevelDesignLessonView({ lesson, previousSlug, nextSlug }: { lesson: LowLevelDesignLesson; previousSlug?: string; nextSlug?: string }) {
-  return <div className="lld-reading page-width">
+  return <div className="lld-reading page-width"><AnalyticsEventOnMount event="low_level_design_lesson_opened" properties={{ track: "low-level-design", lesson_id: lesson.id }} />
     <nav className="lld-breadcrumbs" aria-label="Breadcrumb"><Link href="/low-level-design"><ArrowLeft size={14} />Low-Level Design</Link><span>/ {lesson.title}</span></nav>
-    <header className="lld-reading-header"><h1>{lesson.title}</h1><p>{lesson.summary}</p><div><span>~{lesson.estimatedMinutes} min read</span><span>Published curriculum</span><LowLevelDesignProgressControl itemId={`lesson:${lesson.id}`} /></div></header>
+    <header className="lld-reading-header"><h1>{lesson.title}</h1><p>{lesson.summary}</p><div><span>~{lesson.estimatedMinutes} min read</span><span>Published curriculum</span><LowLevelDesignProgressControl itemId={`lesson:${lesson.id}`} analyticsItemId={lesson.id} analyticsItemType="lesson" /></div></header>
     <aside className="lld-objectives"><h2>What you will practice</h2><ul>{lesson.objectives.map((objective) => <li key={objective}>{objective}</li>)}</ul></aside>
     <article className="lld-article">
       {lesson.sections.map((section) => <section key={section.title}>

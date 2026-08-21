@@ -3,6 +3,7 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { recordPreparationActivityAction } from "@/features/preparation-progress/actions";
+import { track as trackAnalytics } from "@/lib/analytics";
 import {
   preparationProgressEvent,
   readLocalPreparationProgress,
@@ -37,12 +38,17 @@ export function PreparationActivityControl({ track, itemId, noun = "activity" }:
         saved = result.saved;
         setMessage(result.message);
       } catch { setMessage("Saved in this browser. Sign in later to import it deliberately."); }
+      let localRecorded = false;
       if (!saved) {
         try {
           const current = readLocalPreparationProgress(window.localStorage);
           writeLocalPreparationProgress(window.localStorage, recordLocalProgress(current, { track, itemId, status: next }));
           window.dispatchEvent(new CustomEvent(preparationProgressEvent));
+          localRecorded = true;
         } catch { /* Browser storage is optional; the visible state remains useful for this visit. */ }
+      }
+      if (next === "completed" && (saved || localRecorded)) {
+        trackAnalytics("preparation_activity_recorded", { track, item_id: itemId, status: next, persistence: saved ? "account" : "local" });
       }
     } finally { setPending(false); }
   }

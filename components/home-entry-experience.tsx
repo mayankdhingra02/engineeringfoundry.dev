@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, Binary, Building2, MessagesSquare, Network } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { track } from "@/lib/analytics";
 import { systemDesignProgressEvent, systemDesignProgressStorageKey } from "./system-design-lesson-progress";
 import {
   migrateLegacySystemDesignProgress,
@@ -49,6 +50,7 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [progressChecked, setProgressChecked] = useState(false);
+  const presentedContinuations = useRef(new Set<string>());
 
   const readProgress = useCallback(() => {
     try {
@@ -109,6 +111,13 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
 
   const continuation = choosePreparationContinuation(accountCandidates, localCandidates);
   const weeklyActivityDays = accountWeeklyActivityDays || localWeeklyActivityDays;
+  const continuationSource = continuation ? `${continuation.source}:${continuation.kind}` : null;
+
+  useEffect(() => {
+    if (!progressChecked || !continuation || !continuationSource || presentedContinuations.current.has(continuationSource)) return;
+    presentedContinuations.current.add(continuationSource);
+    track("continuation_presented", { track: continuation.track, continuation_source: continuationSource, authenticated });
+  }, [authenticated, continuation, continuationSource, progressChecked]);
 
   return (
     <div className={`home-entry-experience${continuation ? " is-returning" : ""}`}>
@@ -120,7 +129,7 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
             <p>{continuation.context}</p>
             {weeklyActivityDays > 0 && <small className="home-momentum">Preparation recorded on {weeklyActivityDays} {weeklyActivityDays === 1 ? "day" : "days"} this week.</small>}
           </div>
-          <Link className="button" href={continuation.href}>Continue {continuation.track === "interview" ? "interview prep" : continuation.track === "dsa" ? "DSA" : continuation.track === "system-design" ? "System Design" : continuation.track === "ml-design" ? "ML Design" : "Behavioral"} <ArrowRight size={16} aria-hidden="true" /></Link>
+          <Link className="button" href={continuation.href} onClick={() => { track("continuation_selected", { track: continuation.track, continuation_source: continuationSource, authenticated }); if (continuation.kind === "active-plan") track("study_plan_resumed", { track: continuation.track, continuation_source: continuationSource, authenticated }); }}>Continue {continuation.track === "interview" ? "interview prep" : continuation.track === "dsa" ? "DSA" : continuation.track === "system-design" ? "System Design" : continuation.track === "ml-design" ? "ML Design" : "Behavioral"} <ArrowRight size={16} aria-hidden="true" /></Link>
         </section>
       )}
 

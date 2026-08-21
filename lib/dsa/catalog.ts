@@ -1,4 +1,5 @@
 import { dsaInterviewQuestionDatabase } from "@/data/dsa/question-database";
+import type { DSAQuestionSourceType } from "@/data/dsa/interview-prep";
 import { roadmapProblems } from "@/data/dsa/roadmap-problem-registry";
 
 export type CanonicalDsaQuestion = {
@@ -8,6 +9,7 @@ export type CanonicalDsaQuestion = {
   topics: readonly string[];
   patterns: readonly string[];
   companySlugs: readonly string[];
+  sourceType: DSAQuestionSourceType;
   sourceLabel: string;
   sourceUrl: string | null;
   inQuestionBrowser: boolean;
@@ -28,6 +30,7 @@ export const canonicalDsaQuestions: readonly CanonicalDsaQuestion[] = ids.map((i
     topics: browser?.topics ?? roadmap?.topicTags ?? [],
     patterns: browser?.patterns ?? (roadmap?.pattern ? [roadmap.pattern] : []),
     companySlugs: browser?.companies.map((company) => company.companySlug) ?? [],
+    sourceType: source?.type ?? roadmap?.source ?? "other",
     sourceLabel: source?.label ?? (roadmap?.source === "leetcode" ? "LeetCode" : "Public source"),
     sourceUrl: source?.url ?? roadmap?.url ?? null,
     inQuestionBrowser: Boolean(browser),

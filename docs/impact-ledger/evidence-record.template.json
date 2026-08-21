@@ -1,0 +1,12 @@
+{
+  "record_kind": "template",
+  "date": "YYYY-MM-DD",
+  "type": "testimonial | article | podcast | talk | workshop | adoption | invitation | citation | technical_contribution",
+  "title": "Factual title",
+  "source": "Independent source or channel",
+  "evidence_reference": "https://... or repository-relative evidence location",
+  "verified_by": "name or role",
+  "verified_at": "YYYY-MM-DD",
+  "notes": "TEMPLATE ONLY — distinguish observed facts from self-reported claims.",
+  "testimonial_permission": { "retention_allowed": false, "public_attribution_allowed": false, "approved_excerpt": null }
+}

@@ -17,7 +17,7 @@ import {
   type SystemDesignStatus,
 } from "@/lib/system-design/workspace";
 
-export type SystemDesignActionState = { status: "idle" | "success" | "error"; message: string; conflict?: boolean; revision?: number };
+export type SystemDesignActionState = { status: "idle" | "success" | "error"; message: string; conflict?: boolean; revision?: number; analytics?: { itemId: string; itemType: "concept" | "design_problem"; recordedStatus: SystemDesignStatus } };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function refreshSystemDesign(problemId?: string, attemptId?: string) {
@@ -46,7 +46,7 @@ export async function saveSystemDesignProgressAction(_: SystemDesignActionState,
   });
   if (error) return { status: "error", message: "We couldn't save this progress update." };
   refreshSystemDesign(canonicalSystemDesignProblemIds.has(itemId) ? itemId : undefined);
-  return { status: "success", message: "Progress saved." };
+  return { status: "success", message: "Progress saved.", analytics: { itemId, itemType, recordedStatus: status } };
 }
 
 export async function createSystemDesignAttemptAction(problemId: string, formData: FormData) {

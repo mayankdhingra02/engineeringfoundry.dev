@@ -1,8 +1,9 @@
 "use client";
 
 import { Copy, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { calculateOfferComparison, type OfferComparisonInput } from "@/data/salary-negotiation";
+import { track } from "@/lib/analytics";
 
 type DraftOffer = OfferComparisonInput & { id: string; role: string; location: string; benefitsNotes: string; startDate: string; deadline: string; scopeNotes: string };
 const MAX_OFFERS = 4;
@@ -14,6 +15,7 @@ export function OfferComparisonWorksheet() {
   const [offers, setOffers] = useState<DraftOffer[]>(() => [emptyOffer(1), emptyOffer(2)]);
   const [builder, setBuilder] = useState({ enthusiasm: "", request: "", rationale: "", flexibility: "", closing: "" });
   const [copied, setCopied] = useState(false);
+  useEffect(() => { track("offer_comparison_opened", { surface: "salary-negotiation" }); }, []);
   const update = (id: string, key: keyof DraftOffer, value: string | boolean) => setOffers((current) => current.map((offer) => offer.id === id ? { ...offer, [key]: typeof value === "string" && ["baseSalary", "targetBonus", "signOn", "equityGrantValue", "vestingYears", "otherGuaranteedCompensation"].includes(key) ? asNumber(value) : value } : offer));
   const message = [builder.enthusiasm, builder.rationale, builder.request, builder.flexibility, builder.closing].map((part) => part.trim()).filter(Boolean).join(" ");
   const summaries = useMemo(() => offers.map((offer) => ({ offer, summary: calculateOfferComparison(offer) })), [offers]);
