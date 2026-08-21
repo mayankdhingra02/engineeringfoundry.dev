@@ -6,7 +6,9 @@
     "start": "YYYY-MM-01T00:00:00Z",
     "end": "YYYY-MM-01T00:00:00Z"
   },
-  "source_reference": "PostHog aggregate report URL or redacted export location",
+  "analytics_source_reference": "PostHog aggregate report URL or redacted aggregate export location",
+  "account_source_reference": "Supabase/Auth end-of-window aggregate count report or redacted aggregate export location",
+  "product_data_source_reference": "Supabase aggregate report or redacted aggregate export location for product-data metrics such as approvals",
   "metrics": {
     "unique_visitors": 0,
     "registered_users": 0,

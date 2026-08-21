@@ -76,19 +76,19 @@ These are the fixed event families used by the launch funnels. Each event has a 
 
 | Event | Fires when | Fixed properties | Meaning |
 | --- | --- | --- | --- |
-| `dsa_practice_started` | A canonical DSA source/practice link is opened | `track`, `problem_id`, `source` | A user deliberately starts canonical DSA practice |
+| `dsa_practice_started` | A canonical DSA source/practice link is opened | `track`, `problem_id`, canonical `source` type (`leetcode`, `leetcode-ca`, or `other`) | A user deliberately starts canonical DSA practice; display labels and URLs are excluded |
 | `system_design_practice_started` | A canonical System Design practice renders | `track`, `problem_id`, `difficulty`, `domain` | A user opens substantive System Design practice |
 | `ml_design_practice_started` | A canonical ML Design practice renders | `track`, `problem_id`, `difficulty`, `domain` | A user opens substantive ML Design practice |
 | `behavioral_practice_started` | A canonical Behavioral prompt first becomes active | `track`, `question_id`, `category` | A user opens a prompt to practice; no story or answer is sent |
 | `low_level_design_lesson_opened` | A canonical LLD lesson renders | `track`, `lesson_id` | A user opens substantive LLD curriculum |
 | `low_level_design_practice_started` | A canonical LLD practice renders | `track`, `practice_id` | A user starts an original LLD practice design |
 | `preparation_activity_recorded` | A canonical DSA, System Design, ML Design, or Behavioral activity is successfully persisted or safely recorded locally | `track`, `item_id`, `status`, `persistence` | Self-recorded activity, never mastery or readiness |
-| `low_level_design_activity_recorded` | A canonical LLD activity is recorded locally | `track`, `item_id`, `status`, `persistence` | Local self-recorded activity, never mastery or durable account progress |
+| `low_level_design_activity_recorded` | A canonical LLD activity is recorded locally | `track`, canonical `item_id`, fixed `item_type`, `status`, `persistence` | Local self-recorded activity, never mastery or durable account progress; browser storage keys such as `lesson:<id>` are excluded |
 | `continuation_presented` / `continuation_selected` | A real P0.2 continuation is visible / chosen | `track`, `continuation_source`, `authenticated` | Continuation usage with coarse account/local source only |
 | `study_plan_activated` / `study_plan_resumed` | A DSA or System Design plan is successfully saved / then chosen from an active-plan continuation | fixed `track`, `plan_id` or `continuation_source`, `persistence`/`authenticated` | Active plan use; not completion |
 | `mock_review_saved` | A valid self-review/rating save succeeds | `track`, `mode`, `prompt_id`, `rubric_id` | Persisted self-review, not observed interview performance |
 | `salary_negotiation_module_viewed` / `offer_comparison_opened` | Public module or the private in-memory worksheet opens | `module_id` or fixed `surface` | Discovery only; compensation and worksheet fields are excluded |
-| `interview_experience_submission_started` / `interview_experience_submitted` | The signed-in contribution form renders / a report is successfully submitted | fixed `source` | Workflow usage only; no report fields or identity values |
+| `interview_experience_submission_started` / `interview_experience_submitted` | The signed-in contribution form renders / a report is successfully submitted | fixed `source=directory_contribution` | Workflow usage only; no report fields or identity values |
 
 ### First useful action
 
@@ -108,6 +108,9 @@ Completion means **the user recorded preparation activity complete**. It does no
 ### Traffic
 
 - Unique visitors
+- Registered accounts: an authoritative Supabase/Auth aggregate count at the end of a completed measurement window, never a sign-in event count
+- Signed-in users: distinct users with `sign_in_completed` in a selected window; this is activity, not registration
+- Confirmed new email accounts: `account_created` where the product can truthfully identify a newly confirmed email account; OAuth new-account attribution remains unavailable
 - Daily, weekly, and monthly active users (DAU, WAU, MAU)
 - DAU/MAU stickiness
 - Returning visitor percentage
@@ -162,7 +165,7 @@ Outcome metrics require explicit definitions, consent-aware collection, and safe
 - Accurate new-account attribution for OAuth is deferred because the callback cannot reliably distinguish a new OAuth user from a returning one without inventing a heuristic.
 - Event names and property meanings should remain stable. Additive properties are preferred to renaming historical events.
 - Challenge and community analytics properties are limited to registered content identifiers and taxonomy (`challenge_id`, `category`, `level`, `section`) plus navigation context (`placement`, `pathway`). Never send worksheet text, solution URLs, copied summaries, personal names, or qualitative selections.
-- Interview-experience analytics are restricted to fixed `mode`, fixed `source_route`, coarse `round_count_bucket`, `placement`, and a registered public `company_slug` on the six static workspace pages. Never send a user-entered company, role, level, region, interview period, result, topic selection, round note, reflection, generated summary, checklist state, or clipboard content.
+- Interview-experience analytics are restricted to the P0.9 fixed contribution source `directory_contribution`, fixed `mode`, fixed `source_route`, coarse `round_count_bucket`, `placement`, and a registered public `company_slug` on the six static workspace pages. Never send a user-entered company, role, level, region, interview period, result, topic selection, round note, reflection, generated summary, checklist state, or clipboard content.
 - Referral analytics properties are restricted to `mode`, `packet_type`, `availability`, and `placement`. Never send company names, role details, links, introductions, experience text, review preferences, biography text, generated packets, or copied content.
 - Never send passwords, tokens, resumes, free-form referral messages, Mock Interview Practice Lab marks or notes, clipboard contents, exact practice duration, or other sensitive user content to analytics.
 - Production dashboards should distinguish active, demo, future, and self-reported metrics.

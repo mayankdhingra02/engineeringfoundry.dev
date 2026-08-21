@@ -46,7 +46,7 @@ export const P09_EVENT_PROPERTY_ALLOWLIST = {
   low_level_design_lesson_opened: ["track", "lesson_id"],
   low_level_design_practice_started: ["track", "practice_id"],
   preparation_activity_recorded: ["track", "item_id", "status", "persistence"],
-  low_level_design_activity_recorded: ["track", "item_id", "status", "persistence"],
+  low_level_design_activity_recorded: ["track", "item_id", "item_type", "status", "persistence"],
   continuation_presented: ["track", "continuation_source", "authenticated"],
   continuation_selected: ["track", "continuation_source", "authenticated"],
   study_plan_activated: ["track", "plan_id", "persistence"],
@@ -64,17 +64,22 @@ const TRACK_VALUES = new Set([...PREPARATION_TRACKS, "interview"]);
 const PERSISTENCE_VALUES = new Set(["account", "local"]);
 const STATUS_VALUES = new Set(["attempted", "solved", "review", "reviewed", "comfortable", "in-progress", "completed"]);
 const MODE_VALUES = new Set(["solo", "peer"]);
+const DSA_SOURCE_VALUES = new Set(["leetcode", "leetcode-ca", "other"]);
+const INTERVIEW_EXPERIENCE_SOURCE_VALUES = new Set(["directory_contribution"]);
+const LOW_LEVEL_DESIGN_ITEM_TYPES = new Set(["lesson", "practice"]);
 const SLUG_VALUE = /^[a-z0-9][a-z0-9-]{0,119}$/;
 const CONTINUATION_SOURCE_VALUE = /^(account|local):(upcoming-interview|active-plan|in-progress|next|recent)$/;
 
-function validPropertyValue(key: string, value: unknown) {
+function validPropertyValue(event: P09AnalyticsEvent, key: string, value: unknown) {
   if (key === "authenticated") return typeof value === "boolean";
   if (key === "track") return typeof value === "string" && TRACK_VALUES.has(value);
   if (key === "persistence") return typeof value === "string" && PERSISTENCE_VALUES.has(value);
   if (key === "status") return typeof value === "string" && STATUS_VALUES.has(value);
   if (key === "mode") return typeof value === "string" && MODE_VALUES.has(value);
   if (key === "continuation_source") return typeof value === "string" && CONTINUATION_SOURCE_VALUE.test(value);
-  if (key === "source") return typeof value === "string" && new Set(["leetcode", "hackerrank", "codesignal", "other"]).has(value);
+  if (key === "source" && event === "dsa_practice_started") return typeof value === "string" && DSA_SOURCE_VALUES.has(value);
+  if (key === "source" && (event === "interview_experience_submission_started" || event === "interview_experience_submitted")) return typeof value === "string" && INTERVIEW_EXPERIENCE_SOURCE_VALUES.has(value);
+  if (key === "item_type" && event === "low_level_design_activity_recorded") return typeof value === "string" && LOW_LEVEL_DESIGN_ITEM_TYPES.has(value);
   if (key === "surface") return value === "salary-negotiation";
   return typeof value === "string" && SLUG_VALUE.test(value);
 }
@@ -86,5 +91,5 @@ export function isP09AnalyticsEvent(event: string): event is P09AnalyticsEvent {
 export function sanitizeP09AnalyticsProperties(event: string, properties: Record<string, unknown> | undefined) {
   if (!properties || !isP09AnalyticsEvent(event)) return properties;
   const allowed = new Set<string>(P09_EVENT_PROPERTY_ALLOWLIST[event]);
-  return Object.fromEntries(Object.entries(properties).filter(([key, value]) => allowed.has(key) && validPropertyValue(key, value)));
+  return Object.fromEntries(Object.entries(properties).filter(([key, value]) => allowed.has(key) && validPropertyValue(event, key, value)));
 }

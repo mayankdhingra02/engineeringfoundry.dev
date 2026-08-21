@@ -22,7 +22,9 @@ Engineering Foundry currently initializes optional analytics whenever the public
 | Metric | Definition | Never interpret as |
 | --- | --- | --- |
 | Visitors | Distinct PostHog persons/devices with at least one public `$pageview` in the selected window | Active or registered users |
-| Registered users | Distinct identified users with a successful `sign_in_completed` or `account_created` in the selected window | Active users |
+| Registered accounts | Authoritative aggregate count of Supabase/Auth accounts at the end of the completed measurement window | Signed-in, active, or newly created users |
+| Signed-in users | Distinct identified users with `sign_in_completed` in the selected window | Registered accounts or new accounts |
+| Confirmed new email accounts | Distinct `account_created` events with `method=email` in the selected window | Total registrations; OAuth new-account attribution is unavailable |
 | Engaged users | Distinct persons with at least one first-useful-action event in the selected window | Interview-ready users |
 | First useful action users | Distinct persons whose first event in `FIRST_USEFUL_ACTION_EVENTS` occurs in the selected window | Completions, outcomes, or mastery |
 | Returning users | Distinct persons with qualifying activity in more than one selected time window | Seven-day retention unless the 7-day cohort formula is used |
@@ -40,6 +42,8 @@ Create these dashboards manually in the production PostHog project after the eve
 - Visitors: unique persons, `$pageview`, public routes only, selected period.
 - Signup starts: unique persons, `account_signup_started`.
 - Confirmed email accounts: unique persons, `account_created`, `method=email`.
+- Signed-in users: unique persons, `sign_in_completed`; this is a usage metric, not a registration count.
+- Registered accounts: report the end-of-window Supabase/Auth aggregate separately, using the snapshot's `account_source_reference`.
 - First useful action: unique persons, event in the fixed first-useful-action set.
 - First useful action rate: first-useful-action persons ÷ visitors in the same period. Clearly label it a rate of measured visitors, not all people reached.
 
@@ -68,9 +72,9 @@ Every dashboard must use exact event names above. Do not use admin events, free 
 
 ## Monthly evidence workflow
 
-1. After a complete calendar month, export the exact aggregate values needed for `docs/impact-ledger/monthly-snapshot.template.json` from the configured production project.
+1. After a complete calendar month, export the PostHog aggregates needed for `docs/impact-ledger/monthly-snapshot.template.json`, obtain the end-of-window registered-account aggregate from Supabase/Auth, and obtain any product-data aggregate needed for approvals.
 2. Create `docs/impact-ledger/snapshots/YYYY-MM.json` from that template. Do not commit raw person-level event exports.
-3. Include `analytics_definition_version`, a reproducible PostHog report URL or redacted export location, the measurement window, and only truthful nonnegative aggregate values.
+3. Include `analytics_definition_version`, the three reproducible aggregate source references (`analytics_source_reference`, `account_source_reference`, and `product_data_source_reference`), the measurement window, and only truthful nonnegative aggregate values. Do not commit person-level exports.
 4. Run `npm run validate:impact-ledger` before committing the snapshot.
 5. If a definition changes, create a new version; never rewrite a historical snapshot to silently adopt new semantics.
 
