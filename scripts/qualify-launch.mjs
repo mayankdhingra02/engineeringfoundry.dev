@@ -39,6 +39,7 @@ const STATIC_STEPS = [
   ["DSA persistent progress", "npm", ["run", "test:dsa-progress"]],
   ["System Design workspace", "npm", ["run", "test:system-design-workspace"]],
   ["Interview preparation hub", "npm", ["run", "test:interview-preparation-hub"]],
+  ["Interview Playbook mock evidence", "npm", ["run", "test:interview-playbook-mock-evidence"]],
   ["Interview Playbook DSA evidence boundary", "npm", ["run", "test:interview-playbook-dsa-evidence"]],
   ["Interview Playbook System Design evidence boundary", "npm", ["run", "test:interview-playbook-system-design-evidence"]],
   ["Interview calendar and reminders", "npm", ["run", "test:interview-calendar-reminders"]],

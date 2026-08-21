@@ -104,6 +104,7 @@ const withDsa = buildInterviewPlaybookPlanningProjection({ overview, now: NOW, e
 check("DSA self-report has a transparent source description", deepEqual(withDsa?.sourceDescription, {
   hasSavedDiagnosticInputs: false,
   selfReportedEvidenceAreas: ["algorithmic-coding"],
+  selfReportedSources: ["dsa-progress"],
 }));
 check("self-reported DSA still produces an algorithmic baseline check", withDsa?.actions.some((action) => action.area === "algorithmic-coding" && action.kind === "baseline-check"));
 const nonAlgorithmicInjection = [{ ...solvedEvidence[0], area: "system-design" }];

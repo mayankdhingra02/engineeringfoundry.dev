@@ -55,6 +55,8 @@ export type InterviewPlaybookPlanningSourceDescription = Readonly<{
   hasSavedDiagnosticInputs: boolean;
   /** Canonically ordered areas with meaningful user-entered evidence. */
   selfReportedEvidenceAreas: readonly InterviewPreparationArea[];
+  /** Bounded provenance categories for truthful presentation, not planning. */
+  selfReportedSources: readonly ("dsa-progress" | "system-design-progress" | "mock-review")[];
 }>;
 
 /** Presentation-safe round metadata only — never notes or other private round content. */
@@ -226,12 +228,18 @@ function buildSourceDescription(
   evidence: readonly InterviewEvidenceItem[],
 ): InterviewPlaybookPlanningSourceDescription {
   const selfReportedAreas = new Set<InterviewPreparationArea>();
+  const sources = new Set<"dsa-progress" | "system-design-progress" | "mock-review">();
   for (const item of evidence) {
-    if (item.provenance === "self-report" && item.signal !== "unknown") selfReportedAreas.add(item.area);
+    if (item.provenance !== "self-report" || item.signal === "unknown") continue;
+    selfReportedAreas.add(item.area);
+    if (item.id.startsWith("dsa-question-progress:")) sources.add("dsa-progress");
+    else if (item.id.startsWith("system-design-item-progress:")) sources.add("system-design-progress");
+    else if (item.kind === "mock" && item.id.startsWith("mock-session:")) sources.add("mock-review");
   }
   return {
     hasSavedDiagnosticInputs,
     selfReportedEvidenceAreas: INTERVIEW_PREPARATION_AREAS.filter((area) => selfReportedAreas.has(area)),
+    selfReportedSources: (["dsa-progress", "system-design-progress", "mock-review"] as const).filter((source) => sources.has(source)),
   };
 }
 

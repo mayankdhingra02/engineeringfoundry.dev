@@ -63,12 +63,12 @@ function strategyStageLabel(stage: InterviewPlaybookPresentedPlanAction["stage"]
 }
 
 /** Describes exactly what fed the plan below without describing self-report as observed performance. */
-function planningSourceCopy(source: { hasSavedDiagnosticInputs: boolean; selfReportedEvidenceAreas: readonly string[] }) {
-  const sources = source.selfReportedEvidenceAreas.map((area) => area === "algorithmic-coding"
-    ? "DSA practice you marked solved"
-    : area === "system-design"
+function planningSourceCopy(source: { hasSavedDiagnosticInputs: boolean; selfReportedSources: readonly string[] }) {
+  const sources = source.selfReportedSources.map((category) => category === "dsa-progress"
+    ? "DSA progress you marked solved"
+    : category === "system-design-progress"
       ? "System Design progress you marked"
-      : `${area.replaceAll("-", " ")} activity you marked`);
+      : "saved mock self-reviews");
   const sourceText = sources.length === 0 ? "" : ` and ${sources.join(" and ")}`;
   if (source.hasSavedDiagnosticInputs) {
     return `Built from confirmed active round signals, interview timing, the hours, confidence, priorities, and coverage you saved below${sourceText}. Self-reported activity is not observed performance and still calls for stronger evidence.`;
