@@ -43,6 +43,7 @@ const STATIC_STEPS = [
   ["Interview Experiences v1", "npm", ["run", "test:interview-experiences-v1"]],
   ["Company Guides v1", "npm", ["run", "test:company-guides"]],
   ["Low-Level Design v1", "npm", ["run", "test:low-level-design"]],
+  ["Salary Negotiation v1", "npm", ["run", "test:salary-negotiation"]],
   ["Interview preparation hub", "npm", ["run", "test:interview-preparation-hub"]],
   ["Interview Playbook diagnostic inputs", "npm", ["run", "test:interview-playbook-diagnostic-inputs"]],
   ["Interview Playbook mock evidence", "npm", ["run", "test:interview-playbook-mock-evidence"]],

@@ -25,6 +25,7 @@ export const siteConfig = {
     { label: "Challenges", href: "/challenges" },
   ],
   careerCommunityNav: [
+    { label: "Salary Negotiation", href: "/salary-negotiation" },
     { label: "Referrals", href: "/referrals" },
     { label: "Interview Experiences", href: "/interview-experiences" },
     { label: "Resources", href: "/resources" },
@@ -41,7 +42,7 @@ export const siteConfig = {
 export const footerGroups = [
   { title: "Prepare", links: [["DSA", "/dsa"], ["System Design", "/system-design/start-here/introduction"], ["Low-Level Design", "/low-level-design"], ["Company Guides", "/companies"], ["ML Design", "/ml-design"], ["Behavioral", "/behavioral"], ["Interview Execution Guide", "/interview-tips"]] },
   { title: "Practice", links: [["Mock Interviews", "/mock-interviews"], ["Challenges", "/challenges"]] },
-  { title: "Career", links: [["Referrals", "/referrals"], ["Interview Experiences", "/interview-experiences"], ["Resources", "/resources"]] },
+  { title: "Career", links: [["Salary Negotiation", "/salary-negotiation"], ["Referrals", "/referrals"], ["Interview Experiences", "/interview-experiences"], ["Resources", "/resources"]] },
   { title: "Community", links: [["Community Hub", "/community"], ["Recognition", "/leaderboard"], ["Discord", siteConfig.discordUrl]] },
   { title: "Engineering Foundry", links: [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"]] },
   { title: "Legal", links: [["Privacy", "/privacy"], ["Terms", "/terms"]] },

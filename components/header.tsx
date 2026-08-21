@@ -27,6 +27,7 @@ const navDescriptions: Record<string, string> = {
   Companies: "Neutral, provenance-aware preparation guides",
   Community: "Public pathways and Discord community",
   "Interview Experiences": "Private, privacy-conscious write-up builder",
+  "Salary Negotiation": "Ethical offer and compensation guidance",
   Resources: "Curated preparation material",
   Challenges: "Self-guided engineering scenarios",
   Recognition: "Honest recognition preview",

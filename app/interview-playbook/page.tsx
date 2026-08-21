@@ -120,6 +120,7 @@ export default async function InterviewPlaybookPage() {
 
   const firstActiveInterviewProcessWithoutRound = overview.activeInterviewProcesses.find((application) => application.nextRound === null) ?? null;
   const firstPreInterviewApplication = overview.preInterviewApplications[0] ?? null;
+  const offerStageApplication = overview.applications.find((application) => application.status === "Offer") ?? null;
 
   function renderDominantAction() {
     // Branch A: a primary round and its detailed action both exist.
@@ -246,6 +247,8 @@ export default async function InterviewPlaybookPage() {
     </section>}
 
     {renderDominantAction()}
+
+    {offerStageApplication && <section className="prep-next-action prep-offer-handoff" aria-labelledby="playbook-offer-heading"><div><h2 id="playbook-offer-heading">An offer is recorded for {offerStageApplication.companyName}</h2><p>Move from interview preparation to a careful offer review. The worksheet is private browser-session state and does not alter your application record.</p></div><div><Link className="button button-secondary" href="/salary-negotiation">Prepare to evaluate and negotiate this offer<ArrowRight size={15} /></Link><Link className="text-link" href={offerStageApplication.applicationHref}>Review application details</Link></div></section>}
 
     {primaryRound && primaryAction && primaryTiming?.guidance ? (
       <InterviewPlaybookFinalPreparationMode guidance={primaryTiming.guidance} round={primaryRound} />
