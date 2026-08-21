@@ -1,6 +1,6 @@
 import "server-only";
 
-import { isAccountPlatformAvailable, isSupabaseConfigured } from "@/lib/account-platform";
+import { isAccountPlatformAvailable, isProductionSiteUrlConfigured, isSupabaseConfigured } from "@/lib/account-platform";
 import { isReminderEmailDeliveryAvailable } from "@/lib/interview-reminders/provider";
 
 /**
@@ -39,6 +39,7 @@ export function accountPlatformStatus(): CapabilityStatus {
   const missing: string[] = [];
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
   if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  if (!isProductionSiteUrlConfigured()) missing.push("NEXT_PUBLIC_SITE_URL=https://<production-domain>");
   if (process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED !== "true") missing.push("NEXT_PUBLIC_ACCOUNTS_ENABLED=true");
   return { available: isAccountPlatformAvailable(), missing };
 }
