@@ -67,6 +67,8 @@ jobs:
         run: npm run test:interview-playbook-planner-integration
       - name: Test Interview Playbook DSA evidence boundary
         run: npm run test:interview-playbook-dsa-evidence
+      - name: Test Interview Playbook System Design evidence boundary
+        run: npm run test:interview-playbook-system-design-evidence
       - name: Test Interview Playbook diagnostic inputs
         run: npm run test:interview-playbook-diagnostic-inputs
       - name: Test interview calendar and reminders
