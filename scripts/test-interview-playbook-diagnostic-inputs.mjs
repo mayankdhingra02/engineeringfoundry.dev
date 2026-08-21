@@ -386,7 +386,7 @@ check("diagnosticInput is only forwarded when the user has actually saved inputs
 // =====================================================================
 // 8. Account export
 // =====================================================================
-check("EXPORT_VERSION was bumped to 1.1", exportSource.includes('const EXPORT_VERSION = "1.1"'));
+check("EXPORT_VERSION is current at 1.2", exportSource.includes('const EXPORT_VERSION = "1.2"'));
 check("export gains a top-level interview_playbook section", exportSource.includes("interview_playbook: {"));
 for (const subsection of ["diagnostic_settings", "confidence", "priorities", "constraints"]) {
   check(`interview_playbook export includes ${subsection}`, new RegExp(`interview_playbook: \\{[\\s\\S]{0,400}${subsection}`).test(exportSource));
