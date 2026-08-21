@@ -280,6 +280,30 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["account_action_rate_limits"]["Insert"]>;
         Relationships: [{ foreignKeyName: "account_action_rate_limits_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "users"; referencedColumns: ["id"] }];
       };
+      admin_memberships: {
+        Row: { user_id: string; created_at: string };
+        Insert: { user_id: string; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["admin_memberships"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "admin_memberships_user_id_fkey"; columns: ["user_id"]; isOneToOne: true; referencedRelation: "users"; referencedColumns: ["id"] }];
+      };
+      feedback_submissions: {
+        Row: { id: string; reference_id: string; actor_id: string | null; submitted_as_authenticated: boolean; category: "bug" | "suggestion" | "content_source" | "accessibility" | "privacy_safety" | "other"; message: string; page_context: string | null; contact_email: string | null; contact_consent: boolean; status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; admin_note: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; reference_id: string; actor_id?: string | null; submitted_as_authenticated?: boolean; category: "bug" | "suggestion" | "content_source" | "accessibility" | "privacy_safety" | "other"; message: string; page_context?: string | null; contact_email?: string | null; contact_consent?: boolean; status?: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; admin_note?: string | null; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["feedback_submissions"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "feedback_submissions_actor_id_fkey"; columns: ["actor_id"]; isOneToOne: false; referencedRelation: "users"; referencedColumns: ["id"] }];
+      };
+      feedback_submission_rate_limits: {
+        Row: { subject_key: string; window_started_at: string; request_count: number; last_request_at: string; created_at: string };
+        Insert: { subject_key: string; window_started_at?: string; request_count?: number; last_request_at?: string; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["feedback_submission_rate_limits"]["Insert"]>;
+        Relationships: [];
+      };
+      admin_audit_events: {
+        Row: { id: string; admin_actor_id: string | null; action_type: "feedback_status_changed" | "feedback_note_updated" | "experience_moderated"; target_type: "feedback_submission" | "interview_experience"; target_id: string; prior_status: string | null; new_status: string | null; created_at: string };
+        Insert: { id?: string; admin_actor_id?: string | null; action_type: "feedback_status_changed" | "feedback_note_updated" | "experience_moderated"; target_type: "feedback_submission" | "interview_experience"; target_id: string; prior_status?: string | null; new_status?: string | null; created_at?: string };
+        Update: Partial<Database["public"]["Tables"]["admin_audit_events"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "admin_audit_events_admin_actor_id_fkey"; columns: ["admin_actor_id"]; isOneToOne: false; referencedRelation: "users"; referencedColumns: ["id"] }];
+      };
       dsa_question_catalog: {
         Row: { id: string };
         Insert: { id: string };
@@ -861,6 +885,11 @@ export type Database = {
       submit_interview_experience: { Args: { target_id: string }; Returns: boolean };
       withdraw_interview_experience: { Args: { target_id: string }; Returns: boolean };
       delete_interview_experience: { Args: { target_id: string }; Returns: boolean };
+      is_current_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      submit_feedback_submission: { Args: { payload: Json; anonymous_subject?: string | null }; Returns: string };
+      export_own_feedback_submissions: { Args: Record<PropertyKey, never>; Returns: { reference_id: string; category: "bug" | "suggestion" | "content_source" | "accessibility" | "privacy_safety" | "other"; message: string; page_context: string | null; contact_email: string | null; contact_consent: boolean; status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; created_at: string; updated_at: string }[] };
+      update_feedback_submission: { Args: { target_id: string; next_status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; next_note?: string | null }; Returns: boolean };
+      moderate_interview_experience: { Args: { target_id: string; next_status: "needs_changes" | "approved" | "rejected"; moderation_note?: string | null }; Returns: boolean };
       save_mock_interview_review: { Args: { target_session_id: string; target_track: "dsa" | "system-design" | "ml-design" | "behavioral"; target_mode: "solo" | "peer"; target_plan_id: string; target_prompt_id: string; target_rubric_id: string; target_started_at: string; target_elapsed_seconds: number; target_strength: string | null; target_improvement: string | null; target_follow_up_practice: string | null; target_ratings: Json }; Returns: string };
       create_interview_round: {
         Args: {

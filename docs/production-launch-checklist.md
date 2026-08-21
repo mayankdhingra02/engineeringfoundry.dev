@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 23 migrations are recorded, ending at `202608220002_create_preparation_track_progress`
+4. [ ] `supabase migration list --linked` — confirm all 25 migrations are recorded, ending at `202608230002_add_feedback_export_rpc`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -136,11 +136,17 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] With analytics configured, navigate dashboard → application → interview preparation → calendar → behavioral story → System Design attempt, then confirm in PostHog's live event view that **no pageview and no round/application/story/attempt UUID was received**
 - [ ] Private pages return `noindex` metadata
 
+### P0.8 feedback/admin operations
+
+- [ ] Submit anonymous and signed-in feedback; verify the private `EF-FB-…` reference receipt, consent gate, sanitized page context, and rate limit
+- [ ] Verify anonymous and ordinary members cannot read feedback or access `/admin`; verify an explicitly bootstrapped operator can triage feedback and moderate only submitted/needs-changes experiences
+- [ ] Confirm `/admin` remains noindex/no-store, renders no secrets, and company freshness remains a read-only review reminder
+
 ### Export
 
 - [ ] Export succeeds and downloads as a dated JSON attachment
 - [ ] Headers include `Cache-Control: private, no-store` and `X-Robots-Tag: noindex, nofollow`
-- [ ] Export contains User A's data only, has `export_version` `1.4`, includes User A's `preparation_activity` only, and contains no credentials, tokens, provider delivery identifiers, or global catalogs
+- [ ] Export contains User A's data only, has `export_version` `1.5`, includes User A's `preparation_activity` and account-linked feedback only, and contains no credentials, tokens, provider delivery identifiers, or global catalogs
 - [ ] Request the export more than five times in fifteen minutes — the sixth returns `429` with `Retry-After`
 - [ ] **Delete all cookies, sign in again, and confirm the limit is still in force** (the budget is server-side)
 

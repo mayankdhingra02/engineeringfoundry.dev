@@ -27,6 +27,7 @@
 
 /** Static prefixes. A path matches when it equals the prefix or sits beneath it. */
 export const PRIVATE_ROUTE_PREFIXES = [
+  "/admin",
   "/applications",
   "/auth",
   "/behavioral/questions",

@@ -57,6 +57,8 @@ jobs:
         run: npm run test:behavioral-workspace
       - name: Test Behavioral v1 polish
         run: npm run test:behavioral-v1-polish
+      - name: Test Feedback and admin operations
+        run: npm run test:feedback-admin-operations
       - name: Test interview preparation hub
         run: npm run test:interview-preparation-hub
       - name: Test interview execution taxonomy

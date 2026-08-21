@@ -48,9 +48,9 @@ The callback and all post-auth destinations use `safeInternalPath`; arbitrary ex
 2. `supabase link --project-ref <production-project-ref>`
 3. `supabase db diff --linked`; stop on any unexpected drop, rename, or unrelated change.
 4. `supabase db push`
-5. `supabase migration list --linked`; confirm all **23** migrations are applied through `202608220002_create_preparation_track_progress.sql`.
+5. `supabase migration list --linked`; confirm all **25** migrations are applied through `202608230002_add_feedback_export_rpc.sql`.
 6. Verify RLS/grants/RPCs, including profiles, applications/rounds, Behavioral stories and answers, DSA/System Design progress and active-plan preferences, ML Design and Behavioral preparation activity, reminders/calendar, Playbook inputs, mock reviews, and Interview Experiences.
-7. Run the two-disposable-account qualification in `docs/production-launch-checklist.md`, including account export schema `1.4`, account deletion, P0.2 preparation activity and active-plan isolation, the anonymous browser-import no-overwrite boundary, mock review isolation, and private Interview Experience draft isolation.
+7. Run the two-disposable-account qualification in `docs/production-launch-checklist.md`, including account export schema `1.5`, account deletion, P0.2 preparation activity and active-plan isolation, the anonymous browser-import no-overwrite boundary, mock review isolation, private Interview Experience draft isolation, and P0.8 feedback/admin operations.
 
 Migrations are forward-only. If a migration fails before completion, stop the deployment, preserve the error with secrets redacted, compare the linked migration history, and apply a new corrective migration only after review. Do not edit an already-applied migration. Restore from backup only when data loss is accepted; verify restore in a separate environment before routing production traffic.
 

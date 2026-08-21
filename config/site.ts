@@ -44,6 +44,6 @@ export const footerGroups = [
   { title: "Practice", links: [["Mock Interviews", "/mock-interviews"], ["Challenges", "/challenges"]] },
   { title: "Career", links: [["Salary Negotiation", "/salary-negotiation"], ["Referrals", "/referrals"], ["Interview Experiences", "/interview-experiences"], ["Resources", "/resources"]] },
   { title: "Community", links: [["Community Hub", "/community"], ["Recognition", "/leaderboard"], ["Discord", siteConfig.discordUrl]] },
-  { title: "Engineering Foundry", links: [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"]] },
+  { title: "Engineering Foundry", links: [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"], ["Feedback", "/feedback"]] },
   { title: "Legal", links: [["Privacy", "/privacy"], ["Terms", "/terms"]] },
 ] as const;
