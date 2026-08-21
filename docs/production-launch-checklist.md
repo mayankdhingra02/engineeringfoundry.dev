@@ -85,8 +85,8 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 22 migrations are recorded, ending at `202608220001_create_interview_experiences_v1`
-5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md` and `docs/authenticated-workspace.md`
+4. [ ] `supabase migration list --linked` — confirm all 23 migrations are recorded, ending at `202608220002_create_preparation_track_progress`
+5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
    select relname, relrowsecurity from pg_class
@@ -115,12 +115,19 @@ Use two disposable accounts (User A and User B) against the production origin wi
 
 ### Ownership isolation (two users)
 
-- [ ] User A cannot read or mutate User B's applications, rounds, preparation, stories, answers, saved questions, progress, attempts, preferences, reminders, mock reviews, Interview Experience drafts, or throttle state
+- [ ] User A cannot read or mutate User B's applications, rounds, preparation, stories, answers, saved questions, progress, attempts, preferences, ML Design/Behavioral `preparation_track_progress`, DSA/System Design active-plan preferences, reminders, mock reviews, Interview Experience drafts, or throttle state
 - [ ] User A cannot attach a child record to User B's parent
 - [ ] User A cannot open `/interviews/<User B round id>/prepare`
 - [ ] User A cannot fetch User B's `.ics` or Google export
 - [ ] Anonymous clients cannot select `profiles` directly; the public RPC still returns exactly nine fields
 - [ ] Fabricated DSA and System Design canonical IDs are refused
+
+### Anonymous browser-progress import boundary
+
+- [ ] While signed out, record only canonical public preparation activity in the browser; no notes, answers, stories, or analytics payloads are present in browser progress
+- [ ] After sign-in, choose the explicit import action and confirm it imports only valid missing activity for User A
+- [ ] Confirm existing User A records are left unchanged, browser activity is cleared only when imported, and local saved plans are not imported automatically
+- [ ] Confirm User B cannot read, import, overwrite, or otherwise observe User A's browser-originated or account-backed preparation activity
 
 ### Privacy
 
@@ -133,7 +140,7 @@ Use two disposable accounts (User A and User B) against the production origin wi
 
 - [ ] Export succeeds and downloads as a dated JSON attachment
 - [ ] Headers include `Cache-Control: private, no-store` and `X-Robots-Tag: noindex, nofollow`
-- [ ] Export contains User A's data only, with no credentials, tokens, provider delivery identifiers, or global catalogs
+- [ ] Export contains User A's data only, has `export_version` `1.4`, includes User A's `preparation_activity` only, and contains no credentials, tokens, provider delivery identifiers, or global catalogs
 - [ ] Request the export more than five times in fifteen minutes — the sixth returns `429` with `Retry-After`
 - [ ] **Delete all cookies, sign in again, and confirm the limit is still in force** (the budget is server-side)
 
@@ -144,6 +151,7 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] OAuth-only accounts require the typed `DELETE` confirmation
 - [ ] Auth identity and all owner-scoped rows are gone; User B is unaffected
 - [ ] Interview Experience draft/round rows and persisted mock review/rating rows are gone with User A; User B is unaffected
+- [ ] User A's `preparation_track_progress` rows and DSA/System Design active-plan preferences are gone with the account; User B's corresponding data is unaffected
 - [ ] Stale session cannot reach private routes; export returns unauthorized
 - [ ] No reminder row remains for the worker to claim
 
