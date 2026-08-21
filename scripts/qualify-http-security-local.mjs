@@ -160,7 +160,7 @@ try {
     assert.match(response.headers.get("content-disposition") ?? "", /attachment; filename="engineering-foundry-export-/);
     assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
     const payload = await response.json();
-    assert.equal(payload.export_version, "1.0");
+    assert.equal(payload.export_version, "1.1");
     return "200 with private no-store attachment";
   });
 

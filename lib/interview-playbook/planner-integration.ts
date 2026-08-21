@@ -16,11 +16,20 @@
  * `queries.ts`, network, storage, current time, or randomness. May import
  * only `./overview.ts`, `./timing.ts`, `./evidence.ts`, `./diagnostic.ts`,
  * and `./planning.ts`.
+ *
+ * Phase 3B1 extends this module with one optional input,
+ * `diagnosticInput` — real user-supplied hours/confidence/priorities/
+ * constraints/coverage from `./diagnostic-inputs.ts` (never read directly
+ * here; this file stays pure and only accepts the already-loaded value).
+ * When it is absent, behavior is byte-for-byte identical to Phase 3A: the
+ * same neutral diagnostic, the same `"round-context-only"` source mode.
+ * `evidence` inside `diagnosticInput` is always `[]` in this phase — no
+ * performance evidence is collected until Phase 3B2+.
  */
 import type { InterviewPlaybookOverviewBase, InterviewPlaybookRoundSummary } from "./overview.ts";
 import { resolveInterviewPlaybookTiming } from "./timing.ts";
 import { INTERVIEW_PREPARATION_AREAS, type InterviewPreparationArea } from "./evidence.ts";
-import { buildInterviewDiagnosticSnapshot } from "./diagnostic.ts";
+import { buildInterviewDiagnosticSnapshot, type BuildInterviewDiagnosticSnapshotInput } from "./diagnostic.ts";
 import {
   buildAdaptiveInterviewPlan,
   type InterviewAdaptivePlan,
@@ -32,7 +41,15 @@ import {
   type InterviewPlanningTarget,
 } from "./planning.ts";
 
-export const INTERVIEW_PLAYBOOK_PLANNING_SOURCE_MODE = "round-context-only" as const;
+/**
+ * `"round-context-only"` — no saved diagnostic input; the neutral Phase 3A
+ * diagnostic. `"round-context-and-user-inputs"` — the caller supplied a
+ * real `diagnosticInput`, so the plan additionally reflects the user's own
+ * hours, confidence, priorities, constraints, and coverage.
+ */
+export const INTERVIEW_PLAYBOOK_PLANNING_SOURCE_MODES = ["round-context-only", "round-context-and-user-inputs"] as const;
+
+export type InterviewPlaybookPlanningSourceMode = (typeof INTERVIEW_PLAYBOOK_PLANNING_SOURCE_MODES)[number];
 
 /** Presentation-safe round metadata only — never notes or other private round content. */
 export type InterviewPlaybookPlanningRoundMetadata = Readonly<{
@@ -50,6 +67,8 @@ export type InterviewPlaybookPlanningRoundMetadata = Readonly<{
 export type BuildInterviewPlaybookPlanningProjectionInput = Readonly<{
   overview: Pick<InterviewPlaybookOverviewBase, "upcomingRounds" | "unscheduledRounds">;
   now: Date;
+  /** Omit (or pass `undefined`) for the exact Phase 3A neutral-diagnostic behavior. */
+  diagnosticInput?: BuildInterviewDiagnosticSnapshotInput;
 }>;
 
 export type InterviewPlaybookPresentedPlanAction = Readonly<{
@@ -69,7 +88,7 @@ export type InterviewPlaybookPresentedDeferral = Readonly<{
 }>;
 
 export type InterviewPlaybookPlanningProjection = Readonly<{
-  sourceMode: "round-context-only";
+  sourceMode: InterviewPlaybookPlanningSourceMode;
   horizonBand: InterviewPlanHorizonBand;
   earliestDaysUntil: number | null;
   targetCount: number;
@@ -410,12 +429,17 @@ export function buildInterviewPlaybookPlanningProjection(
   if (targets.length === 0) return null;
 
   const roundMetadata = buildRoundMetadataMap(input.overview);
-  const diagnostic = buildNeutralDiagnostic();
+  const diagnostic = input.diagnosticInput
+    ? buildInterviewDiagnosticSnapshot(input.diagnosticInput)
+    : buildNeutralDiagnostic();
+  const sourceMode: InterviewPlaybookPlanningSourceMode = input.diagnosticInput
+    ? "round-context-and-user-inputs"
+    : "round-context-only";
   const plan = buildAdaptiveInterviewPlan({ diagnostic, targets });
   const presentation = presentInterviewAdaptivePlan(plan, roundMetadata);
 
   return {
-    sourceMode: INTERVIEW_PLAYBOOK_PLANNING_SOURCE_MODE,
+    sourceMode,
     horizonBand: plan.horizonBand,
     earliestDaysUntil: plan.earliestDaysUntil,
     targetCount: targets.length,

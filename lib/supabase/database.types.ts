@@ -688,6 +688,120 @@ export type Database = {
         };
         Relationships: [{ foreignKeyName: "user_preparation_preferences_user_id_fkey"; columns: ["user_id"]; isOneToOne: true; referencedRelation: "users"; referencedColumns: ["id"] }];
       };
+      interview_playbook_diagnostic_settings: {
+        Row: {
+          user_id: string;
+          available_hours_per_week: number | null;
+          behavioral_stories_coverage: "unknown" | "not-started" | "partial" | "covered";
+          project_deep_dive_coverage: "unknown" | "not-started" | "partial" | "covered";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          available_hours_per_week?: number | null;
+          behavioral_stories_coverage?: "unknown" | "not-started" | "partial" | "covered";
+          project_deep_dive_coverage?: "unknown" | "not-started" | "partial" | "covered";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_playbook_diagnostic_settings"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "interview_playbook_diagnostic_settings_user_id_fkey"; columns: ["user_id"]; isOneToOne: true; referencedRelation: "profiles"; referencedColumns: ["id"] }];
+      };
+      interview_playbook_confidence: {
+        Row: {
+          user_id: string;
+          area:
+            | "algorithmic-coding"
+            | "practical-coding"
+            | "debugging"
+            | "code-review"
+            | "low-level-design"
+            | "system-design"
+            | "ml-system-design"
+            | "behavioral"
+            | "project-deep-dive";
+          confidence: "low" | "medium" | "high";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          area:
+            | "algorithmic-coding"
+            | "practical-coding"
+            | "debugging"
+            | "code-review"
+            | "low-level-design"
+            | "system-design"
+            | "ml-system-design"
+            | "behavioral"
+            | "project-deep-dive";
+          confidence: "low" | "medium" | "high";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_playbook_confidence"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "interview_playbook_confidence_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }];
+      };
+      interview_playbook_priorities: {
+        Row: {
+          user_id: string;
+          area:
+            | "algorithmic-coding"
+            | "practical-coding"
+            | "debugging"
+            | "code-review"
+            | "low-level-design"
+            | "system-design"
+            | "ml-system-design"
+            | "behavioral"
+            | "project-deep-dive";
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          area:
+            | "algorithmic-coding"
+            | "practical-coding"
+            | "debugging"
+            | "code-review"
+            | "low-level-design"
+            | "system-design"
+            | "ml-system-design"
+            | "behavioral"
+            | "project-deep-dive";
+          position: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_playbook_priorities"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "interview_playbook_priorities_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }];
+      };
+      interview_playbook_constraints: {
+        Row: {
+          id: string;
+          user_id: string;
+          category: "work" | "school" | "health" | "family" | "other";
+          description: string;
+          position: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          category: "work" | "school" | "health" | "family" | "other";
+          description: string;
+          position: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["interview_playbook_constraints"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "interview_playbook_constraints_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] }];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -708,6 +822,17 @@ export type Database = {
           notes_value?: string | null;
         };
         Returns: string | null;
+      };
+      save_interview_playbook_diagnostic_inputs: {
+        Args: {
+          available_hours_per_week_value: number | null;
+          confidence_entries: Json;
+          priority_areas: string[];
+          constraint_entries: Json;
+          behavioral_stories_coverage_value: string;
+          project_deep_dive_coverage_value: string;
+        };
+        Returns: Database["public"]["Tables"]["interview_playbook_diagnostic_settings"]["Row"];
       };
       save_interview_reminder_preferences: {
         Args: {
@@ -884,3 +1009,7 @@ export type DsaQuestionProgressRow = Database["public"]["Tables"]["dsa_question_
 export type SystemDesignProgressRow = Database["public"]["Tables"]["system_design_progress"]["Row"];
 export type SystemDesignItemProgressRow = Database["public"]["Tables"]["system_design_item_progress"]["Row"];
 export type SystemDesignAttemptRow = Database["public"]["Tables"]["system_design_attempts"]["Row"];
+export type InterviewPlaybookDiagnosticSettingsRow = Database["public"]["Tables"]["interview_playbook_diagnostic_settings"]["Row"];
+export type InterviewPlaybookConfidenceRow = Database["public"]["Tables"]["interview_playbook_confidence"]["Row"];
+export type InterviewPlaybookPriorityRow = Database["public"]["Tables"]["interview_playbook_priorities"]["Row"];
+export type InterviewPlaybookConstraintRow = Database["public"]["Tables"]["interview_playbook_constraints"]["Row"];
