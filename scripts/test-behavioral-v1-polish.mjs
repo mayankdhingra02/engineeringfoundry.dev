@@ -34,6 +34,7 @@ check("question guidance excludes Principal overlay", !guidance.includes("Princi
 const workspace = read("app/behavioral/workspace/page.tsx");
 for (const marker of ["buildBehavioralCoverageMap", "Content coverage", "Build next", "Consider whether you need another example for variety"]) check(`workspace includes ${marker}`, workspace.includes(marker));
 check("workspace does not claim a readiness score", !/readiness score/i.test(workspace));
+check("Behavioral presentation maps stored Ready to content completeness", read("lib/behavioral/readiness.ts").includes('return "Content complete"'));
 const validation = read("lib/behavioral/validation.ts");
 check("answer validation requires a source story", validation.includes("Choose the source story for this answer variant."));
 const actions = read("features/behavioral/actions.ts");

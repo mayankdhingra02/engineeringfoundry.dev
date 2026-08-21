@@ -73,6 +73,13 @@ export function preparationStatus(question: WorkspaceQuestion, data: Pick<Behavi
   return "Not started";
 }
 
+/** Presentation-only wording for question coverage; it must not be read as observed interview readiness. */
+export function preparationStatusLabel(status: PreparationStatus) {
+  if (status === "Ready") return "Prepared content";
+  if (status === "Drafted") return "Variant drafted";
+  return status;
+}
+
 export function behavioralSummary(data: BehavioralWorkspaceData) {
   const prepared = data.questions.filter((question) => preparationStatus(question, data) !== "Not started").length;
   return { totalQuestions: data.questions.length, prepared, readyStories: data.stories.filter((story) => storyReadiness(story) === "Ready").length, stories: data.stories.length, answers: data.answers.length, upcomingInterviews: data.upcomingInterviews.length };

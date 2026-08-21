@@ -31,6 +31,14 @@ export function storyCompletenessLabel(readiness: StoryReadiness) {
   return readiness === "Ready" ? "Content complete" : readiness;
 }
 
+/** Stored status values are retained for database compatibility; this is display-only language. */
+export function behavioralContentStatusLabel(status: string) {
+  if (status === "Ready") return "Content complete";
+  if (status === "Needs Work") return "Needs detail";
+  if (status === "Retired") return "Retired";
+  return status;
+}
+
 const BEHAVIORAL_ROUND_PATTERN = /\b(behavioral|behavioural|hiring manager|bar raiser|onsite|virtual onsite)\b/i;
 
 export function isBehavioralRoundType(roundType: string) {
