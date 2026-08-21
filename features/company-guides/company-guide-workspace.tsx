@@ -76,7 +76,8 @@ function StoryWorkspace({ guide, role }: { guide: CompanyInterviewGuide; role: R
 }
 
 function Allocation({ role }: { role: RoleGuide }) {
-  return <div className="company-allocation"><div className="company-allocation-bar" aria-label={`${role.level} recommended preparation allocation`}>{role.preparationAllocation.map((item, index) => <span key={item.label} style={{ width: `${item.value}%` }} data-index={index} title={`${item.label}: ${item.displayValue ?? `${item.value}%`}`} />)}</div><ul>{role.preparationAllocation.map((item, index) => <li key={item.label}><i data-index={index} />{item.label}<strong>{item.displayValue ?? `${item.value}%`}</strong></li>)}</ul></div>;
+  const priorities = [...role.preparationAllocation].sort((a, b) => b.value - a.value);
+  return <div className="company-allocation"><ul aria-label={`${role.level} qualitative preparation priorities`}>{priorities.map((item, index) => <li key={item.label}><i data-index={index} />{item.label}<strong>{index === 0 ? "Primary emphasis" : index === 1 ? "Strong emphasis" : "Supporting emphasis"}</strong></li>)}</ul></div>;
 }
 
 function ResourceGroup({ guide, category }: { guide: CompanyInterviewGuide; category: string }) {
@@ -91,10 +92,10 @@ function FrameworkList({ items, compact = false }: { items: string[]; compact?: 
 
 function PreparationPriorities({ role, company }: { role: RoleGuide; company: string }) {
   const priorities = [...role.preparationAllocation].sort((a, b) => b.value - a.value).slice(0, 3);
-  return <div className="company-prep-priorities"><div className="company-prep-priority-heading"><div><h2>Prepare these first</h2><p>Suggested time emphasis for {role.level}. A smaller share does not mean an interview category can be skipped.</p></div><EvidenceBadge kind="recommendation" confidence="Medium" compact company={company} /></div><ol>{priorities.map((item, index) => <li key={item.label}><span>{index === 0 ? "Primary emphasis" : "Important"}</span><strong>{item.label}</strong><small>{item.displayValue ?? `${item.value}%`} of suggested preparation time</small></li>)}</ol></div>;
+  return <div className="company-prep-priorities"><div className="company-prep-priority-heading"><div><h2>Prepare these first</h2><p>Qualitative Engineering Foundry recommendations for {role.level}. A later item is not an interview category you can automatically skip.</p></div><EvidenceBadge kind="recommendation" confidence="Medium" compact company={company} /></div><ol>{priorities.map((item, index) => <li key={item.label}><span>{index === 0 ? "Primary emphasis" : "Important"}</span><strong>{item.label}</strong><small>{index === 0 ? "Start here" : "Build after the core"}</small></li>)}</ol></div>;
 }
 
-export function CompanyGuideWorkspace({ guide }: { guide: CompanyInterviewGuide }) {
+export function CompanyGuideWorkspace({ guide, embedded = false }: { guide: CompanyInterviewGuide; embedded?: boolean }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -134,7 +135,7 @@ export function CompanyGuideWorkspace({ guide }: { guide: CompanyInterviewGuide 
     ] },
     { label: "Evidence & reference", items: [
       ["experiences", "Candidate experiences"],
-      ...(guide.readiness ? [["readiness", "Readiness scorecard"]] : []),
+      ...(!embedded && guide.readiness ? [["readiness", "Practice transfer checklist"]] : []),
       ...(guide.specializedRoles ? [["specialized", "Specialized roles"]] : []),
       ["resources", "Resources"], ["sources", "Sources & confidence"],
     ] },
@@ -193,8 +194,8 @@ export function CompanyGuideWorkspace({ guide }: { guide: CompanyInterviewGuide 
 
   const closeGuideIndex = () => { if (guideIndexRef.current) guideIndexRef.current.open = false; };
 
-  return <div className="company-guide-shell">
-    <header className="company-guide-hero">
+  return <div className={`company-guide-shell${embedded ? " company-guide-embedded" : ""}`}>
+    {!embedded && <header className="company-guide-hero">
       <div className="page-width company-guide-hero-inner">
         <div className="company-guide-brand" aria-hidden="true"><Building2 size={22} /><span>{guide.brandCode}</span></div>
         <div className="company-guide-hero-copy">
@@ -210,11 +211,11 @@ export function CompanyGuideWorkspace({ guide }: { guide: CompanyInterviewGuide 
           <a className="button company-mobile-start" href="#practice">Review {role.level} practice priorities<ArrowRight size={15} /></a>
         </div>
       </div>
-    </header>
+    </header>}
 
-    <nav className="company-guide-nav" aria-label={`${guide.company} preparation jobs`}><div className="page-width">{preparationJobs.map((job) => <a href={`#${job.id}`} aria-current={activeJob === job.id ? "location" : undefined} key={job.id}><span>{job.label}</span><small>{job.shortLabel}</small></a>)}<details ref={guideIndexRef} className="company-guide-index"><summary><span>Full guide index</span><small>Guide</small><ChevronDown size={14} aria-hidden="true" /></summary><div>{fullGuideGroups.map((group) => <section className="company-guide-index-group" aria-label={group.label} key={group.label}><strong>{group.label}</strong>{group.items.map(([href, label]) => <a href={`#${href}`} key={href} onClick={closeGuideIndex}>{label}</a>)}</section>)}</div></details></div></nav>
+    {!embedded && <nav className="company-guide-nav" aria-label={`${guide.company} preparation jobs`}><div className="page-width">{preparationJobs.map((job) => <a href={`#${job.id}`} aria-current={activeJob === job.id ? "location" : undefined} key={job.id}><span>{job.label}</span><small>{job.shortLabel}</small></a>)}<details ref={guideIndexRef} className="company-guide-index"><summary><span>Full guide index</span><small>Guide</small><ChevronDown size={14} aria-hidden="true" /></summary><div>{fullGuideGroups.map((group) => <section className="company-guide-index-group" aria-label={group.label} key={group.label}><strong>{group.label}</strong>{group.items.map(([href, label]) => <a href={`#${href}`} key={href} onClick={closeGuideIndex}>{label}</a>)}</section>)}</div></details></div></nav>}
 
-    <div className="page-width company-guide-layout">
+    <div className={embedded ? "company-guide-layout company-guide-embedded-layout" : "page-width company-guide-layout"}>
       <div className="company-guide-main">
         <div className="company-guide-brief">
           <div className="company-guide-brief-loop"><div className="company-prep-brief-heading"><div><h2>Your {role.level} interview brief</h2><p>{role.summary}</p></div><EvidenceBadge kind={role.processEvidence.kind} confidence={role.processEvidence.confidence} compact company={guide.company} /></div><ProcessPipeline role={role} compact /><p className="company-loop-caveat"><AlertTriangle size={15} />{guide.processDisclaimer}</p></div>
@@ -272,7 +273,7 @@ export function CompanyGuideWorkspace({ guide }: { guide: CompanyInterviewGuide 
         <GuideSection id="full-guide" title="Full guide and research reference" description="Open only the deeper evidence, edge cases, and supporting material you need. Nothing has been removed.">
           <div className="company-reference-stack">
             <ReferencePanel id="experiences" title="Recent candidate experiences" summary={`${experiences.length} ${role.level} report${experiences.length === 1 ? "" : "s"} in the current context`}><div className="company-experience-grid">{experiences.map((experience) => <article key={experience.id}><header><div><span>{experience.approximateDate ?? experience.year}{experience.location ? ` · ${experience.location}` : ""}</span><h3>{experience.title}</h3></div><EvidenceBadge kind="candidate" confidence={experience.confidence} compact company={guide.company} /></header><div className="company-experience-facts"><span><b>Result</b>{experience.result}</span>{experience.environment && <span><b>Environment</b>{experience.environment}</span>}{experience.yearsExperience && <span><b>Experience</b>{experience.yearsExperience}</span>}</div><details><summary>Rounds and topics<ChevronDown size={15} /></summary><div><strong>Sequence</strong><ul>{experience.sequence.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul><strong>Reported topics</strong><ul>{experience.topics.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul>{experience.note && <p>{experience.note}</p>}</div></details>{experience.sourceUrl ? <a href={experience.sourceUrl} target="_blank" rel="noreferrer">Open source report<ExternalLink size={12} /></a> : <span className="company-source-pending">Candidate report · Source URL pending</span>}</article>)}</div></ReferencePanel>
-            {guide.readiness && <ReferencePanel id="readiness" title="Readiness scorecard" summary="Check whether practice transfers under pressure"><ReadinessScorecardCard scorecard={guide.readiness} level={selectedLevel} /></ReferencePanel>}
+            {!embedded && guide.readiness && <ReferencePanel id="readiness" title="Practice transfer checklist" summary="Check whether practice transfers under pressure"><ReadinessScorecardCard scorecard={guide.readiness} level={selectedLevel} /></ReferencePanel>}
             {guide.postInterview && <ReferencePanel id="post-interview" title={guide.postInterview.title} summary={guide.postInterview.description}><div className="company-post-interview"><div>{guide.postInterview.stages.map((stage, index) => <span key={stage}><b>{String(index + 1).padStart(2, "0")}</b>{stage}</span>)}</div><aside><Route size={19} /><h3>Can {guide.company} ask for another interview?</h3><p>{guide.postInterview.reround}</p></aside></div></ReferencePanel>}
             {guide.specializedRoles && <ReferencePanel id="specialized" title={guide.specializedRoles.title} summary={guide.specializedRoles.description}><div className="company-specialized-model"><strong>{guide.specializedRoles.model}</strong><div>{guide.specializedRoles.roles.map((item) => <span key={item}>{item}</span>)}</div></div>{guide.watchItems?.map((item) => <div className="company-callout caution" key={item.title}><Sparkles size={18} /><div><EvidenceBadge kind={item.evidence.kind} confidence={item.evidence.confidence} compact company={guide.company} /><strong>Current watch item · {item.title}</strong><p>{item.text}</p></div></div>)}</ReferencePanel>}
             <ReferencePanel id="resources" title="Resources" summary="Official material first, followed by clearly labeled practice resources"><div className="company-resource-groups">{guide.resourceCategories.map((category) => <ResourceGroup guide={guide} category={category} key={category} />)}</div>{guide.systemsReading && <div className="company-systems-reading">{guide.systemsReading.map((item) => <a href={item.url} target="_blank" rel="noreferrer" key={item.title}><span><strong>{item.title}</strong><small>{item.lesson}</small></span><ExternalLink size={14} /></a>)}</div>}</ReferencePanel>

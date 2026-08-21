@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import { ArrowRight, Binary, BookOpen, Building2, MessagesSquare, Network, Quote, ShieldCheck, Users } from "lucide-react";
 import { AnalyticsEventOnMount } from "@/components/analytics-event";
 import { PageHero, SectionHeading, StatusPill } from "@/components/page-shell";
 import { QuestionList } from "@/components/question-list";
-import { CompanyGuideWorkspace } from "@/features/company-guides/company-guide-workspace";
+import { CompanyGuideV1Workspace, type CompanyGuidePublicExperience } from "@/features/company-guides/company-guide-v1";
 import { companies, getCompany } from "@/data/companies";
+import { priorityCompanyGuideBySlug } from "@/data/company-guides/v1";
 import { amazonGuide, googleGuide, metaGuide, walmartGuide } from "@/data/company-guides";
 import type { CompanyInterviewGuide } from "@/data/company-guides";
 import { questionsForCompany } from "@/data/dsa";
 import { createPageMetadata } from "@/lib/metadata";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamicParams = false;
 export function generateStaticParams() { return companies.map((company) => ({ slug: company.slug })); }
-const interviewGuides: Partial<Record<string, CompanyInterviewGuide>> = { amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide };
+const matureGuides: Partial<Record<string, CompanyInterviewGuide>> = { amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params; const company = getCompany(slug); if (!company) notFound();
@@ -34,8 +35,13 @@ const generalTracks = [
 
 export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params; const company = getCompany(slug); if (!company) notFound();
-  const interviewGuide = interviewGuides[company.slug];
-  if (interviewGuide) return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} /><Suspense fallback={<div className="page-width company-guide-loading" role="status" aria-live="polite">Loading {company.name} interview workspace…</div>}><CompanyGuideWorkspace guide={interviewGuide} /></Suspense></>;
+  const interviewGuide = priorityCompanyGuideBySlug[company.slug];
+  if (interviewGuide) {
+    const supabase = await createSupabaseServerClient();
+    const result = supabase ? await supabase.from("interview_experiences").select("id,role_title,role_level,region,interview_date,summary,interview_experience_rounds(round_type,topic_labels)").eq("status", "approved").eq("publication_consent", true).eq("company_name", company.name).order("interview_date", { ascending: false, nullsFirst: false }).limit(6) : { data: [] };
+    const matureGuide = matureGuides[company.slug];
+    return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} /><CompanyGuideV1Workspace guide={interviewGuide} experiences={(result.data ?? []) as unknown as CompanyGuidePublicExperience[]} matureGuide={matureGuide} /></>;
+  }
   const associatedQuestions = questionsForCompany(company.slug);
   return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} />
     <PageHero eyebrow="Company preparation hub" title={`${company.name} engineering interview preparation`} description="A useful starting point for general preparation and a future home for company-specific material that has clear public or moderated community provenance."><StatusPill tone="accent">Curation in progress</StatusPill></PageHero>
