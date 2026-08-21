@@ -27,6 +27,7 @@ import {
 import { getInterviewPlaybookDiagnosticInputs } from "@/lib/interview-playbook/diagnostic-inputs.ts";
 import { getDsaInterviewEvidence } from "@/lib/interview-playbook/dsa-evidence-query.ts";
 import { getSystemDesignInterviewEvidence } from "@/lib/interview-playbook/system-design-evidence-query.ts";
+import { getMockInterviewEvidence } from "@/lib/interview-playbook/mock-evidence-query.ts";
 import { InterviewPlaybookFinalPreparationMode } from "@/components/interview-playbook/final-preparation-mode";
 import { InterviewPlaybookDiagnosticInputForm } from "@/components/interview-playbook/diagnostic-input-form";
 
@@ -62,12 +63,12 @@ function strategyStageLabel(stage: InterviewPlaybookPresentedPlanAction["stage"]
 }
 
 /** Describes exactly what fed the plan below without describing self-report as observed performance. */
-function planningSourceCopy(source: { hasSavedDiagnosticInputs: boolean; selfReportedEvidenceAreas: readonly string[] }) {
-  const sources = source.selfReportedEvidenceAreas.map((area) => area === "algorithmic-coding"
-    ? "DSA practice you marked solved"
-    : area === "system-design"
+function planningSourceCopy(source: { hasSavedDiagnosticInputs: boolean; selfReportedSources: readonly string[] }) {
+  const sources = source.selfReportedSources.map((category) => category === "dsa-progress"
+    ? "DSA progress you marked solved"
+    : category === "system-design-progress"
       ? "System Design progress you marked"
-      : `${area.replaceAll("-", " ")} activity you marked`);
+      : "saved mock self-reviews");
   const sourceText = sources.length === 0 ? "" : ` and ${sources.join(" and ")}`;
   if (source.hasSavedDiagnosticInputs) {
     return `Built from confirmed active round signals, interview timing, the hours, confidence, priorities, and coverage you saved below${sourceText}. Self-reported activity is not observed performance and still calls for stronger evidence.`;
@@ -85,11 +86,12 @@ export default async function InterviewPlaybookPage() {
   // timing model must agree on "now," or a round could look upcoming to one and
   // already passed to the other.
   const now = new Date();
-  const [overview, diagnosticInputs, dsaEvidence, systemDesignEvidence] = await Promise.all([
+  const [overview, diagnosticInputs, dsaEvidence, systemDesignEvidence, mockEvidence] = await Promise.all([
     getInterviewPlaybookOverview(now),
     getInterviewPlaybookDiagnosticInputs(),
     getDsaInterviewEvidence(),
     getSystemDesignInterviewEvidence(),
+    getMockInterviewEvidence(),
   ]);
   // Read-only round-context projection: converts confirmed round signals into
   // the merged adaptive planner's targets. When the user has saved diagnostic
@@ -101,7 +103,7 @@ export default async function InterviewPlaybookPage() {
     overview,
     now,
     diagnosticInput: diagnosticInputs.hasSavedInputs ? diagnosticInputs.diagnosticInput : undefined,
-    evidence: [...dsaEvidence, ...systemDesignEvidence],
+    evidence: [...dsaEvidence, ...systemDesignEvidence, ...mockEvidence],
   });
 
   const primaryRound = overview.primaryRound;

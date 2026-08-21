@@ -1,0 +1,28 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(20);
+select ok(not has_table_privilege('anon','public.mock_interview_sessions','select'),'anon cannot read sessions');
+select ok(not has_table_privilege('authenticated','public.mock_interview_sessions','insert'),'authenticated direct session insert denied');
+select ok(not has_table_privilege('authenticated','public.mock_interview_rubric_ratings','insert'),'authenticated direct rating insert denied');
+select ok(has_function_privilege('authenticated','public.save_mock_interview_review(uuid,text,text,text,text,text,timestamptz,integer,text,text,text,jsonb)','execute'),'authenticated can use owner RPC');
+insert into auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('a1111111-1111-4111-8111-111111111111','authenticated','authenticated','mock-a@test','',now(),'{}','{}',now(),now()),('b2222222-2222-4222-8222-222222222222','authenticated','authenticated','mock-b@test','',now(),'{}','{}',now(),now());
+set local role authenticated; select set_config('request.jwt.claim.sub','a1111111-1111-4111-8111-111111111111',true);
+select is(public.save_mock_interview_review('c3333333-3333-4333-8333-333333333333','dsa','solo','mock-dsa-frequency-ledger','ef-frequency-ledger','rubric-dsa',now(),120,'good','better','repeat','[{"dimension_id":"approach","rating":"Strong"}]'::jsonb),'c3333333-3333-4333-8333-333333333333'::uuid,'owner saves review');
+select is((select count(*)::int from public.mock_interview_sessions),1,'owner reads one session');
+select is((select count(*)::int from public.mock_interview_rubric_ratings),1,'owner reads one rating');
+select throws_ok($$select public.save_mock_interview_review('d4444444-4444-4444-8444-444444444444','dsa','solo','x','x','rubric-system-design',now(),0,null,null,null,'[{"dimension_id":"approach","rating":"Strong"}]')$$,'23514','Invalid mock rubric','track/rubric mismatch rejected');
+select throws_ok($$select public.save_mock_interview_review('d4444444-4444-4444-8444-444444444444','dsa','solo','x','x','rubric-dsa',now(),0,null,null,null,'[]')$$,'23514','Invalid rubric ratings','empty ratings rejected');
+select throws_ok($$select public.save_mock_interview_review('d4444444-4444-4444-8444-444444444444','dsa','solo','x','x','rubric-dsa',now(),0,null,null,null,'[{"dimension_id":"requirements","rating":"Strong"}]')$$,'23514','Invalid rubric ratings','cross rubric dimension rejected');
+select throws_ok($$select public.save_mock_interview_review('d4444444-4444-4444-8444-444444444444','dsa','solo','x','x','rubric-dsa',now(),0,null,null,null,'[{"dimension_id":"approach","rating":"Wrong"}]')$$,'23514','Invalid rubric ratings','invalid rating rejected');
+select throws_ok($$select public.save_mock_interview_review('d4444444-4444-4444-8444-444444444444','dsa','solo','x','x','rubric-dsa',now(),0,null,null,null,'[{"dimension_id":"approach","rating":"Strong"},{"dimension_id":"approach","rating":"Strong"}]')$$,'23514','Invalid rubric ratings','duplicate dimensions rejected');
+select is((select count(*)::int from public.mock_interview_sessions),1,'invalid writes are atomic');
+select is(public.save_mock_interview_review('c3333333-3333-4333-8333-333333333333','dsa','solo','mock-dsa-frequency-ledger','ef-frequency-ledger','rubric-dsa',(select started_at from public.mock_interview_sessions),121,'new','newer','again','[{"dimension_id":"testing","rating":"Developing"}]'),'c3333333-3333-4333-8333-333333333333'::uuid,'resave succeeds');
+select is((select count(*)::int from public.mock_interview_sessions),1,'resave does not duplicate');
+select is((select dimension_id from public.mock_interview_rubric_ratings),'testing','resave replaces ratings');
+reset role; set local role authenticated; select set_config('request.jwt.claim.sub','b2222222-2222-4222-8222-222222222222',true);
+select is((select count(*)::int from public.mock_interview_sessions),0,'second user cannot read session');
+select is((select count(*)::int from public.mock_interview_rubric_ratings),0,'second user cannot read ratings');
+select throws_ok($$select public.save_mock_interview_review('c3333333-3333-4333-8333-333333333333','dsa','solo','mock-dsa-frequency-ledger','ef-frequency-ledger','rubric-dsa',now(),0,null,null,null,'[{"dimension_id":"approach","rating":"Strong"}]')$$,'42501','Mock session identity cannot change','cross user UUID reuse denied');
+reset role; delete from public.mock_interview_sessions where id='c3333333-3333-4333-8333-333333333333'; select is((select count(*)::int from public.mock_interview_rubric_ratings),0,'session delete cascades ratings');
+select * from finish(); rollback;

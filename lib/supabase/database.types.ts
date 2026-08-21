@@ -286,6 +286,15 @@ export type Database = {
         Update: { id?: string };
         Relationships: [];
       };
+      mock_interview_sessions: {
+        Row: { id: string; user_id: string; track: "dsa" | "system-design" | "ml-design" | "behavioral"; practice_mode: "solo" | "peer"; plan_id: string; prompt_id: string; rubric_id: string; started_at: string; reviewed_at: string | null; elapsed_seconds: number | null; strength: string | null; improvement: string | null; follow_up_practice: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; user_id: string; track: "dsa" | "system-design" | "ml-design" | "behavioral"; practice_mode: "solo" | "peer"; plan_id: string; prompt_id: string; rubric_id: string; started_at?: string; reviewed_at?: string | null; elapsed_seconds?: number | null; strength?: string | null; improvement?: string | null; follow_up_practice?: string | null; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["mock_interview_sessions"]["Insert"]>; Relationships: [];
+      };
+      mock_interview_rubric_ratings: {
+        Row: { session_id: string; dimension_id: string; rating: "Strong" | "Developing" | "Needs attention" };
+        Insert: { session_id: string; dimension_id: string; rating: "Strong" | "Developing" | "Needs attention" }; Update: Partial<Database["public"]["Tables"]["mock_interview_rubric_ratings"]["Insert"]>; Relationships: [];
+      };
       dsa_question_progress: {
         Row: {
           user_id: string;
@@ -805,6 +814,7 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      save_mock_interview_review: { Args: { target_session_id: string; target_track: "dsa" | "system-design" | "ml-design" | "behavioral"; target_mode: "solo" | "peer"; target_plan_id: string; target_prompt_id: string; target_rubric_id: string; target_started_at: string; target_elapsed_seconds: number; target_strength: string | null; target_improvement: string | null; target_follow_up_practice: string | null; target_ratings: Json }; Returns: string };
       create_interview_round: {
         Args: {
           target_application_id: string;

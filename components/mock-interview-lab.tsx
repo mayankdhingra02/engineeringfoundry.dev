@@ -38,6 +38,7 @@ import type {
   SystemDesignProblem,
 } from "@/types";
 import { PageHero, SectionHeading, StatusPill } from "./page-shell";
+import { saveMockInterviewReview } from "@/app/mock-interviews/actions";
 
 const tracks: MockTrack[] = ["dsa", "system-design", "ml-design", "behavioral"];
 const ratings = ["Strong", "Developing", "Needs attention"] as const;
@@ -120,6 +121,9 @@ export function MockInterviewLab() {
   const [notes, setNotes] = useState({ strength: "", improvement: "", followUp: "" });
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const [linkCopyState, setLinkCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const sessionId = useRef<string | null>(null);
+  const startedAt = useRef<string | null>(null);
   const trackedGuidance = useRef(new Set<string>());
 
   const availablePlans = useMemo(() => plansForMockTrack(selectedTrack), [selectedTrack]);
@@ -186,10 +190,21 @@ export function MockInterviewLab() {
     setMarks({});
     setNotes({ strength: "", improvement: "", followUp: "" });
     setCopyState("idle");
+    setSaveState("idle");
+    sessionId.current = crypto.randomUUID();
+    startedAt.current = new Date().toISOString();
     const properties = analyticsProperties(selectedPlan, mode);
     track("mock_session_configured", properties);
     track("mock_session_started", properties);
     requestAnimationFrame(() => document.querySelector("#session-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
+  async function savePracticeReview() {
+    const ratingsForSave = Object.entries(marks).map(([dimension_id, rating]) => ({ dimension_id, rating }));
+    if (!ratingsForSave.length || !sessionId.current || !startedAt.current) { setSaveState("failed"); return; }
+    setSaveState("saving");
+    const result = await saveMockInterviewReview({ sessionId: sessionId.current, track: selectedPlan.track, mode, planId: selectedPlan.id, promptId: selectedPlan.content_reference.id, rubricId: selectedPlan.rubric_id, startedAt: startedAt.current, elapsedSeconds, strength: notes.strength, improvement: notes.improvement, followUp: notes.followUp, ratings: ratingsForSave });
+    setSaveState(result.ok ? "saved" : "failed");
   }
 
   function trackGuidance(section: string, open: boolean) {
@@ -264,10 +279,10 @@ export function MockInterviewLab() {
       {mode === "solo" ? <details className="mock-guidance" onToggle={(event) => trackGuidance("solo_guidance", event.currentTarget.open)}><summary><span><Sparkles size={18} /></span><div><strong>Reveal solo practice guidance</strong><small>Open only after you have made an initial attempt.</small></div></summary><ul>{revealGuidance(selectedPlan).map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></details> : <details className="mock-guidance mock-interviewer-packet" onToggle={(event) => trackGuidance("interviewer_packet", event.currentTarget.open)}><summary><span><MessageSquareText size={18} /></span><div><strong>Open interviewer packet</strong><small>Candidate: hand the screen to your peer before opening.</small></div></summary><div className="mock-interviewer-body"><section><h3>Follow-ups and facilitation</h3><ul>{selectedPlan.interviewer_instructions.map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul></section><section><h3>Observe these dimensions</h3><ul>{rubric.dimensions.map((dimension) => <li key={dimension.id}><strong>{dimension.label}</strong><span>{dimension.description}</span></li>)}</ul></section><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></div></details>}
 
       <section className="mock-feedback"><SectionHeading eyebrow="Qualitative reflection" title={mode === "solo" ? "Review your reasoning, not a predicted outcome." : "Give specific feedback without pretending to make a hiring decision."} description={rubric.disclaimer} />
-        <p className="session-only-banner"><ShieldCheck size={17} /><span><strong>Session only — feedback is not saved.</strong> Marks and notes stay in React/browser memory, clear on refresh, and are never sent to Supabase, localStorage, or analytics.</span></p>
+        <p className="session-only-banner"><ShieldCheck size={17} /><span><strong>Private until you save.</strong> Ratings and notes stay in browser memory until you explicitly save this review. Saved ratings are self-report evidence; saved reflections remain private and never determine evidence.</span></p>
         <div className="mock-rubric">{rubric.dimensions.map((dimension) => <fieldset key={dimension.id}><legend><strong>{dimension.label}</strong><span>{dimension.description}</span></legend><div>{ratings.map((rating) => <label key={rating}><input type="radio" name={`rubric-${dimension.id}`} value={rating} checked={marks[dimension.id] === rating} onChange={() => setMarks((current) => ({ ...current, [dimension.id]: rating }))} /><span><i aria-hidden="true" />{rating}</span></label>)}</div></fieldset>)}</div>
         <div className="mock-notes"><label><span>Strength</span><textarea value={notes.strength} onChange={(event) => setNotes((current) => ({ ...current, strength: event.target.value }))} placeholder="What worked well?" /></label><label><span>One improvement</span><textarea value={notes.improvement} onChange={(event) => setNotes((current) => ({ ...current, improvement: event.target.value }))} placeholder="What is one concrete adjustment?" /></label><label><span>Follow-up practice</span><textarea value={notes.followUp} onChange={(event) => setNotes((current) => ({ ...current, followUp: event.target.value }))} placeholder="What should the next session focus on?" /></label></div>
-        <div className="mock-feedback-actions"><button type="button" className="button" onClick={copyFeedback}><Clipboard size={15} />Copy feedback</button><span role="status">{copyState === "copied" ? "Feedback copied. Nothing was uploaded or saved." : copyState === "failed" ? "Clipboard access failed; your feedback still remains only in this session." : "Clipboard content is not sent to analytics."}</span></div>
+        <div className="mock-feedback-actions"><button type="button" className="button" onClick={copyFeedback}><Clipboard size={15} />Copy feedback</button><button type="button" className="button button-secondary" onClick={savePracticeReview} disabled={saveState === "saving"}><ShieldCheck size={15} />{saveState === "saving" ? "Saving review…" : "Save practice review"}</button><span role="status">{saveState === "saved" ? "Saved privately. Your review remains self-reported." : saveState === "failed" ? "Add at least one rating and sign in to save this private review." : "Not saved automatically."}</span><span role="status">{copyState === "copied" ? "Feedback copied to your clipboard." : copyState === "failed" ? "Clipboard access failed; your review is still available here." : "Notes are private and never used to determine evidence."}</span></div>
       </section>
     </div></section>}
 
