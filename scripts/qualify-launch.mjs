@@ -38,6 +38,7 @@ const STATIC_STEPS = [
   ["Behavioral workspace", "npm", ["run", "test:behavioral-workspace"]],
   ["Behavioral v1 polish", "npm", ["run", "test:behavioral-v1-polish"]],
   ["Analytics and launch evidence", "npm", ["run", "test:analytics-launch-evidence"]],
+  ["V1 launch readiness", "npm", ["run", "test:v1-launch-readiness"]],
   ["Impact ledger integrity", "npm", ["run", "validate:impact-ledger"]],
   ["Feedback and admin operations", "npm", ["run", "test:feedback-admin-operations"]],
   ["Persistence foundation", "npm", ["run", "test:persistence-foundation"]],

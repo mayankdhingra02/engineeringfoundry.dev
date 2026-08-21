@@ -11,7 +11,7 @@
   "product_data_source_reference": "Supabase aggregate report or redacted aggregate export location for product-data metrics such as approvals",
   "metrics": {
     "unique_visitors": 0,
-    "registered_users": 0,
+    "registered_accounts": 0,
     "first_useful_action_users": 0,
     "engaged_users": 0,
     "seven_day_returning_users": 0,

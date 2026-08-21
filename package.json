@@ -26,6 +26,7 @@
     "test:behavioral-workspace": "node --experimental-strip-types --no-warnings scripts/test-behavioral-workspace.mjs",
     "test:behavioral-v1-polish": "node --experimental-strip-types --no-warnings scripts/test-behavioral-v1-polish.mjs",
     "test:analytics-launch-evidence": "node --experimental-strip-types --no-warnings scripts/test-analytics-launch-evidence.mjs",
+    "test:v1-launch-readiness": "node --experimental-strip-types --no-warnings scripts/test-v1-launch-readiness.mjs",
     "test:feedback-admin-operations": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-feedback-admin-operations.mjs",
     "test:interview-preparation-hub": "node --experimental-strip-types --no-warnings scripts/test-interview-preparation-hub.mjs",
     "test:interview-execution-taxonomy": "node --experimental-strip-types --no-warnings scripts/test-interview-execution-taxonomy.mjs",

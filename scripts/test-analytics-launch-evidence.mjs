@@ -100,6 +100,6 @@ const snapshot = {
 };
 assert.doesNotThrow(() => validateSnapshot(snapshot, "docs/impact-ledger/snapshots/2026-08.json"), "snapshot source provenance must cover analytics, account, and product-data metrics");
 assert.throws(() => validateSnapshot({ ...snapshot, account_source_reference: "" }, "docs/impact-ledger/snapshots/2026-08.json"), /account_source_reference/, "registered accounts require authoritative account provenance");
-assert.throws(() => validateSnapshot({ ...snapshot, metrics: { ...snapshot.metrics, registered_users: -1 } }, "docs/impact-ledger/snapshots/2026-08.json"), /registered_users/, "impossible account metrics must be rejected");
+assert.throws(() => validateSnapshot({ ...snapshot, metrics: { ...snapshot.metrics, registered_accounts: -1 } }, "docs/impact-ledger/snapshots/2026-08.json"), /registered_accounts/, "impossible account metrics must be rejected");
 
 console.log(`P0.9 analytics/evidence regression passed: ${FIRST_USEFUL_ACTION_EVENTS.length} first-useful-action events, explicit property allowlists, post-success activity semantics, dashboard/runbook definitions, and no fabricated evidence.`);

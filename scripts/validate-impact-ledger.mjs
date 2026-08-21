@@ -6,13 +6,13 @@ import { ANALYTICS_DEFINITION_VERSION } from "../lib/analytics/launch-metrics.ts
 
 const ROOT = "docs/impact-ledger";
 export const METRIC_IDS = [
-  "unique_visitors", "registered_users", "first_useful_action_users", "engaged_users", "seven_day_returning_users", "seven_day_return_rate",
+  "unique_visitors", "registered_accounts", "first_useful_action_users", "engaged_users", "seven_day_returning_users", "seven_day_return_rate",
   "dsa_starts", "system_design_starts", "ml_design_starts", "behavioral_starts", "low_level_design_starts",
   "mock_starts", "mock_review_saves", "interview_experience_submissions", "interview_experience_approvals",
 ];
 export const METRIC_SOURCE_REFERENCES = {
-  analytics_source_reference: METRIC_IDS.filter((metric) => metric !== "registered_users" && metric !== "interview_experience_approvals"),
-  account_source_reference: ["registered_users"],
+  analytics_source_reference: METRIC_IDS.filter((metric) => metric !== "registered_accounts" && metric !== "interview_experience_approvals"),
+  account_source_reference: ["registered_accounts"],
   product_data_source_reference: ["interview_experience_approvals"],
 };
 const EVIDENCE_TYPES = new Set(["testimonial", "article", "podcast", "talk", "workshop", "adoption", "invitation", "citation", "technical_contribution"]);
