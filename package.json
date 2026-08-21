@@ -26,6 +26,7 @@
     "test:interview-preparation-hub": "node --experimental-strip-types --no-warnings scripts/test-interview-preparation-hub.mjs",
     "test:interview-execution-taxonomy": "node --experimental-strip-types --no-warnings scripts/test-interview-execution-taxonomy.mjs",
     "test:interview-playbook-diagnostic": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-diagnostic.mjs",
+    "test:interview-playbook-mock-evidence": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-mock-evidence.mjs",
     "test:interview-playbook-planning": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-planning.mjs",
     "test:interview-playbook-planner-integration": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-planner-integration.mjs",
     "test:interview-playbook-dsa-evidence": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-dsa-evidence.mjs",

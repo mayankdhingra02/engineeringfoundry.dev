@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { mockReviewsToInterviewEvidence } from "../lib/interview-playbook/mock-evidence.ts";
+const one = (ratings, track = "dsa") => mockReviewsToInterviewEvidence([{ sessionId: "session-a", track, reviewedAt: "2026-08-20T00:00:00Z", ratings }]);
+assert.equal(one([]).length, 0);
+assert.equal(one(["Strong"])[0].signal, "positive");
+assert.equal(one(["Needs attention"])[0].signal, "negative");
+assert.equal(one(["Strong", "Developing"])[0].signal, "mixed");
+assert.equal(one(["Strong", "Needs attention"])[0].signal, "mixed");
+assert.equal(one(["Developing"])[0].signal, "mixed");
+assert.deepEqual(one(["Strong"], "ml-design")[0], { id: "mock-session:session-a:self-review", area: "ml-system-design", provenance: "self-report", kind: "mock", signal: "positive", observedAt: "2026-08-20T00:00:00Z", summary: "Saved mock self-review.", repeatedError: false });
+assert.deepEqual(one(["Strong", "Developing"]), one(["Developing", "Strong"]));
+console.log("Mock evidence adapter qualification passed.");
