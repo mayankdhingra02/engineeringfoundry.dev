@@ -128,7 +128,7 @@ await check("disposable account can populate every major private workspace", asy
 let exportPayload;
 await check("private JSON export contains owned Phase 1–7 data and excludes secrets", async () => {
   exportPayload = await buildAccountExport({ user: a.user, supabase: a.client });
-  assert.equal(exportPayload.export_version, "1.2");
+  assert.equal(exportPayload.export_version, "1.3");
   assert.equal(exportPayload.applications.length, 1);
   assert.equal(exportPayload.interview_rounds.length, 1);
   assert.equal(exportPayload.interview_preparation.records[0].private_notes, "Private preparation note");

@@ -1,24 +1,26 @@
-import { Archive, BookOpenCheck, FileEdit, SearchCheck, ShieldCheck, UserRoundCheck } from "lucide-react";
+import { CalendarDays, FilePlus2, SearchCheck, ShieldCheck } from "lucide-react";
 import { PageHero, SectionHeading } from "@/components/page-shell";
-import { experienceGuidance } from "@/data/interview-experiences";
-import { ExperienceBuilder } from "@/features/interview-experiences/experience-builder";
+import { ExperienceSubmission } from "@/features/interview-experiences/experience-submission";
+import { ExperienceDirectory, type PublicExperience } from "@/features/interview-experiences/experience-directory";
 import { createPageMetadata } from "@/lib/metadata";
+import { getAuthenticatedActor } from "@/lib/auth/actor";
 
-export const metadata = createPageMetadata({ title: "Interview Experience Write-up Builder", description: "Create a structured, privacy-conscious interview reflection in your browser. Drafts are not saved, submitted, or published today.", path: "/interview-experiences" });
+export const metadata = createPageMetadata({ title: "Interview Experiences", description: "Read reviewed, contributor-submitted interview process reports and share a privacy-conscious experience for moderation.", path: "/interview-experiences" });
 
-const futureRequirements = [
-  { icon: UserRoundCheck, title: "Authenticated submission", text: "A future contributor would deliberately submit a finished account; this local draft is never submitted." },
-  { icon: ShieldCheck, title: "Moderation and privacy review", text: "Review would check scope, personal information, confidentiality risk, and usefulness before publication." },
-  { icon: BookOpenCheck, title: "Provenance and status", text: "Published accounts would carry contributor context, moderation status, and clear personal-experience boundaries." },
-  { icon: Archive, title: "Freshness and removal", text: "A later directory needs correction, removal, and archival paths because experiences can become outdated." },
-];
-
-export default function InterviewExperiencesPage() {
+export default async function InterviewExperiencesPage() {
+  const actor = await getAuthenticatedActor();
+  const [publicResult, ownResult] = actor ? await Promise.all([
+    actor.supabase.from("interview_experiences").select("id,company_name,role_title,role_level,region,interview_date,summary,preparation_lessons,public_identity,interview_experience_rounds(round_type,topic_labels,process_notes)").eq("status", "approved").eq("publication_consent", true).order("interview_date", { ascending: false, nullsFirst: false }).limit(30),
+    actor.supabase.from("interview_experiences").select("id,status,company_name,role_title,updated_at,review_note").order("updated_at", { ascending: false }).limit(20),
+  ]) : [{ data: [] }, { data: [] }];
+  const experiences = (publicResult.data ?? []) as unknown as PublicExperience[];
+  const owned = ownResult.data ?? [];
   return <>
-    <PageHero eyebrow="Interview experience workspace" title="Document the process without exposing the questions." description="Build a structured reflection you control. The tool runs only in your browser page session and publishes nothing." />
-    <section className="section section-compact"><div className="page-width"><div className="experience-page-principles"><span><FileEdit size={16} />High-level process and topics</span><span><ShieldCheck size={16} />No identities or confidential material</span><span><SearchCheck size={16} />No upload, submission, or publishing</span></div></div></section>
-    <section className="section section-alt"><div className="page-width"><ExperienceBuilder /></div></section>
-    <section className="section"><div className="page-width"><SectionHeading eyebrow="Reviewed public experiences" title="No reviewed public interview experiences are published yet." description="Engineering Foundry does not use demo accounts, scraped reviews, or invented activity to make this directory look populated." /><div className="experience-directory-empty" role="status"><SearchCheck size={25} /><div><strong>Current public experience count: {experienceGuidance.currentPublicExperienceCount}</strong><p>The write-up builder creates a private copyable summary. It does not place that summary into a directory or moderation queue.</p></div></div></div></section>
-    <section className="section section-alt"><div className="page-width"><SectionHeading eyebrow="Future directory architecture" title="Publishing requires more than a form." description="A later authenticated phase can support reviewed contributor accounts without changing what the current private tool promises." /><div className="experience-future-grid">{futureRequirements.map(({ icon: Icon, title, text }) => <article key={title}><Icon size={20} /><h2>{title}</h2><p>{text}</p></article>)}</div><p className="experience-future-note">Potential moderation states: {experienceGuidance.futureModerationStates.join(" · ")}. Future identity preferences may include display username or anonymous publicly, but no publishing occurs now and perfect anonymity is not promised.</p></div></section>
+    <PageHero eyebrow="Interview experiences" title="Interview experiences, reviewed before they are shared." description="Browse real, high-level process reports—not copied questions or invented activity. Processes vary by role, team, location, and time." />
+    <section className="section section-compact"><div className="page-width"><div className="experience-page-principles"><span><SearchCheck size={16} />Approved contributor reports only</span><span><ShieldCheck size={16} />No exact prompts or identities</span><span><CalendarDays size={16} />Date and context keep reports honest</span></div></div></section>
+    <section className="section"><div className="page-width"><SectionHeading title="Reviewed experience directory" description="Reports appear only after moderation. A report describes one contributor’s high-level experience and may not reflect the current process." />
+      <ExperienceDirectory experiences={experiences} /></div></section>
+    <section className="section section-alt"><div className="page-width"><SectionHeading title="Contribute a high-level experience" description="Start private. Submit only what you are allowed to share. Moderation checks confidentiality, personal information, and usefulness before publication." /><ExperienceSubmission signedIn={Boolean(actor)} owned={owned} /></div></section>
+    <section className="section"><div className="page-width"><div className="experience-community-note"><div><h2>Need a correction or removal?</h2><p>Contact us with the report context. Approved reports can be corrected, archived, or removed when they become inaccurate, unsafe, or outdated.</p></div><a className="button button-secondary" href="/contact">Contact Engineering Foundry <FilePlus2 size={15} /></a></div></div></section>
   </>;
 }

@@ -295,6 +295,16 @@ export type Database = {
         Row: { session_id: string; dimension_id: string; rating: "Strong" | "Developing" | "Needs attention" };
         Insert: { session_id: string; dimension_id: string; rating: "Strong" | "Developing" | "Needs attention" }; Update: Partial<Database["public"]["Tables"]["mock_interview_rubric_ratings"]["Insert"]>; Relationships: [];
       };
+      interview_experiences: {
+        Row: { id: string; author_id: string; status: "draft" | "submitted" | "needs_changes" | "approved" | "rejected" | "archived" | "withdrawn"; company_name: string; role_title: string; role_level: string | null; region: string | null; interview_date: string | null; summary: string; preparation_lessons: string | null; public_identity: "anonymous" | "username"; publication_consent: boolean; submitted_at: string | null; reviewed_at: string | null; review_note: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; author_id: string; status?: "draft" | "submitted" | "needs_changes" | "approved" | "rejected" | "archived" | "withdrawn"; company_name?: string; role_title?: string; role_level?: string | null; region?: string | null; interview_date?: string | null; summary?: string; preparation_lessons?: string | null; public_identity?: "anonymous" | "username"; publication_consent?: boolean; submitted_at?: string | null; reviewed_at?: string | null; review_note?: string | null; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["interview_experiences"]["Insert"]>; Relationships: [{ foreignKeyName: "interview_experiences_author_id_fkey"; columns: ["author_id"]; isOneToOne: false; referencedRelation: "users"; referencedColumns: ["id"] }];
+      };
+      interview_experience_rounds: {
+        Row: { id: string; experience_id: string; position: number; round_type: string; topic_labels: string[]; process_notes: string | null };
+        Insert: { id?: string; experience_id: string; position: number; round_type: string; topic_labels?: string[]; process_notes?: string | null };
+        Update: Partial<Database["public"]["Tables"]["interview_experience_rounds"]["Insert"]>; Relationships: [{ foreignKeyName: "interview_experience_rounds_experience_id_fkey"; columns: ["experience_id"]; isOneToOne: false; referencedRelation: "interview_experiences"; referencedColumns: ["id"] }];
+      };
       dsa_question_progress: {
         Row: {
           user_id: string;
@@ -814,6 +824,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      save_interview_experience_draft: { Args: { target_id: string | null; payload: Json }; Returns: string };
+      submit_interview_experience: { Args: { target_id: string }; Returns: boolean };
+      withdraw_interview_experience: { Args: { target_id: string }; Returns: boolean };
+      delete_interview_experience: { Args: { target_id: string }; Returns: boolean };
       save_mock_interview_review: { Args: { target_session_id: string; target_track: "dsa" | "system-design" | "ml-design" | "behavioral"; target_mode: "solo" | "peer"; target_plan_id: string; target_prompt_id: string; target_rubric_id: string; target_started_at: string; target_elapsed_seconds: number; target_strength: string | null; target_improvement: string | null; target_follow_up_practice: string | null; target_ratings: Json }; Returns: string };
       create_interview_round: {
         Args: {
