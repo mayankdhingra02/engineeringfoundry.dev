@@ -89,6 +89,8 @@ jobs:
         run: npm run test:canonical-catalog-integrity
       - name: Test authenticated persistence foundation
         run: npm run test:persistence-foundation
+      - name: Test unified preparation progress
+        run: npm run test:unified-progress
       - name: Test UI density guardrails
         run: npm run test:ui-density
       - name: Test typography readability

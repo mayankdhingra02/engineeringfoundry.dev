@@ -20,6 +20,7 @@ for (const path of [
   "lib/preparation-state/repository.ts",
   "supabase/migrations/202608140002_harden_private_workspace_integrity.sql",
   "supabase/migrations/202608140003_create_user_preparation_state.sql",
+  "supabase/migrations/202608220002_create_preparation_track_progress.sql",
 ]) requireFile(path);
 
 const {
@@ -186,6 +187,7 @@ const sitemap = read("app/sitemap.ts");
 for (const privateRoute of ["/applications", "/behavioral/questions", "/behavioral/stories", "/behavioral/workspace", "/dashboard", "/settings", "/onboarding"]) assert.ok(!sitemap.includes(`"${privateRoute}"`), `private route leaked into sitemap source: ${privateRoute}`);
 
 const preparationMigration = read("supabase/migrations/202608140003_create_user_preparation_state.sql");
+const trackActivityMigration = read("supabase/migrations/202608220002_create_preparation_track_progress.sql");
 for (const table of ["user_preparation_preferences", "dsa_progress", "system_design_progress", "behavioral_saved_questions"]) {
   assert.match(preparationMigration, new RegExp(`create table public\\.${table}\\s*\\(`), `normalized table ${table} is missing`);
   assert.match(preparationMigration, new RegExp(`alter table public\\.${table} enable row level security`), `${table} does not enable RLS`);
@@ -209,6 +211,16 @@ assertNotMatches(
   /grant (?:insert|update) \([^)]*local_system_design_import_(?:version|imported_at)/is,
   "authenticated clients must not assign the local-import version or timestamp directly",
 );
+for (const marker of [
+  "create table public.preparation_track_progress",
+  "on delete cascade",
+  "enable row level security",
+  "Owners can read preparation track progress",
+  "save_preparation_track_progress",
+  "security definer",
+  "set search_path = ''",
+  "revoke all on table public.preparation_track_progress from anon, authenticated",
+]) assertContains(trackActivityMigration, marker, `P0.2 durable activity migration lacks ${marker}`);
 
 const hardeningMigration = read("supabase/migrations/202608140002_harden_private_workspace_integrity.sql");
 for (const marker of [
@@ -245,6 +257,6 @@ console.log([
   "- production runtime validators reject forged ownership, invalid enums, impossible dates, unknown catalog IDs, and invalid state transitions",
   "- canonical actor/current-user repositories do not accept arbitrary user IDs or bypass RLS",
   "- public/static pages, private no-cache/noindex pages, analytics, robots, and sitemap boundaries hold",
-  "- signed-out System Design browser state and honest no-state DSA behavior remain intact",
+  "- versioned browser activity remains bounded, recoverable, and separate from deliberate account imports",
   "- normalized schema, owner RLS, narrow grants, relationship ownership, atomic RPCs, and two-user pgTAP coverage are present",
 ].join("\n"));

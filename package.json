@@ -47,6 +47,7 @@
     "qualify:database": "node --experimental-strip-types --no-warnings scripts/qualify-launch.mjs database",
     "qualify:launch": "node --experimental-strip-types --no-warnings scripts/qualify-launch.mjs all",
     "test:persistence-foundation": "node --experimental-strip-types --no-warnings scripts/test-persistence-foundation.mjs",
+    "test:unified-progress": "node --experimental-strip-types --no-warnings scripts/test-unified-progress.mjs",
     "qualify:persistence-local": "node scripts/qualify-persistence-local.mjs",
     "test:ui-density": "node scripts/test-ui-density.mjs",
     "test:typography-readability": "node scripts/test-typography-readability.mjs",

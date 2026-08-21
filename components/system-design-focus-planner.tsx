@@ -28,6 +28,7 @@ import {
 } from "@/data/system-design/study-plan";
 import { cn } from "@/lib/utils";
 import { SystemDesignStudyPlanView } from "./system-design-study-plan";
+import { SaveStudyPlanControl } from "./save-study-plan-control";
 
 type TopicFilter = "all" | SystemDesignRecommendationGroup;
 type PlannerView = "curriculum" | "study-plan";
@@ -207,7 +208,7 @@ export function SystemDesignFocusPlanner() {
     <section className={cn("sd-focus-summary", personalized && "personalized")} aria-live="polite">
       <div><span>Your System Design plan</span>{personalized ? <><h2>{selectedLevel?.label} · {selectedRole?.label} · Interview in {selectedWindow?.shortLabel}</h2><p>Start with the first group, then expand only when the essential material feels reliable.</p></> : <><h2>Default Engineering Foundry curriculum</h2><p>Select a level and interview window to answer: “What should I study next?” Role is optional.</p></>}</div>
       {personalized ? <div className="sd-focus-counts"><span className="focus-now"><strong>{counts["focus-now"]}</strong>Focus Now</span><span className="learn-next"><strong>{counts["learn-next"]}</strong>Learn Next</span><span className="skip-for-now"><strong>{counts["skip-for-now"]}</strong>Skip for Now</span></div> : <div className="sd-focus-default-count"><strong>{systemDesignTopics.length}</strong><span>topics remain available</span></div>}
-      <div className="sd-focus-summary-actions">{view === "curriculum" && <button className="button" type="button" onClick={buildStudyPlan}><CalendarDays size={15} />Build my study plan</button>}{personalized && view === "curriculum" && <button className="button button-secondary" type="button" onClick={showFocusNow}>Start with Focus Now<ArrowRight size={15} /></button>}<Link className="button button-secondary" href="/system-design/problems">Browse practice problems<ArrowRight size={15} /></Link></div>
+      <div className="sd-focus-summary-actions">{view === "curriculum" && <button className="button" type="button" onClick={buildStudyPlan}><CalendarDays size={15} />Build my study plan</button>}{personalized && <SaveStudyPlanControl input={{ track: "system-design", level: effectiveLevel, preparationWindow: effectiveWindow, role, minutesPerDay }} href="/system-design/plan" label="System Design study plan" />}{personalized && view === "curriculum" && <button className="button button-secondary" type="button" onClick={showFocusNow}>Start with Focus Now<ArrowRight size={15} /></button>}<Link className="button button-secondary" href="/system-design/problems">Browse practice problems<ArrowRight size={15} /></Link></div>
     </section>
 
     <div className="sd-focus-mode-tabs" role="group" aria-label="System Design preparation view"><button type="button" aria-pressed={view === "curriculum"} onClick={() => { setView("curriculum"); savePreferences({ level, preparationWindow, role, minutesPerDay, view: "curriculum", missedDays }); }}>Curriculum</button><button type="button" aria-pressed={view === "study-plan"} onClick={buildStudyPlan}>Study Plan</button></div>

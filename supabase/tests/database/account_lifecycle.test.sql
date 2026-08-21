@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(50);
+select plan(51);
 
 select has_column('public', 'profiles', 'onboarding_completed_at', 'profiles store an explicit onboarding completion timestamp');
 select has_column('public', 'user_preparation_preferences', 'preferred_role_level', 'preparation preferences store preferred role level');
@@ -107,6 +107,8 @@ values (
   'Disposable design attempt',
   '{"functional_requirements":[],"non_functional_requirements":[],"capacity":{"assumptions":[],"calculations":[]},"apis":[],"data_models":[],"high_level_design":"Private design","deep_dives":[],"bottlenecks":[],"failure_modes":[],"tradeoffs":[],"follow_ups":[],"final_review_notes":""}'::jsonb
 );
+insert into public.preparation_track_progress (user_id, track, item_id, status, completed_at)
+values ('83838383-8383-4838-8838-838383838383', 'ml-design', 'ml-problem-recommendation', 'completed', now());
 select public.record_interview_calendar_export('83838383-8383-4838-8838-838383838302', 'ics');
 
 select ok((select count(*) > 0 from public.interview_reminders), 'disposable account has pending reminder jobs before deletion');
@@ -132,6 +134,7 @@ select is((select count(*)::integer from public.dsa_question_progress where user
 select is((select count(*)::integer from public.system_design_progress where user_id = '83838383-8383-4838-8838-838383838383'), 0, 'legacy System Design progress cascades');
 select is((select count(*)::integer from public.system_design_item_progress where user_id = '83838383-8383-4838-8838-838383838383'), 0, 'System Design item progress and notes cascade');
 select is((select count(*)::integer from public.system_design_attempts where user_id = '83838383-8383-4838-8838-838383838383'), 0, 'System Design attempts cascade');
+select is((select count(*)::integer from public.preparation_track_progress where user_id = '83838383-8383-4838-8838-838383838383'), 0, 'ML and Behavioral preparation activity cascades');
 select is((select count(*)::integer from public.interview_reminder_preferences where user_id = '83838383-8383-4838-8838-838383838383'), 0, 'reminder preferences cascade');
 select is((select count(*)::integer from public.interview_reminders where user_id = '83838383-8383-4838-8838-838383838383'), 0, 'pending reminder jobs cascade');
 select is((select count(*)::integer from public.interview_calendar_exports where user_id = '83838383-8383-4838-8838-838383838383'), 0, 'calendar export audit rows cascade');
