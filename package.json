@@ -24,6 +24,7 @@
     "test:auth-foundation": "node --experimental-strip-types --no-warnings scripts/test-auth-foundation.mjs",
     "test:application-tracker": "node --experimental-strip-types --no-warnings scripts/test-application-tracker.mjs",
     "test:behavioral-workspace": "node --experimental-strip-types --no-warnings scripts/test-behavioral-workspace.mjs",
+    "test:behavioral-v1-polish": "node --experimental-strip-types --no-warnings scripts/test-behavioral-v1-polish.mjs",
     "test:interview-preparation-hub": "node --experimental-strip-types --no-warnings scripts/test-interview-preparation-hub.mjs",
     "test:interview-execution-taxonomy": "node --experimental-strip-types --no-warnings scripts/test-interview-execution-taxonomy.mjs",
     "test:interview-playbook-diagnostic": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-diagnostic.mjs",
