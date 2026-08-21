@@ -14,6 +14,7 @@ import {
 import { track } from "@/lib/analytics";
 import type { BehavioralQuestion } from "@/types";
 import { PageHero, SectionHeading } from "./page-shell";
+import { PreparationActivityControl } from "./preparation-activity-control";
 
 function setUrlParam(key: string, value: string) {
   const params = new URLSearchParams(window.location.search);
@@ -101,6 +102,7 @@ export function BehavioralPractice() {
         <p>Pause here. Pick one truthful experience, identify your responsibility, and answer in your own words before opening any guidance.</p>
         <div className="behavioral-signal-list">{selected.signals.map((signal) => <span key={signal}>{signal}</span>)}</div>
       </article>
+      <PreparationActivityControl track="behavioral" itemId={selected.id} noun="prompt practice" />
       <div className="behavioral-reveals">
         <details onToggle={(event) => trackReveal("answer_guidance", event.currentTarget.open)}><summary><span>01</span><div><strong>Reveal answer guidance</strong><small>What a strong answer should make clear</small></div></summary><ul>{selected.answerGuidance.map((item) => <li key={item}><CheckCircle2 size={14} />{item}</li>)}</ul></details>
         <details onToggle={(event) => trackReveal("follow_ups", event.currentTarget.open)}><summary><span>02</span><div><strong>Reveal possible follow-ups</strong><small>Questions that test ownership and judgment</small></div></summary><ul>{selected.followUps.map((item) => <li key={item}><CheckCircle2 size={14} />{item}</li>)}</ul></details>

@@ -268,8 +268,8 @@ for (const nonArea of [
 // --- Href ownership ----------------------------------------------------------
 {
   const HREF_CASES = [
-    ["algorithmic-coding", "/dsa"],
-    ["system-design", "/system-design"],
+    ["algorithmic-coding", "/dsa/practice"],
+    ["system-design", "/system-design/practice"],
     ["ml-system-design", "/ml-design"],
     ["behavioral", "/behavioral/workspace"],
     ["practical-coding", "/interview-tips/rounds/practical-coding"],

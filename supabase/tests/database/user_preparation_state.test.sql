@@ -1,22 +1,26 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(109);
+select plan(117);
 
 select ok(not has_table_privilege('anon', 'public.user_preparation_preferences', 'select'), 'anon cannot read preparation preferences');
 select ok(not has_table_privilege('anon', 'public.dsa_progress', 'select'), 'anon cannot read DSA progress');
 select ok(not has_table_privilege('anon', 'public.system_design_progress', 'select'), 'anon cannot read System Design progress');
 select ok(not has_table_privilege('anon', 'public.behavioral_saved_questions', 'select'), 'anon cannot read saved behavioral questions');
+select ok(not has_table_privilege('anon', 'public.preparation_track_progress', 'select'), 'anon cannot read ML or Behavioral preparation activity');
 select ok(has_table_privilege('authenticated', 'public.user_preparation_preferences', 'select'), 'authenticated can read owned preparation preferences through RLS');
 select ok(has_table_privilege('authenticated', 'public.dsa_progress', 'select'), 'authenticated can read owned DSA progress through RLS');
 select ok(has_table_privilege('authenticated', 'public.system_design_progress', 'select'), 'authenticated can read owned System Design progress through RLS');
 select ok(has_table_privilege('authenticated', 'public.behavioral_saved_questions', 'select'), 'authenticated can read owned saved questions through RLS');
+select ok(has_table_privilege('authenticated', 'public.preparation_track_progress', 'select'), 'authenticated can read owned ML or Behavioral preparation activity through RLS');
 select ok(not has_function_privilege('anon', 'public.replace_behavioral_story_themes(uuid,text[])', 'execute'), 'anon cannot replace story themes');
 select ok(has_function_privilege('authenticated', 'public.replace_behavioral_story_themes(uuid,text[])', 'execute'), 'authenticated can invoke owner-checked theme replacement');
 select ok(not has_function_privilege('anon', 'public.move_interview_round(uuid,uuid,text)', 'execute'), 'anon cannot reorder interview rounds');
 select ok(has_function_privilege('authenticated', 'public.move_interview_round(uuid,uuid,text)', 'execute'), 'authenticated can invoke owner-checked round reordering');
 select ok(not has_function_privilege('anon', 'public.record_local_system_design_import(integer)', 'execute'), 'anon cannot record a local System Design import');
 select ok(has_function_privilege('authenticated', 'public.record_local_system_design_import(integer)', 'execute'), 'authenticated can invoke owner-resolved local import recording');
+select ok(not has_function_privilege('anon', 'public.save_preparation_track_progress(text,text,text)', 'execute'), 'anon cannot write preparation activity');
+select ok(has_function_privilege('authenticated', 'public.save_preparation_track_progress(text,text,text)', 'execute'), 'authenticated can write owner-resolved preparation activity');
 select ok(not has_column_privilege('authenticated', 'public.user_preparation_preferences', 'created_at', 'insert'), 'clients cannot assign preparation creation timestamps');
 select ok(not has_column_privilege('authenticated', 'public.user_preparation_preferences', 'user_id', 'update'), 'clients cannot reassign preparation ownership');
 select ok(not has_column_privilege('authenticated', 'public.user_preparation_preferences', 'local_system_design_import_version', 'insert'), 'clients cannot insert a local import version directly');
@@ -136,11 +140,17 @@ insert into public.behavioral_saved_questions (user_id, curated_question_id)
 values ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'beh-lead-01');
 insert into public.behavioral_saved_questions (user_id, custom_question_id)
 values ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', current_setting('test.preparation_custom_question_id')::uuid);
+select is(
+  (select count(*)::integer from public.save_preparation_track_progress('ml-design', 'ml-problem-recommendation', 'completed')),
+  1,
+  'owner can record canonical ML preparation activity through the owner-resolved function'
+);
 
 select is((select count(*)::integer from public.user_preparation_preferences), 1, 'owner can create and read preparation preferences');
 select is((select count(*)::integer from public.dsa_progress), 4, 'owner can create and read each DSA progress kind');
 select is((select count(*)::integer from public.system_design_progress), 2, 'owner can create and read System Design progress');
 select is((select count(*)::integer from public.behavioral_saved_questions), 2, 'owner can save curated and custom behavioral questions');
+select is((select count(*)::integer from public.preparation_track_progress), 1, 'owner can read recorded preparation activity');
 select results_eq(
   $$update public.user_preparation_preferences set dsa_plan_id = '30d' where user_id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' returning dsa_plan_id$$,
   $$values ('30d'::text)$$,
@@ -239,6 +249,7 @@ select is((select count(*)::integer from public.user_preparation_preferences), 0
 select is((select count(*)::integer from public.dsa_progress), 0, 'another user cannot read DSA progress');
 select is((select count(*)::integer from public.system_design_progress), 0, 'another user cannot read System Design progress');
 select is((select count(*)::integer from public.behavioral_saved_questions), 0, 'another user cannot read saved behavioral questions');
+select is((select count(*)::integer from public.preparation_track_progress), 0, 'another user cannot read preparation activity');
 select is_empty(
   $$update public.user_preparation_preferences set dsa_level = 'sde1' where user_id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' returning user_id$$,
   'another user cannot update preparation preferences'
@@ -298,6 +309,11 @@ select is(
   'another user cannot reorder the owner interview rounds'
 );
 select is(public.record_local_system_design_import(1), true, 'local import RPC resolves the caller as its owner');
+select is(
+  (select count(*)::integer from public.save_preparation_track_progress('behavioral', 'beh-lead-01', 'in-progress')),
+  1,
+  'activity function derives the second caller as owner'
+);
 select is(
   (select local_system_design_import_version from public.user_preparation_preferences),
   1,

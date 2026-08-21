@@ -256,8 +256,8 @@ const AREA_DISPLAY_LABELS: Readonly<Record<InterviewPreparationArea, string>> = 
 };
 
 const AREA_HREF_OVERRIDES: Partial<Record<InterviewPreparationArea, string>> = {
-  "algorithmic-coding": "/dsa",
-  "system-design": "/system-design",
+  "algorithmic-coding": "/dsa/practice",
+  "system-design": "/system-design/practice",
   "ml-system-design": "/ml-design",
   behavioral: "/behavioral/workspace",
 };

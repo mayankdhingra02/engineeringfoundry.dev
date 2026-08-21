@@ -48,9 +48,9 @@ The callback and all post-auth destinations use `safeInternalPath`; arbitrary ex
 2. `supabase link --project-ref <production-project-ref>`
 3. `supabase db diff --linked`; stop on any unexpected drop, rename, or unrelated change.
 4. `supabase db push`
-5. `supabase migration list --linked`; confirm all **22** migrations are applied through `202608220001_create_interview_experiences_v1.sql`.
-6. Verify RLS/grants/RPCs, including profiles, applications/rounds, Behavioral, DSA/System Design, reminders/calendar, Playbook inputs, mock reviews, and Interview Experiences.
-7. Run the two-disposable-account qualification in `docs/production-launch-checklist.md`, including export/deletion, mock review isolation, and private Interview Experience draft isolation.
+5. `supabase migration list --linked`; confirm all **23** migrations are applied through `202608220002_create_preparation_track_progress.sql`.
+6. Verify RLS/grants/RPCs, including profiles, applications/rounds, Behavioral stories and answers, DSA/System Design progress and active-plan preferences, ML Design and Behavioral preparation activity, reminders/calendar, Playbook inputs, mock reviews, and Interview Experiences.
+7. Run the two-disposable-account qualification in `docs/production-launch-checklist.md`, including account export schema `1.4`, account deletion, P0.2 preparation activity and active-plan isolation, the anonymous browser-import no-overwrite boundary, mock review isolation, and private Interview Experience draft isolation.
 
 Migrations are forward-only. If a migration fails before completion, stop the deployment, preserve the error with secrets redacted, compare the linked migration history, and apply a new corrective migration only after review. Do not edit an already-applied migration. Restore from backup only when data loss is accepted; verify restore in a separate environment before routing production traffic.
 
@@ -71,7 +71,7 @@ Run after deployment, recording tester/date/evidence without private payloads.
 
 **Auth:** sign-up with confirmation, callback, onboarding, sign-in, sign-out/sign-back-in, password recovery/update, account email change, settings, and each explicitly enabled OAuth provider.
 
-**Private data:** with User A and User B, verify application, Behavioral, DSA/System Design, mock-review, Interview Experience draft, calendar/reminder, export, and deletion isolation. Confirm approved/consented Interview Experiences are publicly readable while drafts/submitted records are not.
+**Private data:** with User A and User B, verify application, Behavioral, DSA/System Design progress and active plans, ML Design/Behavioral preparation activity, mock-review, Interview Experience draft, calendar/reminder, export, and deletion isolation. While signed out, verify browser progress imports only canonical activity after an explicit consent action and never overwrites account records. Confirm approved/consented Interview Experiences are publicly readable while drafts/submitted records are not.
 
 **Analytics:** only if configured, verify a public pageview; navigate private routes and confirm no private pageviews, query strings, tokens, email, notes, stories, answers, application data, mock ratings/notes, or experience draft text arrive in PostHog.
 

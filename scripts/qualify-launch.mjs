@@ -37,6 +37,7 @@ const STATIC_STEPS = [
   ["Applications workspace", "npm", ["run", "test:application-tracker"]],
   ["Behavioral workspace", "npm", ["run", "test:behavioral-workspace"]],
   ["Persistence foundation", "npm", ["run", "test:persistence-foundation"]],
+  ["Unified preparation progress", "npm", ["run", "test:unified-progress"]],
   ["DSA persistent progress", "npm", ["run", "test:dsa-progress"]],
   ["System Design workspace", "npm", ["run", "test:system-design-workspace"]],
   ["Interview Experiences v1", "npm", ["run", "test:interview-experiences-v1"]],

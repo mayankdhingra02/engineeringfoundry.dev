@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, BookOpenCheck, Compass, SearchCheck, ShieldCheck } from "lucide-react";
-import { HomeEntryExperience, type HomeSystemDesignLesson } from "@/components/home-entry-experience";
+import { HomeEntryExperience } from "@/components/home-entry-experience";
 import { SearchLauncher } from "@/components/search-launcher";
 import { systemDesignLessons } from "@/data/system-design/curriculum";
+import { canonicalDsaQuestions } from "@/lib/dsa/catalog";
+import { activeMlDesignProblems } from "@/data/ml-design";
+import { activeBehavioralQuestions } from "@/data/behavioral";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -12,7 +15,7 @@ export const metadata = createPageMetadata({
   absoluteTitle: true,
 });
 
-const continuationLessons: HomeSystemDesignLesson[] = systemDesignLessons
+const continuationLessons = systemDesignLessons
   .filter((lesson) => lesson.status === "published" && lesson.slug)
   .map((lesson) => ({
     id: lesson.id,
@@ -20,6 +23,13 @@ const continuationLessons: HomeSystemDesignLesson[] = systemDesignLessons
     href: lesson.slug!,
     kind: lesson.id.startsWith("problem-") ? "practice" : "lesson",
   }));
+
+const continuationCatalog = {
+  dsa: canonicalDsaQuestions.map((question) => ({ id: question.id, title: question.title, href: `/dsa/questions/${question.id}` })),
+  "system-design": continuationLessons.map((lesson) => ({ id: lesson.kind === "practice" ? lesson.id.slice("problem-".length) : lesson.id, title: lesson.title, href: lesson.href })),
+  "ml-design": activeMlDesignProblems.map((problem) => ({ id: problem.id, title: problem.title, href: `/ml-design/${problem.slug}` })),
+  behavioral: activeBehavioralQuestions.map((question) => ({ id: question.id, title: question.prompt, href: `/behavioral?question=${encodeURIComponent(question.slug)}` })),
+} as const;
 
 const supportingPaths = [
   { title: "Build a study roadmap", description: "Turn your timeline and target level into a focused DSA plan.", href: "/dsa/roadmap" },
@@ -47,7 +57,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             </div>
           </div>
 
-          <HomeEntryExperience lessons={continuationLessons} />
+          <HomeEntryExperience continuationCatalog={continuationCatalog} />
         </div>
       </section>
 

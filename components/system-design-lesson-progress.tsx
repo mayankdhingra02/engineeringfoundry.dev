@@ -2,6 +2,8 @@
 
 import { CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { preparationProgressEvent, readLocalPreparationProgress, recordLocalProgress, removeLocalProgressItems, writeLocalPreparationProgress } from "@/lib/preparation-progress/local";
+import { recordPreparationActivityAction } from "@/features/preparation-progress/actions";
 
 export const systemDesignProgressStorageKey = "engineering-foundry-system-design-study-progress-v1";
 export const systemDesignProgressEvent = "engineering-foundry-system-design-progress";
@@ -29,6 +31,26 @@ export function SystemDesignLessonProgress({ lessonId, lessonSlug }: { lessonId:
       progress[itemId] = nextStatus;
       window.localStorage.setItem(systemDesignProgressStorageKey, JSON.stringify(progress));
       window.dispatchEvent(new CustomEvent(systemDesignProgressEvent, { detail: { lessonSlug, status: nextStatus, completed: nextStatus === "completed" } }));
+      const unified = readLocalPreparationProgress(window.localStorage);
+      const unifiedItemId = practice ? lessonId.slice("problem-".length) : lessonId;
+      writeLocalPreparationProgress(
+        window.localStorage,
+        nextStatus === "not-started"
+          ? removeLocalProgressItems(unified, [`system-design:${unifiedItemId}`])
+          : recordLocalProgress(unified, {
+            track: "system-design",
+            itemId: unifiedItemId,
+            status: nextStatus,
+          }),
+      );
+      window.dispatchEvent(new CustomEvent(preparationProgressEvent));
+      if (nextStatus !== "not-started") {
+        void recordPreparationActivityAction({
+          track: "system-design",
+          itemId: unifiedItemId,
+          status: nextStatus,
+        });
+      }
     } catch { /* The visible control still works for this session. */ }
   }
 

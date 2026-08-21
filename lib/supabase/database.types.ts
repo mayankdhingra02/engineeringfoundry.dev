@@ -551,6 +551,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      preparation_track_progress: {
+        Row: {
+          user_id: string;
+          track: "ml-design" | "behavioral";
+          item_id: string;
+          status: "in-progress" | "completed";
+          completed_at: string | null;
+          last_interacted_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          track: "ml-design" | "behavioral";
+          item_id: string;
+          status: "in-progress" | "completed";
+          completed_at?: string | null;
+          last_interacted_at?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: "in-progress" | "completed";
+          completed_at?: string | null;
+          last_interacted_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [{ foreignKeyName: "preparation_track_progress_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "users"; referencedColumns: ["id"] }];
+      };
       system_design_progress: {
         Row: {
           user_id: string;
@@ -824,6 +853,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      save_preparation_track_progress: {
+        Args: { target_track: "ml-design" | "behavioral"; target_item_id: string; target_status: "in-progress" | "completed" };
+        Returns: Database["public"]["Tables"]["preparation_track_progress"]["Row"][];
+      };
       save_interview_experience_draft: { Args: { target_id: string | null; payload: Json }; Returns: string };
       submit_interview_experience: { Args: { target_id: string }; Returns: boolean };
       withdraw_interview_experience: { Args: { target_id: string }; Returns: boolean };
