@@ -1,35 +1,24 @@
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { buildAccountExport } from "../lib/account/export.ts";
+import { queryLocalDatabase, readLocalSupabaseEnvironment, removeTrackedId } from "./lib/local-supabase.mjs";
 
 if (existsSync(".env.local")) {
   process.loadEnvFile?.(".env.local");
 }
-const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const localEnvironment = readLocalSupabaseEnvironment();
+const apiUrl = localEnvironment.NEXT_PUBLIC_SUPABASE_URL;
+const publishableKey = localEnvironment.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const password = "Phase8Qualification123!";
 
-if (!apiUrl || !publishableKey) throw new Error("Local Supabase public environment is not configured.");
-if (!/^http:\/\/(127\.0\.0\.1|localhost):54321$/.test(apiUrl)) throw new Error("Refusing lifecycle qualification against a non-local Supabase project.");
-
-function localServiceToken() {
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY) return process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const secret = execFileSync("docker", ["exec", "supabase_auth_Engineeringfoundry", "printenv", "GOTRUE_JWT_SECRET"], { encoding: "utf8" }).trim();
-  assert.ok(secret, "local Supabase JWT secret was unavailable");
-  const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
-  const issuedAt = Math.floor(Date.now() / 1000);
-  const unsigned = `${encode({ alg: "HS256", typ: "JWT" })}.${encode({ aud: "authenticated", sub: "00000000-0000-0000-0000-000000000000", role: "service_role", iss: "supabase", iat: issuedAt, exp: issuedAt + 3600 })}`;
-  return `${unsigned}.${createHmac("sha256", secret).update(unsigned).digest("base64url")}`;
-}
-
 const options = { auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false } };
-const serviceToken = localServiceToken();
+const serviceToken = localEnvironment.SUPABASE_SERVICE_ROLE_KEY;
+assert.ok(publishableKey && serviceToken, "Local Supabase status did not provide the required keys.");
 const admin = createClient(apiUrl, serviceToken, options);
 const anon = createClient(apiUrl, publishableKey, options);
-const stamp = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const stamp = randomUUID();
 const emails = [`phase8-a-${stamp}@example.test`, `phase8-b-${stamp}@example.test`];
 const feedbackMessage = `Private lifecycle feedback ${stamp}`;
 const createdIds = [];
@@ -58,9 +47,14 @@ async function createAccount(email) {
   return { client, user: signedIn.data.user };
 }
 
-const [a, b] = await Promise.all(emails.map(createAccount));
-let applicationId;
-let roundId;
+let qualificationError;
+const cleanupFailures = [];
+try {
+  // Sequential creation ensures finally never races a still-pending create.
+  const a = await createAccount(emails[0]);
+  const b = await createAccount(emails[1]);
+  let applicationId;
+  let roundId;
 
 await check("new users begin with explicit incomplete onboarding state", async () => {
   const profile = await a.client.from("profiles").select("onboarding_complete,onboarding_completed_at").single();
@@ -157,22 +151,21 @@ await check("User B export cannot be redirected to User A", async () => {
 await check("privileged Auth deletion removes identity, private rows, reminders, and stale access", async () => {
   const deleted = await admin.auth.admin.deleteUser(a.user.id, false);
   if (deleted.error) throw new Error(`Auth deletion failed (${deleted.error.status ?? "unknown"}): ${deleted.error.message}`);
+  assert.equal(removeTrackedId(createdIds, a.user.id), true, "deleted account was not tracked for cleanup");
   const authLookup = await admin.auth.admin.getUserById(a.user.id);
   assert.ok(authLookup.error || !authLookup.data.user);
   const tables = ["applications", "interview_rounds", "interview_preparations", "behavioral_stories", "dsa_question_progress", "system_design_item_progress", "system_design_attempts", "user_preparation_preferences", "interview_reminder_preferences", "interview_reminders"];
-  assert.match(a.user.id, /^[0-9a-f-]{36}$/i);
   for (const table of tables) {
-    assert.match(table, /^[a-z_]+$/);
-    const count = execFileSync("docker", ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", `select count(*) from public.${table} where user_id = '${a.user.id}'::uuid`], { encoding: "utf8" }).trim();
+    assert.match(table, /^[a-z_]+$/, "cascade check contains an unsafe table identifier");
+    const count = queryLocalDatabase(`select count(*) from public.${table} where user_id = :'user_id'::uuid`, { user_id: a.user.id });
     assert.equal(count, "0", `${table} retained deleted-user rows`);
   }
   const staleUser = await a.client.auth.getUser();
   assert.ok(staleUser.error || !staleUser.data.user, "deleted session still resolves an Auth user");
   const staleRead = await a.client.from("applications").select("id");
   assert.equal(staleRead.data?.length ?? 0, 0);
-  const feedbackActorAfterDeletion = execFileSync("docker", ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", `select coalesce(actor_id::text, 'null') from public.feedback_submissions where message = '${feedbackMessage}'`], { encoding: "utf8" }).trim();
+  const feedbackActorAfterDeletion = queryLocalDatabase("select coalesce(actor_id::text, 'null') from public.feedback_submissions where message = :'feedback_message'", { feedback_message: feedbackMessage });
   assert.equal(feedbackActorAfterDeletion, "null", "feedback account linkage was retained after deletion");
-  createdIds.splice(createdIds.indexOf(a.user.id), 1);
 });
 
 await check("anonymous clients cannot invoke account lifecycle RPCs", async () => {
@@ -180,8 +173,30 @@ await check("anonymous clients cannot invoke account lifecycle RPCs", async () =
   assert.ok((await anon.rpc("save_account_preparation_preferences", { preferred_role_level_value: "sde1", primary_preparation_focus_value: "dsa", preferred_dsa_level_value: "sde1" })).error);
 });
 
-for (const userId of createdIds) await admin.auth.admin.deleteUser(userId, false);
+  const failures = results.filter((result) => result.status === "FAIL");
+  if (failures.length) throw new Error(`${failures.length} lifecycle qualification check(s) failed.`);
+} catch (error) {
+  qualificationError = error;
+} finally {
+  for (const userId of [...createdIds]) {
+    try {
+      const deleted = await admin.auth.admin.deleteUser(userId, false);
+      if (deleted.error) {
+        cleanupFailures.push(`Could not remove disposable account ${userId}: ${deleted.error.message}`);
+      } else {
+        removeTrackedId(createdIds, userId);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      cleanupFailures.push(`Could not remove disposable account ${userId}: ${message}`);
+    }
+  }
+  for (const message of cleanupFailures) console.error(`CLEANUP FAIL  ${message}`);
+}
 
-const failures = results.filter((result) => result.status === "FAIL");
-if (failures.length) throw new Error(`${failures.length} lifecycle qualification check(s) failed.`);
+if (qualificationError && cleanupFailures.length) {
+  throw new AggregateError([qualificationError, ...cleanupFailures.map((message) => new Error(message))], "Lifecycle qualification and cleanup both failed.");
+}
+if (qualificationError) throw qualificationError;
+if (cleanupFailures.length) throw new AggregateError(cleanupFailures.map((message) => new Error(message)), "Lifecycle cleanup failed.");
 console.log(`\n${results.length}/${results.length} Phase 8 local lifecycle checks passed; disposable accounts removed.`);

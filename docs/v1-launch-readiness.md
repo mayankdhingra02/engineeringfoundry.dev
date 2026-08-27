@@ -1,8 +1,7 @@
 # Engineering Foundry v1 launch-readiness tracker
 
-**Assessment date:** 2026-08-21
+**Status:** Living repository checklist; PR and CI status are maintained in GitHub, not hard-coded here.
 **Repository baseline:** `948fb742456e2c0fcc65965304a3e7c5ba17434c` (`main`)
-**Current P0.10 PR:** [#25](https://github.com/mayankdhingra02/engineeringfoundry.dev/pull/25), `feat/p0-final-launch-readiness` — CI green, **not yet merged**.
 
 This is the owner-facing release checklist. It separates what the repository has proved from work that only a deployment owner, provider, or qualified reviewer can complete. Checking a repository item does not complete a hosted-production action.
 
@@ -27,7 +26,7 @@ Repository qualification can establish `REPOSITORY RC READY`; it cannot establis
 | P0.7 | Behavioral v1 polish | Merged / repository-proven | OWNER GATE | Verify hosted private-workspace flows when accounts are enabled. |
 | P0.8 | Feedback and minimal admin operations | Merged / repository-proven | OWNER GATE | Operator bootstrap and edge protection remain external. |
 | P0.9 | Analytics and launch evidence | Merged / repository-proven | OWNER GATE | Consent decision, PostHog configuration, and real evidence are not repository claims. |
-| P0.10 | Content, accessibility, QA, launch operations | Complete in PR #25; CI green; **not yet merged** | OWNER GATE | This tracker and RC record are part of the pending PR; hosted verification remains external. |
+| P0.10 | Content, accessibility, QA, launch operations | Repository release controls implemented | OWNER GATE | The generated RC record identifies its candidate code commit; hosted verification remains external. |
 
 ## Homepage
 
@@ -151,7 +150,7 @@ Repository qualification can establish `REPOSITORY RC READY`; it cannot establis
 
 ## Production / Release Operations
 
-- [x] Repository-proven: clean local reset applies all 25 migrations through `202608230002_add_feedback_export_rpc.sql`; schema lint, pgTAP, two-user qualification, export/deletion, security, static qualification, Webpack build, public smoke, and link validation passed for this RC.
+- [x] Repository-proven: the canonical release verifier derives migration identity from the repository and covers clean reset, schema lint, pgTAP, two-user qualification, export/deletion, auth/security, static qualification, the Next.js production build using Turbopack, public smoke, and link validation.
 - [x] Repository-proven: rollback procedures preserve the feature-gate-first, forward-only-migration boundary in `docs/production-launch-checklist.md` and `docs/production-operations-runbook.md`.
 - [ ] OWNER GATE: set the production DNS/TLS/origin and verify `NEXT_PUBLIC_SITE_URL`, redirects, HSTS, response headers, and CSP console behavior.
 - [ ] OWNER GATE: enable and record backups/PITR, take a pre-migration backup, apply migrations only to the intended hosted Supabase project, and record the migration list.
@@ -165,4 +164,4 @@ Repository qualification can establish `REPOSITORY RC READY`; it cannot establis
 
 ## Readiness decision
 
-**Current repository decision: `REPOSITORY RC READY` after the recorded qualification and fresh PR CI.** This is not public launch completion, and it does not authorize production account or analytics enablement until every applicable unchecked OWNER GATE has dated evidence.
+**Repository decision: `REPOSITORY RC READY` only when the generated release record validates and required GitHub checks pass.** This is not public launch completion, and it does not authorize production account or analytics enablement until every applicable unchecked OWNER GATE has dated evidence.

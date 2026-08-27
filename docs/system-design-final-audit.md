@@ -170,7 +170,7 @@ Generated inventories:
 - External-link audit: passed, 93/93 reachable with no hard failures
 - Route audit: passed, 239 canonical + 11 redirects, 0 failures
 - Default `next build`: blocked by environment-only Turbopack internal port binding
-- `next build --webpack`: passed, 403 static pages generated
+- Historical non-release diagnostic only: `next build --webpack` passed, 403 static pages generated. The canonical release build is now plain `next build` using Turbopack.
 - Rendered desktop/tablet/mobile/light/dark checks: passed
 
 ## Remaining issues

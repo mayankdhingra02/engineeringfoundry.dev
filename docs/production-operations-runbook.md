@@ -90,8 +90,10 @@ Run after deployment, recording tester/date/evidence without private payloads.
 ```bash
 npm run qualify:static
 npm run qualify:database
-npx next build --webpack
-npm run test:public-routes
+npm run qualify:production
+npm run release:verify
 ```
+
+The release build is `next build`, a **Next.js production build using Turbopack**. CI and local production qualification use that same command.
 
 These checks are automated in the repository or CI. DNS, SSL, managed backups, SMTP, OAuth provider settings, Supabase hosted migration application, PostHog configuration, scheduling, and deployment are owner/hosting-provider actions and block full P0.1 completion until recorded as verified.

@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import { priorityCompanyGuides } from "../data/company-guides/v1.ts";
 import { COMPANY_GUIDE_REVIEW_AFTER_DAYS, companyGuideFreshness } from "../lib/company-guides/freshness.ts";
 import { sanitizedFeedbackPageContext } from "../lib/feedback/model.ts";
+import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, feedbackAction, feedbackForm, adminAuth, adminActions, adminLayout, adminHome, feedbackPage, feedbackDetail, experiencePage, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, qualifier, workflow, packageJson] = await Promise.all([
+const [migration, feedbackAction, feedbackForm, adminAuth, adminActions, adminLayout, adminHome, feedbackPage, feedbackDetail, experiencePage, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, workflow, packageJson] = await Promise.all([
   read("supabase/migrations/202608230001_create_feedback_admin_operations.sql"),
   read("features/feedback/actions.ts"),
   read("features/feedback/feedback-form.tsx"),
@@ -25,7 +26,6 @@ const [migration, feedbackAction, feedbackForm, adminAuth, adminActions, adminLa
   read("app/privacy/page.tsx"),
   read("app/contact/page.tsx"),
   read("docs/feedback-admin-operations.md"),
-  read("scripts/qualify-launch.mjs"),
   read(".github/workflows/ci.yml"),
   read("package.json"),
 ]);
@@ -74,6 +74,6 @@ assert.equal(freshness[0].status, "review_due", "freshness threshold is not dete
 assert.equal(COMPANY_GUIDE_REVIEW_AFTER_DAYS, 180, "freshness reminder threshold drifted");
 assert.ok(!Object.hasOwn(priorityCompanyGuides[0], "freshness"), "freshness operation mutates public guide content");
 
-assert.ok(qualifier.includes("Feedback and admin operations") && workflow.includes("npm run test:feedback-admin-operations"), "P0.8 static qualification is not in local and hosted CI parity");
+assert.ok(STATIC_STEPS.some((step) => step.args?.includes("test:feedback-admin-operations")) && workflow.includes("npm run qualify:static"), "P0.8 static qualification is not in local and hosted CI parity");
 assert.ok(JSON.parse(packageJson).scripts["test:feedback-admin-operations"], "P0.8 test command is absent");
 console.log("PASS  P0.8 feedback, admin authorization, RLS/RPC boundaries, lifecycle semantics, company freshness, privacy, and CI parity hold.");

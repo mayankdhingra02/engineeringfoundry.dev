@@ -2,8 +2,9 @@
   "name": "engineering-foundry",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.2",
   "engines": {
-    "node": ">=22.13.0"
+    "node": "22.13.0"
   },
   "scripts": {
     "dev": "next dev",
@@ -50,12 +51,16 @@
     "qualify:auth-cache-local": "node --experimental-strip-types --no-warnings scripts/qualify-auth-cache-local.mjs",
     "qualify:static": "node --experimental-strip-types --no-warnings scripts/qualify-launch.mjs static",
     "qualify:database": "node --experimental-strip-types --no-warnings scripts/qualify-launch.mjs database",
-    "qualify:launch": "node --experimental-strip-types --no-warnings scripts/qualify-launch.mjs all",
+    "qualify:production": "node --experimental-strip-types --no-warnings scripts/qualify-launch.mjs production",
+    "qualify:launch": "npm run release:verify",
+    "release:verify": "node --experimental-strip-types --no-warnings scripts/qualify-launch.mjs all",
+    "release:record": "node --experimental-strip-types --no-warnings scripts/release-record.mjs",
     "test:persistence-foundation": "node --experimental-strip-types --no-warnings scripts/test-persistence-foundation.mjs",
     "test:unified-progress": "node --experimental-strip-types --no-warnings scripts/test-unified-progress.mjs",
     "qualify:persistence-local": "node scripts/qualify-persistence-local.mjs",
     "test:ui-density": "node scripts/test-ui-density.mjs",
     "test:typography-readability": "node scripts/test-typography-readability.mjs",
+    "test:local-supabase-helpers": "node scripts/test-local-supabase-helpers.mjs",
     "test:homepage-entry": "node --experimental-strip-types --no-warnings scripts/test-homepage-entry.mjs",
     "test:system-design-learning": "node --experimental-strip-types --no-warnings scripts/test-system-design-learning.mjs",
     "test:system-design-entry": "node --experimental-strip-types --no-warnings scripts/test-system-design-entry.mjs",
@@ -121,6 +126,7 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "16.4.0",
+    "supabase": "2.115.0",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "typescript-eslint": "8.59.3"

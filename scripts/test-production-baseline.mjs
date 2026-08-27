@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { strict as assert } from "node:assert";
+import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const read = (file) => readFileSync(file, "utf8");
 const failures = [];
@@ -24,7 +25,7 @@ expect(callback.includes("safeInternalPath") && callback.includes("redirectOrigi
 for (const marker of ["SUPABASE_SERVICE_ROLE_KEY", "REMINDER_WORKER_SECRET", "supabase migration list", latestMigration, `all **${migrations.length}** migrations`, "https://<production-domain>/auth/callback", "point-in-time recovery", "owner/hosting-provider actions", "Interview Experience draft isolation", "preparation activity and active-plan isolation", "anonymous browser-import no-overwrite boundary", "NEXT_PUBLIC_ACCOUNTS_ENABLED=false"]) expect(runbook.includes(marker), `Production runbook is missing ${marker}.`);
 expect(migrations.length === 25 && latestMigration === "202608230002_add_feedback_export_rpc.sql", "Production baseline must include the verified P0.1–P0.8 migration history.");
 for (const marker of [`all ${migrations.length} migrations`, latestMigration.replace(/\.sql$/, ""), "preparation_track_progress", "export_version` `1.5", "mock reviews, Interview Experience drafts", "active-plan preferences", "browser-progress import boundary", "feedback/admin operations"]) expect(checklist.includes(marker), `Hosted checklist must cover combined P0.1–P0.8 production qualification: ${marker}.`);
-expect(ci.includes("test:production-baseline"), "P0.1 production-baseline regression must run in GitHub Actions.");
+expect(STATIC_STEPS.some((step) => step.args?.includes("test:production-baseline")) && ci.includes("npm run qualify:static"), "P0.1 production-baseline regression must run through the canonical GitHub Actions lane.");
 
 const originalEnv = { NODE_ENV: process.env.NODE_ENV, NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_ACCOUNTS_ENABLED: process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED, NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY };
 try {

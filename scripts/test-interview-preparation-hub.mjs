@@ -6,6 +6,7 @@ import { modulesForRound, resolveRoundPreparationContext } from "../lib/intervie
 import { buildInterviewPlaybookOverview } from "../lib/interview-playbook/overview.ts";
 import { resolveInterviewPlaybookTiming } from "../lib/interview-playbook/timing.ts";
 import { isActiveInterviewProcess } from "../lib/applications/insights.ts";
+import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const root = process.cwd();
 const read = (file) => readFileSync(join(root, file), "utf8");
@@ -745,7 +746,7 @@ const cases = [
   ["privacy routes: /interview-playbook is registered in PRIVATE_ROUTE_PREFIXES", privacyRoutesSource.includes('"/interview-playbook"')],
   ["privacy regression script: asserts /interview-playbook is private and /interview-tips/rounds/algorithmic-coding is public", privateRoutePrivacyScript.includes("/interview-playbook") && privateRoutePrivacyScript.includes("/interview-tips/rounds/algorithmic-coding")],
   // --- Part 3: taxonomy suite runs in CI ---------------------------------------
-  ["CI: runs the interview execution taxonomy suite", ciWorkflow.includes("Test interview execution taxonomy") && ciWorkflow.includes("npm run test:interview-execution-taxonomy")],
+  ["CI: runs the interview execution taxonomy suite", STATIC_STEPS.some((step) => step.args?.includes("test:interview-execution-taxonomy")) && ciWorkflow.includes("npm run qualify:static")],
   // --- Content integrity -------------------------------------------------------
   ["content integrity: no unauthorized outcome claims or quotas", ![playbookTiming, finalPreparationComponent, playbookPage].some((source) => /you will pass|likely to pass|readiness score|percent ready|confidence score|guarantee|must solve|problems per day/i.test(source))],
   ["content integrity: no unauthorized-AI guidance", ![playbookTiming, finalPreparationComponent, playbookPage].some((source) => /use (chatgpt|an ai tool|an llm)/i.test(source))],

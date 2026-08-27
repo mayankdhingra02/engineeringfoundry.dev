@@ -1,105 +1,129 @@
-/**
- * Launch qualification orchestrator.
- *
- * Runs the deterministic checks that must pass before Engineering Foundry is
- * considered ready for hosted qualification. It orchestrates existing scripts
- * and never reimplements a test.
- *
- *   npm run qualify:static     lint, typecheck, and every static regression
- *   npm run qualify:database   local-Supabase database and two-user checks
- *   npm run qualify:launch     both, static first
- *
- * The database lane assumes a local Supabase stack is already running
- * (`npx supabase start`). It never starts or stops production infrastructure
- * and refuses to run against anything but a local project.
- */
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
+import { DATABASE_STEPS, PINNED_SUPABASE_CLI_VERSION, PRODUCTION_STEPS, STATIC_STEPS } from "./release-verification-manifest.mjs";
+import { assertLocalSupabaseUrl, parseSupabaseStatusEnv } from "./lib/local-supabase.mjs";
 
-const lane = process.argv[2] ?? "all";
-if (!["static", "database", "all"].includes(lane)) {
-  console.error(`Unknown lane "${lane}". Use static, database, or all.`);
+const requestedLane = process.argv[2] ?? "all";
+const allowedLanes = new Set(["static", "database", "production", "all"]);
+if (!allowedLanes.has(requestedLane)) {
+  console.error(`Unknown lane "${requestedLane}". Use static, database, production, or all.`);
   process.exit(2);
 }
+if (process.env.NEXT_PUBLIC_SUPABASE_URL) assertLocalSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
-const STATIC_STEPS = [
-  ["ESLint", "npm", ["run", "lint"]],
-  ["TypeScript", "npm", ["run", "typecheck"]],
-
-  // Phase 9 launch-safety guards.
-  ["Production hardening", "npm", ["run", "test:production-hardening"]],
-  ["Production baseline", "npm", ["run", "test:production-baseline"]],
-  ["Private-route privacy", "npm", ["run", "test:private-route-privacy"]],
-  ["Canonical catalog integrity", "npm", ["run", "test:canonical-catalog-integrity"]],
-
-  // Account and workspace regressions.
-  ["Authentication foundation", "npm", ["run", "test:auth-foundation"]],
-  ["Account lifecycle", "npm", ["run", "test:account-lifecycle"]],
-  ["Applications workspace", "npm", ["run", "test:application-tracker"]],
-  ["Behavioral workspace", "npm", ["run", "test:behavioral-workspace"]],
-  ["Behavioral v1 polish", "npm", ["run", "test:behavioral-v1-polish"]],
-  ["Analytics and launch evidence", "npm", ["run", "test:analytics-launch-evidence"]],
-  ["V1 launch readiness", "npm", ["run", "test:v1-launch-readiness"]],
-  ["Impact ledger integrity", "npm", ["run", "validate:impact-ledger"]],
-  ["Feedback and admin operations", "npm", ["run", "test:feedback-admin-operations"]],
-  ["Persistence foundation", "npm", ["run", "test:persistence-foundation"]],
-  ["Unified preparation progress", "npm", ["run", "test:unified-progress"]],
-  ["DSA persistent progress", "npm", ["run", "test:dsa-progress"]],
-  ["System Design workspace", "npm", ["run", "test:system-design-workspace"]],
-  ["Interview Experiences v1", "npm", ["run", "test:interview-experiences-v1"]],
-  ["Company Guides v1", "npm", ["run", "test:company-guides"]],
-  ["Low-Level Design v1", "npm", ["run", "test:low-level-design"]],
-  ["Salary Negotiation v1", "npm", ["run", "test:salary-negotiation"]],
-  ["Interview preparation hub", "npm", ["run", "test:interview-preparation-hub"]],
-  ["Interview Playbook diagnostic inputs", "npm", ["run", "test:interview-playbook-diagnostic-inputs"]],
-  ["Interview Playbook mock evidence", "npm", ["run", "test:interview-playbook-mock-evidence"]],
-  ["Interview Playbook DSA evidence boundary", "npm", ["run", "test:interview-playbook-dsa-evidence"]],
-  ["Interview Playbook System Design evidence boundary", "npm", ["run", "test:interview-playbook-system-design-evidence"]],
-  ["Interview calendar and reminders", "npm", ["run", "test:interview-calendar-reminders"]],
-  ["Reminder worker outcomes", "npm", ["run", "test:interview-reminder-worker"]],
-
-  // Public product and finish guards.
-  ["Public launch integrity", "npm", ["run", "test:public-launch-integrity"]],
-  ["Typography readability", "npm", ["run", "test:typography-readability"]],
-  ["UI density", "npm", ["run", "test:ui-density"]],
-];
-
-const DATABASE_STEPS = [
-  ["Database schema lint", "npx", ["--yes", "supabase", "db", "lint", "--local", "--schema", "public", "--level", "warning", "--fail-on", "error"]],
-  ["pgTAP policy and integrity suite", "npx", ["--yes", "supabase", "test", "db"]],
-  ["Two-user persistence isolation", "npm", ["run", "qualify:persistence-local"]],
-  ["Account lifecycle export and deletion", "npm", ["run", "qualify:account-lifecycle-local"]],
-  ["Phase 9 security qualification", "npm", ["run", "qualify:security-local"]],
-];
-
-const steps = lane === "static" ? STATIC_STEPS : lane === "database" ? DATABASE_STEPS : [...STATIC_STEPS, ...DATABASE_STEPS];
+const releaseEnvironment = {
+  ...process.env,
+  NEXT_PUBLIC_ACCOUNTS_ENABLED: "false",
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || "https://engineeringfoundry.dev",
+  NEXT_PUBLIC_DISCORD_URL: process.env.NEXT_PUBLIC_DISCORD_URL || "https://discord.gg/cNgNq3AFGX",
+  SUPABASE_TELEMETRY_DISABLED: "1",
+};
+const selectedLanes = requestedLane === "all" ? ["static", "database", "production"] : [requestedLane];
 const results = [];
-const startedAt = Date.now();
+let activeChild;
+let localSupabaseMayBeRunning = false;
 
-console.log(`Engineering Foundry launch qualification — ${lane} lane (${steps.length} steps)\n`);
-
-for (const [name, command, args] of steps) {
-  process.stdout.write(`▸ ${name}… `);
-  const began = Date.now();
-  const run = spawnSync(command, args, { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" });
-  const seconds = ((Date.now() - began) / 1000).toFixed(1);
-  const ok = run.status === 0;
-  results.push({ name, ok, output: `${run.stdout ?? ""}${run.stderr ?? ""}` });
-  console.log(ok ? `pass (${seconds}s)` : `FAIL (${seconds}s)`);
+function runProcess(name, command, args, { capture = false, env = releaseEnvironment } = {}) {
+  const actualCommand = command === "supabase" ? "node_modules/.bin/supabase" : command;
+  const startedAt = Date.now();
+  process.stdout.write(`\n▸ ${name}\n  ${[actualCommand, ...args].join(" ")}\n`);
+  return new Promise((resolve, reject) => {
+    let stdout = "";
+    let stderr = "";
+    const child = spawn(actualCommand, args, { env, stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit" });
+    activeChild = child;
+    if (capture) {
+      child.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
+      child.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+    }
+    child.once("error", reject);
+    child.once("exit", (code, signal) => {
+      activeChild = undefined;
+      const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+      if (code === 0) {
+        results.push({ name, status: "PASS", seconds });
+        console.log(`  PASS (${seconds}s)`);
+        resolve({ stdout, stderr });
+      } else {
+        results.push({ name, status: "FAIL", seconds });
+        reject(new Error(`${name} failed with ${signal ? `signal ${signal}` : `exit ${code}`}.${stderr ? `\n${stderr.trim()}` : ""}`));
+      }
+    });
+  });
 }
 
-const failed = results.filter((entry) => !entry.ok);
-console.log(`\n${results.length - failed.length}/${results.length} steps passed in ${((Date.now() - startedAt) / 1000).toFixed(0)}s.`);
-
-if (failed.length) {
-  for (const entry of failed) {
-    console.error(`\n──── ${entry.name} ────\n${entry.output.trim().split("\n").slice(-25).join("\n")}`);
+async function stopLocalSupabase() {
+  if (!localSupabaseMayBeRunning) return;
+  try {
+    await runProcess("Stop local Supabase", "supabase", ["stop"]);
+  } finally {
+    localSupabaseMayBeRunning = false;
   }
-  console.error(`\nLaunch qualification FAILED: ${failed.map((entry) => entry.name).join(", ")}`);
+}
+
+async function runStaticLane() {
+  for (const step of STATIC_STEPS) await runProcess(step.name, step.command, step.args);
+}
+
+async function runDatabaseLane() {
+  const version = await runProcess("Verify pinned Supabase CLI", "supabase", ["--version"], { capture: true });
+  if (version.stdout.trim() !== PINNED_SUPABASE_CLI_VERSION) {
+    throw new Error(`Expected Supabase CLI ${PINNED_SUPABASE_CLI_VERSION}, received ${version.stdout.trim() || "no version"}.`);
+  }
+  localSupabaseMayBeRunning = true;
+  await runProcess("Start local Supabase", "supabase", ["start"], { capture: true });
+  const statusResult = await runProcess("Read local Supabase environment", "supabase", ["status", "-o", "env"], { capture: true });
+  const status = parseSupabaseStatusEnv(statusResult.stdout);
+  const databaseEnvironment = {
+    ...releaseEnvironment,
+    NEXT_PUBLIC_SUPABASE_URL: assertLocalSupabaseUrl(status.API_URL, "local Supabase API URL"),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: status.ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: status.SERVICE_ROLE_KEY,
+  };
+  if (!databaseEnvironment.NEXT_PUBLIC_SUPABASE_ANON_KEY || !databaseEnvironment.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Local Supabase status did not provide the required public and service-role keys.");
+  }
+  for (const step of DATABASE_STEPS) await runProcess(step.name, step.command, step.args, { env: databaseEnvironment });
+}
+
+async function runProductionLane() {
+  for (const step of PRODUCTION_STEPS) await runProcess(step.name, step.command, step.args);
+}
+
+function handleSignal(signal) {
+  console.error(`\nReceived ${signal}; stopping the active qualification step.`);
+  activeChild?.kill(signal);
+}
+process.once("SIGINT", () => handleSignal("SIGINT"));
+process.once("SIGTERM", () => handleSignal("SIGTERM"));
+
+const startedAt = Date.now();
+let failure;
+try {
+  console.log(`Engineering Foundry release verification — ${requestedLane}`);
+  await runProcess("Clean dependency install", "npm", ["ci"]);
+  for (const lane of selectedLanes) {
+    console.log(`\n══ ${lane.toUpperCase()} LANE ══`);
+    if (lane === "static") await runStaticLane();
+    if (lane === "database") await runDatabaseLane();
+    if (lane === "production") await runProductionLane();
+  }
+} catch (error) {
+  failure = error;
+} finally {
+  try {
+    await stopLocalSupabase();
+  } catch (cleanupError) {
+    console.error(`\nCleanup failure: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+    failure ??= cleanupError;
+  }
+}
+
+const passed = results.filter((result) => result.status === "PASS").length;
+const duration = ((Date.now() - startedAt) / 1000).toFixed(0);
+if (failure) {
+  console.error(`\nRELEASE VERIFICATION: FAIL — ${passed}/${results.length} recorded steps passed in ${duration}s.`);
+  console.error(failure instanceof Error ? failure.message : String(failure));
   process.exit(1);
 }
-
-console.log(
-  lane === "static"
-    ? "\nStatic lane clean. Run `npm run qualify:database` with local Supabase running to finish."
-    : "\nLaunch qualification clean. Local qualification is not hosted qualification — continue with docs/production-launch-checklist.md.",
-);
+console.log(`\nRELEASE VERIFICATION: PASS — ${passed}/${results.length} steps passed in ${duration}s.`);
+console.log("Local qualification is not hosted qualification; hosted owner gates remain incomplete.");

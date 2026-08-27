@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { buildBehavioralCoverageMap } from "../lib/behavioral/coverage.ts";
 import { reviewAnswerFacts } from "../lib/behavioral/fact-integrity.ts";
+import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
 const failures = [];
@@ -43,7 +44,8 @@ const analytics = read("lib/analytics.ts");
 check("no new private Behavioral analytics event was added", !analytics.includes("behavioral_answer_variant_created"));
 const publicPage = read("components/behavioral-practice.tsx");
 check("public entry points to the private workspace", publicPage.includes("Open private story workspace"));
-check("hosted CI runs the P0.7 regression", read(".github/workflows/ci.yml").includes("npm run test:behavioral-v1-polish"));
+check("canonical static lane runs the P0.7 regression", STATIC_STEPS.some((step) => step.args?.includes("test:behavioral-v1-polish")));
+check("hosted CI runs the canonical static lane", read(".github/workflows/ci.yml").includes("npm run qualify:static"));
 
 if (failures.length) {
   console.error(`Behavioral v1 polish regression failed:\n- ${failures.join("\n- ")}`);

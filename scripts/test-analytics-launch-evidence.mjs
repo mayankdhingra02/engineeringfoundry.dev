@@ -7,6 +7,7 @@ import {
   sanitizeP09AnalyticsProperties,
 } from "../lib/analytics/launch-metrics.ts";
 import { validateSnapshot } from "./validate-impact-ledger.mjs";
+import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
 const analytics = read("lib/analytics.ts");
@@ -24,7 +25,6 @@ const lldPractice = read("features/low-level-design/practice-view.tsx");
 const dsaProgress = read("features/dsa/progress/question-progress-editor.tsx");
 const systemDesignProgress = read("features/system-design/progress-editor.tsx");
 const dsaQuestionDetail = read("features/dsa/progress/question-detail.tsx");
-const qualifier = read("scripts/qualify-launch.mjs");
 const ci = read(".github/workflows/ci.yml");
 const monthlySnapshotTemplate = JSON.parse(read("docs/impact-ledger/monthly-snapshot.template.json"));
 
@@ -80,8 +80,8 @@ assert.ok(lldActivity.includes("analyticsItemId") && lldActivity.includes("analy
 assert.ok(dsaQuestionDetail.includes("source: question.sourceType") && !dsaQuestionDetail.includes("sourceLabel.toLowerCase"), "DSA analytics must use canonical source types rather than display labels");
 assert.ok(salary.includes('track("offer_comparison_opened", { surface: "salary-negotiation" })') && !salary.includes("track(", salary.indexOf("const update")), "salary analytics must not include worksheet values");
 assert.ok(experience.includes('track("interview_experience_submitted"') && !experience.includes("companyName }") && !experience.includes("summary }"), "experience analytics must not include user-entered report fields");
-assert.ok(qualifier.includes('["Impact ledger integrity", "npm", ["run", "validate:impact-ledger"]]'), "local static qualification must validate the impact ledger");
-assert.ok(ci.includes("Validate impact ledger integrity") && ci.includes("npm run validate:impact-ledger"), "CI must validate the impact ledger");
+assert.ok(STATIC_STEPS.some((step) => step.args?.includes("validate:impact-ledger")), "local static qualification must validate the impact ledger");
+assert.ok(ci.includes("npm run qualify:static"), "CI must invoke the canonical static lane");
 assert.ok(operations.includes("| Registered accounts | Authoritative aggregate count of Supabase/Auth accounts") && operations.includes("| Signed-in users | Distinct identified users with `sign_in_completed`"), "registered accounts and signed-in users must remain distinct");
 assert.ok(!operations.includes("Registered users | Distinct identified users with a successful `sign_in_completed`"), "sign-in events cannot define registered users");
 for (const key of ["analytics_source_reference", "account_source_reference", "product_data_source_reference"]) assert.equal(typeof monthlySnapshotTemplate[key], "string", `monthly snapshot template must include ${key}`);

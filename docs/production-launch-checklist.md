@@ -227,15 +227,12 @@ Migrations are forward-only. There is no down-migration path. To reverse a schem
 These are what the repository can prove on its own.
 
 ```bash
-npm run qualify:static        # lint, typecheck, all static regressions
-
-npx supabase start            # local stack only
-npm run qualify:database      # schema lint, pgTAP, two-user qualifications
-npx supabase stop
-
-npm run qualify:launch        # both lanes
+npm run qualify:static        # clean install, lint, typecheck, static regressions
+npm run qualify:database      # pinned local CLI, clean reset, pgTAP, auth/RLS qualifiers
+npm run qualify:production    # Next.js production build using Turbopack, links, smoke
+npm run release:verify        # complete sequence; always cleans up local processes
 ```
 
 `npm run qualify:auth-cache-local` additionally requires the application running on `localhost:3000` and is therefore run by hand rather than in CI.
 
-Every qualification script refuses to run against a non-local Supabase URL.
+Every database qualification refuses to run against a non-local Supabase URL. The orchestrator starts and stops the pinned local Supabase stack even when a step fails.
