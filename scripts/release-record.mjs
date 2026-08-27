@@ -31,7 +31,7 @@ function migrationState() {
 }
 
 function workingTreePaths() {
-  const output = git(["status", "--porcelain=v1"]);
+  const output = git(["status", "--porcelain=v1", "--untracked-files=all"]);
   if (!output) return [];
   return output.split("\n").map((line) => {
     const name = line.slice(3);
