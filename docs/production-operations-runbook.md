@@ -67,6 +67,14 @@ The endpoint is `POST https://<production-domain>/api/internal/reminders/process
 
 Run after deployment, recording tester/date/evidence without private payloads.
 
+After deploying the exact candidate that completed local qualification, run the automated public-route smoke against that deployment:
+
+```bash
+PUBLIC_SMOKE_ORIGIN=https://engineeringfoundry.dev npm run test:public-routes:hosted
+```
+
+This is a post-deployment command. It requires a root HTTP(S) origin and rejects paths, query strings, fragments, and embedded credentials. It does not build the application or start/stop a local Next.js server. `npm run test:public-routes` remains the local built-candidate smoke used by `npm run qualify:launch:production`; do not treat that local command as hosted verification. Record the result as dated deployment evidence only after it runs successfully; until then, keep `DEPLOYMENT_STATUS=NOT_DEPLOYED_HOSTED_GATES_PENDING`.
+
 **Public:** homepage, DSA, System Design, ML Design, Behavioral, Interview Playbook, Interview Experiences, companies, and mock interviews; canonical/robots/sitemap; HTTPS headers and no CSP violations on a representative public and private page.
 
 **Auth:** sign-up with confirmation, callback, onboarding, sign-in, sign-out/sign-back-in, password recovery/update, account email change, settings, and each explicitly enabled OAuth provider.
@@ -90,7 +98,7 @@ Run after deployment, recording tester/date/evidence without private payloads.
 ```bash
 npm run qualify:static
 npm run qualify:database
-npm run qualify:production
+npm run qualify:launch:production
 npm run release:verify
 ```
 

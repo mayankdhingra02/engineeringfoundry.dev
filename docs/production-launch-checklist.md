@@ -195,7 +195,11 @@ Check the production response for any page:
 ## Launch
 
 1. [ ] Deploy with `NEXT_PUBLIC_ACCOUNTS_ENABLED=false` and confirm the public product is healthy
-2. [ ] `npm run test:public-routes` against the production origin
+2. [ ] After deploying the exact candidate that passed local qualification, run the post-deployment public-route smoke (it never builds or starts a local application server):
+   ```bash
+   PUBLIC_SMOKE_ORIGIN=https://engineeringfoundry.dev npm run test:public-routes:hosted
+   ```
+   `PUBLIC_SMOKE_ORIGIN` is an operator-only command input, not an application runtime variable. Use only the root HTTP(S) origin; do not add a path, query, fragment, or credentials. Record the tester/date/evidence and keep this hosted gate unchecked until it passes against the real deployment.
 3. [ ] Complete every hosted-qualification item above using a temporarily enabled preview or staging environment
 4. [ ] Set `NEXT_PUBLIC_ACCOUNTS_ENABLED=true` and redeploy
 5. [ ] Re-verify sign-in, dashboard, export, and deletion on production
@@ -229,9 +233,11 @@ These are what the repository can prove on its own.
 ```bash
 npm run qualify:static        # clean install, lint, typecheck, static regressions
 npm run qualify:database      # pinned local CLI, clean reset, pgTAP, auth/RLS qualifiers
-npm run qualify:production    # Next.js production build using Turbopack, links, smoke
+npm run qualify:launch:production # Next.js production build using Turbopack, links, smoke
 npm run release:verify        # complete sequence; always cleans up local processes
 ```
+
+`npm run qualify:launch:production` is the local qualification command for a built candidate. Its `npm run test:public-routes` step starts a local Next.js server and is distinct from the post-deployment hosted command above.
 
 `npm run qualify:auth-cache-local` additionally requires the application running on `localhost:3000` and is therefore run by hand rather than in CI.
 

@@ -14,7 +14,7 @@ export const STATIC_STEPS = [
   ...[
     "test:content-validator", "test:interview-content-validator", "test:mock-content-validator",
     "test:referral-privacy", "test:challenge-privacy", "test:recognition-integrity",
-    "test:experience-privacy", "test:experience-integrity", "test:interview-experiences-v1",
+    "test:experience-privacy", "test:experience-integrity", "test:interview-experiences-v1", "test:public-route-smoke",
     "test:public-launch-integrity", "test:auth-foundation", "test:application-tracker",
     "test:behavioral-workspace", "test:behavioral-v1-polish", "test:analytics-launch-evidence",
     "test:v1-launch-readiness", "test:feedback-admin-operations", "test:interview-preparation-hub",

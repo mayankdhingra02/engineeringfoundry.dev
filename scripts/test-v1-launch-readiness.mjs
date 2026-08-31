@@ -40,10 +40,12 @@ assert.deepEqual(METRIC_SOURCE_REFERENCES.account_source_reference, ["registered
 assert.ok(Object.hasOwn(template.metrics, "registered_accounts") && !Object.hasOwn(template.metrics, "registered_users"), "snapshot template must match canonical account terminology");
 
 const staticScripts = new Set(STATIC_STEPS.filter((step) => step.command === "npm" && step.args[0] === "run").map((step) => step.args[1]));
-for (const script of Object.keys(packageJson.scripts).filter((name) => name.startsWith("test:") && name !== "test:public-routes")) {
+for (const script of Object.keys(packageJson.scripts).filter((name) => name.startsWith("test:") && !["test:public-routes", "test:public-routes:hosted"].includes(name))) {
   assert.ok(staticScripts.has(script), `canonical static qualification must include ${script}`);
 }
 assert.ok(staticScripts.has("test:v1-launch-readiness"), "static qualification must include final launch-readiness evidence");
+assert.equal(packageJson.scripts["qualify:launch:production"], "npm run qualify:production", "the documented local production qualification alias must run the canonical production lane");
+assert.equal(packageJson.scripts["test:public-routes:hosted"], "node scripts/smoke-public-routes.mjs --hosted", "hosted public-route smoke must remain explicit and not silently use local mode");
 for (const command of ["npm run qualify:static", "npm run qualify:database", "npm run qualify:production"]) assert.ok(ci.includes(command), `CI must invoke canonical command: ${command}`);
 validateReleaseRecord({ allowAbsent: true });
 
