@@ -84,14 +84,17 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
     if (!body.trim()) throw new Error(`${route} returned an empty body.`);
   }
 
-  const redirects = [
-    ["/system-design", "/system-design/start-here/introduction", "System Design introduction"],
-    ["/system-design/introduction", "/system-design/start-here/introduction", "canonical introduction lesson"],
-    ["/system-design/url-shortener", "/system-design/problems/url-shortener", "canonical practice problem"],
-  ];
-  for (const [route, destination, label] of redirects) {
-    const result = await request(route, 308);
-    if (result.response.headers.get("location") !== destination) throw new Error(`${route} does not permanently redirect to the ${label}.`);
+  const retiredSystemDesignLanding = await request("/system-design", 308);
+  if (retiredSystemDesignLanding.response.headers.get("location") !== "/system-design/start-here/introduction") {
+    throw new Error("/system-design does not permanently redirect to the System Design introduction.");
+  }
+  const shortIntroduction = await request("/system-design/introduction", 308);
+  if (shortIntroduction.response.headers.get("location") !== "/system-design/start-here/introduction") {
+    throw new Error("/system-design/introduction does not permanently redirect to the canonical introduction lesson.");
+  }
+  const legacyUrlShortener = await request("/system-design/url-shortener", 308);
+  if (legacyUrlShortener.response.headers.get("location") !== "/system-design/problems/url-shortener") {
+    throw new Error("/system-design/url-shortener does not permanently redirect to the canonical practice problem.");
   }
 
   const home = await request("/");
