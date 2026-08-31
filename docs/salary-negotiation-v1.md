@@ -4,9 +4,9 @@ P0.6 owns the public `/salary-negotiation` learning section, eight structured mo
 
 ## Deliberate persistence and analytics decision
 
-The worksheet uses React browser-session state only. It does not use localStorage, cookies, URL/query parameters, Supabase, server actions, or analytics. Closing or refreshing the page clears compensation values, company labels, notes, deadlines, and message-builder text. This is intentional: sensitive offer information does not need durable product storage for this bounded v1 use case.
+The worksheet uses React browser-session state only. It does not use localStorage, cookies, URL/query parameters, Supabase, or server actions. Closing or refreshing the page clears compensation values, company labels, notes, deadlines, and message-builder text. This is intentional: sensitive offer information does not need durable product storage for this bounded v1 use case.
 
-The section adds no Salary Negotiation analytics events in P0.6. Existing analytics boundaries remain in force, and no worksheet value is ever passed to `track`.
+Opening the worksheet emits the existing fixed, allowlisted `offer_comparison_opened` event with only `surface: "salary-negotiation"`. That value-free discovery signal contains no compensation values, labels, notes, dates, or message-builder text; those inputs remain session-only and never leave the browser session. Existing analytics boundaries remain in force, and no worksheet value is ever passed to `track`.
 
 ## Calculation boundary
 

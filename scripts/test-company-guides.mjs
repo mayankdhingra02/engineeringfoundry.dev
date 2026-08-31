@@ -23,6 +23,10 @@ assert.match(matureWorkspace, /embedded = false/, "the mature guide component mu
 assert.match(matureWorkspace, /!embedded && <header[\s\S]*!embedded && <nav/s, "embedded mature detail must suppress its competing header and navigation");
 assert.match(matureWorkspace, /!embedded && guide\.readiness/, "embedded mature detail must not surface legacy readiness scoring");
 assert.match(ui, /Detailed company-specific research[\s\S]*Open detailed \{guide\.company\} guide/s, "mature detail must be progressively disclosed under a clear label");
+assert.match(ui, /const publicGuideHref[\s\S]*"\/behavioral\/workspace": "\/behavioral"[\s\S]*"\/interview-playbook": "\/interview-tips"/, "public company guides must map account-gated preparation routes to public equivalents");
+assert.match(ui, /href=\{publicGuideHref\(domain\.href\)\}/, "company guide domain CTAs must use public-safe routes");
+assert.match(ui, /publicGuideActionLabel\(domain\.href, domain\.actionLabel\)/, "company guide domain CTA labels must describe their public destinations");
+assert.doesNotMatch(ui, /href="\/(?:behavioral\/workspace|interview-playbook)"/, "company guide CTAs must not send launch users to account-gated routes");
 assert.match(indexPage, /company\.guideStatus === "available"/, "company index must derive display status from guideStatus");
 assert.match(indexPage, /available \? "Guide available" : "Curation in progress"/, "curating companies must not render the available label");
 assert.match(indexPage, /company-guide-curating/, "curating cards must have a visually distinct state hook");

@@ -71,5 +71,6 @@ assert.doesNotMatch(
   /label|baseSalary|targetBonus|signOn|equityGrantValue|vestingYears|otherGuaranteedCompensation/i,
   "worksheet analytics cannot include private offer values",
 );
-assert.match(docs, /browser-session state only[\s\S]*does not use localStorage[\s\S]*analytics/i, "persistence/privacy decision must be documented");
+assert.match(worksheet, /Offer values, labels, notes, dates, and draft text stay only in this browser session and never leave it\.[\s\S]*Visiting this page sends one fixed, value-free analytics event; it never includes anything you enter\./, "worksheet must disclose the fixed, value-free page-visit event without weakening the session-only privacy boundary");
+assert.match(docs, /browser-session state only[\s\S]*does not use localStorage[\s\S]*Opening the worksheet emits the existing fixed, allowlisted `offer_comparison_opened` event with only `surface: "salary-negotiation"`[\s\S]*no compensation values, labels, notes, dates, or message-builder text[\s\S]*remain session-only and never leave the browser session/i, "persistence and fixed-event privacy boundaries must be documented together");
 console.log("Salary Negotiation v1 qualification passed: eight modules, privacy, math, safeguards, discovery, and offer handoffs hold.");

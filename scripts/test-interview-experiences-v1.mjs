@@ -4,8 +4,10 @@ const read = (path) => fs.readFileSync(path, "utf8");
 const migration = read("supabase/migrations/202608220001_create_interview_experiences_v1.sql");
 const page = read("app/interview-experiences/page.tsx");
 const directory = read("features/interview-experiences/experience-directory.tsx");
+const companyPage = read("app/interview-experiences/[company]/page.tsx");
 const actions = read("app/interview-experiences/actions.ts");
 const form = read("features/interview-experiences/experience-submission.tsx");
+const company = read("lib/interview-experiences/company.ts");
 const failures = [];
 const expect = (condition, message) => { if (!condition) failures.push(message); };
 
@@ -16,6 +18,13 @@ expect(page.includes("const publicResult = publicSupabase ? await publicSupabase
 expect(page.includes('eq("status", "approved").eq("publication_consent", true)') && page.includes("const ownResult = actor ? await actor.supabase"), "Public query must remain approved/consented while private history stays actor-gated.");
 expect(page.includes("Reviewed experience directory") && directory.includes("No reviewed public interview experiences are published yet."), "Directory-first route needs an honest empty state.");
 for (const marker of ["Company", "Level", "Region", "Stage"]) expect(directory.includes(marker), `Directory is missing the ${marker} filter.`);
+expect(!directory.includes("useSearchParams") && directory.includes("normalizeInterviewExperienceCompany") && directory.includes("resolveCompanyFilter"), "Directory filters must resolve canonical company names without forcing a client search-params bailout.");
+expect(directory.includes("Reset filters") && directory.includes('role="status"') && directory.includes('aria-live="polite"'), "Directory filters need a reset affordance and a live result status.");
+expect(companyPage.includes("createSupabaseServerClient") && companyPage.includes("ExperienceDirectory"), "Company experience pages must query and render public reports.");
+expect(companyPage.includes('eq("status", "approved").eq("publication_consent", true).ilike("company_name", item.name)'), "Company experience pages must scope approved, consented reads case-insensitively to the requested company.");
+expect(companyPage.includes("<ExperienceDirectory experiences={experiences} initialCompany={item.name} fixedCompany />") && directory.includes("No reviewed public interview experiences are published yet."), "Company experience pages must render the shared honest no-reports state in a fixed company scope.");
+expect(page.includes("searchParams: Promise") && page.includes("const { company } = await searchParams"), "Directory route must resolve the company handoff on the server.");
+expect(company.includes("normalizeInterviewExperienceCompany") && company.includes("canonicalInterviewExperienceCompany") && form.includes("companyName: canonicalInterviewExperienceCompany(input.companyName)") && form.includes("saveInterviewExperience(bounded(input), submit)"), "Known company submissions must be canonicalized before storage and moderation.");
 expect(page.includes("Contribute a high-level experience") && page.includes("interview_experience_rounds"), "Route must provide contribution and reviewed process context.");
 expect(actions.includes("getAuthenticatedActor") && actions.includes("save_interview_experience_draft"), "Mutations must authenticate and use the controlled RPC boundary.");
 expect(!actions.includes("author_id:"), "Caller-controlled author identity is forbidden.");
