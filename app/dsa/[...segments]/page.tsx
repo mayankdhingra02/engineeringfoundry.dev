@@ -14,12 +14,13 @@ import { DSAOverviewGuide, LanguageComparisonGuide, ProblemSolvingFrameworkGuide
 import { PythonDSAGuide } from "@/content/dsa/python";
 import { JavaDSAGuide } from "@/content/dsa/java";
 import { dsaCurriculumPages, getDsaCurriculumPage } from "@/data/dsa/curriculum";
-import { activeQuestions, dsaPatterns, dsaTopics, questionsForTopic, roadmapStages, topicBySlug } from "@/data/dsa";
+import { dsaPatterns, dsaTopics, questionsForTopic, roadmapStages, topicBySlug } from "@/data/dsa";
 import { dsaCompanies, getDsaCompany } from "@/data/dsa/interview-prep";
 import { dsaLanguages, getDsaLanguage } from "@/data/dsa/languages";
 import { dsaInterviewQuestionDatabase, questionsForInterviewCompany } from "@/data/dsa/question-database";
 import { canonicalDsaQuestions, getCanonicalDsaQuestion } from "@/lib/dsa/catalog";
 import { getDsaWorkspaceState } from "@/lib/dsa/queries";
+import { filterDsaQuestionsBySearch } from "@/lib/dsa/question-search";
 import { PracticeWorkspace } from "@/features/dsa/progress/practice-workspace";
 import { DsaQuestionDetail } from "@/features/dsa/progress/question-detail";
 import { getCoreRoadmapQuestionCounts } from "@/data/dsa/core-roadmap";
@@ -134,7 +135,7 @@ function RoadmapPage({ roleSlug, durationSegment }: { roleSlug: string; duration
 
 function PatternIndex() {
   const page = { id: "dsa-patterns", title: "Coding Interview Pattern Index", slug: "/dsa/patterns", type: "page" as const, category: "Patterns", status: "published" as const, description: "A compact map of reusable solution shapes, recognition signals, and common mistakes.", estimatedReadTime: 5 };
-  return <DSAArticleLayout page={page} showPager={false}><p>Patterns help compress search space, but they are useful only when connected to recognition signals and an invariant. Use this index to name weak areas, then practice deriving the approach.</p><div className="pattern-grid">{dsaPatterns.map((pattern) => { const questionCount = activeQuestions.filter((question) => question.patterns.includes(pattern.slug)).length; return <article key={pattern.id}><h2>{pattern.name}</h2><p>{pattern.summary}</p><h3>Recognition signals</h3><ul>{pattern.recognitionSignals.map((signal) => <li key={signal}>{signal}</li>)}</ul><h3>Common mistakes</h3><ul>{pattern.commonMistakes.map((mistake) => <li key={mistake}>{mistake}</li>)}</ul>{questionCount > 0 ? <Link className="card-link" href={`/dsa/questions?q=${encodeURIComponent(pattern.name)}`}>Practice {questionCount} matching question{questionCount === 1 ? "" : "s"}<ArrowRight size={14} /></Link> : <span className="pattern-grid-empty">No matching questions cataloged yet.</span>}</article>; })}</div><DSAHeading level={2} id="use-patterns-well">Use patterns without memorizing answers</DSAHeading><p>For each attempt, record the clue that suggested a pattern, the invariant that makes it correct, and the condition that would make you choose something else.</p></DSAArticleLayout>;
+  return <DSAArticleLayout page={page} showPager={false}><p>Patterns help compress search space, but they are useful only when connected to recognition signals and an invariant. Use this index to name weak areas, then practice deriving the approach.</p><div className="pattern-grid">{dsaPatterns.map((pattern) => { const questionCount = filterDsaQuestionsBySearch(dsaInterviewQuestionDatabase, pattern.slug).length; return <article key={pattern.id}><h2>{pattern.name}</h2><p>{pattern.summary}</p><h3>Recognition signals</h3><ul>{pattern.recognitionSignals.map((signal) => <li key={signal}>{signal}</li>)}</ul><h3>Common mistakes</h3><ul>{pattern.commonMistakes.map((mistake) => <li key={mistake}>{mistake}</li>)}</ul>{questionCount > 0 ? <Link className="card-link" href={`/dsa/questions?q=${encodeURIComponent(pattern.slug)}`}>Practice {questionCount} matching question{questionCount === 1 ? "" : "s"}<ArrowRight size={14} /></Link> : <span className="pattern-grid-empty">No matching questions cataloged yet.</span>}</article>; })}</div><DSAHeading level={2} id="use-patterns-well">Use patterns without memorizing answers</DSAHeading><p>For each attempt, record the clue that suggested a pattern, the invariant that makes it correct, and the condition that would make you choose something else.</p></DSAArticleLayout>;
 }
 
 async function PracticeRoute({ searchParams, libraryOnly }: { searchParams: PageProps["searchParams"]; libraryOnly: boolean }) {

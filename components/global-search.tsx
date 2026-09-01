@@ -68,7 +68,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
   const items = useMemo(() => [
     ...activeQuestions.map((question) => ({ title: question.title, type: `Question · ${question.source.name}`, href: `/dsa/questions?q=${encodeURIComponent(question.title)}` })),
     ...dsaTopics.map((topic) => ({ title: topic.name, type: "Topic", href: `/dsa/${topic.slug}` })),
-    ...dsaPatterns.map((pattern) => ({ title: pattern.name, type: "Pattern", href: `/dsa/questions?q=${encodeURIComponent(pattern.name)}` })),
+    ...dsaPatterns.map((pattern) => ({ title: pattern.name, type: "Pattern", href: `/dsa/questions?q=${encodeURIComponent(pattern.slug)}` })),
     ...dsaCurriculumPages.map((page) => ({ title: page.navigationTitle ?? page.title, type: `DSA guide · ${page.category}`, href: page.slug! })),
     ...dsaCompanies.map((company) => ({ title: `${company.name} coding interview questions`, type: "DSA company index · demo tags", href: `/dsa/companies/${company.slug}` })),
     ...dsaLanguages.map((language) => ({ title: `DSA in ${language.name}`, type: "DSA language guide", href: `/dsa/languages/${language.slug}` })),
@@ -98,7 +98,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     }
     function onKey(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openSearch(); }
-      if (event.key === "Escape") closeSearch();
+      if (open && event.key === "Escape") closeSearch();
     }
     window.addEventListener("keydown", onKey);
     window.addEventListener(globalSearchOpenEvent, openSearch);
@@ -106,7 +106,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
       window.removeEventListener("keydown", onKey);
       window.removeEventListener(globalSearchOpenEvent, openSearch);
     };
-  }, [closeSearch]);
+  }, [closeSearch, open]);
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 30); }, [open]);
   useEffect(() => {
     if (!open) return;

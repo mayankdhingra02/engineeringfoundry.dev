@@ -4,9 +4,9 @@ P0.6 owns the public `/salary-negotiation` learning section, eight structured mo
 
 ## Deliberate persistence and analytics decision
 
-The worksheet uses React browser-session state only. It does not use localStorage, cookies, URL/query parameters, Supabase, or server actions. Closing or refreshing the page clears compensation values, company labels, notes, deadlines, and message-builder text. This is intentional: sensitive offer information does not need durable product storage for this bounded v1 use case.
+The worksheet uses React in-memory page state only. It does not use localStorage, cookies, URL/query parameters, Supabase, or server actions. Engineering Foundry does not transmit or store compensation values, company labels, notes, deadlines, or message-builder text. Refreshing or closing the page clears them. This is intentional: sensitive offer information does not need durable product storage for this bounded v1 use case. Copying writes the assembled message to the browser clipboard only; it does not send email or contact a recruiter.
 
-Opening the worksheet emits the existing fixed, allowlisted `offer_comparison_opened` event with only `surface: "salary-negotiation"`. That value-free discovery signal contains no compensation values, labels, notes, dates, or message-builder text; those inputs remain session-only and never leave the browser session. Existing analytics boundaries remain in force, and no worksheet value is ever passed to `track`.
+If analytics is enabled and available, opening the worksheet emits the existing fixed, allowlisted `offer_comparison_opened` event with only `surface: "salary-negotiation"`. That value-free discovery signal contains no compensation values, labels, notes, dates, or message-builder text; those inputs remain in memory and are never transmitted to or stored by Engineering Foundry. Existing analytics boundaries remain in force, and no worksheet value is ever passed to `track`.
 
 ## Calculation boundary
 

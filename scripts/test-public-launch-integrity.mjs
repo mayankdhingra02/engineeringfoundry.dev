@@ -82,6 +82,7 @@ const globalSearch = read("components/global-search.tsx");
 requireText(globalSearch, "systemDesignLessons", "Global search is not using the current System Design curriculum index.");
 prohibit(globalSearch, /activeSystemDesignProblems|systemDesignConcepts/, "Global search still mixes legacy System Design routes into the current curriculum.");
 requireText(globalSearch, "invokerRef.current", "Global search does not retain the actual opening control for focus restoration.");
+requireText(globalSearch, 'if (open && event.key === "Escape") closeSearch();', "Global search must ignore Escape while closed so it cannot steal focus from the page.");
 requireText(globalSearch, 'role="status" aria-live="polite"', "Global search result changes are not announced.");
 requireText(globalSearch, 'document.body.style.overflow = "hidden"', "Global search does not lock background scrolling while modal.");
 for (const [label, href] of [

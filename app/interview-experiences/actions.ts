@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { canonicalInterviewExperienceCompany } from "@/lib/interview-experiences/company";
 import type { Json } from "@/lib/supabase/database.types";
 
 export type ExperienceSubmissionInput = {
@@ -24,7 +25,7 @@ function clean(value: string, max: number) { return value.trim().slice(0, max); 
 export async function saveInterviewExperience(input: ExperienceSubmissionInput, submit = false) {
   const actor = await getAuthenticatedActor();
   if (!actor) return { ok: false, error: "Sign in to save or submit an interview experience." };
-  const companyName = clean(input.companyName, 120);
+  const companyName = canonicalInterviewExperienceCompany(clean(input.companyName, 120));
   const roleTitle = clean(input.roleTitle, 160);
   const summary = clean(input.summary, 4000);
   const validLevels = new Set(["", "Entry", "Mid", "Senior", "Staff+", "Management", "Prefer not to say"]);

@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, FilterX, Search, SlidersHorizontal, X } from "lucide-react";
 import type { DSACompany, DSAInterviewQuestion, DSAQuestionSourceType } from "@/data/dsa/interview-prep";
 import type { DsaProgressMap } from "@/lib/dsa/progress";
+import { matchesDsaQuestionSearch } from "@/lib/dsa/question-search";
 import { QuestionTable } from "./question-table";
 
 export interface QuestionBrowserFilters {
@@ -87,8 +88,7 @@ function BrowserCore({ questions, companies, mode, fixedCompanySlug, initialFilt
 
   const filtered = useMemo(() => scopedQuestions.filter((question) => {
     const companyNames = question.companies.map((association) => companyMap.get(association.companySlug)?.name ?? association.companySlug);
-    const haystack = [question.id, question.slug, question.title, ...question.topics, ...question.patterns, ...companyNames].filter(Boolean).join(" ").toLowerCase();
-    return (!deferredSearch || haystack.includes(deferredSearch.trim().toLowerCase()))
+    return matchesDsaQuestionSearch(question, deferredSearch, companyNames)
       && (fixedCompanySlug || filters.company === "all" || question.companies.some((association) => association.companySlug === filters.company))
       && (filters.difficulty === "all" || question.difficulty.toLowerCase() === filters.difficulty.toLowerCase())
       && (!filters.topics.length || filters.topics.every((topic) => question.topics.some((title) => filterSlug(title) === topic)))
@@ -141,7 +141,7 @@ export function QuestionBrowser({ questions, companies, fixedCompanySlug, progre
     const params = filtersToParams(filters); const retainedApplication = searchParams.get("application"); if (retainedApplication) params.set("application", retainedApplication); const query = params.toString();
     startTransition(() => router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false }));
   }
-  return <BrowserCore questions={questions} companies={companies} mode="full" fixedCompanySlug={fixedCompanySlug} initialFilters={initialFilters} onFiltersChange={updateUrl} progress={progress} signedIn={signedIn} applicationId={applicationId} />;
+  return <BrowserCore key={`${fixedCompanySlug ?? "all"}:${searchParams.toString()}`} questions={questions} companies={companies} mode="full" fixedCompanySlug={fixedCompanySlug} initialFilters={initialFilters} onFiltersChange={updateUrl} progress={progress} signedIn={signedIn} applicationId={applicationId} />;
 }
 
 export function QuestionBrowserPreviewCore({ questions, companies }: { questions: DSAInterviewQuestion[]; companies: DSACompany[] }) {

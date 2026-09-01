@@ -27,6 +27,8 @@ assert.match(ui, /const publicGuideHref[\s\S]*"\/behavioral\/workspace": "\/beha
 assert.match(ui, /href=\{publicGuideHref\(domain\.href\)\}/, "company guide domain CTAs must use public-safe routes");
 assert.match(ui, /publicGuideActionLabel\(domain\.href, domain\.actionLabel\)/, "company guide domain CTA labels must describe their public destinations");
 assert.doesNotMatch(ui, /href="\/(?:behavioral\/workspace|interview-playbook)"/, "company guide CTAs must not send launch users to account-gated routes");
+assert.match(matureWorkspace, /isPrivateBehavioralWorkspace = resource\.url === "\/behavioral\/workspace"[\s\S]*href = isPrivateBehavioralWorkspace \? "\/behavioral" : resource\.url/, "embedded mature guides must route private behavioral resources to the public behavioral guide");
+assert.match(matureWorkspace, /Behavioral practice[\s\S]*Practice evidence-based stories with public guidance\./, "remapped mature resources must truthfully describe their public destination");
 assert.match(indexPage, /company\.guideStatus === "available"/, "company index must derive display status from guideStatus");
 assert.match(indexPage, /available \? "Guide available" : "Curation in progress"/, "curating companies must not render the available label");
 assert.match(indexPage, /company-guide-curating/, "curating cards must have a visually distinct state hook");

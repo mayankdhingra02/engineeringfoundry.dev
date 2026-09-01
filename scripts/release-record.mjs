@@ -3,31 +3,81 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import {
-  PINNED_NODE_VERSION,
-  PINNED_NPM_VERSION,
-  PINNED_SUPABASE_CLI_VERSION,
-  PRODUCTION_BUILD_COMMAND,
-  PRODUCTION_BUILD_DESCRIPTION,
-  RELEASE_QUALIFICATION_COMMANDS,
-} from "./release-verification-manifest.mjs";
 
 export const RELEASE_JSON_PATH = "docs/releases/v1-release-candidate.json";
 export const RELEASE_MARKDOWN_PATH = "docs/releases/v1-release-candidate.md";
 export const RELEASE_RECORD_PATHS = [RELEASE_JSON_PATH, RELEASE_MARKDOWN_PATH];
+const RELEASE_ARCHIVE_DIRECTORY = "docs/releases/archive";
 
 function git(args, options = {}) {
   return execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], ...options }).trim();
+}
+
+function gitFile(commit, file) {
+  return execFileSync("git", ["show", `${commit}:${file}`], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
 }
 
 function fullCommit(value) {
   return git(["rev-parse", "--verify", `${value}^{commit}`]);
 }
 
-function migrationState() {
-  const migrations = readdirSync("supabase/migrations").filter((name) => name.endsWith(".sql")).sort();
+function migrationStateAt(commit) {
+  const migrations = git(["ls-tree", "-r", "--name-only", commit, "--", "supabase/migrations"])
+    .split("\n")
+    .filter((name) => name.endsWith(".sql"))
+    .map((name) => path.basename(name))
+    .sort();
   assert.ok(migrations.length > 0, "At least one migration is required.");
   return { migration_count: migrations.length, final_migration_filename: migrations.at(-1) };
+}
+
+function manifestString(source, name) {
+  const match = source.match(new RegExp(`export const ${name} = ["']([^"']+)["'];`));
+  assert.ok(match, `Release verification manifest at the candidate must export ${name}.`);
+  return match[1];
+}
+
+function manifestCommands(source) {
+  const match = source.match(/export const RELEASE_QUALIFICATION_COMMANDS = \[([\s\S]*?)\];/);
+  assert.ok(match, "Release verification manifest at the candidate must export qualification commands.");
+  const commands = [...match[1].matchAll(/["']([^"']+)["']/g)].map((entry) => entry[1]);
+  assert.ok(commands.length > 0, "Candidate qualification commands must not be empty.");
+  return commands;
+}
+
+/**
+ * Release evidence describes the candidate, not whichever code happens to be
+ * checked out later. Read every mutable qualification fact from that candidate
+ * tree so a normal descendant cannot retroactively change the evidence.
+ */
+function candidateSnapshot(candidateSha) {
+  const packageJson = JSON.parse(gitFile(candidateSha, "package.json"));
+  const manifest = gitFile(candidateSha, "scripts/release-verification-manifest.mjs");
+  const node = gitFile(candidateSha, ".nvmrc").trim();
+  const npm = packageJson.packageManager?.match(/^npm@(.+)$/)?.[1];
+  const supabaseCli = packageJson.devDependencies?.supabase;
+  const frameworkCommand = packageJson.scripts?.build;
+
+  assert.ok(node, "Candidate .nvmrc must declare a Node.js version.");
+  assert.ok(npm, "Candidate package.json must pin npm with packageManager.");
+  assert.ok(supabaseCli, "Candidate package.json must pin the Supabase CLI.");
+  assert.ok(frameworkCommand, "Candidate package.json must declare the production build command.");
+  assert.equal(packageJson.engines?.node, node, "Candidate package.json engines.node must match its .nvmrc.");
+  assert.equal(manifestString(manifest, "PINNED_NODE_VERSION"), node, "Candidate release manifest Node pin must match its .nvmrc.");
+  assert.equal(manifestString(manifest, "PINNED_NPM_VERSION"), npm, "Candidate release manifest npm pin must match package.json.");
+  assert.equal(manifestString(manifest, "PINNED_SUPABASE_CLI_VERSION"), supabaseCli, "Candidate release manifest Supabase CLI pin must match package.json.");
+  assert.equal(manifestString(manifest, "PRODUCTION_BUILD_COMMAND"), frameworkCommand, "Candidate release manifest build command must match package.json.");
+
+  return {
+    toolchain: { node, npm, supabase_cli: supabaseCli },
+    database: migrationStateAt(candidateSha),
+    build: {
+      command: "npm run build",
+      framework_command: frameworkCommand,
+      description: manifestString(manifest, "PRODUCTION_BUILD_DESCRIPTION"),
+    },
+    qualification_commands: manifestCommands(manifest),
+  };
 }
 
 function workingTreePaths() {
@@ -89,90 +139,156 @@ function assertAllowedWorkingTree() {
   assert.deepEqual(unexpected, [], `Only release-record files may be dirty: ${unexpected.join(", ")}`);
 }
 
-export function validateReleaseRecord({ allowAbsent = true } = {}) {
-  const jsonExists = existsSync(RELEASE_JSON_PATH);
-  const markdownExists = existsSync(RELEASE_MARKDOWN_PATH);
-  assert.equal(jsonExists, markdownExists, "Release-record JSON and Markdown must either both exist or both be absent.");
-  if (!jsonExists) {
-    assert.ok(allowAbsent, "The release record is required.");
-    return { status: "ABSENT" };
-  }
+function archiveDescriptors() {
+  if (!existsSync(RELEASE_ARCHIVE_DIRECTORY)) return [];
+  const names = readdirSync(RELEASE_ARCHIVE_DIRECTORY).sort();
+  const jsonNames = names.filter((name) => name.endsWith(".json"));
+  const markdownNames = names.filter((name) => name.endsWith(".md"));
+  assert.equal(jsonNames.length, markdownNames.length, "Every archived release-record JSON must have exactly one Markdown pair.");
+  return jsonNames.map((jsonName) => {
+    const match = jsonName.match(/^v1-release-candidate-([0-9a-f]{40})\.json$/);
+    assert.ok(match, `Archived release record has an unexpected filename: ${jsonName}`);
+    const markdownName = jsonName.replace(/\.json$/, ".md");
+    assert.ok(markdownNames.includes(markdownName), `Archived release record is missing Markdown: ${jsonName}`);
+    return {
+      label: `archive ${match[1]}`,
+      paths: [`${RELEASE_ARCHIVE_DIRECTORY}/${jsonName}`, `${RELEASE_ARCHIVE_DIRECTORY}/${markdownName}`],
+      expectedCandidateSha: match[1],
+    };
+  });
+}
 
-  const record = JSON.parse(readFileSync(RELEASE_JSON_PATH, "utf8"));
+function directChildrenOfCandidate(candidateSha) {
+  return git(["rev-list", "--parents", "HEAD"])
+    .split("\n")
+    .map((line) => line.trim().split(" ").filter(Boolean))
+    .filter(([, ...parents]) => parents.length === 1 && parents[0] === candidateSha)
+    .map(([commit]) => commit);
+}
+
+function changedPaths(commit) {
+  return git(["diff-tree", "--no-commit-id", "--name-only", "-r", commit]).split("\n").filter(Boolean).sort();
+}
+
+function originalMetadataCommit(record, pair) {
+  const candidates = directChildrenOfCandidate(record.candidate_sha).filter((commit) => {
+    if (JSON.stringify(changedPaths(commit)) !== JSON.stringify([...RELEASE_RECORD_PATHS].sort())) return false;
+    try {
+      return gitFile(commit, RELEASE_JSON_PATH) === pair.json && gitFile(commit, RELEASE_MARKDOWN_PATH) === pair.markdown;
+    } catch {
+      return false;
+    }
+  });
+  assert.equal(candidates.length, 1, `${pair.label} must be preserved from exactly one record-only metadata commit directly after its candidate.`);
+  return candidates[0];
+}
+
+function validateRecordFacts(record, markdown, pair) {
   assert.equal(record.schema_version, 1);
   assert.equal(record.record_version, 1);
   assert.equal(record.release_name, "Engineering Foundry v1 release candidate");
   assert.match(record.base_sha, /^[0-9a-f]{40}$/);
   assert.match(record.candidate_sha, /^[0-9a-f]{40}$/);
+  if (pair.expectedCandidateSha) assert.equal(record.candidate_sha, pair.expectedCandidateSha, `${pair.label} filename must identify its candidate SHA.`);
   assert.equal(fullCommit(record.base_sha), record.base_sha, "Recorded base SHA is not a full commit SHA.");
   assert.equal(fullCommit(record.candidate_sha), record.candidate_sha, "Recorded candidate SHA is not a full commit SHA.");
   execFileSync("git", ["merge-base", "--is-ancestor", record.candidate_sha, "HEAD"]);
   execFileSync("git", ["merge-base", "--is-ancestor", record.base_sha, record.candidate_sha]);
-
-  const head = fullCommit("HEAD");
-  if (head !== record.candidate_sha) {
-    assert.equal(fullCommit("HEAD^"), record.candidate_sha, "The metadata commit must immediately follow the candidate commit.");
-  }
-  const committedAfterCandidate = git(["diff", "--name-only", `${record.candidate_sha}..HEAD`]).split("\n").filter(Boolean);
-  assert.ok(committedAfterCandidate.every((name) => RELEASE_RECORD_PATHS.includes(name)), "A non-release-record file changed after the candidate commit.");
-  if (head !== record.candidate_sha) {
-    assert.deepEqual([...committedAfterCandidate].sort(), [...RELEASE_RECORD_PATHS].sort(), "The metadata commit must contain exactly both release-record files.");
-  }
-  assertAllowedWorkingTree();
-
-  assert.equal(record.candidate_branch, "feat/p0-final-launch-readiness");
+  assert.match(record.candidate_branch, /^[A-Za-z0-9][A-Za-z0-9._/-]*$/, "Candidate branch must be a non-empty safe Git branch name.");
   assert.match(record.qualified_at_utc, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
   assert.equal(record.production_status, "not_deployed_or_hosted_qualified");
   assert.equal(record.hosted_owner_gates_complete, false);
   assert.match(record.hosted_owner_gates_statement, /remain incomplete/i);
 
-  const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
-  assert.equal(readFileSync(".nvmrc", "utf8").trim(), PINNED_NODE_VERSION);
-  assert.equal(packageJson.engines.node, PINNED_NODE_VERSION);
-  assert.equal(packageJson.packageManager, `npm@${PINNED_NPM_VERSION}`);
-  assert.equal(packageJson.devDependencies.supabase, PINNED_SUPABASE_CLI_VERSION);
-  assert.deepEqual(record.toolchain, { node: PINNED_NODE_VERSION, npm: PINNED_NPM_VERSION, supabase_cli: PINNED_SUPABASE_CLI_VERSION });
-  assert.equal(packageJson.scripts.build, PRODUCTION_BUILD_COMMAND);
-  assert.deepEqual(record.build, { command: "npm run build", framework_command: PRODUCTION_BUILD_COMMAND, description: PRODUCTION_BUILD_DESCRIPTION });
-  assert.deepEqual(record.database, migrationState());
-  assert.deepEqual(record.qualification_commands, RELEASE_QUALIFICATION_COMMANDS);
-  assert.equal(readFileSync(RELEASE_MARKDOWN_PATH, "utf8"), renderReleaseMarkdown(record), "Generated Markdown does not match the JSON release record.");
-  return { status: "VALID", record };
+  const snapshot = candidateSnapshot(record.candidate_sha);
+  assert.deepEqual(record.toolchain, snapshot.toolchain);
+  assert.deepEqual(record.build, snapshot.build);
+  assert.deepEqual(record.database, snapshot.database);
+  assert.deepEqual(record.qualification_commands, snapshot.qualification_commands);
+  assert.equal(markdown, renderReleaseMarkdown(record), `${pair.label} generated Markdown does not match its JSON release record.`);
 }
 
-function generateReleaseRecord(candidateArgument, baseArgument) {
-  assertAllowedWorkingTree();
-  const candidateSha = fullCommit(candidateArgument || "HEAD");
-  assert.equal(candidateSha, fullCommit("HEAD"), "Generate the release record only while HEAD is the candidate commit.");
-  const baseSha = fullCommit(baseArgument || git(["merge-base", "main", candidateSha]));
-  const record = {
+function validateRecordPair(pair) {
+  const jsonExists = existsSync(pair.paths[0]);
+  const markdownExists = existsSync(pair.paths[1]);
+  assert.equal(jsonExists, markdownExists, `${pair.label} JSON and Markdown must either both exist or both be absent.`);
+  assert.ok(jsonExists, `${pair.label} is required.`);
+
+  const json = readFileSync(pair.paths[0], "utf8");
+  const markdown = readFileSync(pair.paths[1], "utf8");
+  const record = JSON.parse(json);
+  validateRecordFacts(record, markdown, pair);
+  const metadataCommit = originalMetadataCommit(record, { ...pair, json, markdown });
+  assert.equal(gitFile(metadataCommit, RELEASE_JSON_PATH), json, `${pair.label} JSON changed after its original metadata commit.`);
+  assert.equal(gitFile(metadataCommit, RELEASE_MARKDOWN_PATH), markdown, `${pair.label} Markdown changed after its original metadata commit.`);
+  return { ...pair, record, metadataCommit };
+}
+
+export function validateReleaseRecord() {
+  const jsonExists = existsSync(RELEASE_JSON_PATH);
+  const markdownExists = existsSync(RELEASE_MARKDOWN_PATH);
+  assert.equal(jsonExists, markdownExists, "Release-record JSON and Markdown must either both exist or both be absent.");
+  assert.ok(jsonExists, "The current release record is required.");
+  const current = validateRecordPair({ label: "current release record", paths: RELEASE_RECORD_PATHS });
+  const archives = archiveDescriptors().map(validateRecordPair);
+  return { status: "VALID", record: current.record, metadataCommit: current.metadataCommit, records: [current, ...archives] };
+}
+
+export function createReleaseRecord({ candidateSha, baseSha, candidateBranch, qualifiedAtUtc }) {
+  const snapshot = candidateSnapshot(candidateSha);
+  return {
     schema_version: 1,
     record_version: 1,
     release_name: "Engineering Foundry v1 release candidate",
     base_sha: baseSha,
     candidate_sha: candidateSha,
-    candidate_branch: git(["branch", "--show-current"]),
-    qualified_at_utc: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
-    toolchain: { node: PINNED_NODE_VERSION, npm: PINNED_NPM_VERSION, supabase_cli: PINNED_SUPABASE_CLI_VERSION },
-    database: migrationState(),
-    build: { command: "npm run build", framework_command: PRODUCTION_BUILD_COMMAND, description: PRODUCTION_BUILD_DESCRIPTION },
-    qualification_commands: RELEASE_QUALIFICATION_COMMANDS,
+    candidate_branch: candidateBranch,
+    qualified_at_utc: qualifiedAtUtc,
+    toolchain: snapshot.toolchain,
+    database: snapshot.database,
+    build: snapshot.build,
+    qualification_commands: snapshot.qualification_commands,
     production_status: "not_deployed_or_hosted_qualified",
     hosted_owner_gates_complete: false,
     hosted_owner_gates_statement: "Hosted owner gates remain incomplete and require separate, dated evidence from the deployment owner.",
   };
+}
+
+export function validateGeneratedReleaseRecord(record) {
+  validateRecordFacts(record, renderReleaseMarkdown(record), { label: "generated release record" });
+}
+
+export function assertReleaseRecordDestinationAvailable() {
+  const jsonExists = existsSync(RELEASE_JSON_PATH);
+  const markdownExists = existsSync(RELEASE_MARKDOWN_PATH);
+  assert.equal(jsonExists, markdownExists, "Release-record JSON and Markdown must either both exist or both be absent.");
+  assert.ok(!jsonExists, "Refusing to overwrite the current immutable release record. Archive the existing JSON/Markdown pair under docs/releases/archive before generating a new candidate record.");
+}
+
+function generateReleaseRecord(candidateArgument, baseArgument) {
+  assertAllowedWorkingTree();
+  assertReleaseRecordDestinationAvailable();
+  const candidateSha = fullCommit(candidateArgument || "HEAD");
+  assert.equal(candidateSha, fullCommit("HEAD"), "Generate the release record only while HEAD is the candidate commit.");
+  const baseSha = fullCommit(baseArgument || git(["merge-base", "main", candidateSha]));
+  const record = createReleaseRecord({
+    candidateSha,
+    baseSha,
+    candidateBranch: git(["branch", "--show-current"]),
+    qualifiedAtUtc: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+  });
+  validateGeneratedReleaseRecord(record);
   writeFileSync(RELEASE_JSON_PATH, `${JSON.stringify(record, null, 2)}\n`);
   writeFileSync(RELEASE_MARKDOWN_PATH, renderReleaseMarkdown(record));
-  validateReleaseRecord({ allowAbsent: false });
-  console.log(`Generated and validated release records for candidate ${candidateSha}.`);
+  console.log(`Generated and pre-commit validated release records for candidate ${candidateSha}. Commit only the record pair, then run release:record validate.`);
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const command = process.argv[2] || "validate";
   if (command === "validate") {
-    const result = validateReleaseRecord({ allowAbsent: true });
-    console.log(result.status === "ABSENT" ? "Release record absent; candidate-code state is valid." : `Release record valid for ${result.record.candidate_sha}.`);
+    const result = validateReleaseRecord();
+    console.log(`Release record valid for ${result.record.candidate_sha}.`);
   } else if (command === "generate") {
     generateReleaseRecord(process.argv[3], process.argv[4]);
   } else {

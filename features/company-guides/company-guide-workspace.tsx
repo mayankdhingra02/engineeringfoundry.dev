@@ -83,7 +83,14 @@ function Allocation({ role }: { role: RoleGuide }) {
 function ResourceGroup({ guide, category }: { guide: CompanyInterviewGuide; category: string }) {
   const resources = guide.resources.filter((resource) => resource.category === category);
   if (!resources.length) return null;
-  return <div className="company-resource-group"><h3>{category}</h3><div>{resources.map((resource) => <a href={resource.url} target={resource.url.startsWith("/") ? undefined : "_blank"} rel={resource.url.startsWith("/") ? undefined : "noreferrer"} key={resource.title}><span><strong>{resource.title}</strong><small>{resource.description}</small></span><EvidenceBadge kind={resource.evidence} compact company={guide.company} /><ExternalLink size={14} aria-hidden="true" /></a>)}</div></div>;
+  return <div className="company-resource-group"><h3>{category}</h3><div>{resources.map((resource) => {
+    const isPrivateBehavioralWorkspace = resource.url === "/behavioral/workspace";
+    const href = isPrivateBehavioralWorkspace ? "/behavioral" : resource.url;
+    const title = isPrivateBehavioralWorkspace ? "Behavioral practice" : resource.title;
+    const description = isPrivateBehavioralWorkspace ? "Practice evidence-based stories with public guidance." : resource.description;
+    const content = <><span><strong>{title}</strong><small>{description}</small></span><EvidenceBadge kind={resource.evidence} compact company={guide.company} />{!href.startsWith("/") && <ExternalLink size={14} aria-hidden="true" />}</>;
+    return href.startsWith("/") ? <Link href={href} key={resource.title}>{content}</Link> : <a href={href} target="_blank" rel="noreferrer" key={resource.title}>{content}</a>;
+  })}</div></div>;
 }
 
 function FrameworkList({ items, compact = false }: { items: string[]; compact?: boolean }) {
