@@ -10,6 +10,7 @@ import { ExperienceDirectory, type PublicExperience } from "@/features/interview
 import { createPageMetadata } from "@/lib/metadata";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 
+export const dynamic = "force-dynamic";
 export const dynamicParams = false;
 export function generateStaticParams() { return companies.map((company) => ({ company: company.slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ company: string }> }): Promise<Metadata> { const { company } = await params; const item = getCompany(company); if (!item) notFound(); return createPageMetadata({ title: `${item.name} Interview Experiences`, description: `Read approved, consented contributor reports about ${item.name} interviews and create a private local reflection.`, path: `/interview-experiences/${item.slug}` }); }

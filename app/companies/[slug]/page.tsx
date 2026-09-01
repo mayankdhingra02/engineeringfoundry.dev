@@ -14,6 +14,7 @@ import { questionsForCompany } from "@/data/dsa";
 import { createPageMetadata } from "@/lib/metadata";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 
+export const dynamic = "force-dynamic";
 export const dynamicParams = false;
 export function generateStaticParams() { return companies.map((company) => ({ slug: company.slug })); }
 const matureGuides: Partial<Record<string, CompanyInterviewGuide>> = { amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide };

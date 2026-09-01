@@ -29,8 +29,13 @@ assert.ok(
 );
 
 const generatedCandidate = git(["rev-parse", "HEAD"]);
-const generatedBase = git(["merge-base", "main", generatedCandidate]);
-const generatedBranch = git(["branch", "--show-current"]);
+const generatedBase = result.record.base_sha;
+const generatedBranch = "test/generated-release-record";
+assert.equal(
+  git(["merge-base", generatedBase, generatedCandidate]),
+  generatedBase,
+  "The validated release-record base must remain an ancestor of the generated test candidate.",
+);
 const generated = createReleaseRecord({
   candidateSha: generatedCandidate,
   baseSha: generatedBase,

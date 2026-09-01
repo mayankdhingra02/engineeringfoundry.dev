@@ -15,6 +15,7 @@ for (const slug of priority) {
 for (const level of ["Entry", "Mid", "Senior", "Staff+"]) assert.ok(data.includes(`"${level}"`), `missing canonical level ${level}`);
 for (const id of ["dsa", "practical", "lld", "system-design", "ml-design", "behavioral"]) assert.match(data, new RegExp(`id: "${id}"`), `missing separated domain ${id}`);
 for (const marker of ["official", "candidate", "recommendation", "verifiedAt", "confidence", "applicability", "Processes vary by role, team, location, and time", "approved", "publication_consent"]) assert.match(`${data}\n${route}\n${ui}`, new RegExp(marker), `missing source, freshness, or experience boundary: ${marker}`);
+assert.match(route, /export const dynamic = "force-dynamic";[\s\S]*export const dynamicParams = false;[\s\S]*generateStaticParams/, "report-backed company routes must render fresh data per request while retaining the closed company route catalog");
 assert.match(route, /eq\("status", "approved"\)[\s\S]*eq\("publication_consent", true\)/, "company pages must query only approved, consented experiences");
 assert.match(route, /matureGuides:[\s\S]*amazon:[\s\S]*google:[\s\S]*meta:[\s\S]*walmart:/, "the company route must register all four mature guides for composition");
 assert.match(route, /matureGuide=\{matureGuide\}/, "the normalized route must pass the mature guide into the rendered P0.4 surface");

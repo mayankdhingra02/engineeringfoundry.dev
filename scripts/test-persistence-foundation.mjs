@@ -96,7 +96,7 @@ assertNotMatches(repository, /export\s+(?:async\s+)?function\s+\w+\s*\([^)]*(?:u
 assertNotMatches(repository, /service[_-]?role|SUPABASE_SERVICE/i, "request persistence must not bypass RLS with service credentials");
 assertNotMatches(repository, /(?:error\.message|JSON\.stringify\(error\)|throw\s+error)/, "database errors must not be exposed through the repository result");
 
-const publicEntryFiles = [
+const publicStaticEntryFiles = [
   "app/page.tsx",
   "app/prepare/page.tsx",
   "app/dsa/page.tsx",
@@ -104,12 +104,18 @@ const publicEntryFiles = [
   "app/system-design/[...segments]/page.tsx",
   "app/system-design/plan/page.tsx",
   "app/companies/page.tsx",
-  "app/companies/[slug]/page.tsx",
 ];
-for (const path of publicEntryFiles) {
+for (const path of publicStaticEntryFiles) {
   const source = read(path);
   assertNotMatches(source, /@\/lib\/(?:auth\/actor|applications\/queries|behavioral\/queries|preparation-state)/, `${path} imports private user data into a public route`);
   assertNotMatches(source, /force-dynamic/, `${path} lost its public/static rendering boundary`);
+}
+
+for (const path of ["app/companies/[slug]/page.tsx", "app/interview-experiences/[company]/page.tsx"]) {
+  const source = read(path);
+  assertNotMatches(source, /@\/lib\/(?:auth\/actor|applications\/queries|behavioral\/queries|preparation-state)/, `${path} imports private user data into a public route`);
+  assertContains(source, 'dynamic = "force-dynamic"', `${path} must read approved public reports per request instead of freezing moderation results at build time`);
+  assertNotMatches(source, /unstable_cache|cacheLife\(|cacheTag\(/, `${path} must not indefinitely cache moderated public reports`);
 }
 
 const privatePages = [
