@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { accountDeletionProofCookie } from "@/lib/auth/account-deletion";
 import { safeInternalPath } from "@/lib/auth/redirects";
 import { validIanaTimeZone } from "@/lib/interview-calendar/model";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -171,5 +172,6 @@ export async function deleteAccountAction(_: AccountActionState, form: FormData)
       cookieStore.delete(cookie.name);
     }
   }
-  redirect("/?account=deleted");
+  cookieStore.set(accountDeletionProofCookie(process.env.NODE_ENV === "production"));
+  redirect("/");
 }

@@ -42,6 +42,7 @@ let omittedSystemDesignMarkerRoute = null;
 let leakedSystemDesignHandoffRoute = null;
 let omittedPreparationMarkerRoute = null;
 let leakedPreparationHandoffRoute = null;
+let leakUnprovenAccountDeletionClaim = false;
 
 const fixture = createServer((request, response) => {
   const url = new URL(request.url, "http://fixture.invalid");
@@ -63,11 +64,12 @@ const fixture = createServer((request, response) => {
   const disabledPreparationMarker = route === omittedPreparationMarkerRoute ? undefined : DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS.find((expectation) => expectation.route === route)?.marker;
   const leakedSystemDesignHandoff = route === leakedSystemDesignHandoffRoute ? ' href="/signin?next=/system-design/practice" Sign in to practice' : "";
   const leakedPreparationHandoff = route === leakedPreparationHandoffRoute ? ' href="/behavioral/workspace" Sign in to save' : "";
+  const unprovenAccountDeletionClaim = route === "/?account=deleted" && leakUnprovenAccountDeletionClaim ? " Your account was deleted. Your private Engineering Foundry data and authentication identity have been removed." : "";
   const body = pathname === "/contact"
     ? "Open Discord Open GitHub Issues"
     : accountRoutePattern.test(pathname)
       ? "Account features are not available yet."
-      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}${disabledSystemDesignMarker ? ` ${disabledSystemDesignMarker}` : ""}${disabledPreparationMarker ? ` ${disabledPreparationMarker}` : ""}${leakedSystemDesignHandoff}${leakedPreparationHandoff}`;
+      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}${disabledSystemDesignMarker ? ` ${disabledSystemDesignMarker}` : ""}${disabledPreparationMarker ? ` ${disabledPreparationMarker}` : ""}${leakedSystemDesignHandoff}${leakedPreparationHandoff}${unprovenAccountDeletionClaim}`;
   response.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "x-content-type-options": "nosniff",
@@ -137,6 +139,9 @@ try {
   leakedPreparationHandoffRoute = "/behavioral";
   await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/behavioral exposes disabled preparation account handoff/, "hosted smoke must reject disabled Behavioral workspace and sign-in handoffs");
   leakedPreparationHandoffRoute = null;
+  leakUnprovenAccountDeletionClaim = true;
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/\?account=deleted exposes an unproven account-deletion success claim/, "hosted smoke must reject a deletion-success claim driven only by a public query parameter");
+  leakUnprovenAccountDeletionClaim = false;
   const commandOutput = await runHostedCommand(origin);
   assert.match(commandOutput, /Public route smoke passed \(hosted\)/, "the hosted package command must exercise the supplied fixture");
 } finally {

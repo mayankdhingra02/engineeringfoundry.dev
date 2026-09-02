@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ArrowRight, BookOpenCheck, Compass, SearchCheck, ShieldCheck } from "lucide-react";
 import { HomeEntryExperience } from "@/components/home-entry-experience";
 import { SearchLauncher } from "@/components/search-launcher";
@@ -6,6 +7,7 @@ import { systemDesignLessons } from "@/data/system-design/curriculum";
 import { canonicalDsaQuestions } from "@/lib/dsa/catalog";
 import { activeMlDesignProblems } from "@/data/ml-design";
 import { activeBehavioralQuestions } from "@/data/behavioral";
+import { accountDeletionProofCookieName, isAccountDeletionProof } from "@/lib/auth/account-deletion";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -38,8 +40,8 @@ const supportingPaths = [
   { title: "Practice engineering judgment", description: "Work through self-guided engineering scenarios and rubrics.", href: "/challenges" },
 ];
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ account?: string }> }) {
-  const accountDeleted = (await searchParams).account === "deleted";
+export default async function HomePage() {
+  const accountDeleted = isAccountDeletionProof((await cookies()).get(accountDeletionProofCookieName)?.value);
   return (
     <>
       {accountDeleted && <div className="account-deleted-notice" role="status"><div className="page-width"><ShieldCheck size={18} aria-hidden="true" /><p><strong>Your account was deleted.</strong> Your private Engineering Foundry data and authentication identity have been removed.</p></div></div>}

@@ -26,6 +26,11 @@ const homepage = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8
 const entryExperience = readFileSync(new URL("../components/home-entry-experience.tsx", import.meta.url), "utf8");
 assert.match(homepage, /What should you prepare next\?/);
 assert.match(homepage, /Search topics, questions, or companies/);
+assert.match(homepage, /import \{ cookies \} from "next\/headers"/, "homepage must read the deletion proof from the server request");
+assert.match(homepage, /accountDeletionProofCookieName, isAccountDeletionProof/, "homepage must use the shared deletion-proof contract");
+assert.match(homepage, /isAccountDeletionProof\(\(await cookies\(\)\)\.get\(accountDeletionProofCookieName\)\?\.value\)/, "homepage must validate the exact server-controlled proof cookie");
+assert.doesNotMatch(homepage, /searchParams|\.account\s*===\s*["']deleted["']/, "query parameters alone must never prove account deletion");
+assert.match(homepage, /accountDeleted && <div className="account-deleted-notice" role="status">/, "verified account deletion must retain its accessible status notice");
 assert.deepEqual(homeCoreTracks.map((track) => track.href), ["/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral"], "homepage core tracks must match the master blueprint");
 assert.deepEqual(homeSupportingTracks.map((track) => track.href), ["/low-level-design", "/companies", "/interview-tips"], "supporting preparation tracks must remain directly discoverable");
 assert.match(entryExperience, /homeCoreTracks\.map[\s\S]*className="home-track-link"/, "core track data must render as direct links");

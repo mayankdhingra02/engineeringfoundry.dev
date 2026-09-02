@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { onboardingDestination } from "../lib/account/preferences.ts";
+import {
+  accountDeletionProofCookie,
+  accountDeletionProofCookieName,
+  isAccountDeletionProof,
+} from "../lib/auth/account-deletion.ts";
 import { safeInternalPath } from "../lib/auth/redirects.ts";
 import { collectAccountExportRows, EXPORT_PAGE_SIZE } from "../lib/account/export-pagination.ts";
 
@@ -38,6 +43,22 @@ assert.equal(onboardingDestination({ hasUpcomingInterview: false, interviewSched
 assert.equal(safeInternalPath("//evil.example/account"), "/dashboard");
 assert.equal(safeInternalPath("https://evil.example/account"), "/dashboard");
 
+const localDeletionProof = accountDeletionProofCookie(false);
+assert.deepEqual(localDeletionProof, {
+  name: accountDeletionProofCookieName,
+  value: "account-deleted",
+  httpOnly: true,
+  sameSite: "lax",
+  secure: false,
+  path: "/",
+  maxAge: 60,
+}, "account deletion proof must be short-lived, HttpOnly, SameSite=Lax, and root-scoped");
+assert.equal(accountDeletionProofCookie(true).secure, true, "production account deletion proof must require HTTPS");
+assert.equal(isAccountDeletionProof(localDeletionProof.value), true, "the emitted account deletion proof must verify exactly");
+for (const forged of [undefined, null, "", "deleted", "account-deleted ", "ACCOUNT-DELETED", { value: "account-deleted" }]) {
+  assert.equal(isAccountDeletionProof(forged), false, `forged account deletion proof must fail: ${String(forged)}`);
+}
+
 const highCardinalityRows = Array.from({ length: (EXPORT_PAGE_SIZE * 2) + 205 }, (_, id) => ({ id }));
 const requestedRanges = [];
 const paginatedRows = await collectAccountExportRows("high_cardinality_regression", async (from, to) => {
@@ -56,6 +77,25 @@ assert.ok(dashboard.indexOf('!preparationHasStarted') < dashboard.indexOf('class
 
 assert.match(actions, /String\(form\.get\("confirmation"\)[\s\S]*!== "DELETE"/, "deletion lacks exact confirmation");
 assert.match(actions, /admin\.auth\.admin\.deleteUser\(actor\.user\.id, false\)/, "deletion is not bound to the authenticated actor");
+const deletionStart = actions.indexOf("export async function deleteAccountAction");
+const adminDelete = actions.indexOf("admin.auth.admin.deleteUser(actor.user.id, false)", deletionStart);
+const deletionFailure = actions.indexOf("if (error)", adminDelete);
+const cookieStoreRead = actions.indexOf("const cookieStore = await cookies()", deletionFailure);
+const authCookieCleanup = actions.indexOf("cookieStore.delete(cookie.name)", cookieStoreRead);
+const proofWrite = actions.indexOf("cookieStore.set(accountDeletionProofCookie", authCookieCleanup);
+const homeRedirect = actions.indexOf('redirect("/")', proofWrite);
+assert.ok(
+  deletionStart >= 0
+    && adminDelete > deletionStart
+    && deletionFailure > adminDelete
+    && cookieStoreRead > deletionFailure
+    && authCookieCleanup > cookieStoreRead
+    && proofWrite > authCookieCleanup
+    && homeRedirect > proofWrite,
+  "deletion proof must follow successful admin deletion and auth-cookie cleanup, then precede the home redirect",
+);
+assert.match(actions.slice(deletionFailure, cookieStoreRead), /return \{ status: "error", message: "Your account was not deleted\./, "admin deletion failure must return before any proof cookie can be written");
+assert.ok(!actions.includes('redirect("/?account=deleted")') && !actions.includes("account=deleted"), "account deletion success must not be asserted through a public query parameter");
 assert.ok(!actions.includes('form.get("userId")') && !actions.includes('form.get("user_id")'), "an account action trusts a client user ID");
 assert.match(actions, /signOut\(\{ scope: "global" \}\)/, "global session signout is not implemented");
 // Phase 9 moved credential verification to an isolated, cookie-free client so a

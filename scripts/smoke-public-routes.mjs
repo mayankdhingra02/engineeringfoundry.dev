@@ -125,6 +125,10 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
   for (const unavailableCta of [">Sign in<", ">Create account<", ">Get started<", ">Dashboard<"]) {
     if (home.body.includes(unavailableCta)) throw new Error(`Homepage/header exposes disabled account CTA ${unavailableCta}.`);
   }
+  const unprovenAccountDeletion = await request("/?account=deleted");
+  for (const unsupportedClaim of ["Your account was deleted.", "Your private Engineering Foundry data and authentication identity have been removed."]) {
+    if (unprovenAccountDeletion.body.includes(unsupportedClaim)) throw new Error(`/?account=deleted exposes an unproven account-deletion success claim: ${unsupportedClaim}`);
+  }
   for (const { route, marker } of DISABLED_ACCOUNT_DSA_EXPECTATIONS) {
     const body = publicBodies.get(route) ?? (await request(route)).body;
     for (const unavailableHandoff of ['href="/signin', "Sign in to track", "Sign in to persist", "Sign in to keep private notes", "Keep progress between sessions"]) {
