@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "112405df32458acca5284e8b8486aaff30e1f131",
-  "repository_state_sha256": "10d0d5ba29aa114c21c467c86836558690533a37529d65d4a9e43fbf778732c1",
+  "repository_sha": "291c46a1ecceb1e3b80d495aeb5373eb91a828f6",
+  "repository_state_sha256": "c766249889ce541d21231728560ea1a96831ef46b5835edc22be9210deb229b6",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1291,14 +1291,22 @@
     },
     {
       "acceptance_criteria": [
-        "Published lessons and walkthroughs remain route-valid while unpublished records stay honest and noindex."
+        "Published lessons and walkthroughs remain route-valid while unpublished records stay honest and noindex.",
+        "Account-disabled System Design routes remain public and useful without inoperable sign-in or persistence handoffs, while enabled signed-out and signed-in modes retain their existing behavior."
       ],
       "code_paths": [
         "app/system-design",
         "components/system-design-focus-planner.tsx",
+        "components/system-design-practice-library.tsx",
+        "components/system-design-sidebar.tsx",
         "content/system-design",
         "data/system-design/manifest.ts",
-        "scripts/test-system-design-study-plan.mjs"
+        "features/system-design",
+        "lib/system-design/queries.ts",
+        "scripts/smoke-public-routes.mjs",
+        "scripts/test-public-route-smoke.mjs",
+        "scripts/test-system-design-study-plan.mjs",
+        "scripts/test-system-design-workspace.mjs"
       ],
       "content_paths": [
         "docs/system-design-content-inventory.json",
@@ -1333,10 +1341,12 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run test:public-route-smoke",
         "npm run test:system-design-manifest",
         "npm run test:system-design-practice",
         "npm run test:system-design-release-audit",
-        "npm run test:system-design-study-plan"
+        "npm run test:system-design-study-plan",
+        "npm run test:system-design-workspace"
       ],
       "title": "System Design",
       "visual_ids": []
