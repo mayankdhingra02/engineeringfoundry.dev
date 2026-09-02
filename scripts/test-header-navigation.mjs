@@ -63,8 +63,14 @@ assert.match(header, /onBlur=\{\(event\) => \{ if \(!event\.currentTarget\.conta
 assert.match(header, /openDropdown\?\.contains\(target\)/, "Pointer dismissal must be scoped to the open disclosure instead of the entire header.");
 assert.match(header, /window\.requestAnimationFrame\(\(\) => desktopTrigger\?\.focus\(\)\)/, "Escape must restore focus after the desktop panel unmounts.");
 assert.match(header, /window\.addEventListener\(globalSearchOpenEvent, closeNavigationForSearch\)/, "Opening Global Search must close every header navigation layer.");
+assert.match(header, /id=\{`\$\{id\}-navigation-trigger`\}/, "Each desktop disclosure must expose a persistent shortcut focus target.");
 assert.match(header, /fallbackFocusId="mobile-navigation-trigger"/, "Search opened from the mobile panel must return focus to its persistent menu trigger.");
 assert.doesNotMatch(header, /role="menu"|role="menuitem"/, "Header navigation must retain disclosure semantics instead of an incomplete ARIA menu pattern.");
+
+const globalSearch = readFileSync("components/global-search.tsx", "utf8");
+assert.match(globalSearch, /invoker\?\.closest\("#mobile-menu"\).*"mobile-navigation-trigger"/, "The Search shortcut must retain the persistent mobile navigation trigger as its fallback.");
+assert.match(globalSearch, /closest\("\.nav-dropdown"\)\?\.querySelector<HTMLButtonElement>\("button\[id\]"\)\?\.id/, "The Search shortcut must retain the owning desktop disclosure trigger as its fallback.");
+assert.match(globalSearch, /requestGlobalSearch\(\{ invoker, fallbackFocusId: shortcutFallbackFocusId\(invoker\) \}\)/, "Every Search shortcut must send its contextual focus fallback before navigation layers close.");
 
 const styles = readFileSync("app/globals.css", "utf8");
 assert.match(styles, /@media \(min-width: 801px\) and \(max-width: 1180px\) \{\s+\.mobile-nav \{ display: grid; position: absolute;/, "The 801–1180px mobile-navigation trigger must reveal a visible panel.");

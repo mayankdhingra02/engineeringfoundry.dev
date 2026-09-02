@@ -24,6 +24,11 @@ export function requestGlobalSearch(detail: GlobalSearchOpenDetail = {}) {
   window.dispatchEvent(new CustomEvent<GlobalSearchOpenDetail>(globalSearchOpenEvent, { detail }));
 }
 
+function shortcutFallbackFocusId(invoker: HTMLElement | null) {
+  if (invoker?.closest("#mobile-menu")) return "mobile-navigation-trigger";
+  return invoker?.closest(".nav-dropdown")?.querySelector<HTMLButtonElement>("button[id]")?.id;
+}
+
 export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: string }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -63,7 +68,8 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     function onKey(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        requestGlobalSearch({ invoker: document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current });
+        const invoker = document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
+        requestGlobalSearch({ invoker, fallbackFocusId: shortcutFallbackFocusId(invoker) });
       }
       if (open && event.key === "Escape") closeSearch();
     }

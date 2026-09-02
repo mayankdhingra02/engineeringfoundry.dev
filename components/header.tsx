@@ -43,7 +43,7 @@ function NavDropdown({ id, label, items, pathname, open, onToggle, onClose, trig
 
   return (
     <div className="nav-dropdown" role="group" aria-label={`${label} menu`} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) onClose(); }}>
-      <button ref={triggerRef} type="button" className={cn("nav-link", active && "active", open && "open")} aria-expanded={open} aria-controls={menuId} onClick={onToggle}>
+      <button id={`${id}-navigation-trigger`} ref={triggerRef} type="button" className={cn("nav-link", active && "active", open && "open")} aria-expanded={open} aria-controls={menuId} onClick={onToggle}>
         {label}<ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && <div className="nav-panel" id={menuId}>{items.map((item) => <Link href={item.href} key={item.href} onClick={onClose} aria-current={pathname === item.href ? "page" : undefined}><span>{item.label}</span><small>{navDescriptions[item.label]}</small></Link>)}</div>}
