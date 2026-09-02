@@ -91,7 +91,8 @@ async function CompanyPage({ companySlug }: { companySlug: string }) {
   const questions = questionsForInterviewCompany(companySlug);
   const topicCount = new Set(questions.flatMap((question) => question.topics)).size;
   const state = await getDsaWorkspaceState();
-  return <DSAWorkspacePageLayout eyebrow="Company question browser" title={`${company.name} Coding Interview Questions`} description={`Filter the current ${company.name} demonstration associations by difficulty, topic, source, or title. No frequency claims are shown.`} badge={state.signedIn ? "Private progress · demo associations" : "Demo associations"} meta={`${questions.length} sample question${questions.length === 1 ? "" : "s"} · ${topicCount} topic${topicCount === 1 ? "" : "s"}`}><QuestionBrowser companies={dsaCompanies} questions={dsaInterviewQuestionDatabase} fixedCompanySlug={companySlug} progress={state.progress} signedIn={state.signedIn} accountPlatformAvailable={state.accountPlatformAvailable} /></DSAWorkspacePageLayout>;
+  const badge = state.signedIn ? "Private progress · demo associations" : state.accountPlatformAvailable ? "Demo associations" : "Account progress unavailable · demo associations";
+  return <DSAWorkspacePageLayout eyebrow="Company question browser" title={`${company.name} Coding Interview Questions`} description={`Filter the current ${company.name} demonstration associations by difficulty, topic, source, or title. No frequency claims are shown.`} badge={badge} meta={`${questions.length} sample question${questions.length === 1 ? "" : "s"} · ${topicCount} topic${topicCount === 1 ? "" : "s"}`}><QuestionBrowser companies={dsaCompanies} questions={dsaInterviewQuestionDatabase} fixedCompanySlug={companySlug} progress={state.progress} signedIn={state.signedIn} accountPlatformAvailable={state.accountPlatformAvailable} /></DSAWorkspacePageLayout>;
 }
 
 function LanguageIndex() {
