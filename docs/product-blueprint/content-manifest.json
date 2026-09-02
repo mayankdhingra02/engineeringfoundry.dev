@@ -1,0 +1,1363 @@
+{
+  "blueprint_version": "1.0",
+  "generated_or_reviewed_at": "2026-09-02",
+  "repository_sha": "3474423a502ba063ae1a56f3be1ad4dd113a0ac3",
+  "repository_state_sha256": "27f98d6143e7d3e70658aa0c4427664f114d1b369d7ce9302a441b126b581183",
+  "requirements": [
+    {
+      "acceptance_criteria": [
+        "Founder approval and imported source specifications precede any route or curriculum implementation."
+      ],
+      "code_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
+      ],
+      "gap_inventory_ids": [],
+      "id": "EF-AIB",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Audience, placement, source artifacts, and relationship to ML Design remain unresolved."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "product-approval",
+      "prerequisite_ids": [],
+      "priority": "requires-founder-approval",
+      "publication_status": "unpublished",
+      "research_status": "approved-needs-source-import",
+      "routes": [],
+      "section": "ai-basics",
+      "source_ledger_ids": [],
+      "status": "deferred",
+      "test_commands": [],
+      "title": "AI Basics",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Founder approval, audience definition, artifact import, and source review precede route architecture and curriculum work."
+      ],
+      "code_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
+      ],
+      "gap_inventory_ids": [
+        "EF-AIB-BEGINNER-SCOPE"
+      ],
+      "id": "EF-AIB-BEGINNER-SCOPE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Learning outcomes, audience, relationship to ML Design, exercises, and source policy remain unresolved."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "product-approval",
+      "prerequisite_ids": [
+        "EF-AIB"
+      ],
+      "priority": "requires-founder-approval",
+      "publication_status": "unpublished",
+      "research_status": "approved-needs-source-import",
+      "routes": [],
+      "section": "ai-basics",
+      "source_ledger_ids": [],
+      "status": "deferred",
+      "test_commands": [],
+      "title": "AI Basics beginner scope",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "No implementation begins without new product authorization and child-safety, privacy, legal, pedagogy, moderation, and source review."
+      ],
+      "code_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
+      ],
+      "gap_inventory_ids": [
+        "EF-AIB-KIDS"
+      ],
+      "id": "EF-AIB-KIDS",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Explicitly excluded from the current product scope."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "product-approval",
+      "prerequisite_ids": [],
+      "priority": "excluded",
+      "publication_status": "unpublished",
+      "research_status": "not-applicable",
+      "routes": [],
+      "section": "ai-for-kids",
+      "source_ledger_ids": [],
+      "status": "excluded",
+      "test_commands": [],
+      "title": "AI for Kids",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Existing public questions and private/local practice preserve fact integrity and privacy boundaries."
+      ],
+      "code_paths": [
+        "app/behavioral",
+        "components/behavioral-practice.tsx",
+        "features/behavioral"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-BEH",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.",
+        "Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "behavioral",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/behavioral"
+      ],
+      "section": "behavioral",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:behavioral-v1-polish",
+        "npm run test:behavioral-workspace"
+      ],
+      "title": "Behavioral Interview",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Expanded lessons, frameworks, probes, examples, and evaluator rules publish only from an imported approved curriculum and evidence policy."
+      ],
+      "code_paths": [
+        "data/behavioral",
+        "features/behavioral"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "id": "EF-BEH-CURRICULUM-DEPTH",
+      "kind": "content-gap",
+      "known_gaps": [
+        "The full 16-lesson curriculum and deeper evaluation architecture are not present."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "behavioral",
+      "prerequisite_ids": [
+        "EF-BEH"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/behavioral"
+      ],
+      "section": "behavioral",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:behavioral-v1-polish",
+        "npm run test:behavioral-workspace"
+      ],
+      "title": "Behavioral curriculum depth",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Priority guides preserve attributable sources, review dates, uncertainty, and public-safe handoffs."
+      ],
+      "code_paths": [
+        "app/companies",
+        "data/company-guides/v1.ts",
+        "lib/company-guides/freshness.ts"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-COMP",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.",
+        "Four guides also have mature legacy modules; internal complete labels do not establish master completion."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": "Source records below preserve repository provenance only; claims_supported remains empty pending claim-level audit.",
+      "owner": "company-guides",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "needs-current-verification",
+      "routes": [
+        "/companies"
+      ],
+      "section": "company-guides",
+      "source_ledger_ids": [
+        "SRC-COMP-AMAZON-OFFICIAL",
+        "SRC-COMP-ANTHROPIC-OFFICIAL",
+        "SRC-COMP-ATLASSIAN-OFFICIAL",
+        "SRC-COMP-GOOGLE-OFFICIAL",
+        "SRC-COMP-META-OFFICIAL",
+        "SRC-COMP-MICROSOFT-OFFICIAL",
+        "SRC-COMP-NVIDIA-OFFICIAL",
+        "SRC-COMP-OPENAI-OFFICIAL",
+        "SRC-COMP-UBER-OFFICIAL",
+        "SRC-COMP-WALMART-OFFICIAL"
+      ],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:company-guides",
+        "npm run test:company-interview-guide"
+      ],
+      "title": "Company Interview Guides",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Every published company claim resolves to current attributable evidence or is clearly labeled as editorial recommendation or candidate report."
+      ],
+      "code_paths": [
+        "app/companies/[slug]/page.tsx",
+        "data/company-guides/v1.ts"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "id": "EF-COMP-GUIDE-COVERAGE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "company-guides",
+      "prerequisite_ids": [
+        "EF-COMP"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "needs-current-verification",
+      "routes": [
+        "/companies/[slug]"
+      ],
+      "section": "company-guides",
+      "source_ledger_ids": [
+        "SRC-COMP-AMAZON-OFFICIAL",
+        "SRC-COMP-ANTHROPIC-OFFICIAL",
+        "SRC-COMP-ATLASSIAN-OFFICIAL",
+        "SRC-COMP-GOOGLE-OFFICIAL",
+        "SRC-COMP-META-OFFICIAL",
+        "SRC-COMP-MICROSOFT-OFFICIAL",
+        "SRC-COMP-NVIDIA-OFFICIAL",
+        "SRC-COMP-OPENAI-OFFICIAL",
+        "SRC-COMP-UBER-OFFICIAL",
+        "SRC-COMP-WALMART-OFFICIAL"
+      ],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:company-guides",
+        "npm run test:company-interview-guide"
+      ],
+      "title": "Company Guide coverage and provenance",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Canonical questions, patterns, topics, routes, filters, and published language guides remain internally consistent."
+      ],
+      "code_paths": [
+        "app/dsa",
+        "data/dsa",
+        "features/dsa"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-DSA",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.",
+        "Unpublished curriculum shells require reviewed source-backed content.",
+        "Rendered Back/Forward and focus behavior lacks automated browser coverage."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "dsa",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/dsa"
+      ],
+      "section": "dsa",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:dsa-interview-prep",
+        "npm run test:dsa-languages",
+        "npm run test:dsa-pattern-index"
+      ],
+      "title": "Data Structures and Algorithms",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Every shell remains honest and noindex until reviewed instructional content and acceptance evidence are present."
+      ],
+      "code_paths": [
+        "app/dsa/[...segments]/page.tsx",
+        "data/dsa/curriculum.ts"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-DSA-CURRICULUM-SHELLS"
+      ],
+      "id": "EF-DSA-CURRICULUM-SHELLS",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Thirty-four curriculum records remain explicit coming-soon states."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "dsa",
+      "prerequisite_ids": [
+        "EF-DSA"
+      ],
+      "priority": "p2",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/dsa/interview-strategy/[...segments]",
+        "/dsa/roadmaps/[...segments]",
+        "/dsa/start-here/[...segments]"
+      ],
+      "section": "dsa",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:dsa-interview-prep",
+        "npm run test:dsa-strategy"
+      ],
+      "title": "DSA curriculum shells",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Published language guides have reviewed semantics, examples, pitfalls, responsive rendering, and compile or parse evidence."
+      ],
+      "code_paths": [
+        "content/dsa/languages",
+        "data/dsa/languages.ts",
+        "features/dsa/languages"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "id": "EF-DSA-LANGUAGE-COVERAGE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "C++, JavaScript/TypeScript, and Go remain coming soon.",
+        "C++ placement and approved source artifacts remain unresolved."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "dsa",
+      "prerequisite_ids": [
+        "EF-DSA"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/dsa/languages",
+        "/dsa/languages/[slug]"
+      ],
+      "section": "dsa",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:dsa-languages"
+      ],
+      "title": "DSA language coverage",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Only approved and consented safe projections appear publicly; query errors never become false empty states."
+      ],
+      "code_paths": [
+        "app/interview-experiences",
+        "features/interview-experiences",
+        "lib/supabase/public.ts"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-EXP",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Hosted database, moderation, removal, and two-user evidence remain external owner gates.",
+        "Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "interview-experiences",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "published",
+      "research_status": "not-applicable",
+      "routes": [
+        "/interview-experiences"
+      ],
+      "section": "interview-experiences",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:experience-integrity",
+        "npm run test:experience-privacy",
+        "npm run test:interview-experiences-v1"
+      ],
+      "title": "Interview Experiences",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries."
+      ],
+      "code_paths": [
+        "app/layout.tsx",
+        "components/global-search.tsx",
+        "components/header.tsx"
+      ],
+      "content_paths": [
+        "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
+      ],
+      "gap_inventory_ids": [],
+      "id": "EF-GLOBAL",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Rendered browser accessibility and focus/history coverage remains incomplete.",
+        "Hosted production evidence remains an external owner gate."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": "Family publication means public platform surfaces exist; it does not complete every atomic global requirement.",
+      "owner": "platform",
+      "prerequisite_ids": [],
+      "priority": "required",
+      "publication_status": "published",
+      "research_status": "not-applicable",
+      "routes": [
+        "/"
+      ],
+      "section": "global-platform",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run lint",
+        "npm run test:public-launch-integrity",
+        "npm run typecheck",
+        "npm run validate:public-links"
+      ],
+      "title": "Global platform",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "A product definition identifies the subject, audience, concept map, and relationship to existing System and ML Design concepts."
+      ],
+      "code_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
+      ],
+      "gap_inventory_ids": [
+        "EF-GLOBAL-CORE-CONCEPTS-SCOPE"
+      ],
+      "id": "EF-GLOBAL-CORE-CONCEPTS-SCOPE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "product-approval",
+      "prerequisite_ids": [],
+      "priority": "requires-new-research",
+      "publication_status": "unpublished",
+      "research_status": "needs-research",
+      "routes": [],
+      "section": "core-concepts",
+      "source_ledger_ids": [],
+      "status": "blocked",
+      "test_commands": [],
+      "title": "General Core Concepts scope",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Eight lessons and at least six original practice designs satisfy the reviewed core contract."
+      ],
+      "code_paths": [
+        "app/low-level-design",
+        "features/low-level-design"
+      ],
+      "content_paths": [
+        "docs/low-level-design-v1.md"
+      ],
+      "gap_inventory_ids": [],
+      "id": "EF-LLD",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Source and master acceptance mapping remains unverified.",
+        "A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "low-level-design",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/low-level-design"
+      ],
+      "section": "low-level-design",
+      "source_ledger_ids": [],
+      "status": "implemented-unverified",
+      "test_commands": [
+        "npm run test:low-level-design"
+      ],
+      "title": "Low-Level Design",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "An approved rehearsal flow, rubric, persistence boundary, and self-review-versus-evaluator decision precede implementation."
+      ],
+      "code_paths": [
+        "app/low-level-design",
+        "features/low-level-design"
+      ],
+      "content_paths": [
+        "docs/low-level-design-v1.md"
+      ],
+      "gap_inventory_ids": [
+        "EF-LLD-REHEARSAL"
+      ],
+      "id": "EF-LLD-REHEARSAL",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "low-level-design",
+      "prerequisite_ids": [
+        "EF-LLD"
+      ],
+      "priority": "p1",
+      "publication_status": "unpublished",
+      "research_status": "needs-research",
+      "routes": [
+        "/low-level-design",
+        "/low-level-design/practice/[slug]"
+      ],
+      "section": "low-level-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:low-level-design"
+      ],
+      "title": "Low-Level Design rehearsal",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Existing ML Design routes remain public and honest without implying the master curriculum is complete."
+      ],
+      "code_paths": [
+        "app/ml-design",
+        "data/ml-design"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-ML",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.",
+        "A dedicated ML route/data contract regression is absent.",
+        "Original research artifacts and claim-level provenance are not imported."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "ml-design",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/ml-design"
+      ],
+      "section": "ml-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:public-launch-integrity",
+        "npm run validate:design-content"
+      ],
+      "title": "Machine Learning System Design",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Concept depth, objectives, references, provenance, and publication rules match an imported approved specification."
+      ],
+      "code_paths": [
+        "data/ml-design"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-ML-CONCEPT-COVERAGE"
+      ],
+      "id": "EF-ML-CONCEPT-COVERAGE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Ten compact summaries exist versus the blueprint target of 20 concepts.",
+        "No approved deep-lesson route and provenance contract is implemented."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "ml-design",
+      "prerequisite_ids": [
+        "EF-ML"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/ml-design"
+      ],
+      "section": "ml-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run validate:design-content"
+      ],
+      "title": "ML Design concept coverage",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Every active prompt records reviewed authorship, provenance, freshness, and acceptance metadata."
+      ],
+      "code_paths": [
+        "data/ml-design"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-ML-PRACTICE-PROVENANCE"
+      ],
+      "id": "EF-ML-PRACTICE-PROVENANCE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "ml-design",
+      "prerequisite_ids": [
+        "EF-ML"
+      ],
+      "priority": "p2",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/ml-design/[slug]"
+      ],
+      "section": "ml-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run validate:design-content"
+      ],
+      "title": "ML Design practice provenance",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Every roadmap stage has an approved stage-to-concept and practice mapping without inferred prerequisites."
+      ],
+      "code_paths": [
+        "data/ml-design/roadmap.json"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-ML-ROADMAP-MAPPING"
+      ],
+      "id": "EF-ML-ROADMAP-MAPPING",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Eight static stages have no approved mapping to concept IDs and practice records."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "ml-design",
+      "prerequisite_ids": [
+        "EF-ML-CONCEPT-COVERAGE"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/ml-design"
+      ],
+      "section": "ml-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run validate:design-content"
+      ],
+      "title": "ML Design roadmap mapping",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Local practice packets and self-review keep private session material within documented boundaries."
+      ],
+      "code_paths": [
+        "app/mock-interviews",
+        "components/mock-interview-lab.tsx",
+        "data/mock-interviews"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-MOCK",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.",
+        "URL Back/Forward synchronization lacks rendered behavior coverage."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "mock-interviews",
+      "prerequisite_ids": [
+        "EF-PLAY"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/mock-interviews"
+      ],
+      "section": "mock-interviews",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:mock-content-validator",
+        "npm run validate:mock-content"
+      ],
+      "title": "Mock Interview Practice Lab",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Product, privacy, safety, moderation, evidence, and trust specifications precede any peer network behavior."
+      ],
+      "code_paths": [
+        "app/mock-interviews",
+        "data/mock-interviews"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-MOCK-PEER-FACILITATION"
+      ],
+      "id": "EF-MOCK-PEER-FACILITATION",
+      "kind": "content-gap",
+      "known_gaps": [
+        "The current product intentionally does not match, schedule, verify, or guarantee peers."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "mock-interviews",
+      "prerequisite_ids": [
+        "EF-MOCK"
+      ],
+      "priority": "p2",
+      "publication_status": "unpublished",
+      "research_status": "needs-research",
+      "routes": [
+        "/mock-interviews"
+      ],
+      "section": "mock-interviews",
+      "source_ledger_ids": [],
+      "status": "deferred",
+      "test_commands": [
+        "npm run test:mock-content-validator",
+        "npm run validate:mock-content"
+      ],
+      "title": "Peer mock facilitation",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale."
+      ],
+      "code_paths": [
+        "scripts/product-blueprint-governance.mjs",
+        "scripts/release-verification-manifest.mjs"
+      ],
+      "content_paths": [
+        "docs/product-blueprint/registry/requirements.json",
+        "docs/product-blueprint/registry/sources.json"
+      ],
+      "gap_inventory_ids": [],
+      "id": "EF-OPS",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "This bootstrap models families and current gap rows, not every atomic blueprint requirement.",
+        "Generated outputs require their dedicated output-only metadata commit."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "release-governance",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "unpublished",
+      "research_status": "not-applicable",
+      "routes": [],
+      "section": "governance-and-release",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:product-blueprint-governance",
+        "npm run test:release-record",
+        "npm run test:v1-launch-readiness",
+        "npm run validate:product-blueprint"
+      ],
+      "title": "Autonomous delivery and release governance",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Planning and round guidance preserve existing evidence boundaries and public handoffs."
+      ],
+      "code_paths": [
+        "app/interview-playbook",
+        "app/interview-tips",
+        "components/interview-playbook",
+        "lib/interview-playbook"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-PLAY",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Source methodology and claim mapping are incomplete.",
+        "Not every final-week, interview-day, debrief, and technical-presentation contract is implemented."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "interview-playbook",
+      "prerequisite_ids": [
+        "EF-BEH",
+        "EF-DSA",
+        "EF-SD"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/interview-playbook",
+        "/interview-tips"
+      ],
+      "section": "interview-playbook",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:interview-execution-taxonomy",
+        "npm run test:interview-playbook-diagnostic",
+        "npm run test:interview-playbook-planning"
+      ],
+      "title": "Interview Playbook",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Expanded frameworks and stage-specific guidance map to imported sources, acceptance criteria, and privacy boundaries."
+      ],
+      "code_paths": [
+        "app/interview-tips",
+        "components/interview-playbook",
+        "lib/interview-playbook"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-PLAY-CURRICULUM-DEPTH"
+      ],
+      "id": "EF-PLAY-CURRICULUM-DEPTH",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Research methodology and master-depth acceptance mapping remain incomplete."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "interview-playbook",
+      "prerequisite_ids": [
+        "EF-PLAY"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "approved-needs-source-import",
+      "routes": [
+        "/interview-tips"
+      ],
+      "section": "interview-playbook",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:interview-execution-taxonomy",
+        "npm run test:interview-playbook-planning"
+      ],
+      "title": "Interview Playbook curriculum depth",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Each dossier exposes a reviewed methodology and claim-to-source mapping before substantive guidance is promoted."
+      ],
+      "code_paths": [
+        "components/interview-playbook/round-execution-dossier.tsx",
+        "lib/interview-playbook/dossiers"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-PLAY-ROUND-PROVENANCE"
+      ],
+      "id": "EF-PLAY-ROUND-PROVENANCE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "Nine current dossiers show review dates but no reader-facing source methodology or claim ledger."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "interview-playbook",
+      "prerequisite_ids": [
+        "EF-PLAY"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "needs-current-verification",
+      "routes": [
+        "/interview-tips/rounds/[slug]"
+      ],
+      "section": "interview-playbook",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:interview-execution-taxonomy"
+      ],
+      "title": "Round-execution dossier provenance",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "A reviewed audience, role scope, source set, examples, and editorial specification precede publication."
+      ],
+      "code_paths": [
+        "app/interview-tips"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-PLAY-TECHNICAL-PRESENTATION"
+      ],
+      "id": "EF-PLAY-TECHNICAL-PRESENTATION",
+      "kind": "content-gap",
+      "known_gaps": [
+        "The index honestly identifies this role-specific guide as outside current v1."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "interview-playbook",
+      "prerequisite_ids": [
+        "EF-PLAY"
+      ],
+      "priority": "p2",
+      "publication_status": "noindex-draft",
+      "research_status": "needs-research",
+      "routes": [
+        "/interview-tips/rounds"
+      ],
+      "section": "interview-playbook",
+      "source_ledger_ids": [],
+      "status": "placeholder",
+      "test_commands": [
+        "npm run test:interview-execution-taxonomy"
+      ],
+      "title": "Technical-presentation guide",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Eight modules, private in-memory comparison, and anti-fabrication guidance remain available without persisting worksheet values."
+      ],
+      "code_paths": [
+        "app/salary-negotiation",
+        "features/salary-negotiation"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-SAL",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Source, freshness, and qualified legal review remain incomplete.",
+        "Persistent comparison remains deliberately unapproved."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "salary-negotiation",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "needs-current-verification",
+      "routes": [
+        "/salary-negotiation"
+      ],
+      "section": "salary-negotiation",
+      "source_ledger_ids": [],
+      "status": "implemented-unverified",
+      "test_commands": [
+        "npm run test:salary-negotiation"
+      ],
+      "title": "Salary Negotiation",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Published lessons and walkthroughs remain route-valid while unpublished records stay honest and noindex."
+      ],
+      "code_paths": [
+        "app/system-design",
+        "content/system-design",
+        "data/system-design/manifest.ts"
+      ],
+      "content_paths": [
+        "docs/system-design-content-inventory.json",
+        "docs/system-design-final-audit.md"
+      ],
+      "gap_inventory_ids": [],
+      "id": "EF-SD",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "146 of 178 topics are published; 32 remain unpublished.",
+        "27 of 60 practice walkthroughs are published; 33 remain unpublished.",
+        "The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": "Do not delete or invent topics to reconcile the 161-to-178 mismatch.",
+      "owner": "system-design",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "stale-review",
+      "research_status": "needs-research",
+      "routes": [
+        "/system-design"
+      ],
+      "section": "system-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:system-design-manifest",
+        "npm run test:system-design-practice",
+        "npm run test:system-design-release-audit"
+      ],
+      "title": "System Design",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Each practice record publishes only after its reviewed brief, walkthrough, assumptions, and trade-offs pass validation."
+      ],
+      "code_paths": [
+        "content/system-design/problems",
+        "data/system-design/problems.json"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [
+        "EF-SD-PRACTICE-COVERAGE"
+      ],
+      "id": "EF-SD-PRACTICE-COVERAGE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "27 of 60 walkthroughs are published; 33 remain researched and unpublished."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "system-design",
+      "prerequisite_ids": [
+        "EF-SD"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "needs-research",
+      "routes": [
+        "/system-design/problems/[problemId]"
+      ],
+      "section": "system-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:system-design-practice"
+      ],
+      "title": "System Design practice coverage",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Every target topic has an explicit crosswalk disposition, research state, publication state, and route outcome."
+      ],
+      "code_paths": [
+        "app/system-design/[...segments]/page.tsx",
+        "data/system-design/manifest.ts"
+      ],
+      "content_paths": [
+        "docs/system-design-content-inventory.json"
+      ],
+      "gap_inventory_ids": [
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "id": "EF-SD-TOPIC-COVERAGE",
+      "kind": "content-gap",
+      "known_gaps": [
+        "32 of 178 repository topics remain unpublished.",
+        "The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "system-design",
+      "prerequisite_ids": [
+        "EF-SD"
+      ],
+      "priority": "p1",
+      "publication_status": "stale-review",
+      "research_status": "needs-research",
+      "routes": [
+        "/system-design/[...segments]"
+      ],
+      "section": "system-design",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:system-design-manifest",
+        "npm run test:system-design-release-audit"
+      ],
+      "title": "System Design topic coverage",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior."
+      ],
+      "code_paths": [
+        "app/challenges",
+        "app/feedback",
+        "app/prepare",
+        "app/referrals",
+        "app/resources"
+      ],
+      "content_paths": [],
+      "gap_inventory_ids": [],
+      "id": "EF-SUP",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.",
+        "Employer-specific referral policy remains intentionally absent."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "supporting-product",
+      "prerequisite_ids": [
+        "EF-GLOBAL"
+      ],
+      "priority": "required",
+      "publication_status": "published",
+      "research_status": "not-applicable",
+      "routes": [
+        "/challenges",
+        "/feedback",
+        "/prepare",
+        "/referrals",
+        "/resources"
+      ],
+      "section": "supporting-routes",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:challenge-privacy",
+        "npm run test:homepage-entry",
+        "npm run test:referral-privacy",
+        "npm run validate:public-links"
+      ],
+      "title": "Supporting product routes",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Employer-specific claims publish only from current official employer policy with legal/editorial scope and freshness rules."
+      ],
+      "code_paths": [
+        "app/referrals",
+        "features/referrals"
+      ],
+      "content_paths": [
+        "data/referrals/guidance.json"
+      ],
+      "gap_inventory_ids": [
+        "EF-SUP-REFERRAL-POLICY"
+      ],
+      "id": "EF-SUP-REFERRAL-POLICY",
+      "kind": "content-gap",
+      "known_gaps": [
+        "The current local toolkit deliberately directs users to official employer rules and makes no employer-policy claims."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "supporting-product",
+      "prerequisite_ids": [
+        "EF-SUP"
+      ],
+      "priority": "p2",
+      "publication_status": "unpublished",
+      "research_status": "needs-current-verification",
+      "routes": [
+        "/referrals"
+      ],
+      "section": "referrals",
+      "source_ledger_ids": [],
+      "status": "deferred",
+      "test_commands": [
+        "npm run test:referral-privacy",
+        "npm run validate:referral-content"
+      ],
+      "title": "Employer-specific referral policy guidance",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Only deterministic visuals with an accessible textual fallback are promoted into a curated lab."
+      ],
+      "code_paths": [
+        "components/mermaid-diagram.tsx"
+      ],
+      "content_paths": [
+        "docs/system-design-visual-inventory.json"
+      ],
+      "gap_inventory_ids": [],
+      "id": "EF-VIZ",
+      "kind": "requirement-family",
+      "known_gaps": [
+        "No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": null,
+      "owner": "visualization-governance",
+      "prerequisite_ids": [
+        "EF-DSA",
+        "EF-SD"
+      ],
+      "priority": "p1",
+      "publication_status": "unpublished",
+      "research_status": "approved-needs-source-import",
+      "routes": [],
+      "section": "visualization-lab",
+      "source_ledger_ids": [],
+      "status": "partial",
+      "test_commands": [
+        "npm run test:system-design-release-audit"
+      ],
+      "title": "Visualization Lab",
+      "visual_ids": []
+    }
+  ],
+  "schema_version": 1,
+  "scope": {
+    "phase": "bootstrap",
+    "required_family_ids": [
+      "EF-AIB",
+      "EF-BEH",
+      "EF-COMP",
+      "EF-DSA",
+      "EF-EXP",
+      "EF-GLOBAL",
+      "EF-LLD",
+      "EF-ML",
+      "EF-MOCK",
+      "EF-OPS",
+      "EF-PLAY",
+      "EF-SAL",
+      "EF-SD",
+      "EF-SUP",
+      "EF-VIZ"
+    ],
+    "required_gap_ids": [
+      "EF-AIB-BEGINNER-SCOPE",
+      "EF-AIB-KIDS",
+      "EF-BEH-CURRICULUM-DEPTH",
+      "EF-COMP-GUIDE-COVERAGE",
+      "EF-DSA-CURRICULUM-SHELLS",
+      "EF-DSA-LANGUAGE-COVERAGE",
+      "EF-GLOBAL-CORE-CONCEPTS-SCOPE",
+      "EF-LLD-REHEARSAL",
+      "EF-ML-CONCEPT-COVERAGE",
+      "EF-ML-PRACTICE-PROVENANCE",
+      "EF-ML-ROADMAP-MAPPING",
+      "EF-MOCK-PEER-FACILITATION",
+      "EF-PLAY-CURRICULUM-DEPTH",
+      "EF-PLAY-ROUND-PROVENANCE",
+      "EF-PLAY-TECHNICAL-PRESENTATION",
+      "EF-SD-PRACTICE-COVERAGE",
+      "EF-SD-TOPIC-COVERAGE",
+      "EF-SUP-REFERRAL-POLICY"
+    ]
+  },
+  "unmodeled_atomic_requirements": [
+    {
+      "id": "EF-GLOBAL-ATOMIC-COVERAGE",
+      "priority": "required",
+      "reason": "The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint.",
+      "section": "global"
+    },
+    {
+      "id": "EF-SD-TAXONOMY-CROSSWALK",
+      "priority": "p1",
+      "reason": "A reviewed crosswalk is still required between the blueprint's 161-row target and the repository's 178-topic manifest.",
+      "section": "system-design"
+    }
+  ]
+}
