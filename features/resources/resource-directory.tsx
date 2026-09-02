@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, CircleDotDashed, ExternalLink, RotateCcw, Search } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { activeResources, resourceAccessLevels, resourceCategories, resourceTypes } from "@/data/resources";
 import { track } from "@/lib/analytics";
 import {
+  canonicalizeResourceDirectoryUrlState,
   defaultResourceDirectoryUrlState,
   parseResourceDirectoryUrlState,
   RESOURCE_DIRECTORY_SEARCH_LIMIT,
@@ -39,15 +40,18 @@ function ResourceCard({ resource }: { resource: Resource }) {
 export function ResourceDirectory() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const queryString = searchParams.toString();
   const filters = useMemo(() => parseResourceDirectoryUrlState(queryString), [queryString]);
+  const canonicalFilters = useMemo(() => canonicalizeResourceDirectoryUrlState(filters), [filters]);
   const { search, category, type, access, source, sort } = filters;
 
   useEffect(() => {
-    const canonicalHref = resourceDirectoryHref(pathname, filters, queryString, window.location.hash);
+    const nextFilters = document.activeElement === searchInputRef.current ? filters : canonicalFilters;
+    const canonicalHref = resourceDirectoryHref(pathname, nextFilters, queryString, window.location.hash);
     const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (canonicalHref !== currentHref) window.history.replaceState(null, "", canonicalHref);
-  }, [filters, pathname, queryString]);
+  }, [canonicalFilters, filters, pathname, queryString]);
 
   function commitFilters(next: ResourceDirectoryUrlState, mode: "push" | "replace") {
     const href = resourceDirectoryHref(pathname, next, window.location.search, window.location.hash);
@@ -58,7 +62,9 @@ export function ResourceDirectory() {
   }
 
   function updateFilter(key: keyof ResourceDirectoryUrlState, value: string, mode: "push" | "replace" = "push") {
-    commitFilters({ ...filters, [key]: value }, mode);
+    const currentFilters = parseResourceDirectoryUrlState(window.location.search);
+    const baseFilters = key === "search" ? currentFilters : canonicalizeResourceDirectoryUrlState(currentFilters);
+    commitFilters({ ...baseFilters, [key]: value }, mode);
   }
 
   const filtered = useMemo(() => activeResources.filter((resource) => {
@@ -74,11 +80,11 @@ export function ResourceDirectory() {
       ? (b.lastVerifiedAt ?? "").localeCompare(a.lastVerifiedAt ?? "") || a.title.localeCompare(b.title)
       : a.category.localeCompare(b.category) || a.title.localeCompare(b.title)), [access, category, search, sort, source, type]);
 
-  const filtersActive = Object.entries(filters).some(([key, value]) => value !== defaultResourceDirectoryUrlState[key as keyof ResourceDirectoryUrlState]);
+  const filtersActive = Object.entries(canonicalFilters).some(([key, value]) => value !== defaultResourceDirectoryUrlState[key as keyof ResourceDirectoryUrlState]);
 
   return <>
     <div className="resource-filters" aria-label="Resource directory filters">
-      <label className="resource-search"><span>Search resources</span><div><Search size={16} aria-hidden="true" /><input value={search} maxLength={RESOURCE_DIRECTORY_SEARCH_LIMIT} onChange={(event) => updateFilter("search", event.target.value.slice(0, RESOURCE_DIRECTORY_SEARCH_LIMIT), "replace")} placeholder="Search title, provider, or topic" /></div></label>
+      <label className="resource-search"><span>Search resources</span><div><Search size={16} aria-hidden="true" /><input ref={searchInputRef} value={search} maxLength={RESOURCE_DIRECTORY_SEARCH_LIMIT} onChange={(event) => updateFilter("search", event.target.value.slice(0, RESOURCE_DIRECTORY_SEARCH_LIMIT), "replace")} onBlur={() => commitFilters(canonicalFilters, "replace")} placeholder="Search title, provider, or topic" /></div></label>
       <label><span>Category</span><select value={category} onChange={(event) => updateFilter("category", event.target.value)}><option>All categories</option>{resourceCategories.map((item) => <option key={item}>{item}</option>)}</select></label>
       <label><span>Type</span><select value={type} onChange={(event) => updateFilter("type", event.target.value)}><option>All types</option>{resourceTypes.map((item) => <option key={item}>{item}</option>)}</select></label>
       <label><span>Access</span><select value={access} onChange={(event) => updateFilter("access", event.target.value)}><option>All access</option>{resourceAccessLevels.map((item) => <option key={item}>{item}</option>)}</select></label>

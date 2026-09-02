@@ -51,6 +51,10 @@ export function parseResourceDirectoryUrlState(source: SearchParamsSource): Reso
   };
 }
 
+export function canonicalizeResourceDirectoryUrlState(state: ResourceDirectoryUrlState): ResourceDirectoryUrlState {
+  return { ...state, search: state.search.trim() };
+}
+
 export function serializeResourceDirectoryUrlState(state: ResourceDirectoryUrlState, base: SearchParamsSource = "") {
   const params = paramsFrom(base);
   for (const key of ownedKeys) params.delete(key);

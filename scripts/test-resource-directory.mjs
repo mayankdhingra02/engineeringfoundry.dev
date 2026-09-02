@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resourceAccessLevels, resourceCategories, resourceTypes } from "../data/resources/index.ts";
 import {
+  canonicalizeResourceDirectoryUrlState,
   defaultResourceDirectoryUrlState,
   parseResourceDirectoryUrlState,
   RESOURCE_DIRECTORY_SEARCH_LIMIT,
@@ -37,6 +38,10 @@ const invalid = parseResourceDirectoryUrlState("category=unknown&type=unknown&ac
 assert.deepEqual(invalid, defaultResourceDirectoryUrlState, "Invalid owned parameters must fail closed to canonical defaults.");
 assert.equal(parseResourceDirectoryUrlState(`search=${"x".repeat(RESOURCE_DIRECTORY_SEARCH_LIMIT + 40)}`).search.length, RESOURCE_DIRECTORY_SEARCH_LIMIT, "Resource search state must remain bounded.");
 
+const paddedSearch = parseResourceDirectoryUrlState("search=%20%20github%20%20");
+assert.equal(canonicalizeResourceDirectoryUrlState(paddedSearch).search, "github", "Committed search state must trim redundant outer whitespace.");
+assert.equal(resourceDirectoryHref("/resources", canonicalizeResourceDirectoryUrlState(parseResourceDirectoryUrlState("search=%20%20"))), "/resources", "Whitespace-only search state must canonicalize to the unfiltered directory URL.");
+
 const canonicalDefaults = serializeResourceDirectoryUrlState(defaultResourceDirectoryUrlState, "utm_source=review&category=unknown&sort=unknown");
 assert.equal(canonicalDefaults.toString(), "utm_source=review", "Default state must remove invalid owned values without deleting unrelated parameters.");
 
@@ -52,6 +57,7 @@ assert.equal(canonicalSelectedHref, selectedHref, "Serializing an already canoni
 const component = readFileSync("features/resources/resource-directory.tsx", "utf8");
 for (const marker of [
   "parseResourceDirectoryUrlState",
+  "canonicalizeResourceDirectoryUrlState",
   "resourceDirectoryHref",
   'window.history.pushState(null, "", href)',
   'window.history.replaceState(null, "", href)',
@@ -59,6 +65,7 @@ for (const marker of [
   'if (canonicalHref !== currentHref) window.history.replaceState(null, "", canonicalHref)',
   'if (href === currentHref) return',
   'updateFilter("search", event.target.value.slice(0, RESOURCE_DIRECTORY_SEARCH_LIMIT), "replace")',
+  'onBlur={() => commitFilters(canonicalFilters, "replace")}',
   'onChange={(event) => updateFilter("category", event.target.value)}',
   'onClick={() => commitFilters(defaultResourceDirectoryUrlState, "push")}',
   'role="status" aria-live="polite" aria-atomic="true"',
