@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ChevronRight, ListFilter, MessageSquareQuote, RefreshCw, Search, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   activeBehavioralQuestions,
@@ -12,24 +12,16 @@ import {
   behavioralStoryTypes,
 } from "@/data/behavioral";
 import { track } from "@/lib/analytics";
+import { behavioralPracticeHref, parseBehavioralPracticeUrlState, type BehavioralPracticeUrlState } from "@/lib/behavioral/practice-url-state";
 import type { BehavioralQuestion } from "@/types";
 import { PageHero, SectionHeading } from "./page-shell";
 import { PreparationActivityControl } from "./preparation-activity-control";
 
-function setUrlParam(key: string, value: string) {
-  const params = new URLSearchParams(window.location.search);
-  if (!value || value === "All") params.delete(key); else params.set(key, value);
-  window.history.replaceState(null, "", `${window.location.pathname}${params.size ? `?${params}` : ""}`);
-}
-
 export function BehavioralPractice() {
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("search") ?? "");
-  const [category, setCategory] = useState(searchParams.get("category") ?? "All");
-  const [storyType, setStoryType] = useState(searchParams.get("story") ?? "All");
-  const [scope, setScope] = useState(searchParams.get("scope") ?? "All");
-  const initialSlug = searchParams.get("question");
-  const [selectedId, setSelectedId] = useState(activeBehavioralQuestions.find((item) => item.slug === initialSlug)?.id ?? activeBehavioralQuestions[0].id);
+  const queryString = searchParams.toString();
+  const urlState = useMemo(() => parseBehavioralPracticeUrlState(queryString), [queryString]);
+  const { query, category, storyType, scope } = urlState;
 
   const filtered = useMemo(() => activeBehavioralQuestions.filter((question) => {
     const searchable = `${question.prompt} ${question.category} ${question.signals.join(" ")} ${question.storyTypes.join(" ")}`.toLowerCase();
@@ -39,8 +31,36 @@ export function BehavioralPractice() {
       && (scope === "All" || question.scope.includes(scope as BehavioralQuestion["scope"][number]));
   }), [category, query, scope, storyType]);
 
-  const selected = activeBehavioralQuestions.find((question) => question.id === selectedId) ?? activeBehavioralQuestions[0];
+  const selected = activeBehavioralQuestions.find((question) => question.slug === urlState.questionSlug) ?? activeBehavioralQuestions[0];
   const startedQuestions = useRef(new Set<string>());
+  const pendingHistoryFocus = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const canonicalHref = behavioralPracticeHref(window.location.pathname, urlState, queryString, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (canonicalHref !== currentHref) window.history.replaceState(null, "", canonicalHref);
+  }, [queryString, urlState]);
+
+  useEffect(() => {
+    const preserveContextAfterHistory = () => {
+      const activeElement = document.activeElement;
+      const focusedResult = activeElement instanceof HTMLElement && Boolean(activeElement.closest(".behavioral-question-grid"));
+      if (focusedResult) pendingHistoryFocus.current = activeElement;
+    };
+    window.addEventListener("popstate", preserveContextAfterHistory);
+    return () => window.removeEventListener("popstate", preserveContextAfterHistory);
+  }, []);
+
+  useEffect(() => {
+    const previousFocus = pendingHistoryFocus.current;
+    if (!previousFocus) return;
+    pendingHistoryFocus.current = null;
+    const activeElement = document.activeElement;
+    const focusIsUnclaimed = activeElement === document.body
+      || !(activeElement instanceof HTMLElement)
+      || !activeElement.isConnected;
+    if (!previousFocus.isConnected && focusIsUnclaimed) document.getElementById("behavioral-search-input")?.focus();
+  }, [queryString]);
 
   useEffect(() => {
     track("behavioral_question_viewed", { question_id: selected.id, category: selected.category, scope: selected.scope[0] });
@@ -49,9 +69,16 @@ export function BehavioralPractice() {
     track("behavioral_practice_started", { track: "behavioral", question_id: selected.id, category: selected.category.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-|-$/g, "") });
   }, [selected]);
 
+  function commitUrlState(nextState: BehavioralPracticeUrlState, mode: "push" | "replace") {
+    const href = behavioralPracticeHref(window.location.pathname, nextState, window.location.search, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (href === currentHref) return;
+    if (mode === "push") window.history.pushState(null, "", href);
+    else window.history.replaceState(null, "", href);
+  }
+
   function chooseQuestion(question: BehavioralQuestion) {
-    setSelectedId(question.id);
-    setUrlParam("question", question.slug);
+    commitUrlState({ ...urlState, questionSlug: question.slug }, "push");
     requestAnimationFrame(() => document.querySelector("#practice")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
@@ -87,13 +114,13 @@ export function BehavioralPractice() {
     <section className="section" id="explorer"><div className="page-width">
       <SectionHeading eyebrow="Original question explorer" title="Find a prompt that fits the behavior you need to practice." description="Categories and story types are preparation tools, not company-specific interview claims or difficulty ratings." />
       <div className="behavioral-filters" aria-label="Behavioral question filters">
-        <label className="behavioral-search"><span>Search prompt text</span><div><Search size={16} aria-hidden="true" /><input value={query} onChange={(event) => { setQuery(event.target.value); setUrlParam("search", event.target.value); }} placeholder="Search prompts and signals" /></div></label>
-        <label><span>Category</span><select value={category} onChange={(event) => { setCategory(event.target.value); setUrlParam("category", event.target.value); }}><option>All</option>{behavioralCategories.map((item) => <option key={item.id}>{item.name}</option>)}</select></label>
-        <label><span>Story type</span><select value={storyType} onChange={(event) => { setStoryType(event.target.value); setUrlParam("story", event.target.value); }}><option>All</option>{behavioralStoryTypes.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-        <label><span>Scope</span><select value={scope} onChange={(event) => { setScope(event.target.value); setUrlParam("scope", event.target.value); }}><option>All</option>{behavioralScopes.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label className="behavioral-search"><span>Search prompt text</span><div><Search size={16} aria-hidden="true" /><input id="behavioral-search-input" value={query} maxLength={160} onChange={(event) => commitUrlState({ ...urlState, query: event.target.value }, "replace")} placeholder="Search prompts and signals" /></div></label>
+        <label><span>Category</span><select value={category} onChange={(event) => commitUrlState({ ...urlState, category: event.target.value }, "push")}><option>All</option>{behavioralCategories.map((item) => <option key={item.id}>{item.name}</option>)}</select></label>
+        <label><span>Story type</span><select value={storyType} onChange={(event) => commitUrlState({ ...urlState, storyType: event.target.value }, "push")}><option>All</option>{behavioralStoryTypes.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+        <label><span>Scope</span><select value={scope} onChange={(event) => commitUrlState({ ...urlState, scope: event.target.value }, "push")}><option>All</option>{behavioralScopes.map((item) => <option key={item}>{item}</option>)}</select></label>
       </div>
-      <div className="behavioral-results-meta"><span>{filtered.length} {filtered.length === 1 ? "prompt" : "prompts"}</span><ListFilter size={14} aria-hidden="true" /></div>
-      <div className="behavioral-question-grid">{filtered.map((question) => <button type="button" className={question.id === selected.id ? "selected" : ""} onClick={() => chooseQuestion(question)} key={question.id}><span>{question.category}</span><h3>{question.prompt}</h3><div>{question.storyTypes.slice(0, 2).map((type) => <small key={type}>{behavioralStoryTypes.find((item) => item.id === type)?.label}</small>)}</div><b>Practice this prompt <ArrowRight size={14} /></b></button>)}</div>
+      <div className="behavioral-results-meta" role="status" aria-live="polite" aria-atomic="true"><span>{filtered.length} {filtered.length === 1 ? "prompt" : "prompts"}</span><ListFilter size={14} aria-hidden="true" /></div>
+      <div className="behavioral-question-grid">{filtered.map((question) => <button type="button" className={question.id === selected.id ? "selected" : ""} aria-pressed={question.id === selected.id} onClick={() => chooseQuestion(question)} key={question.id}><span>{question.category}</span><h3>{question.prompt}</h3><div>{question.storyTypes.slice(0, 2).map((type) => <small key={type}>{behavioralStoryTypes.find((item) => item.id === type)?.label}</small>)}</div><b>Practice this prompt <ArrowRight size={14} /></b></button>)}</div>
       {!filtered.length && <div className="empty-inline"><strong>No prompts match these filters.</strong><span>Try a broader search, category, story type, or scope.</span></div>}
     </div></section>
 

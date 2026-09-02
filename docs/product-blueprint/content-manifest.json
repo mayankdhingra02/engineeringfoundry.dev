@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "09e8f5b24992311312ed77bf7c0695d2b42db855",
-  "repository_state_sha256": "6868cd5a99b54c2932c5e7916a1cfc5cef4d800a82143f63f5997603625edc2c",
+  "repository_sha": "c5ded4e008ff97b6e45bfdbe884a44343e3609cc",
+  "repository_state_sha256": "10f8dc6df10b98970419f658fb5bd935d1f5a8ffd0e888bd6e938fe7d9a5a6cb",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -111,12 +111,15 @@
     },
     {
       "acceptance_criteria": [
-        "Existing public questions and private/local practice preserve fact integrity and privacy boundaries."
+        "Existing public questions and private/local practice preserve fact integrity and privacy boundaries.",
+        "Public filters and selected prompts derive from validated, deterministic URL state across direct links and history snapshots."
       ],
       "code_paths": [
         "app/behavioral",
         "components/behavioral-practice.tsx",
-        "features/behavioral"
+        "features/behavioral",
+        "lib/behavioral/practice-url-state.ts",
+        "scripts/test-practice-url-state.mjs"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
@@ -124,7 +127,8 @@
       "kind": "requirement-family",
       "known_gaps": [
         "The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.",
-        "Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete."
+        "Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.",
+        "Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated."
       ],
       "last_verified_at": "2026-09-02",
       "notes": null,
@@ -152,7 +156,8 @@
       "status": "partial",
       "test_commands": [
         "npm run test:behavioral-v1-polish",
-        "npm run test:behavioral-workspace"
+        "npm run test:behavioral-workspace",
+        "npm run test:practice-url-state"
       ],
       "title": "Behavioral Interview",
       "visual_ids": []
@@ -861,20 +866,25 @@
     },
     {
       "acceptance_criteria": [
-        "Local practice packets and self-review keep private session material within documented boundaries."
+        "Local practice packets and self-review keep private session material within documented boundaries.",
+        "Validated public configuration follows direct links and history while private session material never enters shared URLs and is retired when configuration changes."
       ],
       "code_paths": [
         "app/mock-interviews",
         "components/mock-interview-lab.tsx",
-        "data/mock-interviews"
+        "data/mock-interviews",
+        "lib/mock-interviews/url-state.ts",
+        "scripts/test-practice-url-state.mjs"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/mock-interview-model.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-MOCK",
       "kind": "requirement-family",
       "known_gaps": [
         "Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.",
-        "URL Back/Forward synchronization lacks rendered behavior coverage."
+        "Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated."
       ],
       "last_verified_at": "2026-09-02",
       "notes": null,
@@ -898,6 +908,7 @@
       "status": "partial",
       "test_commands": [
         "npm run test:mock-content-validator",
+        "npm run test:practice-url-state",
         "npm run validate:mock-content"
       ],
       "title": "Mock Interview Practice Lab",

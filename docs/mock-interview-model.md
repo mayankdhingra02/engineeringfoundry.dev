@@ -1,6 +1,6 @@
 # Mock Interview Practice Lab model
 
-The Mock Interview Practice Lab is a credential-free, client-side practice workspace at `/mock-interviews`. It provides structure for realistic practice without claiming that Engineering Foundry matches, schedules, or verifies participants.
+The Mock Interview Practice Lab provides a credential-free core practice workspace at `/mock-interviews`. Visitors can run and copy a session without an account; signed-in visitors may explicitly save a private review. The lab provides structure for realistic practice without claiming that Engineering Foundry matches, schedules, or verifies participants.
 
 ## Practice modes
 
@@ -25,14 +25,16 @@ Suggested minutes are an Engineering Foundry practice format, not official emplo
 
 Rubrics are personal practice aids. They are not employer rubrics, hiring scores, pass probabilities, readiness percentages, percentiles, or performance predictions. They contain no company associations.
 
-## Session-only privacy
+## Session privacy and explicit saving
 
-Timer state, rubric marks, and free-text fields live only in React/browser memory. They are not written to Supabase, another backend, `localStorage`, cookies, or the URL, and they clear on refresh. The clipboard is used only after the visitor explicitly chooses **Copy feedback** or **Copy session link**.
+Timer state, unsaved rubric marks, and unsaved free-text fields live only in React/browser memory. They are not written to `localStorage`, cookies, or the URL, and they clear on refresh. The clipboard is used only after the visitor explicitly chooses **Copy feedback** or **Copy session link**.
+
+Nothing is saved automatically. When a signed-in visitor explicitly chooses **Save practice review**, a controlled server action validates the canonical session and stores the review in owner-scoped Supabase tables protected by row-level security. Signed-out or account-disabled visitors can still practice and copy their feedback, but cannot persist it.
 
 Analytics may record stable non-sensitive identifiers for configuration, session start, randomization, guidance opening, feedback copy, and the community CTA. Analytics never receives qualitative marks, free text, clipboard contents, names, email addresses, or exact session duration.
 
 Shareable URLs include only the track, prompt slug, and mode. They never contain participant identity or feedback.
 
-## Future persistence boundary
+## Product boundary
 
-No migrations, tables, saved sessions, matchmaking, schedules, or feedback history are part of this model. Any future persistence or matching system must be designed as a separate, consent-aware product boundary rather than silently extending this session-only implementation.
+Owner-scoped practice-review storage is the only persistence in this model. Matchmaking, schedules, verified interviewer profiles, bookings, payments, public feedback, and a marketplace are not included. Any future matching or broader feedback-history product must be designed as a separate, consent-aware boundary rather than silently extending private review storage.

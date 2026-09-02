@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 09e8f5b24992311312ed77bf7c0695d2b42db855
-repository_state_sha256: 6868cd5a99b54c2932c5e7916a1cfc5cef4d800a82143f63f5997603625edc2c
+repository_sha: c5ded4e008ff97b6e45bfdbe884a44343e3609cc
+repository_state_sha256: 10f8dc6df10b98970419f658fb5bd935d1f5a8ffd0e888bd6e938fe7d9a5a6cb
 ---
 
 # Engineering Foundry requirement coverage
@@ -113,7 +113,7 @@ repository_state_sha256: 6868cd5a99b54c2932c5e7916a1cfc5cef4d800a82143f63f599760
 | EF-AIB | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Audience, placement, source artifacts, and relationship to ML Design remain unresolved. |
 | EF-AIB-BEGINNER-SCOPE | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Learning outcomes, audience, relationship to ML Design, exercises, and source policy remain unresolved. |
 | EF-AIB-KIDS | ai-for-kids | excluded | excluded | not-applicable | unpublished | not-applicable | — | — | 0 | 0 | Explicitly excluded from the current product scope. |
-| EF-BEH | behavioral | required | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete. |
+| EF-BEH | behavioral | required | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 3 | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.; Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
 | EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
@@ -129,7 +129,7 @@ repository_state_sha256: 6868cd5a99b54c2932c5e7916a1cfc5cef4d800a82143f63f599760
 | EF-ML-CONCEPT-COVERAGE | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Ten compact summaries exist versus the blueprint target of 20 concepts.; No approved deep-lesson route and provenance contract is implemented. |
 | EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | partial | approved-needs-source-import | stale-review | missing | — | /ml-design/[slug] | 0 | 1 | Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields. |
 | EF-ML-ROADMAP-MAPPING | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Eight static stages have no approved mapping to concept IDs and practice records. |
-| EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 2 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; URL Back/Forward synchronization lacks rendered behavior coverage. |
+| EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 3 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
 | EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 4 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
@@ -149,14 +149,14 @@ repository_state_sha256: 6868cd5a99b54c2932c5e7916a1cfc5cef4d800a82143f63f599760
 
 | ID | Record type | Status | Gap/reason |
 | --- | --- | --- | --- |
-| EF-BEH | modeled | partial | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete. |
+| EF-BEH | modeled | partial | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.; Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-COMP | modeled | partial | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-DSA | modeled | partial | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
 | EF-ML | modeled | partial | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; Original research artifacts and claim-level provenance are not imported. |
-| EF-MOCK | modeled | partial | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; URL Back/Forward synchronization lacks rendered behavior coverage. |
+| EF-MOCK | modeled | partial | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-PLAY | modeled | partial | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
 | EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
