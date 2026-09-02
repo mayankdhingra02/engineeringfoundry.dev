@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: c96529c535a29f4a99422b7ce17c91c23cffe28d
-repository_state_sha256: f5a6cd45d90fe505ddaa4ff0b652e54b8b6c2e90af593afc3baf220d74d98281
+repository_sha: bc055a9c0678b08a3018c6d137567d2b185ca428
+repository_state_sha256: 0f9faae2620fdb6d54624626ddf5d7084d1bd25e48236e1e715f05a46898206a
 ---
 
 # Engineering Foundry requirement coverage
@@ -125,7 +125,7 @@ repository_state_sha256: f5a6cd45d90fe505ddaa4ff0b652e54b8b6c2e90af593afc3baf220
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
 | EF-LLD | low-level-design | required | partial | needs-research | stale-review | missing | /low-level-design | — | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
 | EF-LLD-REHEARSAL | low-level-design | p1 | partial | needs-research | unpublished | missing | /low-level-design | /low-level-design/practice/[slug] | 0 | 1 | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
-| EF-ML | ml-design | required | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 2 | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; A dedicated ML route/data contract regression is absent.; Original research artifacts and claim-level provenance are not imported. |
+| EF-ML | ml-design | required | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 3 | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; Original research artifacts and claim-level provenance are not imported. |
 | EF-ML-CONCEPT-COVERAGE | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Ten compact summaries exist versus the blueprint target of 20 concepts.; No approved deep-lesson route and provenance contract is implemented. |
 | EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | partial | approved-needs-source-import | stale-review | missing | — | /ml-design/[slug] | 0 | 1 | Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields. |
 | EF-ML-ROADMAP-MAPPING | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Eight static stages have no approved mapping to concept IDs and practice records. |
@@ -155,7 +155,7 @@ repository_state_sha256: f5a6cd45d90fe505ddaa4ff0b652e54b8b6c2e90af593afc3baf220
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
-| EF-ML | modeled | partial | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; A dedicated ML route/data contract regression is absent.; Original research artifacts and claim-level provenance are not imported. |
+| EF-ML | modeled | partial | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; Original research artifacts and claim-level provenance are not imported. |
 | EF-MOCK | modeled | partial | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; URL Back/Forward synchronization lacks rendered behavior coverage. |
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-PLAY | modeled | partial | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |

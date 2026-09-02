@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "c96529c535a29f4a99422b7ce17c91c23cffe28d",
-  "repository_state_sha256": "f5a6cd45d90fe505ddaa4ff0b652e54b8b6c2e90af593afc3baf220d74d98281",
+  "repository_sha": "bc055a9c0678b08a3018c6d137567d2b185ca428",
+  "repository_state_sha256": "0f9faae2620fdb6d54624626ddf5d7084d1bd25e48236e1e715f05a46898206a",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -676,7 +676,10 @@
       ],
       "code_paths": [
         "app/ml-design",
-        "data/ml-design"
+        "components/design-track-page.tsx",
+        "data/ml-design",
+        "lib/ml-design-routes.ts",
+        "scripts/test-ml-design.mjs"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
@@ -684,7 +687,6 @@
       "kind": "requirement-family",
       "known_gaps": [
         "The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.",
-        "A dedicated ML route/data contract regression is absent.",
         "Original research artifacts and claim-level provenance are not imported."
       ],
       "last_verified_at": "2026-09-02",
@@ -712,6 +714,7 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run test:ml-design",
         "npm run test:public-launch-integrity",
         "npm run validate:design-content"
       ],
