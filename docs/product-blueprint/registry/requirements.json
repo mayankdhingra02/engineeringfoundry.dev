@@ -70,7 +70,7 @@
       "source_ledger_ids": [],
       "research_artifact_ids": [],
       "prerequisite_ids": [],
-      "code_paths": ["app/layout.tsx", "app/page.tsx", "components/header.tsx", "components/global-search.tsx", "components/home-entry-experience.tsx", "components/save-study-plan-control.tsx", "features/preparation-progress/plan-actions.ts", "lib/global-search.ts", "lib/header-navigation.ts", "lib/home-track-catalog.ts", "lib/preparation-progress/plan-save.ts", "scripts/test-unified-progress.mjs"],
+      "code_paths": ["app/globals.css", "app/layout.tsx", "app/page.tsx", "components/header.tsx", "components/global-search.tsx", "components/home-entry-experience.tsx", "components/save-study-plan-control.tsx", "features/preparation-progress/plan-actions.ts", "lib/global-search.ts", "lib/header-navigation.ts", "lib/home-track-catalog.ts", "lib/preparation-progress/plan-save.ts", "scripts/test-unified-progress.mjs"],
       "content_paths": ["docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"],
       "visual_ids": [],
       "test_commands": ["npm run lint", "npm run typecheck", "npm run test:global-search", "npm run test:header-navigation", "npm run test:homepage-entry", "npm run test:public-launch-integrity", "npm run test:unified-progress", "npm run validate:public-links"],

@@ -384,6 +384,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .button { min-height: 42px; border-radius: var(--radius-sm); box-shadow: 0 1px 1px rgba(0, 0, 0, .05); letter-spacing: -.01em; }
 .button-lg { min-height: 46px; padding-inline: 21px; }
 .button:disabled { cursor: not-allowed; opacity: .52; transform: none; }
+.save-study-plan-control .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
 .button-inverse { color: #171918; background: #f3f2ec; border-color: #f3f2ec; }
 .button-inverse:hover { color: #171918; background: #fff; border-color: #fff; }
 

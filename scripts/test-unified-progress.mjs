@@ -69,6 +69,8 @@ for (const reason of accountFailureReasons) {
   assert.equal(totalFailure.persistence, null, `${reason} plus localStorage failure must not produce an analytics persistence value`);
   assert.doesNotMatch(totalFailure.message, /^Saved\b/, `${reason} plus localStorage failure must not claim success`);
 }
+assert.equal(resolveStudyPlanSaveOutcome({ accountStatus: "failed", accountReason: "request-failed", localStatus: "saved" }).message, "Saved in this browser. Account saving could not be confirmed.", "a rejected response cannot prove that an earlier account write failed");
+assert.equal(resolveStudyPlanSaveOutcome({ accountStatus: "failed", accountReason: "request-failed", localStatus: "failed" }).message, "This plan is still visible, but it could not be saved in this browser. Account saving could not be confirmed.", "an unconfirmed account response and failed browser write must remain distinct");
 
 assert.equal(studyPlanId({ track: "dsa", level: "sde2", duration: 60 }), "sde2-60d", "DSA plan analytics IDs must remain canonical");
 assert.equal(studyPlanId({ track: "system-design", level: "senior", preparationWindow: "2-weeks", role: undefined, minutesPerDay: 45 }), "senior-2-weeks-general-45m", "general System Design plans must include their role discriminator");
@@ -89,7 +91,8 @@ for (const marker of ["on delete cascade", "enable row level security", "save_pr
 assert.ok(planControl.includes("Saving replaces the active plan"), "saved plan replacement must be deliberate rather than silent");
 assert.ok(planControl.includes("if (accountPlatformAvailable)"), "account-disabled study-plan saves must not invoke the Server Action");
 assert.ok(planControl.includes("browser storage when available"), "account-disabled helper copy must not promise optional browser persistence before it succeeds");
-assert.ok(planControl.includes('const pending = saveState?.status === "pending"') && planControl.includes("Finishing previous plan save…"), "an in-flight save must globally block a different selected plan from racing it");
+assert.ok(planControl.includes('const pending = saveState?.status === "pending"') && planControl.includes("pendingRef.current") && planControl.includes("Finishing previous plan save…"), "an in-flight save must block duplicate or different-plan activation while the shared control remains mounted");
+assert.ok(planControl.includes("aria-disabled={pending}") && !planControl.includes(" disabled={pending}"), "pending saves must retain trigger focus while preventing another activation");
 assert.equal((planControl.match(/track\("study_plan_activated"/g) ?? []).length, 1, "study-plan persistence must have one analytics emission point");
 assert.ok(planControl.includes("if (outcome.persisted)"), "study-plan analytics must require a resolved real persistence outcome");
 assert.match(planControl, /writeLocalPreparationProgress\([^;]+;\s*window\.dispatchEvent\(new CustomEvent\(preparationProgressEvent\)\)/, "browser-local continuation events must follow the storage write");

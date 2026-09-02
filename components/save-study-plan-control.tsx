@@ -31,6 +31,7 @@ export function SaveStudyPlanControl({
   accountPlatformAvailable: boolean;
 }) {
   const requestIdRef = useRef(0);
+  const pendingRef = useRef(false);
   const [saveState, setSaveState] = useState<SaveState | null>(null);
   const planId = studyPlanId(input);
   const planKey = `${planId}\n${href}\n${label}`;
@@ -39,6 +40,8 @@ export function SaveStudyPlanControl({
   const savingCurrentPlan = pending && saveState.planKey === planKey;
 
   async function save() {
+    if (pendingRef.current) return;
+    pendingRef.current = true;
     const requestId = ++requestIdRef.current;
     setSaveState({ requestId, planKey, status: "pending", message: null });
 
@@ -71,6 +74,7 @@ export function SaveStudyPlanControl({
     }
 
     const outcome = resolveStudyPlanSaveOutcome(attempts);
+    pendingRef.current = false;
     if (outcome.persisted) {
       track("study_plan_activated", {
         track: input.track,
@@ -95,7 +99,7 @@ export function SaveStudyPlanControl({
   }
 
   return <div className="save-study-plan-control">
-    <button type="button" className="button button-secondary" disabled={pending} onClick={() => { void save(); }}><BookmarkCheck size={15} aria-hidden="true" />{pending ? savingCurrentPlan ? "Saving…" : "Finishing previous plan save…" : "Save as active plan"}</button>
+    <button type="button" className="button button-secondary" aria-disabled={pending} onClick={() => { if (!pending) void save(); }}><BookmarkCheck size={15} aria-hidden="true" />{pending ? savingCurrentPlan ? "Saving…" : "Finishing previous plan save…" : "Save as active plan"}</button>
     <small>{accountPlatformAvailable ? "Saving replaces the active plan for this track; it does not mark work complete." : "Account saving is unavailable. This control uses browser storage when available; it does not mark work complete."}</small>
     <small role="status" aria-live="polite" aria-atomic="true">{pending ? savingCurrentPlan ? "Saving this plan…" : "Finishing previous plan save…" : currentSaveState?.message}</small>
   </div>;

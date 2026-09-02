@@ -47,8 +47,9 @@ function localSuccessMessage(reason: StudyPlanAccountFailureReason): string {
     case "invalid-input":
       return "Saved in this browser. Account saving could not accept this plan.";
     case "persistence-failed":
-    case "request-failed":
       return "Saved in this browser. Account saving did not complete.";
+    case "request-failed":
+      return "Saved in this browser. Account saving could not be confirmed.";
     default:
       return assertNever(reason);
   }
@@ -63,8 +64,9 @@ function totalFailureMessage(reason: StudyPlanAccountFailureReason): string {
     case "invalid-input":
       return "This plan is still visible, but its settings could not be saved. Review the plan and try again.";
     case "persistence-failed":
-    case "request-failed":
       return "This plan is still visible, but it could not be saved to your account or in this browser. Try again.";
+    case "request-failed":
+      return "This plan is still visible, but it could not be saved in this browser. Account saving could not be confirmed.";
     default:
       return assertNever(reason);
   }
