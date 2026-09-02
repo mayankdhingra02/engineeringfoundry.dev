@@ -7,7 +7,12 @@ export const mlDesignDomains = ["Recommendation", "Ranking", "Risk", "Trust & Sa
 export const mlDesignRoadmap = roadmapData as DesignRoadmapStage[];
 export const mlDesignConcepts = conceptsData as DesignConcept[];
 export const mlDesignProblems = problemsData as MlDesignProblem[];
-export const activeMlDesignProblems = mlDesignProblems.filter((problem) => problem.status === "active");
+
+export function selectActiveMlDesignProblems<T extends { status: string }>(problems: readonly T[]): T[] {
+  return problems.filter((problem) => problem.status === "active");
+}
+
+export const activeMlDesignProblems = selectActiveMlDesignProblems(mlDesignProblems);
 
 export function getMlDesignProblem(slug: string) {
   return activeMlDesignProblems.find((problem) => problem.slug === slug);

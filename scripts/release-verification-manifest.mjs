@@ -32,7 +32,7 @@ export const STATIC_STEPS = [
     "test:system-design-foundations", "test:system-design-networking", "test:system-design-data-storage",
     "test:system-design-caching", "test:system-design-messaging", "test:system-design-reliability",
     "test:system-design-specialized", "test:system-design-technology", "test:system-design-practice",
-    "test:system-design-workspace", "test:system-design-release-audit", "test:low-level-design",
+    "test:system-design-workspace", "test:system-design-release-audit", "test:ml-design", "test:low-level-design",
     "test:salary-negotiation", "test:dsa-interview-prep", "test:dsa-pattern-index", "test:dsa-roadmap",
     "test:dsa-level-roadmaps", "test:dsa-roadmap-planning", "test:dsa-progress",
     "test:dsa-study-plans", "test:dsa-languages", "test:dsa-strategy",

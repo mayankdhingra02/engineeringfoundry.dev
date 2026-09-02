@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { DesignPracticePage, type PracticeSection } from "@/components/design-practice-page";
 import { activeMlDesignProblems, getMlDesignProblem } from "@/data/ml-design";
 import { createPageMetadata } from "@/lib/metadata";
+import { mlDesignProblemHref } from "@/lib/ml-design-routes";
 
 export const dynamicParams = false;
 
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return createPageMetadata({
     title: `${problem.title} ML Design Practice`,
     description: `${problem.summary} Work through original product framing, data, modeling, serving, monitoring, and tradeoff guidance.`,
-    path: `/ml-design/${problem.slug}`,
+    path: mlDesignProblemHref(problem.slug),
   });
 }
 
