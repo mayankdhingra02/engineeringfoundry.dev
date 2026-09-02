@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, X, ArrowUpRight } from "lucide-react";
+import { Search, X, ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { companies } from "@/data/companies";
 import { activeChallenges } from "@/data/challenges";
@@ -18,6 +18,7 @@ import { systemDesignLessons } from "@/data/system-design/curriculum";
 import { lowLevelDesignLessons, lowLevelDesignPractice } from "@/data/low-level-design";
 import { salaryNegotiationModules } from "@/data/salary-negotiation";
 import { track } from "@/lib/analytics";
+import { GLOBAL_SEARCH_INITIAL_RESULT_LIMIT, visibleGlobalSearchResults } from "@/lib/global-search-results";
 
 export const globalSearchOpenEvent = "engineering-foundry-open-search";
 
@@ -53,12 +54,14 @@ const suggestedResults = [
 export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: string }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [expandedResults, setExpandedResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const invokerRef = useRef<HTMLElement | null>(null);
   const closeSearch = useCallback(() => {
     setOpen(false);
+    setExpandedResults(false);
     window.setTimeout(() => {
       const invoker = invokerRef.current;
       if (invoker?.isConnected) invoker.focus();
@@ -88,12 +91,15 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     ...activeResources.map((resource) => ({ title: resource.title, type: `Resource · ${resource.provider}`, href: `/resources?search=${encodeURIComponent(resource.title)}` })),
     ...staticResults,
   ], []);
-  const matches = query.trim() ? items.filter((item) => `${item.title} ${item.type}`.toLowerCase().includes(query.toLowerCase())) : suggestedResults;
-  const results = matches.slice(0, 8);
+  const hasQuery = Boolean(query.trim());
+  const matches = hasQuery ? items.filter((item) => `${item.title} ${item.type}`.toLowerCase().includes(query.toLowerCase())) : suggestedResults;
+  const results = visibleGlobalSearchResults(matches, expandedResults);
+  const canToggleResults = matches.length > GLOBAL_SEARCH_INITIAL_RESULT_LIMIT;
 
   useEffect(() => {
     function openSearch() {
       invokerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
+      setExpandedResults(false);
       setOpen(true);
     }
     function onKey(event: KeyboardEvent) {
@@ -130,18 +136,21 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
 
   return (
     <>
-      <button ref={triggerRef} className={triggerClass} onClick={(event) => { invokerRef.current = event.currentTarget; setOpen(true); }} aria-label="Search Engineering Foundry">
+      <button ref={triggerRef} className={triggerClass} onClick={(event) => { invokerRef.current = event.currentTarget; setExpandedResults(false); setOpen(true); }} aria-label="Search Engineering Foundry">
         <Search size={17} /><span className="search-label">Search</span>
       </button>
       {open && (
         <div className="search-backdrop">
           <button className="search-dismiss" onClick={closeSearch} aria-label="Close search" />
           <section ref={dialogRef} className="search-dialog" role="dialog" aria-modal="true" aria-label="Global search">
-            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search questions, playbooks, resources…" aria-label="Search query" /><button className="icon-button" onClick={closeSearch} aria-label="Close search"><X size={17} /></button></div>
-            <div className="search-meta"><span role="status" aria-live="polite" aria-atomic="true">{query ? matches.length > results.length ? `${results.length} shown of ${matches.length}` : `${results.length} ${results.length === 1 ? "result" : "results"}` : "Suggested across Engineering Foundry"}</span><span className="kbd">ESC</span></div>
-            <div className="search-results">
-              {results.map((item) => <Link href={item.href} key={`${item.type}-${item.title}`} onClick={() => { track("search_used", { result_type: item.type.split(" · ")[0].toLowerCase() }); setTimeout(() => setOpen(false), 0); }}><span><small>{item.type}</small>{item.title}</span><ArrowUpRight size={16} /></Link>)}
-              {!results.length && <div className="empty-inline"><strong>No results yet</strong><span>Try a broader topic or company name.</span></div>}
+            <div className="search-input-wrap"><Search size={20} /><input ref={inputRef} value={query} onChange={(e) => { setQuery(e.target.value); setExpandedResults(false); }} placeholder="Search questions, playbooks, resources…" aria-label="Search query" /><button className="icon-button" onClick={closeSearch} aria-label="Close search"><X size={17} /></button></div>
+            <div className="search-meta"><span role="status" aria-live="polite" aria-atomic="true">{hasQuery ? matches.length > results.length ? `${results.length} shown of ${matches.length}` : `${results.length} ${results.length === 1 ? "result" : "results"}` : canToggleResults && !expandedResults ? `${results.length} shown of ${matches.length} suggestions` : "Suggested across Engineering Foundry"}</span><span className="kbd">ESC</span></div>
+            <div className="search-results-shell">
+              {canToggleResults && <button type="button" className="search-results-toggle" aria-controls="global-search-results" aria-expanded={expandedResults} onClick={() => setExpandedResults((current) => !current)}><span>{expandedResults ? `Show first ${GLOBAL_SEARCH_INITIAL_RESULT_LIMIT} results` : hasQuery ? `Show all ${matches.length} results` : `Show all ${matches.length} suggestions`}</span>{expandedResults ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>}
+              <div className="search-results" id="global-search-results">
+                {results.map((item) => <Link href={item.href} key={`${item.type}-${item.title}`} onClick={() => { track("search_used", { result_type: item.type.split(" · ")[0].toLowerCase() }); setExpandedResults(false); setTimeout(() => setOpen(false), 0); }}><span><small>{item.type}</small>{item.title}</span><ArrowUpRight size={16} /></Link>)}
+                {!results.length && <div className="empty-inline"><strong>No results yet</strong><span>Try a broader topic or company name.</span></div>}
+              </div>
             </div>
           </section>
         </div>

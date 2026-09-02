@@ -27,7 +27,7 @@ export const STATIC_STEPS = [
     "test:production-hardening", "test:production-baseline", "test:private-route-privacy",
     "test:canonical-catalog-integrity", "test:persistence-foundation", "test:unified-progress",
     "test:ui-density", "test:typography-readability", "test:local-supabase-helpers",
-    "test:homepage-entry", "test:system-design-learning", "test:system-design-entry",
+    "test:homepage-entry", "test:global-search", "test:system-design-learning", "test:system-design-entry",
     "test:system-design-manifest", "test:system-design-recommendations", "test:system-design-study-plan",
     "test:system-design-foundations", "test:system-design-networking", "test:system-design-data-storage",
     "test:system-design-caching", "test:system-design-messaging", "test:system-design-reliability",
