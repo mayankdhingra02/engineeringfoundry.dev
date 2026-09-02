@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "0ae9bd575072e535b57cf47be2dbc7e81860435e",
-  "repository_state_sha256": "26fa4cd5760f1b87df6e2076d4ccf13bfb549502206e3ee477c70dd76c1ddf33",
+  "repository_sha": "3cdead85cc713a30871604e37e25c1b76f5a9dd8",
+  "repository_state_sha256": "0d8c96bda3d3dc3a940c7243f298331c384cd31ffdc90aba544f7fa14de01474",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -505,8 +505,11 @@
       ],
       "code_paths": [
         "app/layout.tsx",
+        "app/page.tsx",
         "components/global-search.tsx",
-        "components/header.tsx"
+        "components/header.tsx",
+        "components/home-entry-experience.tsx",
+        "lib/home-track-catalog.ts"
       ],
       "content_paths": [
         "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
@@ -535,6 +538,7 @@
       "status": "partial",
       "test_commands": [
         "npm run lint",
+        "npm run test:homepage-entry",
         "npm run test:public-launch-integrity",
         "npm run typecheck",
         "npm run validate:public-links"
