@@ -3483,7 +3483,9 @@ button.flow-card { cursor: pointer; }
 .experience-directory-empty svg, .experience-company-empty svg { flex: none; color: var(--accent); }
 .experience-directory-empty strong, .experience-company-empty strong, .experience-company-empty span { display: block; }
 .experience-directory-empty strong, .experience-company-empty strong { font-size: 14px; }
-.experience-directory-empty p, .experience-company-empty span { margin: 7px 0 0; color: var(--text-secondary); font-size: 10px; line-height: 1.55; }
+.experience-directory-empty p, .experience-company-empty span { margin: 7px 0 0; color: var(--text-secondary); line-height: 1.55; }
+.experience-directory-empty p { font-size: var(--type-meta); }
+.experience-company-empty span { font-size: 10px; }
 .experience-directory-list { display: grid; gap: 10px; }
 .experience-directory-filters { min-inline-size: 0; margin: 0 0 14px; padding: 0; border: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .experience-directory-filters legend { grid-column: 1 / -1; padding: 0; color: var(--text-secondary); font-size: var(--type-meta); font-weight: 700; }
