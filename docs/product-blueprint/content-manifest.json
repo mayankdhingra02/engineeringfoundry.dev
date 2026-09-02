@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "b7fb1f127242c67df566a3a1ea165f537addfbc6",
-  "repository_state_sha256": "1f9d5f2b4548b6469530995f8b25a7bb1f2a88b9f56fdaf42a1b80868cb3e91a",
+  "repository_sha": "b5f144dcdf81e2928aa1838c28a73bb7ce8e5aa1",
+  "repository_state_sha256": "d43663712c2eefa11527d0152e80e3873a1ac85ae27487d4758151a875672b92",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1397,14 +1397,18 @@
         "app/feedback",
         "app/prepare",
         "app/referrals",
-        "app/resources"
+        "app/resources",
+        "app/sitemap.ts",
+        "lib/global-search.ts",
+        "scripts/smoke-public-routes.mjs",
+        "scripts/test-global-search.mjs",
+        "scripts/test-public-launch-integrity.mjs"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
       "id": "EF-SUP",
       "kind": "requirement-family",
       "known_gaps": [
-        "Feedback discovery remains a repository P1 candidate.",
         "Employer-specific referral policy remains intentionally absent."
       ],
       "last_verified_at": "2026-09-02",
@@ -1430,7 +1434,10 @@
       "status": "partial",
       "test_commands": [
         "npm run test:challenge-privacy",
+        "npm run test:global-search",
         "npm run test:homepage-entry",
+        "npm run test:public-launch-integrity",
+        "npm run test:public-route-smoke",
         "npm run test:referral-privacy",
         "npm run validate:public-links"
       ],
