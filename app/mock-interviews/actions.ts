@@ -1,9 +1,11 @@
 "use server";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { activeMockSessionPlans, getMockRubric } from "@/data/mock-interviews";
 import type { Json } from "@/lib/supabase/database.types";
 
 export async function saveMockInterviewReview(input: { sessionId: string; track: string; mode: string; planId: string; promptId: string; rubricId: string; startedAt: string; elapsedSeconds: number; strength: string; improvement: string; followUp: string; ratings: { dimension_id: string; rating: string }[] }) {
+  if (!isAccountPlatformAvailable()) return { ok: false, error: "Private review saving is unavailable in this configuration." };
   const actor = await getAuthenticatedActor();
   if (!actor) return { ok: false, error: "Sign in to save this private practice review." };
   const plan = activeMockSessionPlans.find((item) => item.id === input.planId);

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { MockInterviewLab } from "@/components/mock-interview-lab";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -13,5 +14,5 @@ export const metadata = createPageMetadata({
 });
 
 export default function MockInterviewsPage() {
-  return <Suspense fallback={<div className="page-loading" role="status" aria-live="polite"><span className="sr-only">Loading Mock Interview Practice Lab…</span></div>}><MockInterviewLab /></Suspense>;
+  return <Suspense fallback={<div className="page-loading" role="status" aria-live="polite"><span className="sr-only">Loading Mock Interview Practice Lab…</span></div>}><MockInterviewLab accountPlatformAvailable={isAccountPlatformAvailable()} /></Suspense>;
 }
