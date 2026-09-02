@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 25 migrations are recorded, ending at `202608230002_add_feedback_export_rpc`
+4. [ ] `supabase migration list --linked` — confirm all 26 migrations are recorded, ending at `202608230003_restrict_public_interview_experience_columns`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -120,6 +120,8 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] User A cannot open `/interviews/<User B round id>/prepare`
 - [ ] User A cannot fetch User B's `.ics` or Google export
 - [ ] Anonymous clients cannot select `profiles` directly; the public RPC still returns exactly nine fields
+- [ ] Anonymous Interview Experience reads return only approved, consented reports and the safe nested round projection; direct requests for author identity, moderation/lifecycle metadata, round identifiers/positions, or round process notes fail
+- [ ] A signed-in non-owner cannot query another contributor's approved base row; the sessionless public directory still shows the same approved projection
 - [ ] Fabricated DSA and System Design canonical IDs are refused
 
 ### Anonymous browser-progress import boundary

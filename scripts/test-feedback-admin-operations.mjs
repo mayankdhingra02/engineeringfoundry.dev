@@ -57,6 +57,7 @@ assert.ok(!adminActions.includes("createSupabaseAdminClient") && !adminActions.i
 for (const marker of ["robots", "force-dynamic", "requireAdminActor"]) assert.ok(adminLayout.includes(marker), `admin layout is missing private-route ${marker}`);
 for (const marker of ["Feedback requiring triage", "Experiences requiring moderation", "Company guides requiring review", "Operational configuration"]) assert.ok(adminHome.includes(marker), `admin home is missing ${marker}`);
 for (const source of [feedbackPage, feedbackDetail, experiencePage, healthPage]) assert.ok(source.includes("requireAdminActor") || source.includes("operationalHealth"), "admin surface lacks bounded operational access");
+for (const marker of ["interview_experience_rounds(position,round_type,topic_labels,process_notes)", "Submitted round context", "round.topic_labels", "round.process_notes"]) assert.ok(experiencePage.includes(marker), `experience moderation must expose submitted public round context: ${marker}`);
 assert.ok(privacyRoutes.includes('"/admin"'), "admin route is absent from canonical private-route protection");
 
 for (const name of ["message", "contact_email", "reference_id", "admin_note", "moderation_note"]) assert.ok(analyticsProperties.includes(`"${name}"`), `feedback/admin private field ${name} is not analytics-denied`);

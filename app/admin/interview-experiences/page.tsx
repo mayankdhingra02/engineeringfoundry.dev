@@ -3,6 +3,21 @@ import { requireAdminActor } from "@/lib/admin/auth";
 
 export default async function AdminInterviewExperiencesPage() {
   const actor = await requireAdminActor("/admin/interview-experiences");
-  const { data } = await actor.supabase.from("interview_experiences").select("id,status,company_name,role_title,role_level,region,interview_date,summary,publication_consent,submitted_at,review_note").in("status", ["submitted", "needs_changes"]).order("submitted_at", { ascending: true, nullsFirst: false }).limit(100);
-  return <><header className="admin-page-header"><h2>Interview Experience moderation</h2><p>Only submitted and needs-changes reports appear here. Do not edit contributor content; approve, request changes, or reject through the existing state model.</p></header><div className="admin-moderation-list">{data?.length ? data.map((experience) => <article className="admin-moderation-card" key={experience.id}><header><div><span className="status-pill warning">{experience.status.replaceAll("_", " ")}</span><h3>{experience.company_name} · {experience.role_title}</h3><p>{[experience.role_level, experience.region, experience.interview_date].filter(Boolean).join(" · ") || "No additional context"}</p></div><small>{experience.submitted_at ? new Date(experience.submitted_at).toLocaleString() : "Not submitted"}</small></header><section><h4>Contributor summary</h4><p>{experience.summary}</p><small>Publication consent: {experience.publication_consent ? "provided" : "not provided"}</small></section>{experience.review_note && <section className="admin-previous-note"><h4>Current private note</h4><p>{experience.review_note}</p></section>}<ExperienceModerationForm experienceId={experience.id} /></article>) : <div className="empty-state"><strong>No interview experiences need moderation.</strong><p>Submitted contributor reports will appear here once the existing P0.3 workflow receives them.</p></div>}</div></>;
+  const { data } = await actor.supabase
+    .from("interview_experiences")
+    .select("id,status,company_name,role_title,role_level,region,interview_date,summary,publication_consent,submitted_at,review_note,interview_experience_rounds(position,round_type,topic_labels,process_notes)")
+    .in("status", ["submitted", "needs_changes"])
+    .order("submitted_at", { ascending: true, nullsFirst: false })
+    .limit(100);
+
+  return <>
+    <header className="admin-page-header"><h2>Interview Experience moderation</h2><p>Only submitted and needs-changes reports appear here. Review the summary and every submitted round field before approving; request changes or reject anything unsafe.</p></header>
+    <div className="admin-moderation-list">{data?.length ? data.map((experience) => <article className="admin-moderation-card" key={experience.id}>
+      <header><div><span className="status-pill warning">{experience.status.replaceAll("_", " ")}</span><h3>{experience.company_name} · {experience.role_title}</h3><p>{[experience.role_level, experience.region, experience.interview_date].filter(Boolean).join(" · ") || "No additional context"}</p></div><small>{experience.submitted_at ? new Date(experience.submitted_at).toLocaleString() : "Not submitted"}</small></header>
+      <section><h4>Contributor summary</h4><p>{experience.summary}</p><small>Publication consent: {experience.publication_consent ? "provided" : "not provided"}</small></section>
+      {experience.interview_experience_rounds?.length ? <section><h4>Submitted round context</h4><ol>{[...experience.interview_experience_rounds].sort((left, right) => left.position - right.position).map((round) => <li key={`${round.position}-${round.round_type}`}><strong>{round.round_type}</strong><span>{round.topic_labels.length ? round.topic_labels.join(" · ") : "No topic labels"}</span>{round.process_notes && <p>{round.process_notes}</p>}</li>)}</ol></section> : <section><h4>Submitted round context</h4><p>No round context was submitted.</p></section>}
+      {experience.review_note && <section className="admin-previous-note"><h4>Current private note</h4><p>{experience.review_note}</p></section>}
+      <ExperienceModerationForm experienceId={experience.id} />
+    </article>) : <div className="empty-state"><strong>No interview experiences need moderation.</strong><p>Submitted contributor reports will appear here once the existing P0.3 workflow receives them.</p></div>}</div>
+  </>;
 }
