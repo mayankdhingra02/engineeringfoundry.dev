@@ -12,7 +12,17 @@ const operations = read("docs/production-operations-runbook.md");
 const analytics = read("docs/analytics-launch-operations.md");
 const template = JSON.parse(read("docs/impact-ledger/monthly-snapshot.template.json"));
 const ci = read(".github/workflows/ci.yml");
+const codeql = read(".github/workflows/codeql.yml");
 const packageJson = JSON.parse(read("package.json"));
+
+function assertPrOnlyCancellation(workflow, label, expectedGroup) {
+  assert.ok(workflow.includes(`group: ${expectedGroup}`), `${label} must group pull requests by PR number and every non-PR run by its exact SHA`);
+  assert.equal(workflow.match(/^\s*group:/gm)?.length, 1, `${label} must declare exactly one workflow concurrency group`);
+  assert.ok(workflow.includes("cancel-in-progress: ${{ github.event_name == 'pull_request' }}"), `${label} may cancel only superseded pull-request runs`);
+  assert.equal(workflow.match(/^\s*cancel-in-progress:/gm)?.length, 1, `${label} must declare exactly one conditional cancellation policy`);
+  assert.ok(!workflow.includes("github.event.pull_request.number || github.ref"), `${label} must not collapse every push to the same branch concurrency group`);
+  assert.ok(!workflow.includes("cancel-in-progress: true"), `${label} must not cancel push or schedule evidence`);
+}
 
 assert.ok(tracker.includes("REPOSITORY RC READY"), "tracker must distinguish repository readiness from a production launch");
 assert.ok(!/REPOSITORY RC READY[^.\n]{0,120}public launch completion/i.test(tracker), "repository readiness must not be called public launch completion");
@@ -47,6 +57,8 @@ assert.ok(staticScripts.has("test:v1-launch-readiness"), "static qualification m
 assert.equal(packageJson.scripts["qualify:launch:production"], "npm run qualify:production", "the documented local production qualification alias must run the canonical production lane");
 assert.equal(packageJson.scripts["test:public-routes:hosted"], "node scripts/smoke-public-routes.mjs --hosted", "hosted public-route smoke must remain explicit and not silently use local mode");
 for (const command of ["npm run qualify:static", "npm run qualify:database", "npm run qualify:production"]) assert.ok(ci.includes(command), `CI must invoke canonical command: ${command}`);
+assertPrOnlyCancellation(ci, "CI", "ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}");
+assertPrOnlyCancellation(codeql, "CodeQL", "codeql-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}");
 validateReleaseRecord();
 
 console.log("P0.10 launch-readiness regression passed: tracker boundaries, deferred visualization scope, owner gates, and analytics account terminology are explicit and qualified.");

@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "c5ded4e008ff97b6e45bfdbe884a44343e3609cc",
-  "repository_state_sha256": "10f8dc6df10b98970419f658fb5bd935d1f5a8ffd0e888bd6e938fe7d9a5a6cb",
+  "repository_sha": "49c06e6bf8dcd8e461f3864144883ce60504b9ba",
+  "repository_state_sha256": "b27feed7b5a78368fdb39ac81ed0f252b16b380236048569d82642654f44c706",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -957,11 +957,15 @@
     },
     {
       "acceptance_criteria": [
-        "Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale."
+        "Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale.",
+        "Superseded pull-request runs may be cancelled, while push and scheduled CI or CodeQL runs retain exact-commit verification evidence."
       ],
       "code_paths": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/codeql.yml",
         "scripts/product-blueprint-governance.mjs",
-        "scripts/release-verification-manifest.mjs"
+        "scripts/release-verification-manifest.mjs",
+        "scripts/test-v1-launch-readiness.mjs"
       ],
       "content_paths": [
         "docs/product-blueprint/registry/requirements.json",
