@@ -116,7 +116,8 @@ function RoadmapIndex() {
 
 async function LevelRoadmapPage() {
   const state = await getDsaWorkspaceState();
-  return <DSAWorkspacePageLayout eyebrow="Level-specific interview preparation" title="DSA Roadmaps" description="Choose your level, preparation window, and optional target company to get a focused plan from the shared curriculum." badge={state.signedIn ? "Account-backed progress" : "SDE I · SDE II · SDE III+"} meta="Linkable plans · researched company overlays · no fake readiness"><LevelRoadmapExperience accountProgress={state.progress} signedIn={state.signedIn} preferredRoadmap={state.preferredRoadmap} accountPlatformAvailable={state.accountPlatformAvailable} /></DSAWorkspacePageLayout>;
+  const badge = state.signedIn ? "Account-backed progress" : state.accountPlatformAvailable ? "SDE I · SDE II · SDE III+" : "Account progress unavailable · public roadmap";
+  return <DSAWorkspacePageLayout eyebrow="Level-specific interview preparation" title="DSA Roadmaps" description="Choose your level, preparation window, and optional target company to get a focused plan from the shared curriculum." badge={badge} meta="Linkable plans · researched company overlays · no fake readiness"><LevelRoadmapExperience accountProgress={state.progress} signedIn={state.signedIn} preferredRoadmap={state.preferredRoadmap} accountPlatformAvailable={state.accountPlatformAvailable} /></DSAWorkspacePageLayout>;
 }
 
 function TopicDependencyMapPage() {

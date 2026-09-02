@@ -19,7 +19,7 @@ export const DISABLED_ACCOUNT_DSA_EXPECTATIONS = [
   { route: "/dsa/questions", marker: "Public practice remains available" },
   { route: "/dsa/practice", marker: "Public practice remains available" },
   { route: "/dsa/companies/amazon", marker: "Account progress unavailable" },
-  { route: "/dsa/roadmap?level=sde2", marker: "Account-backed problem progress is unavailable in this configuration" },
+  { route: "/dsa/roadmap?level=sde2", marker: "Account progress unavailable · public roadmap" },
   { route: "/dsa/questions/two-sum", marker: "Private notes are unavailable in this configuration" },
 ];
 
