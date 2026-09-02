@@ -10,7 +10,7 @@ const [route, planPage, introduction, planner, sidebar, practiceLibrary, nextCon
   "components/system-design-practice-library.tsx",
   "next.config.ts",
   "scripts/smoke-public-routes.mjs",
-  "components/global-search.tsx",
+  "lib/global-search.ts",
   "app/sitemap.ts",
   "app/globals.css",
 ].map((file) => readFile(file, "utf8")));

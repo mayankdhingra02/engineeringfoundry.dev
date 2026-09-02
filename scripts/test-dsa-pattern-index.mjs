@@ -11,7 +11,7 @@ const prohibit = (source, pattern, message) => { if (pattern.test(source)) failu
 const route = read("app/dsa/[...segments]/page.tsx");
 const styles = read("app/globals.css");
 const browser = read("features/dsa/questions/question-browser.tsx");
-const search = read("components/global-search.tsx");
+const search = read("lib/global-search.ts");
 
 if (!Array.isArray(dsaPatterns) || dsaPatterns.length === 0) failures.push("Curated DSA pattern data is empty.");
 for (const pattern of dsaPatterns) {
