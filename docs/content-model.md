@@ -41,7 +41,7 @@ Original Engineering Foundry material is presented with an `Original` label in t
 
 Company associations are separate records attached to a question. They reference a known company and carry their own source and verification state. Verified associations require a verified HTTPS source. Community reports never become verified merely through repetition.
 
-Company guide claims follow the same rule: claim text, source, source type, verification state, and last-verified date. The current six company guides intentionally publish no company-specific question associations or process claims because no reviewed source dataset has been added.
+Company guide claims follow the same rule: claim text, source, source type, verification state, and last-verified date. The repository currently has ten normalized priority guide records backed by official-source records, four of which also have deeper legacy guide modules. Unsupported question associations and process claims remain withheld; a guide's internal `complete` label does not establish master-curriculum completion or claim-level provenance coverage.
 
 ## Validation
 
