@@ -47,6 +47,6 @@ assert.ok(staticScripts.has("test:v1-launch-readiness"), "static qualification m
 assert.equal(packageJson.scripts["qualify:launch:production"], "npm run qualify:production", "the documented local production qualification alias must run the canonical production lane");
 assert.equal(packageJson.scripts["test:public-routes:hosted"], "node scripts/smoke-public-routes.mjs --hosted", "hosted public-route smoke must remain explicit and not silently use local mode");
 for (const command of ["npm run qualify:static", "npm run qualify:database", "npm run qualify:production"]) assert.ok(ci.includes(command), `CI must invoke canonical command: ${command}`);
-validateReleaseRecord({ allowAbsent: true });
+validateReleaseRecord();
 
 console.log("P0.10 launch-readiness regression passed: tracker boundaries, deferred visualization scope, owner gates, and analytics account terminology are explicit and qualified.");
