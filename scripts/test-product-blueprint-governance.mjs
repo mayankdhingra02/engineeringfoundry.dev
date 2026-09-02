@@ -217,6 +217,16 @@ try {
           artifacts.artifacts.find((item) => item.id === "RA-SD-CURRICULUM-TOPIC-MAP").verified_at = "2026-02-29";
         },
       },
+      {
+        name: "noncanonical offset timestamp",
+        expectedLabel: "requirements registry reviewed_at",
+        mutate: (requirements) => { requirements.reviewed_at = "2026-09-02T12:34:56+00:00"; },
+      },
+      {
+        name: "noncanonical fractional timestamp",
+        expectedLabel: "sources registry reviewed_at",
+        mutate: (_requirements, sources) => { sources.reviewed_at = "2026-09-02T12:34:56.1Z"; },
+      },
     ];
 
     for (const invalidCase of invalidCalendarCases) {
@@ -227,11 +237,11 @@ try {
       write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(requirements, null, 2)}\n`);
       write(fixture.cwd, SOURCES_REGISTRY_PATH, `${JSON.stringify(sources, null, 2)}\n`);
       write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
-      const invalidCalendar = commit(fixture.cwd, `test: reject impossible ${invalidCase.name}`);
+      const invalidCalendar = commit(fixture.cwd, `test: reject invalid ${invalidCase.name}`);
       assert.throws(
         () => buildGovernanceArtifacts(fixture.cwd, invalidCalendar),
-        (error) => error instanceof Error && error.message.includes(`${invalidCase.expectedLabel} must be an ISO-8601 date or UTC timestamp.`),
-        `An impossible ${invalidCase.name} must fail canonical calendar validation.`,
+        (error) => error instanceof Error && error.message.includes(`${invalidCase.expectedLabel} must use YYYY-MM-DD, YYYY-MM-DDTHH:mm:ssZ, or YYYY-MM-DDTHH:mm:ss.SSSZ.`),
+        `An invalid or noncanonical ${invalidCase.name} must fail canonical calendar validation.`,
       );
     }
 
