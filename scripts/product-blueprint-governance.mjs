@@ -69,6 +69,13 @@ const SOURCE_CLASSES = new Set([
 ]);
 const ARTIFACT_AVAILABILITIES = new Set(["missing", "repository-present", "external-recorded"]);
 const ARTIFACT_APPROVAL_STATUSES = new Set(["unverified", "approved-needs-source-import", "needs-current-verification", "requires-founder-approval", "approved", "excluded"]);
+const RESEARCH_STATUS_LEVEL = new Map([
+  ["needs-research", 0], ["needs-current-verification", 1], ["approved-needs-source-import", 2], ["approved", 3],
+]);
+const ARTIFACT_APPROVAL_LEVEL = new Map([
+  ["unverified", 0], ["requires-founder-approval", 0], ["excluded", 0],
+  ["needs-current-verification", 1], ["approved-needs-source-import", 2], ["approved", 3],
+]);
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
 const MAX_NORMALIZED_STATE_BYTES = 512 * 1024 * 1024;
@@ -180,7 +187,7 @@ function validateRequirementShape(requirement, index) {
   assertObject(requirement, label);
   const allowed = new Set([
     "id", "section", "kind", "title", "priority", "status", "research_status", "publication_status",
-    "routes", "source_ledger_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids",
+    "routes", "route_families", "source_ledger_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids",
     "test_commands", "acceptance_criteria", "known_gaps", "owner", "last_verified_at", "notes",
     "gap_inventory_ids", "research_artifact_ids",
   ]);
@@ -194,6 +201,8 @@ function validateRequirementShape(requirement, index) {
   for (const field of ["routes", "source_ledger_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids", "test_commands", "acceptance_criteria", "known_gaps"]) {
     assertStringArray(requirement[field], `${requirement.id}.${field}`);
   }
+  if (requirement.route_families === undefined) requirement.route_families = [];
+  assertStringArray(requirement.route_families, `${requirement.id}.route_families`);
   if (requirement.gap_inventory_ids === undefined) requirement.gap_inventory_ids = [];
   assertStringArray(requirement.gap_inventory_ids, `${requirement.id}.gap_inventory_ids`);
   if (requirement.research_artifact_ids === undefined) fail(`${requirement.id}.research_artifact_ids is required.`);
@@ -205,6 +214,7 @@ function validateRequirementShape(requirement, index) {
   if (requirement.acceptance_criteria.length === 0) fail(`${requirement.id} must have at least one acceptance criterion.`);
   if (requirement.status === "implemented" && requirement.test_commands.length === 0) fail(`${requirement.id} cannot be implemented without a test command.`);
   if (requirement.status === "implemented" && requirement.known_gaps.length > 0) fail(`${requirement.id} cannot be implemented while known gaps remain.`);
+  if (requirement.status === "implemented-unverified" && requirement.test_commands.length > 0) fail(`${requirement.id} cannot be implemented-unverified when behavior test commands are recorded; use partial until verification and source criteria close.`);
   if (requirement.status === "blocked" && requirement.known_gaps.length === 0) fail(`${requirement.id} cannot be blocked without a known gap.`);
   if (requirement.status === "placeholder" && requirement.publication_status === "published") fail(`${requirement.id} cannot be both placeholder and published.`);
   if (requirement.status === "excluded" && requirement.priority !== "excluded") fail(`${requirement.id} with excluded status must use excluded priority.`);
@@ -243,6 +253,7 @@ function validateResearchArtifactShape(artifact, index) {
   if (artifact.availability === "repository-present" && (!artifact.repository_path || !artifact.version_or_hash || !artifact.verified_at)) fail(`${artifact.id} with repository-present availability requires repository_path, version_or_hash, and verified_at.`);
   if (artifact.availability === "external-recorded" && (!artifact.external_record || !artifact.version_or_hash || !artifact.verified_at)) fail(`${artifact.id} with external-recorded availability requires external_record, version_or_hash, and verified_at.`);
   if (artifact.availability === "missing" && [artifact.repository_path, artifact.external_record, artifact.version_or_hash, artifact.verified_at].some((value) => value !== null)) fail(`${artifact.id} with missing availability must keep repository_path, external_record, version_or_hash, and verified_at null.`);
+  if (artifact.approval_status === "approved" && (artifact.availability === "missing" || !artifact.version_or_hash || !artifact.verified_at)) fail(`${artifact.id} with approved status requires repository-present or external-recorded availability plus version_or_hash and verified_at.`);
 }
 
 function parseMarkdownRow(line) {
@@ -419,7 +430,7 @@ function appRouteCovers(appSegments, declaredSegments, appIndex = 0, declaredInd
 }
 
 function normalizedRequirement(requirement) {
-  const arrayFields = new Set(["routes", "source_ledger_ids", "research_artifact_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids", "test_commands", "gap_inventory_ids"]);
+  const arrayFields = new Set(["routes", "route_families", "source_ledger_ids", "research_artifact_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids", "test_commands", "gap_inventory_ids"]);
   return Object.fromEntries(Object.entries(requirement).map(([key, value]) => [key, arrayFields.has(key) ? stableStrings(value) : value]));
 }
 
@@ -485,6 +496,15 @@ export function loadAndValidateModel(cwd, repositorySha) {
       if (!artifactIds.has(artifactId)) fail(`${requirement.id} references unknown research artifact ${artifactId}.`);
       if (!artifacts.find((artifact) => artifact.id === artifactId).requirement_ids.includes(requirement.id)) fail(`${requirement.id} -> ${artifactId} is missing the reverse artifact requirement_ids link.`);
     }
+    if (requirement.research_status === "not-applicable" && requirement.research_artifact_ids.length > 0) fail(`${requirement.id} cannot use research_status not-applicable while linked to research artifacts.`);
+    if (requirement.research_status !== "not-applicable" && requirement.research_artifact_ids.length > 0) {
+      const requirementLevel = RESEARCH_STATUS_LEVEL.get(requirement.research_status);
+      for (const artifactId of requirement.research_artifact_ids) {
+        const artifact = artifacts.find((item) => item.id === artifactId);
+        const allowedLevel = ARTIFACT_APPROVAL_LEVEL.get(artifact.approval_status);
+        if (requirementLevel > allowedLevel) fail(`${requirement.id} research_status ${requirement.research_status} overclaims linked artifact ${artifact.id} with approval_status ${artifact.approval_status}.`);
+      }
+    }
   }
   for (const source of sources) for (const requirementId of source.applies_to) {
     if (!requirementIds.has(requirementId)) fail(`${source.id} applies_to unknown requirement ${requirementId}.`);
@@ -514,7 +534,13 @@ export function loadAndValidateModel(cwd, repositorySha) {
     for (const candidate of [...requirement.code_paths, ...requirement.content_paths]) if (!pathExists(entries, candidate)) fail(`${requirement.id} references missing evaluated-snapshot path ${candidate}.`);
     for (const route of requirement.routes) {
       const declaredSegments = parseRoute(route, `${requirement.id}.routes`);
+      if (declaredSegments.some((segment) => segment.kind !== "static")) fail(`${requirement.id}.routes must contain only concrete routes; move dynamic or catch-all patterns to route_families.`);
       if (!routePatterns.some((pattern) => appRouteCovers(pattern.segments, declaredSegments))) fail(`${requirement.id} references nonexistent evaluated App Router route ${route}.`);
+    }
+    for (const routeFamily of requirement.route_families) {
+      const declaredSegments = parseRoute(routeFamily, `${requirement.id}.route_families`);
+      if (!declaredSegments.some((segment) => segment.kind !== "static")) fail(`${requirement.id}.route_families must contain dynamic or catch-all patterns, not concrete routes.`);
+      if (!routePatterns.some((pattern) => appRouteCovers(pattern.segments, declaredSegments))) fail(`${requirement.id} references nonexistent evaluated App Router route family ${routeFamily}.`);
     }
     for (const command of requirement.test_commands) {
       const match = command.match(/^npm run ([A-Za-z0-9:_-]+)$/);
@@ -619,9 +645,9 @@ function renderCoverage(model, envelope) {
       return `| ${escapeCell(section)} | ${modeled} | ${unmodeled} | ${modeled + unmodeled} |`;
     }), "",
     "## Requirement inventory", "",
-    "| ID | Section | Priority | Status | Research | Publication | Source state | Routes | Sources | Tests | Gaps |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |",
-    ...model.requirements.map((item) => `| ${escapeCell(item.id)} | ${escapeCell(item.section)} | ${escapeCell(item.priority)} | ${escapeCell(item.status)} | ${escapeCell(item.research_status)} | ${escapeCell(item.publication_status)} | ${sourceStates.get(item.id)} | ${escapeCell(item.routes.join(", "))} | ${item.source_ledger_ids.length} | ${item.test_commands.length} | ${escapeCell(item.known_gaps.join("; "))} |`), "",
+    "| ID | Section | Priority | Status | Research | Publication | Source state | Routes | Route families | Sources | Tests | Gaps |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |",
+    ...model.requirements.map((item) => `| ${escapeCell(item.id)} | ${escapeCell(item.section)} | ${escapeCell(item.priority)} | ${escapeCell(item.status)} | ${escapeCell(item.research_status)} | ${escapeCell(item.publication_status)} | ${sourceStates.get(item.id)} | ${escapeCell(item.routes.join(", "))} | ${escapeCell(item.route_families.join(", "))} | ${item.source_ledger_ids.length} | ${item.test_commands.length} | ${escapeCell(item.known_gaps.join("; "))} |`), "",
     "## Required blockers", "",
   ];
   const blockers = priorityRecords.filter((item) => item.priority === "required" && (item.recordType === "unmodeled" || item.status !== "implemented"));
@@ -676,7 +702,7 @@ function renderCoverage(model, envelope) {
     for (const item of model.unmodeled) lines.push(`| ${escapeCell(item.id)} | ${familyFor(item.id)} | ${escapeCell(item.section)} | ${item.priority} | ${escapeCell(item.reason)} |`);
     lines.push("");
   }
-  lines.push("## Source readiness", "", "| ID | Class | Verified | Applies to |", "| --- | --- | --- | --- |");
+  lines.push("## Source records", "", "| ID | Class | Verified | Applies to |", "| --- | --- | --- | --- |");
   for (const source of model.sources) lines.push(`| ${escapeCell(source.id)} | ${escapeCell(source.source_class)} | ${escapeCell(source.verified_at)} | ${escapeCell(source.applies_to.join(", "))} |`);
   if (model.sources.length === 0) lines.push("| — | — | — | — |");
   lines.push("");
@@ -684,9 +710,9 @@ function renderCoverage(model, envelope) {
   for (const availability of ARTIFACT_AVAILABILITIES) lines.push(`| ${availability} | ${model.artifacts.filter((item) => item.availability === availability).length} |`);
   lines.push("", "### Approval status", "", "| Approval status | Count |", "| --- | ---: |");
   for (const approval of ARTIFACT_APPROVAL_STATUSES) lines.push(`| ${approval} | ${model.artifacts.filter((item) => item.approval_status === approval).length} |`);
-  lines.push("", "| ID | Family | Availability | Approval | Requirements | Repository path | External record |", "| --- | --- | --- | --- | --- | --- | --- |");
-  for (const artifact of model.artifacts) lines.push(`| ${escapeCell(artifact.id)} | ${artifact.family_id} | ${artifact.availability} | ${artifact.approval_status} | ${escapeCell(artifact.requirement_ids.join(", "))} | ${escapeCell(artifact.repository_path)} | ${escapeCell(artifact.external_record)} |`);
-  if (model.artifacts.length === 0) lines.push("| — | — | — | — | — | — | — |");
+  lines.push("", "| ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- |");
+  for (const artifact of model.artifacts) lines.push(`| ${escapeCell(artifact.id)} | ${artifact.family_id} | ${artifact.availability} | ${artifact.approval_status} | ${escapeCell(artifact.version_or_hash)} | ${escapeCell(artifact.verified_at)} | ${escapeCell(artifact.requirement_ids.join(", "))} | ${escapeCell(artifact.repository_path)} | ${escapeCell(artifact.external_record)} |`);
+  if (model.artifacts.length === 0) lines.push("| — | — | — | — | — | — | — | — | — |");
   const unresolvedArtifacts = model.artifacts.filter((artifact) => artifact.approval_status !== "excluded" && (artifact.availability === "missing" || artifact.approval_status !== "approved"));
   lines.push("", "## Unresolved research artifact inputs", "");
   if (unresolvedArtifacts.length === 0) lines.push("None.", "");

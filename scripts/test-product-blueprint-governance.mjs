@@ -169,7 +169,7 @@ try {
     for (const heading of [
       "### Research status", "### Publication status", "## Requirements by family", "## Requirements by section",
       "## Required blockers", "## P1 blockers and dispositions", "## Stale-review items", "## External owner gates and blocked items",
-      "## Deferred and excluded items", "## Source record states", "## Research artifact inputs", "## Unresolved research artifact inputs",
+      "## Deferred and excluded items", "## Source record states", "## Source records", "## Research artifact inputs", "## Unresolved research artifact inputs",
     ]) assert.ok(coverage.includes(heading), `Coverage report is missing ${heading}.`);
     assert.match(coverage, /\| EF-COMP-GUIDE-COVERAGE \| ef-comp \| needs-current-verification \| 0 \|/, "Coverage must explicitly list stale-review requirements.");
     assert.match(coverage, /\| EF-MOCK-PEER-FACILITATION \| modeled \| external-owner-gate \| blocked \|/, "Coverage must separate external/blocked requirements.");
@@ -178,6 +178,8 @@ try {
     assert.match(coverage, /\| EF-GLOBAL-ATOMIC-FIXTURE \| unmodeled \| unmodeled \| Required atomic fixture remains unmodeled\. \|/, "Required blockers must include required unmodeled records without inventing a modeled status.");
     assert.match(coverage, /\| EF-SD-ATOMIC-FIXTURE \| unmodeled \| unmodeled \| P1 atomic fixture remains unmodeled\. \|/, "P1 dispositions must include P1 unmodeled records.");
     assert.match(coverage, /\| RA-SD-CURRICULUM-TOPIC-MAP \| missing \| unverified \|/, "Coverage must explicitly list unresolved research artifacts.");
+    assert.match(coverage, /\| Routes \| Route families \| Sources \|/, "Coverage must distinguish concrete routes from structural route families.");
+    assert.match(coverage, /\| Approval \| Version\/hash \| Verified \| Requirements \|/, "Artifact coverage must expose version/hash and verification metadata.");
     assert.ok(!/readiness percentage|overall completion percentage/i.test(coverage), "Coverage must not emit an aggregate readiness percentage.");
     assert.ok(!coverage.includes("source-complete"), "Coverage must not overclaim source completeness.");
     const previousTimezone = process.env.TZ;
@@ -265,6 +267,52 @@ try {
     assert.throws(() => buildGovernanceArtifacts(fixture.cwd, incompleteUnmodeled), /\.priority is required/, "Unmodeled records must use the exact required schema.");
   }
 
+  for (const contradiction of [
+    { requirementId: "EF-LLD", artifactId: "RA-LOW-LEVEL-SYSTEMS", approval: "unverified" },
+    { requirementId: "EF-DSA", artifactId: "RA-DSA-JAVASCRIPT-REQUEST", approval: "unverified" },
+    { requirementId: "EF-AIB", artifactId: "RA-AIB-MVP-RECOMMENDATION", approval: "requires-founder-approval" },
+  ]) {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    registry.requirements.find((item) => item.id === contradiction.requirementId).research_status = "approved-needs-source-import";
+    const artifacts = researchArtifactsRegistry();
+    for (const artifact of artifacts.artifacts.filter((item) => item.requirement_ids.includes(contradiction.requirementId))) artifact.approval_status = "approved-needs-source-import";
+    artifacts.artifacts.find((item) => item.id === contradiction.artifactId).approval_status = contradiction.approval;
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const contradictoryStatus = commit(fixture.cwd, `test: reject ${contradiction.requirementId} research overclaim`);
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, contradictoryStatus), new RegExp(`${contradiction.requirementId} research_status .* overclaims linked artifact ${contradiction.artifactId}`), `${contradiction.requirementId} must not overclaim its linked research artifact.`);
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const artifacts = researchArtifactsRegistry();
+    artifacts.artifacts.find((item) => item.id === "RA-SAL-SECTION-BLUEPRINT").approval_status = "needs-current-verification";
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const conservativeLowerStatus = commit(fixture.cwd, "test: retain conservative lower research status");
+    assert.doesNotThrow(() => buildGovernanceArtifacts(fixture.cwd, conservativeLowerStatus), "A requirement may retain the lower needs-research state when its artifact permits needs-current-verification.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    registry.requirements.find((item) => item.id === "EF-LLD").research_status = "not-applicable";
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const notApplicableWithArtifact = commit(fixture.cwd, "test: link artifact to not-applicable requirement");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, notApplicableWithArtifact), /cannot use research_status not-applicable while linked to research artifacts/, "not-applicable requirements must not link research artifacts.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    const requirementWithTests = registry.requirements.find((item) => item.id === "EF-SUP");
+    requirementWithTests.status = "implemented-unverified";
+    requirementWithTests.test_commands = ["npm run test:fixture"];
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const implementedUnverifiedWithTests = commit(fixture.cwd, "test: reject implemented-unverified behavior tests");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, implementedUnverifiedWithTests), /cannot be implemented-unverified when behavior test commands are recorded/, "Behavior-tested records must remain partial until verification and source criteria close.");
+  }
+
   {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     const registry = requirementsRegistry();
@@ -280,22 +328,38 @@ try {
   {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     const registry = requirementsRegistry();
-    registry.requirements.find((item) => item.id === "EF-SUP").routes = ["/catalog/[item]", "/dsa/languages/[slug]"];
+    const routeRequirement = registry.requirements.find((item) => item.id === "EF-SUP");
+    routeRequirement.routes = ["/catalog/example"];
+    routeRequirement.route_families = ["/catalog/[item]", "/dsa/languages/[slug]"];
     write(fixture.cwd, "app/catalog/[slug]/page.tsx", "export default function Page() { return null; }\n");
     write(fixture.cwd, "app/dsa/[...segments]/page.tsx", "export default function Page() { return null; }\n");
     write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
     const validRoutes = commit(fixture.cwd, "test: add dynamic and catch-all routes");
     assert.doesNotThrow(() => buildGovernanceArtifacts(fixture.cwd, validRoutes), "Dynamic and catch-all App Router pages must cover compatible declared routes.");
+    const generated = buildGovernanceArtifacts(fixture.cwd, validRoutes);
+    const generatedRequirement = generated.model.requirements.find((item) => item.id === "EF-SUP");
+    assert.deepEqual(generatedRequirement.routes, ["/catalog/example"]);
+    assert.deepEqual(generatedRequirement.route_families, ["/catalog/[item]", "/dsa/languages/[slug]"]);
 
-    registry.requirements.find((item) => item.id === "EF-SUP").routes = ["/does-not-exist"];
+    routeRequirement.route_families = ["/does-not-exist/[slug]"];
     write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
     const nonexistentRoute = commit(fixture.cwd, "test: add nonexistent route");
-    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, nonexistentRoute), /nonexistent evaluated App Router route/, "Nonexistent routes must fail snapshot validation.");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, nonexistentRoute), /nonexistent evaluated App Router route family/, "Nonexistent route families must fail snapshot validation.");
 
-    registry.requirements.find((item) => item.id === "EF-SUP").routes = ["/bad//route"];
+    routeRequirement.route_families = ["/bad//[slug]"];
     write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
     const malformedRoute = commit(fixture.cwd, "test: add malformed route");
     assert.throws(() => buildGovernanceArtifacts(fixture.cwd, malformedRoute), /malformed route/, "Malformed routes must fail snapshot validation.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    registry.requirements.find((item) => item.id === "EF-SUP").routes = ["/catalog/[item]"];
+    write(fixture.cwd, "app/catalog/[slug]/page.tsx", "export default function Page() { return null; }\n");
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const patternInConcreteRoutes = commit(fixture.cwd, "test: put route family in concrete routes");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, patternInConcreteRoutes), /move dynamic or catch-all patterns to route_families/, "Dynamic declarations must not masquerade as verified concrete routes.");
   }
 
   {
@@ -319,13 +383,23 @@ try {
   {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     const artifacts = researchArtifactsRegistry();
+    artifacts.artifacts[0].approval_status = "approved";
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const approvedMissingArtifact = commit(fixture.cwd, "test: approve missing research artifact");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, approvedMissingArtifact), /with approved status requires repository-present or external-recorded availability/, "Missing artifacts must never be marked approved.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const artifacts = researchArtifactsRegistry();
     Object.assign(artifacts.artifacts[0], {
       repository_path: "fixture.mjs", version_or_hash: "fixture-v1", availability: "repository-present",
       approval_status: "approved", verified_at: "2026-09-02",
     });
     write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
     const repositoryArtifact = commit(fixture.cwd, "test: add repository-present research artifact");
-    assert.doesNotThrow(() => buildGovernanceArtifacts(fixture.cwd, repositoryArtifact), "A repository-present artifact with complete provenance metadata must validate.");
+    const generated = buildGovernanceArtifacts(fixture.cwd, repositoryArtifact);
+    assert.match(generated.files.get(COVERAGE_PATH), /\| fixture-v1 \| 2026-09-02 \|/, "Artifact coverage must expose version and verification date.");
 
     artifacts.artifacts[0].repository_path = "missing-research-artifact.md";
     write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
