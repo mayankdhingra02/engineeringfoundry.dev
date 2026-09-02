@@ -1,0 +1,179 @@
+{
+  "blueprint_version": "1.0",
+  "generated_or_reviewed_at": "2026-09-02",
+  "repository_sha": "1c14864a24b6282b47b83ce506548ae71b2b9c29",
+  "repository_state_sha256": "81ed571dc80ad42110d786172d0438b083edc6bc779a0e5be5f211a729da8b0b",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-AMAZON-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: Software-development candidates; exact loop varies.",
+      "published_at": null,
+      "publisher": "Amazon",
+      "source_class": "official company hiring/candidate",
+      "title": "Amazon software development interview topics",
+      "url": "https://www.amazon.jobs/content/en/how-we-hire/interview-prep/software-development-topics",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-ANTHROPIC-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: Technical roles; engineering, research, and infrastructure scope differ.",
+      "published_at": null,
+      "publisher": "Anthropic",
+      "source_class": "official company hiring/candidate",
+      "title": "Anthropic careers and how we hire",
+      "url": "https://www.anthropic.com/careers",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-ATLASSIAN-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: Engineering candidates; exact role loop varies.",
+      "published_at": null,
+      "publisher": "Atlassian",
+      "source_class": "official company hiring/candidate",
+      "title": "Atlassian engineering interview guide",
+      "url": "https://www.atlassian.com/company/careers/resources/interviewing/engineering",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-GOOGLE-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: Technical candidates; recruiter instructions control.",
+      "published_at": null,
+      "publisher": "Google",
+      "source_class": "official company hiring/candidate",
+      "title": "Google technical virtual interview candidate guide",
+      "url": "https://services.google.com/fh/files/misc/technical_virtual_interviews_candidate_resource.pdf",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-META-OFFICIAL",
+      "notes": "Repository confidence: Limited. Applicability: General careers information; no universal SWE-loop claim in this guide.",
+      "published_at": null,
+      "publisher": "Meta",
+      "source_class": "official company hiring/candidate",
+      "title": "Meta Careers",
+      "url": "https://www.metacareers.com/",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; do not infer a universal engineering loop.",
+      "verified_at": "2026-08-21",
+      "volatility": "volatile"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-MICROSOFT-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: Technical roles; role-specific technical areas vary.",
+      "published_at": null,
+      "publisher": "Microsoft",
+      "source_class": "official company hiring/candidate",
+      "title": "Microsoft technical interviewing",
+      "url": "https://careers.microsoft.com/v2/global/en/hiring-tips/technical-interviewing.html",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-NVIDIA-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: Technical roles; systems, GPU, and ML relevance depend on the job.",
+      "published_at": null,
+      "publisher": "NVIDIA",
+      "source_class": "official company hiring/candidate",
+      "title": "NVIDIA: How we hire",
+      "url": "https://www.nvidia.com/en-gb/about-nvidia/careers/how-we-hire/",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-OPENAI-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: All roles; assessments and final interviews are team-dependent.",
+      "published_at": null,
+      "publisher": "OpenAI",
+      "source_class": "official company hiring/candidate",
+      "title": "OpenAI interview guide",
+      "url": "https://openai.com/interview-guide/",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-UBER-OFFICIAL",
+      "notes": "Repository confidence: High. Applicability: Engineering roles; use the linked specialty guide for exact expectations.",
+      "published_at": null,
+      "publisher": "Uber",
+      "source_class": "official company hiring/candidate",
+      "title": "Uber role-specific interview guides",
+      "url": "https://jobs.uber.com/en/get-interview-ready/",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
+      "verified_at": "2026-08-21",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "claims_supported": [],
+      "id": "SRC-COMP-WALMART-OFFICIAL",
+      "notes": "Repository confidence: Limited. Applicability: General careers information; location and organization vary.",
+      "published_at": null,
+      "publisher": "Walmart",
+      "source_class": "official company hiring/candidate",
+      "title": "Walmart Careers",
+      "url": "https://careers.walmart.com/",
+      "usage_limits": "Discovery and provenance record only until claim-level support is audited; do not infer a universal process across locations or organizations.",
+      "verified_at": "2026-08-21",
+      "volatility": "volatile"
+    }
+  ]
+}
