@@ -30,10 +30,12 @@ requireText(route, "No matching questions cataloged yet.", "Pattern index must b
 prohibit(route, /Detailed guide coming soon|dsaPatternIndex/, "Pattern index still contains the hard-coded coming-soon listing.");
 requireText(browser, 'search: params.get("q") ?? ""', "Question browser does not read the linked q filter.");
 requireText(browser, "matchesDsaQuestionSearch(question, deferredSearch, companyNames)", "Question browser does not use the production search helper.");
+// These source contracts guard the no-remount architecture. Active-element and
+// browser-history behavior still require a real DOM/browser integration test.
 requireText(browser, "const filters = useMemo(() => parseFilters(new URLSearchParams(queryString)), [queryString]);", "Question browser controls are not derived from the current URL for direct loads and Back/Forward navigation.");
 requireText(browser, 'window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname)', "Question browser filter changes do not update the URL through the Next.js-compatible native history API.");
 requireText(browser, "filters={filters}", "Question browser does not reconcile every control and result set from URL-derived filters.");
-prohibit(browser, /<BrowserCore\s+key=/, "Question browser still remounts its interactive subtree when the query string changes, which loses input focus.");
+prohibit(browser, /<BrowserCore\s+key=/, "Question browser still remounts its interactive subtree when the query string changes, risking input-focus loss.");
 requireText(search, 'href: `/dsa/questions?q=${encodeURIComponent(pattern.slug)}`', "Global search pattern results do not use the canonical pattern query.");
 
 for (const pattern of dsaPatterns) {
@@ -52,4 +54,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`DSA pattern-index regression passed: ${dsaPatterns.length} curated patterns use the production browser search helper for exact card counts and canonical links; URL-derived controls preserve focus without subtree remounts.`);
+console.log(`DSA pattern-index regression passed: ${dsaPatterns.length} curated patterns use the production search helper for exact counts and canonical links; structural contracts require URL-derived controls and prohibit keyed browser remounts.`);
