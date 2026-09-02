@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { getSystemDesignContinuation } from "../lib/home-continuation.ts";
+import { homeCoreTracks, homeSupportingTracks } from "../lib/home-track-catalog.ts";
 
 const lessons = [
   { id: "introduction", title: "Introduction", href: "/system-design/start-here/introduction", kind: "lesson" },
@@ -25,13 +26,12 @@ const homepage = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8
 const entryExperience = readFileSync(new URL("../components/home-entry-experience.tsx", import.meta.url), "utf8");
 assert.match(homepage, /What should you prepare next\?/);
 assert.match(homepage, /Search topics, questions, or companies/);
-for (const href of ["/dsa", "/system-design/start-here/introduction", "/companies", "/behavioral"]) {
-  assert.ok(entryExperience.includes(href), `homepage must include the ${href} track`);
-}
-for (const cue of ["Best for coding rounds", "Best for architecture rounds", "Best when one employer is the target", "Best for story-based rounds"]) {
-  assert.ok(entryExperience.includes(cue), `homepage must explain the track decision with: ${cue}`);
-}
+assert.deepEqual(homeCoreTracks.map((track) => track.href), ["/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral"], "homepage core tracks must match the master blueprint");
+assert.deepEqual(homeSupportingTracks.map((track) => track.href), ["/low-level-design", "/companies", "/interview-tips"], "supporting preparation tracks must remain directly discoverable");
+assert.match(entryExperience, /homeCoreTracks\.map[\s\S]*className="home-track-link"/, "core track data must render as direct links");
+assert.match(entryExperience, /homeSupportingTracks\.map[\s\S]*<Link href=\{track\.href\}/, "supporting track data must render as direct links");
 assert.ok(!homepage.includes("1,000+ community members"), "homepage must not use community-size marketing proof in its entry hierarchy");
-assert.match(homepage, /Show two more preparation tools/, "secondary preparation choices should use progressive disclosure");
+assert.match(entryExperience, /More interview tracks/, "specialized interview tracks should remain visible without disclosure");
+assert.doesNotMatch(`${homepage}\n${entryExperience}`, /<details|Show two more preparation tools/, "preparation tracks must not be hidden behind a disclosure");
 
 console.log("Homepage entry experience tests passed.");

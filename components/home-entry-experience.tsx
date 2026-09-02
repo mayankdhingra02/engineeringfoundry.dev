@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Binary, Building2, MessagesSquare, Network } from "lucide-react";
+import { ArrowRight, Binary, BookOpenCheck, BrainCircuit, Building2, MessagesSquare, Network, Puzzle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
+import { homeCoreTracks, homeSupportingTracks } from "@/lib/home-track-catalog";
 import { systemDesignProgressEvent, systemDesignProgressStorageKey } from "./system-design-lesson-progress";
 import {
   migrateLegacySystemDesignProgress,
@@ -21,12 +22,15 @@ import {
   type PreparationContinuation,
 } from "@/lib/preparation-progress/continuation";
 
-const tracks = [
-  { title: "DSA", bestFor: "Best for coding rounds", description: "Learn patterns, build a roadmap, and practice company-tagged questions.", href: "/dsa", action: "Open DSA", icon: Binary },
-  { title: "System Design", bestFor: "Best for architecture rounds", description: "Learn core concepts, focus your plan, and practice 50+ designs.", href: "/system-design/start-here/introduction", action: "Start learning", icon: Network },
-  { title: "Companies", bestFor: "Best when one employer is the target", description: "Understand its interview process and prepare each round in context.", href: "/companies", action: "Choose a company", icon: Building2 },
-  { title: "Behavioral", bestFor: "Best for story-based rounds", description: "Shape evidence around impact, judgment, leadership, and growth.", href: "/behavioral", action: "Prepare stories", icon: MessagesSquare },
-] as const;
+const trackIcons = {
+  dsa: Binary,
+  "system-design": Network,
+  "ml-design": BrainCircuit,
+  behavioral: MessagesSquare,
+  "low-level-design": Puzzle,
+  companies: Building2,
+  "interview-execution": BookOpenCheck,
+} as const;
 
 function readBrowserProgressWithLegacy() {
   const current = readLocalPreparationProgress(window.localStorage);
@@ -149,14 +153,35 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
         <Link className="home-help-link" href="/prepare">Not sure where to start? <span>Compare tracks</span></Link>
       </div>
       <nav className="home-track-grid" aria-label="Interview preparation tracks">
-        {tracks.map(({ icon: Icon, ...track }) => (
-          <Link className="home-track-link" href={track.href} key={track.href}>
-            <span className="home-track-icon"><Icon size={21} aria-hidden="true" /></span>
-            <span className="home-track-copy"><strong>{track.title}</strong><span className="home-track-fit">{track.bestFor}</span><small>{track.description}</small></span>
-            <span className="home-track-action">{track.action} <ArrowRight size={15} aria-hidden="true" /></span>
-          </Link>
-        ))}
+        {homeCoreTracks.map((track) => {
+          const Icon = trackIcons[track.id];
+          return (
+            <Link className="home-track-link" href={track.href} key={track.href}>
+              <span className="home-track-icon"><Icon size={21} aria-hidden="true" /></span>
+              <span className="home-track-copy"><strong>{track.title}</strong><span className="home-track-fit">{track.bestFor}</span><small>{track.description}</small></span>
+              <span className="home-track-action">{track.action} <ArrowRight size={15} aria-hidden="true" /></span>
+            </Link>
+          );
+        })}
       </nav>
+      <section className="home-other-tracks" aria-labelledby="home-other-tracks-title">
+        <div className="home-other-tracks-heading">
+          <h3 id="home-other-tracks-title">More interview tracks</h3>
+          <p>Go directly to a specialized design track or the round-execution guide.</p>
+        </div>
+        <nav className="home-other-track-list" aria-label="More interview preparation tracks">
+          {homeSupportingTracks.map((track) => {
+            const Icon = trackIcons[track.id];
+            return (
+              <Link href={track.href} key={track.href}>
+                <span className="home-other-track-icon"><Icon size={18} aria-hidden="true" /></span>
+                <span><strong>{track.title}</strong><small>{track.description}</small></span>
+                <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            );
+          })}
+        </nav>
+      </section>
     </div>
   );
 }

@@ -10,7 +10,7 @@ import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
   title: "Engineering Foundry — Focused Engineering Interview Preparation",
-  description: "Choose a focused path for DSA, System Design, company-specific, or behavioral interview preparation.",
+  description: "Choose a focused path for coding, System Design, Low-Level Design, ML Design, company, behavioral, or interview-execution preparation.",
   path: "/",
   absoluteTitle: true,
 });
@@ -34,9 +34,7 @@ const continuationCatalog = {
 const supportingPaths = [
   { title: "Build a study roadmap", description: "Turn your timeline and target level into a focused DSA plan.", href: "/dsa/roadmap" },
   { title: "Practice interview questions", description: "Filter coding questions by pattern, difficulty, and company.", href: "/dsa/questions" },
-  { title: "Use the interview playbook", description: "Prepare for the process around the technical rounds.", href: "/interview-tips" },
   { title: "Run a mock interview", description: "Use a structured solo session or practice with your own peer.", href: "/mock-interviews" },
-  { title: "Explore ML System Design", description: "Study data, training, serving, and production ML tradeoffs.", href: "/ml-design" },
   { title: "Practice engineering judgment", description: "Work through self-guided engineering scenarios and rubrics.", href: "/challenges" },
 ];
 
@@ -70,24 +68,13 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             </div>
           </div>
           <nav className="home-supporting-list" aria-label="Additional preparation paths">
-            {supportingPaths.slice(0, 4).map((path) => (
+            {supportingPaths.map((path) => (
               <Link href={path.href} key={path.href}>
                 <span><strong>{path.title}</strong><small>{path.description}</small></span>
                 <ArrowRight size={17} aria-hidden="true" />
               </Link>
             ))}
           </nav>
-          <details className="home-supporting-more">
-            <summary>Show two more preparation tools</summary>
-            <nav aria-label="More preparation tools">
-              {supportingPaths.slice(4).map((path) => (
-                <Link href={path.href} key={path.href}>
-                  <span><strong>{path.title}</strong><small>{path.description}</small></span>
-                  <ArrowRight size={17} aria-hidden="true" />
-                </Link>
-              ))}
-            </nav>
-          </details>
         </div>
       </section>
 
