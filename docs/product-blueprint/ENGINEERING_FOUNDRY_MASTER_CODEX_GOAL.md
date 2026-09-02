@@ -4007,7 +4007,8 @@ Learn → AI Basics
 
 Landing identity:
 
-> **AI for Noobs**  
+> **AI for Noobs**
+>
 > AI explained visually. No jargon. No coding required.
 
 The target is ordinary adults who use or encounter AI but do not understand it. The section succeeds only if nontechnical users can build accurate mental models and safer practical habits.
