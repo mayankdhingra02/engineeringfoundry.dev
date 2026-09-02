@@ -71,5 +71,8 @@ assert.doesNotMatch(
   /label|baseSalary|targetBonus|signOn|equityGrantValue|vestingYears|otherGuaranteedCompensation/i,
   "worksheet analytics cannot include private offer values",
 );
-assert.match(docs, /browser-session state only[\s\S]*does not use localStorage[\s\S]*analytics/i, "persistence/privacy decision must be documented");
+assert.match(worksheet, /in-memory state[\s\S]*does not transmit or store them[\s\S]*refreshing or closing the page clears them[\s\S]*If analytics is enabled and available[\s\S]*fixed, value-free event/, "worksheet must disclose in-memory-only inputs and the conditional fixed analytics event");
+assert.match(worksheet, /await navigator\.clipboard\.writeText\(message\)[\s\S]*setCopyStatus\("copied"\)[\s\S]*catch[\s\S]*setCopyStatus\("unavailable"\)/, "copy must write the assembled message and report clipboard failure truthfully");
+assert.match(worksheet, /role="status" aria-live="polite"[\s\S]*Draft copied to your clipboard[\s\S]*Copy was unavailable\. Select the draft and copy it manually\./, "copy feedback must be live and offer a recovery path");
+assert.match(docs, /React in-memory page state[\s\S]*does not transmit or store[\s\S]*Refreshing or closing the page clears them[\s\S]*Copying writes the assembled message to the browser clipboard only[\s\S]*If analytics is enabled and available[\s\S]*no compensation values, labels, notes, dates, or message-builder text[\s\S]*never transmitted to or stored by Engineering Foundry/i, "persistence, clipboard, and conditional fixed-event privacy boundaries must be documented together");
 console.log("Salary Negotiation v1 qualification passed: eight modules, privacy, math, safeguards, discovery, and offer handoffs hold.");

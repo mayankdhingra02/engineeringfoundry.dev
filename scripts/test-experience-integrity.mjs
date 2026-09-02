@@ -11,6 +11,8 @@ if (!publicDirectory.includes("No reviewed public interview experiences are publ
 if (!company.includes("ExperienceDirectory") || !company.includes("companyName: item.name")) failures.push("Company workspace does not reuse the honest company-scoped reviewed directory.");
 if (!publicDirectory.includes("experiences.length") || !publicReports.includes('eq("status", "approved")') || !publicReports.includes('eq("publication_consent", true)')) failures.push("Main directory does not expose a real approved-record-only architecture.");
 if (!publicDirectory.includes("temporarily unavailable") || !publicDirectory.includes("cannot make a completeness claim")) failures.push("Public query failures or unconfigured environments can still masquerade as a true empty state.");
+if (!publicReports.includes("isSupabaseConfigured") || publicReports.includes("isAccountPlatformAvailable") || publicReports.includes("cookies()")) failures.push("Public report discovery is still coupled to account enablement or request cookies.");
+if (!publicDirectory.includes("fixedCompany") || !publicDirectory.includes("does not substitute unrelated reports")) failures.push("Company-scoped empty states can still substitute unrelated reports or lose their scope.");
 if (!company.includes("No fabricated")) failures.push("Company workspace does not explicitly reject fabricated entries and counts.");
 
 if (failures.length) {

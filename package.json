@@ -86,6 +86,7 @@
     "audit:system-design-routes": "node --experimental-strip-types --no-warnings scripts/audit-system-design-routes.mjs",
     "report:system-design-manifest": "node --experimental-strip-types --no-warnings scripts/generate-system-design-manifest-report.mjs",
     "test:dsa-interview-prep": "node scripts/test-dsa-interview-prep.mjs",
+    "test:dsa-pattern-index": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-dsa-pattern-index.mjs",
     "test:dsa-roadmap": "node scripts/test-dsa-roadmap.mjs",
     "test:dsa-level-roadmaps": "node --experimental-strip-types --no-warnings scripts/test-dsa-level-roadmaps.mjs",
     "test:dsa-roadmap-planning": "node --experimental-strip-types --no-warnings scripts/test-dsa-roadmap-planning.mjs",

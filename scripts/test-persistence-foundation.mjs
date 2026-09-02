@@ -116,6 +116,7 @@ for (const path of ["app/companies/[slug]/page.tsx", "app/interview-experiences/
   assertContains(source, 'dynamic = "force-dynamic"', `${path} must fetch moderated public reports per request`);
   assertContains(source, "listPublicInterviewExperiences", `${path} must use the sessionless public report boundary`);
   assertNotMatches(source, /createSupabaseServerClient|@\/lib\/auth\/actor/, `${path} must not inherit a signed-in request role for its public report query`);
+  assertNotMatches(source, /unstable_cache|cacheLife\(|cacheTag\(/, `${path} must not indefinitely cache moderated public reports`);
 }
 const interviewExperienceDirectory = read("app/interview-experiences/page.tsx");
 assertContains(interviewExperienceDirectory, 'dynamic = "force-dynamic"', "the mixed public/private Interview Experience directory must fetch per request");

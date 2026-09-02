@@ -21,12 +21,15 @@ assert.match(route, /dynamic = "force-dynamic"[\s\S]*listPublicInterviewExperien
 assert.doesNotMatch(route, /Interview-experience submission and moderation remain a later phase|No experience is submitted or published/, "neutral company hubs must not describe the live reviewed-report directory as future-only");
 for (const marker of ["Approved contributor reports appear only after moderation", "Reviewed reports and private reflection", "builder does not submit or publish your notes"]) assert.ok(route.includes(marker), `neutral company report handoff is missing ${marker}`);
 for (const marker of ["experienceAvailability", "temporarily unavailable", "cannot make a completeness claim", "/interview-experiences/${guide.slug}"]) assert.ok(ui.includes(marker), `company guide report handoff is missing ${marker}`);
+for (const marker of ["publicGuideHref", "publicGuideActionLabel", 'href="/behavioral"', 'href="/interview-tips"']) assert.ok(ui.includes(marker), `account-disabled company-guide handoff is missing ${marker}`);
+assert.doesNotMatch(ui, /href="\/behavioral\/workspace"|href="\/interview-playbook"/, "public company guides must not lead account-disabled visitors to private workspaces");
 assert.match(route, /matureGuides:[\s\S]*amazon:[\s\S]*google:[\s\S]*meta:[\s\S]*walmart:/, "the company route must register all four mature guides for composition");
 assert.match(route, /matureGuide=\{matureGuide\}/, "the normalized route must pass the mature guide into the rendered P0.4 surface");
 assert.match(ui, /CompanyGuideWorkspace guide=\{matureGuide\} embedded/, "the normalized surface must actually render mature guide detail when supplied");
 assert.match(matureWorkspace, /embedded = false/, "the mature guide component must support embedded composition");
 assert.match(matureWorkspace, /!embedded && <header[\s\S]*!embedded && <nav/s, "embedded mature detail must suppress its competing header and navigation");
 assert.match(matureWorkspace, /!embedded && guide\.readiness/, "embedded mature detail must not surface legacy readiness scoring");
+assert.doesNotMatch(matureWorkspace, /href="\/behavioral\/workspace"/, "embedded mature guides must not restore a private behavioral CTA");
 assert.match(ui, /Detailed company-specific research[\s\S]*Open detailed \{guide\.company\} guide/s, "mature detail must be progressively disclosed under a clear label");
 assert.match(indexPage, /company\.guideStatus === "available"/, "company index must derive display status from guideStatus");
 assert.match(indexPage, /available \? "Guide available" : "Curation in progress"/, "curating companies must not render the available label");

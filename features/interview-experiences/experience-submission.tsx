@@ -5,11 +5,12 @@ import { CheckCircle2, Send, Trash2, Undo2 } from "lucide-react";
 import { experienceRoundTypes, experienceTopics } from "@/data/interview-experiences";
 import { manageInterviewExperience, saveInterviewExperience, type ExperienceSubmissionInput } from "@/app/interview-experiences/actions";
 import { track } from "@/lib/analytics";
+import { canonicalInterviewExperienceCompany } from "@/lib/interview-experiences/company";
 
 const initial: ExperienceSubmissionInput = { companyName: "", roleTitle: "", roleLevel: "", region: "", interviewDate: "", summary: "", preparationLessons: "", publicIdentity: "anonymous", publicationConsent: false, roundType: "", topics: [] };
 type OwnedExperience = { id: string; status: string; company_name: string; role_title: string; role_level: string | null; region: string | null; interview_date: string | null; summary: string; preparation_lessons: string | null; public_identity: "anonymous" | "username"; publication_consent: boolean; updated_at: string; review_note: string | null; interview_experience_rounds: { round_type: string; topic_labels: string[] }[] | null };
 const editableStatuses = new Set(["draft", "needs_changes", "withdrawn"]);
-function bounded(input: ExperienceSubmissionInput): ExperienceSubmissionInput { return { ...input, companyName: input.companyName.trim().slice(0, 120), roleTitle: input.roleTitle.trim().slice(0, 160), region: input.region.trim().slice(0, 120), summary: input.summary.trim().slice(0, 4000), preparationLessons: input.preparationLessons.trim().slice(0, 3000), roundType: input.roundType.trim().slice(0, 80), topics: input.topics.slice(0, 12).map((topic) => topic.trim().slice(0, 80)).filter(Boolean) }; }
+function bounded(input: ExperienceSubmissionInput): ExperienceSubmissionInput { return { ...input, companyName: canonicalInterviewExperienceCompany(input.companyName).slice(0, 120), roleTitle: input.roleTitle.trim().slice(0, 160), region: input.region.trim().slice(0, 120), summary: input.summary.trim().slice(0, 4000), preparationLessons: input.preparationLessons.trim().slice(0, 3000), roundType: input.roundType.trim().slice(0, 80), topics: input.topics.slice(0, 12).map((topic) => topic.trim().slice(0, 80)).filter(Boolean) }; }
 
 export function ExperienceSubmission({ signedIn, owned }: { signedIn: boolean; owned: readonly OwnedExperience[] }) {
   const [input, setInput] = useState(initial);
@@ -24,7 +25,7 @@ export function ExperienceSubmission({ signedIn, owned }: { signedIn: boolean; o
   }, [signedIn]);
   const update = <K extends keyof ExperienceSubmissionInput>(key: K, value: ExperienceSubmissionInput[K]) => setInput((current) => ({ ...current, [key]: value }));
   const save = (submit: boolean) => startTransition(async () => {
-    const result = await saveInterviewExperience(input, submit);
+    const result = await saveInterviewExperience(bounded(input), submit);
     setMessage(result.ok ? (submit ? "Submitted for privacy and moderation review. You can withdraw it while it is under review." : "Private draft saved. It is not public.") : result.error ?? "Your experience could not be saved.");
     if (result.ok) {
       if (submit) track("interview_experience_submitted", { source: "directory_contribution" });
