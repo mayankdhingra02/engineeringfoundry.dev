@@ -41,6 +41,43 @@ const generated = createReleaseRecord({
   qualifiedAtUtc: "2026-09-01T00:00:00Z",
 });
 assert.doesNotThrow(() => validateGeneratedReleaseRecord(generated), "A new candidate record must validate before its record-only metadata commit exists.");
+
+for (const qualifiedAtUtc of ["2000-02-29T00:00:00Z", "2026-12-31T23:59:59Z"]) {
+  const validBoundaryRecord = createReleaseRecord({
+    candidateSha: generatedCandidate,
+    baseSha: generatedBase,
+    candidateBranch: generatedBranch,
+    qualifiedAtUtc,
+  });
+  assert.doesNotThrow(
+    () => validateGeneratedReleaseRecord(validBoundaryRecord),
+    `A valid UTC boundary timestamp must validate: ${qualifiedAtUtc}`,
+  );
+}
+
+for (const qualifiedAtUtc of [
+  "2026-02-29T00:00:00Z",
+  "2026-02-30T00:00:00Z",
+  "2026-04-31T00:00:00Z",
+  "2026-00-01T00:00:00Z",
+  "2026-13-01T00:00:00Z",
+  "2026-01-00T00:00:00Z",
+  "2026-01-01T24:00:00Z",
+  "2026-01-01T00:60:00Z",
+  "2026-01-01T00:00:60Z",
+]) {
+  const invalidCalendarRecord = createReleaseRecord({
+    candidateSha: generatedCandidate,
+    baseSha: generatedBase,
+    candidateBranch: generatedBranch,
+    qualifiedAtUtc,
+  });
+  assert.throws(
+    () => validateGeneratedReleaseRecord(invalidCalendarRecord),
+    /valid UTC calendar instant/,
+    `An impossible UTC timestamp must be rejected: ${qualifiedAtUtc}`,
+  );
+}
 assert.throws(() => assertReleaseRecordDestinationAvailable(), /Refusing to replace the current immutable release record/, "Generation must not replace the current evidence before its exact archive pair is committed.");
 
 // Exercise both supported HEAD positions in an isolated repository so this

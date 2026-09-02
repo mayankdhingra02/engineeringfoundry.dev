@@ -14,6 +14,12 @@ const trackingParams = /^(utm_.+|ref|referrer|affiliate|aff|source)$/i;
 
 const nonEmptyString = (value) => typeof value === "string" && value.trim().length > 0;
 const nonEmptyList = (value) => Array.isArray(value) && value.length > 0 && value.every(nonEmptyString);
+const isCanonicalDate = (value) => {
+  if (typeof value !== "string" || !datePattern.test(value)) return false;
+  const normalized = `${value}T00:00:00.000Z`;
+  const parsed = new Date(normalized);
+  return !Number.isNaN(parsed.valueOf()) && parsed.toISOString() === normalized;
+};
 
 export function validateInterviewContent({ categories, frameworks, questions, tips, checklists, resources }) {
   const errors = [];
@@ -92,7 +98,7 @@ export function validateInterviewContent({ categories, frameworks, questions, ti
       }
     }
     if (resource.verification === "verified") {
-      check(datePattern.test(resource.lastVerifiedAt ?? "") && !Number.isNaN(Date.parse(resource.lastVerifiedAt)), `Verified resource ${resource.id} requires a valid verification date`);
+      check(isCanonicalDate(resource.lastVerifiedAt), `Verified resource ${resource.id} requires a valid verification date`);
     } else {
       check(resource.lastVerifiedAt === null, `Unverified resource ${resource.id} must not include a verification date`);
     }

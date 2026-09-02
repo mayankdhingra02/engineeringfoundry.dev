@@ -16,17 +16,29 @@ const demoResource = structuredClone(resources);
 demoResource[0].demo = true;
 const companyTagged = structuredClone(questions);
 companyTagged[0].companies = ["Example Company"];
-const invalidDate = structuredClone(resources);
-invalidDate[0].lastVerifiedAt = "2026-99-99";
+const resourcesWithVerifiedDate = (lastVerifiedAt) => {
+  const datedResources = structuredClone(resources);
+  const verifiedResource = datedResources.find((resource) => resource.verification === "verified");
+  if (!verifiedResource) throw new Error("The date regression requires at least one verified resource fixture");
+  verifiedResource.lastVerifiedAt = lastVerifiedAt;
+  return datedResources;
+};
+
+for (const lastVerifiedAt of ["2000-02-29", "2026-12-31"]) {
+  const errors = validate({ resources: resourcesWithVerifiedDate(lastVerifiedAt) });
+  if (errors.length) throw new Error(`A valid calendar boundary failed validation (${lastVerifiedAt}):\n${errors.join("\n")}`);
+}
 
 const cases = [
   [validate({ resources: malformedUrl }), "malformed URL"],
   [validate({ resources: demoResource }), "active demo record"],
   [validate({ questions: companyTagged }), "must not contain company associations"],
-  [validate({ resources: invalidDate }), "valid verification date"],
 ];
+for (const lastVerifiedAt of ["2026-02-29", "2026-02-30", "2026-04-31", "2026-00-01", "2026-13-01", "2026-01-00"]) {
+  cases.push([validate({ resources: resourcesWithVerifiedDate(lastVerifiedAt) }), "valid verification date"]);
+}
 for (const [errors, expected] of cases) {
   if (!errors.some((error) => error.includes(expected))) throw new Error(`Expected validator failure was not produced: ${expected}`);
 }
 
-console.log("Interview content validator regression checks passed: 31+ prompt scale, malformed URL, active demo, company tag, and invalid verification date.");
+console.log("Interview content validator regression checks passed: 31+ prompt scale, malformed URL, active demo, company tag, and canonical verification dates.");

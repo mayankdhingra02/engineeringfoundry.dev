@@ -21,6 +21,13 @@ function fullCommit(value) {
   return git(["rev-parse", "--verify", `${value}^{commit}`]);
 }
 
+function assertCanonicalUtcSecond(value, label) {
+  assert.match(value, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/, `${label} must use YYYY-MM-DDTHH:mm:ssZ.`);
+  const normalized = value.replace(/Z$/, ".000Z");
+  const parsed = new Date(normalized);
+  assert.ok(!Number.isNaN(parsed.valueOf()) && parsed.toISOString() === normalized, `${label} must identify a valid UTC calendar instant.`);
+}
+
 function migrationStateAt(commit) {
   const migrations = git(["ls-tree", "-r", "--name-only", commit, "--", "supabase/migrations"])
     .split("\n")
@@ -262,7 +269,7 @@ function validateRecordFacts(record, markdown, pair) {
   execFileSync("git", ["merge-base", "--is-ancestor", record.candidate_sha, "HEAD"]);
   execFileSync("git", ["merge-base", "--is-ancestor", record.base_sha, record.candidate_sha]);
   assert.match(record.candidate_branch, /^[A-Za-z0-9][A-Za-z0-9._/-]*$/, "Candidate branch must be a non-empty safe Git branch name.");
-  assert.match(record.qualified_at_utc, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+  assertCanonicalUtcSecond(record.qualified_at_utc, "qualified_at_utc");
   assert.equal(record.production_status, "not_deployed_or_hosted_qualified");
   assert.equal(record.hosted_owner_gates_complete, false);
   assert.match(record.hosted_owner_gates_statement, /remain incomplete/i);
