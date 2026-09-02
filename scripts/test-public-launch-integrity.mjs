@@ -83,7 +83,8 @@ requireText(header, "ref={triggerRef}", "Desktop disclosure trigger refs are not
 requireText(header, 'const menuId = `${id}-navigation`', "Desktop disclosures do not use stable whitespace-free control targets.");
 prohibit(header, /label\.toLowerCase\(\).*navigation/, "Desktop disclosure control targets are still derived from labels with spaces.");
 requireText(header, 'openDropdown?.contains(target)', "Clicks elsewhere in the header do not dismiss the open desktop disclosure.");
-requireText(header, "currentHeaderNavigationState(storedNavigation, pathname)", "Persistent header disclosures do not close after client-side route changes.");
+requireText(header, "<HeaderNavigation key={pathname} pathname={pathname} />", "Persistent header disclosures do not reset their state owner after client-side route changes.");
+requireText(header, "window.addEventListener(globalSearchOpenEvent, closeNavigationForSearch)", "Opening Global Search does not close existing header navigation layers.");
 requireText(header, '"Interview Experiences": "Reviewed reports and private local reflection"', "Header navigation still describes Interview Experiences as private-only.");
 requireText(header, 'aria-current={pathname.startsWith(item.href) ? "page" : undefined}', "Mobile navigation does not expose the current route.");
 requireText(header, 'prepareActive ? "location" : undefined', "Primary preparation navigation does not expose the current region.");

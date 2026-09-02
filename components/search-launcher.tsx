@@ -1,22 +1,24 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { globalSearchOpenEvent } from "./global-search";
+import { requestGlobalSearch } from "./global-search";
 
 export function SearchLauncher({
   className,
   label = "Search",
   showShortcut = false,
+  fallbackFocusId,
 }: {
   className: string;
   label?: string;
   showShortcut?: boolean;
+  fallbackFocusId?: string;
 }) {
   return (
     <button
       type="button"
       className={className}
-      onClick={() => window.dispatchEvent(new Event(globalSearchOpenEvent))}
+      onClick={(event) => requestGlobalSearch({ invoker: event.currentTarget, fallbackFocusId })}
       aria-label="Search Engineering Foundry"
     >
       <Search size={18} aria-hidden="true" />

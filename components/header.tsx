@@ -7,8 +7,8 @@ import { useEffect, useReducer, useRef, type Ref } from "react";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
-import { closedHeaderNavigation, currentHeaderNavigationState, headerNavigationReducer, type DesktopMenuId } from "@/lib/header-navigation";
-import { GlobalSearch } from "./global-search";
+import { closedHeaderNavigation, headerNavigationReducer, type DesktopMenuId } from "@/lib/header-navigation";
+import { GlobalSearch, globalSearchOpenEvent } from "./global-search";
 import { SearchLauncher } from "./search-launcher";
 import { Logo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
@@ -52,12 +52,16 @@ function NavDropdown({ id, label, items, pathname, open, onToggle, onClose, trig
 }
 
 export function Header() {
+  const pathname = usePathname();
+  return <HeaderNavigation key={pathname} pathname={pathname} />;
+}
+
+function HeaderNavigation({ pathname }: { pathname: string }) {
   const headerRef = useRef<HTMLElement>(null);
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
   const desktopTriggerRefs = useRef<Record<DesktopMenuId, HTMLButtonElement | null>>({ practice: null, career: null, more: null });
-  const pathname = usePathname();
   const [storedNavigation, dispatchNavigation] = useReducer(headerNavigationReducer, pathname, closedHeaderNavigation);
-  const { openMenu, mobileOpen } = currentHeaderNavigationState(storedNavigation, pathname);
+  const { openMenu, mobileOpen } = storedNavigation;
   const closeMobile = () => dispatchNavigation({ type: "close-mobile", pathname });
   const prepareActive = pathname === "/prepare" || siteConfig.prepareNav.some((item) => pathname.startsWith(item.href));
 
@@ -88,6 +92,14 @@ export function Header() {
     };
   }, [mobileOpen, openMenu, pathname]);
 
+  useEffect(() => {
+    function closeNavigationForSearch() {
+      if (openMenu || mobileOpen) dispatchNavigation({ type: "close-all", pathname });
+    }
+    window.addEventListener(globalSearchOpenEvent, closeNavigationForSearch);
+    return () => window.removeEventListener(globalSearchOpenEvent, closeNavigationForSearch);
+  }, [mobileOpen, openMenu, pathname]);
+
   return (
     <header className="site-header" ref={headerRef}>
       <div className="nav-shell">
@@ -103,11 +115,11 @@ export function Header() {
           <ThemeToggle />
           <a className="text-link discord-nav" href={siteConfig.discordUrl} onClick={() => track("discord_clicked", { placement: "header" })}>Discord</a>
           <AccountControl />
-          <button ref={mobileTriggerRef} className="icon-button mobile-menu-button" onClick={() => dispatchNavigation({ type: "toggle-mobile", pathname })} aria-expanded={mobileOpen} aria-controls="mobile-menu" aria-label={mobileOpen ? "Close navigation" : "Open navigation"}>{mobileOpen ? <X size={20} /> : <Menu size={20} />}</button>
+          <button id="mobile-navigation-trigger" ref={mobileTriggerRef} type="button" className="icon-button mobile-menu-button" onClick={() => dispatchNavigation({ type: "toggle-mobile", pathname })} aria-expanded={mobileOpen} aria-controls="mobile-menu" aria-label={mobileOpen ? "Close navigation" : "Open navigation"}>{mobileOpen ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
       </div>
       {mobileOpen && <nav id="mobile-menu" className="mobile-nav" aria-label="Mobile navigation">
-        <div className="mobile-search"><SearchLauncher className="mobile-search-trigger" /></div>
+        <div className="mobile-search"><SearchLauncher className="mobile-search-trigger" fallbackFocusId="mobile-navigation-trigger" /></div>
         <div className="mobile-nav-group"><Link className="mobile-nav-heading" href="/prepare" onClick={closeMobile} aria-current={pathname === "/prepare" ? "page" : prepareActive ? "location" : undefined}>Prepare <ArrowRight size={13} aria-hidden="true" /></Link>{siteConfig.prepareNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile} aria-current={pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</Link>)}</div>
         <div className="mobile-nav-group"><span>Practice</span>{siteConfig.practiceNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile} aria-current={pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</Link>)}</div>
         <div className="mobile-nav-group"><span>Career / community</span>{siteConfig.careerCommunityNav.map((item) => <Link href={item.href} key={item.href} onClick={closeMobile} aria-current={pathname.startsWith(item.href) ? "page" : undefined}>{item.label}</Link>)}</div>
