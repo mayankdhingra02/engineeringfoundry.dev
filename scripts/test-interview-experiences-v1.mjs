@@ -41,6 +41,15 @@ for (const marker of ["fieldset", "legend", 'aria-live="polite"', "Reset filters
 for (const marker of ["canonicalInterviewExperienceCompany", "normalizeInterviewExperienceCompany"]) expect(companyNormalization.includes(marker), `Company normalization is missing ${marker}.`);
 expect(actions.includes("canonicalInterviewExperienceCompany") && form.includes("canonicalInterviewExperienceCompany"), "Known company variants must be canonicalized in both client and server submission boundaries.");
 expect(page.includes("Contribute a high-level experience") && page.includes("interview_experience_rounds"), "Route must provide contribution and reviewed process context.");
+expect(page.includes("isAccountPlatformAvailable") && page.includes("accountPlatformAvailable ? await getAuthenticatedActor() : null"), "Account-disabled public routes must not initialize an unavailable authenticated contribution path.");
+expect(page.includes("Contribution availability") && page.includes("accountPlatformAvailable={accountPlatformAvailable}"), "The page must pass account availability to an honest contribution state.");
+const unavailableBranchStart = form.indexOf("if (!accountPlatformAvailable)");
+const signedOutBranchStart = form.indexOf("if (!signedIn)");
+const unavailableBranch = form.slice(unavailableBranchStart, signedOutBranchStart);
+expect(unavailableBranchStart >= 0 && signedOutBranchStart > unavailableBranchStart, "Account unavailability must be handled before the enabled-but-signed-out state.");
+for (const marker of ["Contributions are not available in this public configuration.", "You can still read reviewed reports.", "nothing can be submitted from this state."]) expect(unavailableBranch.includes(marker), `Account-disabled contribution state is missing ${marker}`);
+expect(!unavailableBranch.includes("/signin"), "Account-disabled contribution state must not advertise an inoperable sign-in action.");
+expect(form.slice(signedOutBranchStart).includes("/signin?next=/interview-experiences#contribute") && form.slice(signedOutBranchStart).includes("Sign in to contribute"), "Enabled signed-out visitors must retain the contribution sign-in handoff.");
 expect(actions.includes("getAuthenticatedActor") && actions.includes("save_interview_experience_draft"), "Mutations must authenticate and use the controlled RPC boundary.");
 expect(!actions.includes("author_id:"), "Caller-controlled author identity is forbidden.");
 for (const marker of ["Save private draft", "Submit for review", "Withdraw", "Delete", "publicationConsent", "exact proprietary questions", "editableStatuses", "setInput({ id: item.id", "Cancel edit", "Preview report", "Return to edit", "This is not public yet", "preview.publicationConsent"]) expect(form.includes(marker), `Submission UI is missing ${marker}.`);

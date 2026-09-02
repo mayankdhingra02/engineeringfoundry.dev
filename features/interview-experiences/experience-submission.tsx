@@ -12,17 +12,17 @@ type OwnedExperience = { id: string; status: string; company_name: string; role_
 const editableStatuses = new Set(["draft", "needs_changes", "withdrawn"]);
 function bounded(input: ExperienceSubmissionInput): ExperienceSubmissionInput { return { ...input, companyName: canonicalInterviewExperienceCompany(input.companyName).slice(0, 120), roleTitle: input.roleTitle.trim().slice(0, 160), region: input.region.trim().slice(0, 120), summary: input.summary.trim().slice(0, 4000), preparationLessons: input.preparationLessons.trim().slice(0, 3000), roundType: input.roundType.trim().slice(0, 80), topics: input.topics.slice(0, 12).map((topic) => topic.trim().slice(0, 80)).filter(Boolean) }; }
 
-export function ExperienceSubmission({ signedIn, owned }: { signedIn: boolean; owned: readonly OwnedExperience[] }) {
+export function ExperienceSubmission({ accountPlatformAvailable, signedIn, owned }: { accountPlatformAvailable: boolean; signedIn: boolean; owned: readonly OwnedExperience[] }) {
   const [input, setInput] = useState(initial);
   const [view, setView] = useState<"form" | "preview">("form");
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
   const submissionStarted = useRef(false);
   useEffect(() => {
-    if (!signedIn || submissionStarted.current) return;
+    if (!accountPlatformAvailable || !signedIn || submissionStarted.current) return;
     submissionStarted.current = true;
     track("interview_experience_submission_started", { source: "directory_contribution" });
-  }, [signedIn]);
+  }, [accountPlatformAvailable, signedIn]);
   const update = <K extends keyof ExperienceSubmissionInput>(key: K, value: ExperienceSubmissionInput[K]) => setInput((current) => ({ ...current, [key]: value }));
   const save = (submit: boolean) => startTransition(async () => {
     const result = await saveInterviewExperience(bounded(input), submit);
@@ -45,6 +45,8 @@ export function ExperienceSubmission({ signedIn, owned }: { signedIn: boolean; o
   };
   const cancelEdit = () => { setInput(initial); setView("form"); setMessage("Editing cancelled. You can start a new private report."); };
   const preview = bounded(input);
+
+  if (!accountPlatformAvailable) return <div className="experience-directory-empty"><div><strong>Contributions are not available in this public configuration.</strong><p>You can still read reviewed reports. Account-backed private drafts and moderation submissions require the account platform; nothing can be submitted from this state.</p></div></div>;
 
   if (!signedIn) return <div className="experience-directory-empty"><div><strong>Share a process-level experience when you are signed in.</strong><p>Your report starts private, goes through review, and only approved reports can appear here. Never include exact questions, interviewer identities, private links, or confidential material.</p></div><a className="button" href="/signin?next=/interview-experiences#contribute">Sign in to contribute</a></div>;
 

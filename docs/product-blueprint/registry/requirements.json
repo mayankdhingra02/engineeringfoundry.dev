@@ -266,7 +266,7 @@
       "content_paths": [],
       "visual_ids": [],
       "test_commands": ["npm run test:interview-experiences-v1", "npm run test:experience-integrity", "npm run test:experience-privacy"],
-      "acceptance_criteria": ["Only approved and consented safe projections appear publicly; query errors never become false empty states."],
+      "acceptance_criteria": ["Only approved and consented safe projections appear publicly; query errors never become false empty states.", "Account-disabled public pages keep reviewed reports readable without advertising unavailable contribution actions."],
       "known_gaps": ["Hosted database, moderation, removal, and two-user evidence remain external owner gates.", "Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested."],
       "owner": "interview-experiences",
       "last_verified_at": "2026-09-02",
