@@ -43,7 +43,14 @@ check("answer actions require source-story confirmation for detected claims", ac
 const analytics = read("lib/analytics.ts");
 check("no new private Behavioral analytics event was added", !analytics.includes("behavioral_answer_variant_created"));
 const publicPage = read("components/behavioral-practice.tsx");
-check("public entry points to the private workspace", publicPage.includes("Open private story workspace"));
+const publicRoute = read("app/behavioral/page.tsx");
+check("Behavioral derives account availability on the server", publicRoute.includes("const accountPlatformAvailable = isAccountPlatformAvailable();"));
+check("Behavioral passes account availability to public practice", publicRoute.includes("<BehavioralPractice accountPlatformAvailable={accountPlatformAvailable}"));
+check("disabled Behavioral HTML exposes the account-saving boundary", publicRoute.includes("Account saving is unavailable. Public Behavioral practice and the on-page story worksheet remain available."));
+check("enabled Behavioral keeps the private workspace handoff", publicPage.includes('href="/behavioral/workspace">Open private story workspace'));
+check("disabled Behavioral recovers to the public worksheet", publicPage.includes('href="#story-inventory">Review the on-page story worksheet'));
+check("Behavioral activity receives account availability", publicPage.includes('track="behavioral"') && publicPage.includes("accountPlatformAvailable={accountPlatformAvailable}"));
+check("Behavioral activity keeps the mobile touch-target floor", read("app/globals.css").includes(".preparation-activity-control > button { min-height: 44px; }"));
 check("canonical static lane runs the P0.7 regression", STATIC_STEPS.some((step) => step.args?.includes("test:behavioral-v1-polish")));
 check("hosted CI runs the canonical static lane", read(".github/workflows/ci.yml").includes("npm run qualify:static"));
 

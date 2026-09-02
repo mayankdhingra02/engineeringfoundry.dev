@@ -31,6 +31,11 @@ export const DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS = [
   { route: "/system-design/practice", marker: "Public System Design practice remains available" },
 ];
 
+export const DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS = [
+  { route: "/behavioral", marker: "Account saving is unavailable. Public Behavioral practice and the on-page story worksheet remain available." },
+  { route: "/ml-design/recommendation-system", marker: "Account saving is unavailable" },
+];
+
 const ACCOUNT_ROUTES = [
   "/signin", "/signup", "/forgot-password", "/reset-password", "/onboarding", "/dashboard", "/settings/profile", "/applications", "/applications/new", "/applications/11111111-1111-4111-8111-111111111111", "/behavioral/workspace", "/behavioral/questions", "/behavioral/questions/new", "/behavioral/questions/beh-lead-01", "/behavioral/questions/beh-lead-01/answers/new", "/behavioral/questions/beh-lead-01/answers/11111111-1111-4111-8111-111111111111/edit", "/behavioral/stories", "/behavioral/stories/new", "/behavioral/stories/11111111-1111-4111-8111-111111111111",
 ];
@@ -133,6 +138,21 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
       if (body.includes(unavailableHandoff)) throw new Error(`${route} exposes disabled System Design account handoff ${unavailableHandoff}.`);
     }
     if (!body.includes(marker)) throw new Error(`${route} lacks the disabled-account System Design state: ${marker}.`);
+  }
+  for (const { route, marker } of DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS) {
+    const body = publicBodies.get(route) ?? (await request(route)).body;
+    const unavailableHandoffs = [
+      'href="/signin',
+      "Sign in to save",
+      "Sign in to keep this activity with your account",
+      "Sign in later to import it deliberately",
+      "Preparation activity saved to your account",
+      ...(route === "/behavioral" ? ['href="/behavioral/workspace"'] : []),
+    ];
+    for (const unavailableHandoff of unavailableHandoffs) {
+      if (body.includes(unavailableHandoff)) throw new Error(`${route} exposes disabled preparation account handoff ${unavailableHandoff}.`);
+    }
+    if (!body.includes(marker)) throw new Error(`${route} lacks the disabled-account preparation state: ${marker}.`);
   }
 
   const contact = await request("/contact");

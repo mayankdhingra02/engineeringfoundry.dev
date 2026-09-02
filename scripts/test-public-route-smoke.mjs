@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import {
   DISABLED_ACCOUNT_DSA_EXPECTATIONS,
+  DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS,
   DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS,
   PUBLIC_ROUTES,
   normalizeHostedOrigin,
@@ -39,6 +40,8 @@ const accountRoutePattern = /^(?:\/signin|\/signup|\/forgot-password|\/reset-pas
 const notFoundRoutePattern = /not-a-(?:real-(?:topic|company|problem|lesson|challenge)|role)/;
 let omittedSystemDesignMarkerRoute = null;
 let leakedSystemDesignHandoffRoute = null;
+let omittedPreparationMarkerRoute = null;
+let leakedPreparationHandoffRoute = null;
 
 const fixture = createServer((request, response) => {
   const url = new URL(request.url, "http://fixture.invalid");
@@ -57,12 +60,14 @@ const fixture = createServer((request, response) => {
 
   const disabledDsaMarker = DISABLED_ACCOUNT_DSA_EXPECTATIONS.find((expectation) => expectation.route === route)?.marker;
   const disabledSystemDesignMarker = route === omittedSystemDesignMarkerRoute ? undefined : DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS.find((expectation) => expectation.route === route)?.marker;
+  const disabledPreparationMarker = route === omittedPreparationMarkerRoute ? undefined : DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS.find((expectation) => expectation.route === route)?.marker;
   const leakedSystemDesignHandoff = route === leakedSystemDesignHandoffRoute ? ' href="/signin?next=/system-design/practice" Sign in to practice' : "";
+  const leakedPreparationHandoff = route === leakedPreparationHandoffRoute ? ' href="/behavioral/workspace" Sign in to save' : "";
   const body = pathname === "/contact"
     ? "Open Discord Open GitHub Issues"
     : accountRoutePattern.test(pathname)
       ? "Account features are not available yet."
-      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}${disabledSystemDesignMarker ? ` ${disabledSystemDesignMarker}` : ""}${leakedSystemDesignHandoff}`;
+      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}${disabledSystemDesignMarker ? ` ${disabledSystemDesignMarker}` : ""}${disabledPreparationMarker ? ` ${disabledPreparationMarker}` : ""}${leakedSystemDesignHandoff}${leakedPreparationHandoff}`;
   response.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "x-content-type-options": "nosniff",
@@ -119,12 +124,19 @@ try {
   assert.ok(requestedOrigins.every((requestedOrigin) => requestedOrigin === origin), "hosted mode must request only the supplied origin");
   assert.ok(DISABLED_ACCOUNT_DSA_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account DSA assertion must exercise a declared public route");
   assert.ok(DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account System Design assertion must exercise a declared public route");
+  assert.ok(DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account preparation assertion must exercise a declared public route");
   omittedSystemDesignMarkerRoute = "/system-design/practice";
   await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/system-design\/practice lacks the disabled-account System Design state/, "hosted smoke must reject a missing server-rendered System Design disabled marker");
   omittedSystemDesignMarkerRoute = null;
   leakedSystemDesignHandoffRoute = "/system-design/start-here/introduction";
   await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /exposes disabled System Design account handoff/, "hosted smoke must reject a disabled-account sign-in handoff");
   leakedSystemDesignHandoffRoute = null;
+  omittedPreparationMarkerRoute = "/ml-design/recommendation-system";
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/ml-design\/recommendation-system lacks the disabled-account preparation state/, "hosted smoke must reject a missing server-rendered preparation disabled marker");
+  omittedPreparationMarkerRoute = null;
+  leakedPreparationHandoffRoute = "/behavioral";
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/behavioral exposes disabled preparation account handoff/, "hosted smoke must reject disabled Behavioral workspace and sign-in handoffs");
+  leakedPreparationHandoffRoute = null;
   const commandOutput = await runHostedCommand(origin);
   assert.match(commandOutput, /Public route smoke passed \(hosted\)/, "the hosted package command must exercise the supplied fixture");
 } finally {

@@ -10,12 +10,13 @@ import {
   canonicalSystemDesignConceptIds,
   canonicalSystemDesignProblemIds,
 } from "@/lib/system-design/workspace";
-import type { LocalProgressStatus, PreparationTrack } from "@/lib/preparation-progress/local";
-
-export type PreparationActivityActionResult = { saved: boolean; message: string };
+import type { PreparationActivityAccountResult } from "@/lib/preparation-progress/activity-save";
+import { preparationTracks, type LocalProgressStatus, type PreparationTrack } from "@/lib/preparation-progress/local";
 
 const mlIds = new Set(activeMlDesignProblems.map((item) => item.id));
 const behavioralIds = new Set(activeBehavioralQuestions.map((item) => item.id));
+const preparationTrackSet = new Set<unknown>(preparationTracks);
+const preparationStatusSet = new Set<unknown>(["in-progress", "completed"]);
 
 function refreshPreparation(track: PreparationTrack) {
   revalidatePath("/");
@@ -33,13 +34,14 @@ export async function recordPreparationActivityAction(input: {
   track: PreparationTrack;
   itemId: string;
   status: LocalProgressStatus;
-}): Promise<PreparationActivityActionResult> {
-  if (!isAccountPlatformAvailable()) return { saved: false, message: "Account persistence is not available in this configuration." };
+}): Promise<PreparationActivityAccountResult> {
+  if (!isAccountPlatformAvailable()) return { saved: false, reason: "account-unavailable" };
+  if (!input || !preparationTrackSet.has(input.track) || !preparationStatusSet.has(input.status) || typeof input.itemId !== "string") return { saved: false, reason: "invalid-input" };
   const actor = await getAuthenticatedActor();
-  if (!actor) return { saved: false, message: "Sign in to keep this activity with your account." };
+  if (!actor) return { saved: false, reason: "unauthenticated" };
 
   if (input.track === "dsa") {
-    if (!canonicalDsaQuestionById.has(input.itemId)) return { saved: false, message: "That DSA item is not in the current catalog." };
+    if (!canonicalDsaQuestionById.has(input.itemId)) return { saved: false, reason: "invalid-input" };
     const { error } = await actor.supabase.rpc("save_dsa_question_progress", {
       target_question_id: input.itemId,
       target_status: input.status === "completed" ? "review" : "attempted",
@@ -47,14 +49,14 @@ export async function recordPreparationActivityAction(input: {
       target_bookmarked: false,
       target_notes: null,
     });
-    if (error) return { saved: false, message: "We couldn't save this DSA activity." };
+    if (error) return { saved: false, reason: "persistence-failed" };
   } else if (input.track === "system-design") {
     const itemType = canonicalSystemDesignConceptIds.has(input.itemId)
       ? "concept"
       : canonicalSystemDesignProblemIds.has(input.itemId)
         ? "design_problem"
         : null;
-    if (!itemType) return { saved: false, message: "That System Design item is not in the published curriculum." };
+    if (!itemType) return { saved: false, reason: "invalid-input" };
     const { error } = await actor.supabase.rpc("save_system_design_item_progress", {
       target_item_id: input.itemId,
       target_item_type: itemType,
@@ -63,18 +65,20 @@ export async function recordPreparationActivityAction(input: {
       target_bookmarked: false,
       target_notes: null,
     });
-    if (error) return { saved: false, message: "We couldn't save this System Design activity." };
-  } else {
+    if (error) return { saved: false, reason: "persistence-failed" };
+  } else if (input.track === "ml-design" || input.track === "behavioral") {
     const valid = input.track === "ml-design" ? mlIds.has(input.itemId) : behavioralIds.has(input.itemId);
-    if (!valid) return { saved: false, message: "That preparation item is not in the current catalog." };
+    if (!valid) return { saved: false, reason: "invalid-input" };
     const { error } = await actor.supabase.rpc("save_preparation_track_progress", {
       target_track: input.track,
       target_item_id: input.itemId,
       target_status: input.status,
     });
-    if (error) return { saved: false, message: "We couldn't save this preparation activity." };
+    if (error) return { saved: false, reason: "persistence-failed" };
+  } else {
+    return { saved: false, reason: "invalid-input" };
   }
 
   refreshPreparation(input.track);
-  return { saved: true, message: "Preparation activity saved to your account." };
+  return { saved: true, reason: "saved" };
 }

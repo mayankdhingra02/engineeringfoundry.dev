@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DesignPracticePage, type PracticeSection } from "@/components/design-practice-page";
 import { activeMlDesignProblems, getMlDesignProblem } from "@/data/ml-design";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
 import { mlDesignProblemHref } from "@/lib/ml-design-routes";
 
@@ -26,6 +27,7 @@ export default async function MlDesignProblemPage({ params }: { params: Promise<
   const { slug } = await params;
   const problem = getMlDesignProblem(slug);
   if (!problem) notFound();
+  const accountPlatformAvailable = isAccountPlatformAvailable();
 
   const sections: PracticeSection[] = [
     { id: "framing", title: "Reveal product framing guidance", intro: "Start with the decision and baseline, not a model family.", groups: [{ title: "Product goal and constraints", items: problem.productGoal }, { title: "Prediction target", items: problem.predictionTarget }, { title: "Non-ML baseline", items: problem.baseline }] },
@@ -37,5 +39,5 @@ export default async function MlDesignProblemPage({ params }: { params: Promise<
     { id: "follow-ups", title: "Reveal interviewer follow-ups", groups: [{ title: "What to discuss next", items: problem.extensions }] },
   ];
 
-  return <DesignPracticePage track="ml" id={problem.id} title={problem.title} summary={problem.summary} prompt={problem.prompt} difficulty={problem.difficulty} domains={problem.domains} sections={sections} checklist={problem.interviewChecklist} />;
+  return <DesignPracticePage track="ml" id={problem.id} title={problem.title} summary={problem.summary} prompt={problem.prompt} difficulty={problem.difficulty} domains={problem.domains} sections={sections} checklist={problem.interviewChecklist} accountPlatformAvailable={accountPlatformAvailable} />;
 }

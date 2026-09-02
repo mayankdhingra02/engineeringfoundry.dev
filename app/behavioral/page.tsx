@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { BehavioralPractice } from "@/components/behavioral-practice";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -13,5 +14,9 @@ export const metadata = createPageMetadata({
 });
 
 export default function BehavioralPage() {
-  return <Suspense fallback={<div className="page-loading" role="status" aria-live="polite"><span className="sr-only">Loading behavioral practice…</span></div>}><BehavioralPractice /></Suspense>;
+  const accountPlatformAvailable = isAccountPlatformAvailable();
+  return <>
+    {!accountPlatformAvailable && <p className="sr-only">Account saving is unavailable. Public Behavioral practice and the on-page story worksheet remain available.</p>}
+    <Suspense fallback={<div className="page-loading" role="status" aria-live="polite"><span className="sr-only">Loading behavioral practice…</span></div>}><BehavioralPractice accountPlatformAvailable={accountPlatformAvailable} /></Suspense>
+  </>;
 }

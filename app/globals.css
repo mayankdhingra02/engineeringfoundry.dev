@@ -5883,6 +5883,7 @@ textarea {
 
 @media (max-width: 700px) {
   .logo { min-height: var(--mobile-target); }
+  .preparation-activity-control > button { min-height: 44px; }
   .mobile-nav-group > span { font-size: var(--type-label); }
   .mobile-nav-group a,
   .mobile-search-trigger,
