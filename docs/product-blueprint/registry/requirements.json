@@ -430,7 +430,7 @@
       "source_ledger_ids": [],
       "research_artifact_ids": [],
       "prerequisite_ids": ["EF-OPS"],
-      "code_paths": ["scripts/production-baseline.mjs", "scripts/smoke-production.mjs"],
+      "code_paths": ["scripts/test-production-baseline.mjs", "scripts/test-production-hardening.mjs"],
       "content_paths": ["docs/v1-launch-readiness.md"],
       "visual_ids": [],
       "test_commands": ["npm run test:production-baseline", "npm run test:production-hardening"],
