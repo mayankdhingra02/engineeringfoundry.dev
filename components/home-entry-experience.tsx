@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Binary, Building2, MessagesSquare, Network } from "lucide-react";
+import { ArrowRight, Binary, BookOpenCheck, BrainCircuit, Building2, MessagesSquare, Network, Puzzle } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics";
 import { systemDesignProgressEvent, systemDesignProgressStorageKey } from "./system-design-lesson-progress";
@@ -26,6 +26,12 @@ const tracks = [
   { title: "System Design", bestFor: "Best for architecture rounds", description: "Learn core concepts, focus your plan, and practice 50+ designs.", href: "/system-design/start-here/introduction", action: "Start learning", icon: Network },
   { title: "Companies", bestFor: "Best when one employer is the target", description: "Understand its interview process and prepare each round in context.", href: "/companies", action: "Choose a company", icon: Building2 },
   { title: "Behavioral", bestFor: "Best for story-based rounds", description: "Shape evidence around impact, judgment, leadership, and growth.", href: "/behavioral", action: "Prepare stories", icon: MessagesSquare },
+] as const;
+
+const otherTracks = [
+  { title: "Low-Level Design", description: "Responsibilities, interfaces, and state", href: "/low-level-design", icon: Puzzle },
+  { title: "ML System Design", description: "Data, serving, and evaluation", href: "/ml-design", icon: BrainCircuit },
+  { title: "Interview Execution Guide", description: "Communication, recovery, and closing", href: "/interview-tips", icon: BookOpenCheck },
 ] as const;
 
 function readBrowserProgressWithLegacy() {
@@ -157,6 +163,21 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
           </Link>
         ))}
       </nav>
+      <section className="home-other-tracks" aria-labelledby="home-other-tracks-title">
+        <div className="home-other-tracks-heading">
+          <h3 id="home-other-tracks-title">More interview tracks</h3>
+          <p>Go directly to a specialized design track or the round-execution guide.</p>
+        </div>
+        <nav className="home-other-track-list" aria-label="More interview preparation tracks">
+          {otherTracks.map(({ icon: Icon, ...track }) => (
+            <Link href={track.href} key={track.href}>
+              <span className="home-other-track-icon"><Icon size={18} aria-hidden="true" /></span>
+              <span><strong>{track.title}</strong><small>{track.description}</small></span>
+              <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          ))}
+        </nav>
+      </section>
     </div>
   );
 }

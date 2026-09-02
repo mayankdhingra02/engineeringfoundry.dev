@@ -387,7 +387,7 @@
       "visual_ids": [],
       "test_commands": ["npm run test:homepage-entry", "npm run validate:public-links", "npm run test:referral-privacy", "npm run test:challenge-privacy"],
       "acceptance_criteria": ["Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior."],
-      "known_gaps": ["Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.", "Employer-specific referral policy remains intentionally absent."],
+      "known_gaps": ["Broad-search recovery and feedback discovery remain repository P1 candidates.", "Employer-specific referral policy remains intentionally absent."],
       "owner": "supporting-product",
       "last_verified_at": "2026-09-02",
       "notes": null,

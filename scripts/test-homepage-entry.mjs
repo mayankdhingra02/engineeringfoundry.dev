@@ -25,13 +25,14 @@ const homepage = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8
 const entryExperience = readFileSync(new URL("../components/home-entry-experience.tsx", import.meta.url), "utf8");
 assert.match(homepage, /What should you prepare next\?/);
 assert.match(homepage, /Search topics, questions, or companies/);
-for (const href of ["/dsa", "/system-design/start-here/introduction", "/companies", "/behavioral"]) {
+for (const href of ["/dsa", "/system-design/start-here/introduction", "/low-level-design", "/companies", "/ml-design", "/behavioral", "/interview-tips"]) {
   assert.ok(entryExperience.includes(href), `homepage must include the ${href} track`);
 }
-for (const cue of ["Best for coding rounds", "Best for architecture rounds", "Best when one employer is the target", "Best for story-based rounds"]) {
+for (const cue of ["Best for coding rounds", "Best for architecture rounds", "Best when one employer is the target", "Best for story-based rounds", "Responsibilities, interfaces, and state", "Data, serving, and evaluation", "Communication, recovery, and closing"]) {
   assert.ok(entryExperience.includes(cue), `homepage must explain the track decision with: ${cue}`);
 }
 assert.ok(!homepage.includes("1,000+ community members"), "homepage must not use community-size marketing proof in its entry hierarchy");
-assert.match(homepage, /Show two more preparation tools/, "secondary preparation choices should use progressive disclosure");
+assert.match(entryExperience, /More interview tracks/, "specialized interview tracks should remain visible without disclosure");
+assert.doesNotMatch(homepage, /Show two more preparation tools/, "primary preparation tracks must not be hidden behind a disclosure");
 
 console.log("Homepage entry experience tests passed.");
