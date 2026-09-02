@@ -51,6 +51,7 @@ check("enabled Behavioral keeps the private workspace handoff", publicPage.inclu
 check("disabled Behavioral recovers to the public worksheet", publicPage.includes('href="#story-inventory">Review the on-page story worksheet'));
 check("Behavioral activity receives account availability", publicPage.includes('track="behavioral"') && publicPage.includes("accountPlatformAvailable={accountPlatformAvailable}"));
 check("Behavioral activity keeps the mobile touch-target floor", read("app/globals.css").includes(".preparation-activity-control > button { min-height: 44px; }"));
+check("focus-preserving pending activity suppresses hover affordance", read("app/globals.css").includes(':not([aria-disabled="true"]):hover') && read("app/globals.css").includes('button[aria-disabled="true"] { cursor: wait; opacity: .7; }') && !read("app/globals.css").includes(".preparation-activity-control > button:disabled"));
 check("canonical static lane runs the P0.7 regression", STATIC_STEPS.some((step) => step.args?.includes("test:behavioral-v1-polish")));
 check("hosted CI runs the canonical static lane", read(".github/workflows/ci.yml").includes("npm run qualify:static"));
 

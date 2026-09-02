@@ -5740,9 +5740,9 @@ p, li, dd { text-wrap: pretty; }
   font: 720 var(--type-meta)/1.2 var(--font-sans);
   cursor: pointer;
 }
-.preparation-activity-control > button:hover { border-color: var(--green); }
+.preparation-activity-control > button:not([aria-disabled="true"]):hover { border-color: var(--green); }
 .preparation-activity-control > button.is-complete { border-color: color-mix(in srgb, var(--green) 48%, var(--line)); color: var(--green); background: var(--green-soft); }
-.preparation-activity-control > button:disabled { cursor: wait; opacity: .7; }
+.preparation-activity-control > button[aria-disabled="true"] { cursor: wait; opacity: .7; }
 .preparation-activity-control > small, .save-study-plan-control > small { color: var(--muted); font-size: var(--type-meta); line-height: 1.45; }
 .home-track-heading { margin-bottom: 15px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
 .home-track-heading h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; }
