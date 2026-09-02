@@ -128,7 +128,7 @@ const sitemap = read("app/sitemap.ts");
 for (const route of ["/dashboard", "/applications", "/behavioral/workspace", "/behavioral/questions", "/behavioral/stories", "/onboarding", "/settings", "/signin", "/signup", "/forgot-password", "/reset-password"]) {
   if (sitemap.includes(`"${route}"`)) failures.push(`Sitemap includes private/auth route ${route}.`);
 }
-for (const route of ["/prepare", "/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral", "/interview-tips", "/resources", "/mock-interviews", "/referrals", "/challenges", "/community", "/leaderboard", "/interview-experiences", "/companies", "/contact"]) {
+for (const route of ["/prepare", "/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral", "/interview-tips", "/resources", "/mock-interviews", "/referrals", "/challenges", "/community", "/leaderboard", "/interview-experiences", "/companies", "/contact", "/feedback"]) {
   if (!sitemap.includes(`"${route}"`)) failures.push(`Sitemap omits substantive public route ${route}.`);
 }
 

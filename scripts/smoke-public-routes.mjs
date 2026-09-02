@@ -5,7 +5,7 @@ import path from "node:path";
 export const PUBLIC_ROUTES = [
   "/", "/prepare", "/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral", "/interview-tips", "/resources",
   "/mock-interviews", "/referrals", "/challenges", "/community", "/leaderboard", "/interview-experiences",
-  "/companies", "/faq", "/contact", "/dsa/arrays", "/dsa/questions", "/dsa/companies",
+  "/companies", "/faq", "/contact", "/feedback", "/dsa/arrays", "/dsa/questions", "/dsa/companies",
   "/dsa/companies/amazon", "/dsa/roadmap", "/dsa/roadmap?topic=trees", "/dsa/practice", "/dsa/company-questions", "/dsa/company-questions/amazon", "/dsa/languages", "/dsa/languages/python",
   "/dsa/languages/choose-a-language", "/dsa/roadmaps", "/dsa/roadmaps/sde-2/60-day",
   "/dsa/strategy", "/dsa/interview-strategy", "/dsa/interview-strategy/problem-solving-framework", "/system-design/plan",
