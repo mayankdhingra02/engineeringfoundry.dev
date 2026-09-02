@@ -13,6 +13,11 @@ const result = validateReleaseRecord();
 const head = git(["rev-parse", "HEAD"]);
 
 assert.equal(result.status, "VALID");
+assert.throws(
+  () => validateReleaseRecord(new Date(Date.parse(result.record.qualified_at_utc) - 1_000)),
+  /must not be after validation instant/,
+  "Committed evidence must not validate against an earlier injected instant.",
+);
 assert.ok(result.records.length >= 2, "The current release record and its archived predecessor must both validate.");
 assert.equal(git(["merge-base", result.metadataCommit, head]), result.metadataCommit, "The current record metadata commit must remain an ancestor of HEAD.");
 
@@ -29,6 +34,7 @@ for (const entry of result.records) {
 const generatedCandidate = git(["rev-parse", "HEAD"]);
 const generatedBase = result.record.base_sha;
 const generatedBranch = "test/generated-release-record";
+const validationInstant = new Date("2026-09-02T12:34:56.000Z");
 assert.equal(
   git(["merge-base", generatedBase, generatedCandidate]),
   generatedBase,
@@ -40,7 +46,56 @@ const generated = createReleaseRecord({
   candidateBranch: generatedBranch,
   qualifiedAtUtc: "2026-09-01T00:00:00Z",
 });
-assert.doesNotThrow(() => validateGeneratedReleaseRecord(generated), "A new candidate record must validate before its record-only metadata commit exists.");
+assert.doesNotThrow(() => validateGeneratedReleaseRecord(generated, validationInstant), "A new candidate record must validate before its record-only metadata commit exists.");
+
+for (const qualifiedAtUtc of ["2000-02-29T00:00:00Z", "2026-09-02T12:34:56Z"]) {
+  const validBoundaryRecord = createReleaseRecord({
+    candidateSha: generatedCandidate,
+    baseSha: generatedBase,
+    candidateBranch: generatedBranch,
+    qualifiedAtUtc,
+  });
+  assert.doesNotThrow(
+    () => validateGeneratedReleaseRecord(validBoundaryRecord, validationInstant),
+    `A valid UTC boundary timestamp must validate: ${qualifiedAtUtc}`,
+  );
+}
+
+for (const qualifiedAtUtc of [
+  "1900-02-29T00:00:00Z",
+  "2026-02-29T00:00:00Z",
+  "2026-02-30T00:00:00Z",
+  "2026-04-31T00:00:00Z",
+  "2026-00-01T00:00:00Z",
+  "2026-13-01T00:00:00Z",
+  "2026-01-00T00:00:00Z",
+  "2026-01-01T24:00:00Z",
+  "2026-01-01T00:60:00Z",
+  "2026-01-01T00:00:60Z",
+]) {
+  const invalidCalendarRecord = createReleaseRecord({
+    candidateSha: generatedCandidate,
+    baseSha: generatedBase,
+    candidateBranch: generatedBranch,
+    qualifiedAtUtc,
+  });
+  assert.throws(
+    () => validateGeneratedReleaseRecord(invalidCalendarRecord, validationInstant),
+    /valid UTC calendar instant/,
+    `An impossible UTC timestamp must be rejected: ${qualifiedAtUtc}`,
+  );
+}
+const futureRecord = createReleaseRecord({
+  candidateSha: generatedCandidate,
+  baseSha: generatedBase,
+  candidateBranch: generatedBranch,
+  qualifiedAtUtc: "2026-09-02T12:34:57Z",
+});
+assert.throws(
+  () => validateGeneratedReleaseRecord(futureRecord, validationInstant),
+  /must not be after validation instant/,
+  "A canonical future qualification timestamp must be rejected.",
+);
 assert.throws(() => assertReleaseRecordDestinationAvailable(), /Refusing to replace the current immutable release record/, "Generation must not replace the current evidence before its exact archive pair is committed.");
 
 // Exercise both supported HEAD positions in an isolated repository so this
@@ -121,7 +176,13 @@ export const RELEASE_QUALIFICATION_COMMANDS = ["npm ci", "npm run qualify:static
   git(["-c", "commit.gpgSign=false", "commit", "--quiet", "-m", "test: add next release candidate"]);
   const nextCandidate = git(["rev-parse", "HEAD"]);
   assert.doesNotThrow(() => assertReleaseRecordDestinationAvailable(), "An exact committed archive must permit replacing the canonical pair after qualification.");
-  generateReleaseRecord(nextCandidate, fixtureBase);
+  const generationInstant = new Date("2026-09-02T12:34:56.789Z");
+  generateReleaseRecord(nextCandidate, fixtureBase, generationInstant);
+  assert.equal(
+    JSON.parse(readFileSync(RELEASE_RECORD_PATHS[0], "utf8")).qualified_at_utc,
+    "2026-09-02T12:34:56Z",
+    "Generation must derive the recorded whole-second timestamp from its single injected validation instant.",
+  );
   const generatedStatus = execFileSync("git", ["status", "--porcelain=v1"], { encoding: "utf8" }).trimEnd();
   assert.deepEqual(
     generatedStatus.split("\n").filter(Boolean).map((line) => line.slice(3)).sort(),

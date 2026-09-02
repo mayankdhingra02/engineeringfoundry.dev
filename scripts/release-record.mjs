@@ -21,6 +21,18 @@ function fullCommit(value) {
   return git(["rev-parse", "--verify", `${value}^{commit}`]);
 }
 
+function assertValidationInstant(validationInstant) {
+  assert.ok(validationInstant instanceof Date && !Number.isNaN(validationInstant.valueOf()), "validationInstant must be a valid Date.");
+}
+
+function assertCanonicalUtcSecond(value, label, validationInstant) {
+  assert.match(value, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/, `${label} must use YYYY-MM-DDTHH:mm:ssZ.`);
+  const normalized = value.replace(/Z$/, ".000Z");
+  const parsed = new Date(normalized);
+  assert.ok(!Number.isNaN(parsed.valueOf()) && parsed.toISOString() === normalized, `${label} must identify a valid UTC calendar instant.`);
+  assert.ok(parsed.valueOf() <= validationInstant.valueOf(), `${label} must not be after validation instant ${validationInstant.toISOString()}.`);
+}
+
 function migrationStateAt(commit) {
   const migrations = git(["ls-tree", "-r", "--name-only", commit, "--", "supabase/migrations"])
     .split("\n")
@@ -250,7 +262,7 @@ function originalMetadataCommit(record, pair) {
   return candidates[0];
 }
 
-function validateRecordFacts(record, markdown, pair) {
+function validateRecordFacts(record, markdown, pair, validationInstant) {
   assert.equal(record.schema_version, 1);
   assert.equal(record.record_version, 1);
   assert.equal(record.release_name, "Engineering Foundry v1 release candidate");
@@ -262,7 +274,7 @@ function validateRecordFacts(record, markdown, pair) {
   execFileSync("git", ["merge-base", "--is-ancestor", record.candidate_sha, "HEAD"]);
   execFileSync("git", ["merge-base", "--is-ancestor", record.base_sha, record.candidate_sha]);
   assert.match(record.candidate_branch, /^[A-Za-z0-9][A-Za-z0-9._/-]*$/, "Candidate branch must be a non-empty safe Git branch name.");
-  assert.match(record.qualified_at_utc, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+  assertCanonicalUtcSecond(record.qualified_at_utc, "qualified_at_utc", validationInstant);
   assert.equal(record.production_status, "not_deployed_or_hosted_qualified");
   assert.equal(record.hosted_owner_gates_complete, false);
   assert.match(record.hosted_owner_gates_statement, /remain incomplete/i);
@@ -275,7 +287,7 @@ function validateRecordFacts(record, markdown, pair) {
   assert.equal(markdown, renderReleaseMarkdown(record), `${pair.label} generated Markdown does not match its JSON release record.`);
 }
 
-function validateRecordPair(pair) {
+function validateRecordPair(pair, validationInstant) {
   const jsonExists = existsSync(pair.paths[0]);
   const markdownExists = existsSync(pair.paths[1]);
   assert.equal(jsonExists, markdownExists, `${pair.label} JSON and Markdown must either both exist or both be absent.`);
@@ -284,20 +296,21 @@ function validateRecordPair(pair) {
   const json = readFileSync(pair.paths[0], "utf8");
   const markdown = readFileSync(pair.paths[1], "utf8");
   const record = JSON.parse(json);
-  validateRecordFacts(record, markdown, pair);
+  validateRecordFacts(record, markdown, pair, validationInstant);
   const metadataCommit = originalMetadataCommit(record, { ...pair, json, markdown });
   assert.equal(gitFile(metadataCommit, RELEASE_JSON_PATH), json, `${pair.label} JSON changed after its original metadata commit.`);
   assert.equal(gitFile(metadataCommit, RELEASE_MARKDOWN_PATH), markdown, `${pair.label} Markdown changed after its original metadata commit.`);
   return { ...pair, record, metadataCommit };
 }
 
-export function validateReleaseRecord() {
+export function validateReleaseRecord(validationInstant = new Date()) {
+  assertValidationInstant(validationInstant);
   const jsonExists = existsSync(RELEASE_JSON_PATH);
   const markdownExists = existsSync(RELEASE_MARKDOWN_PATH);
   assert.equal(jsonExists, markdownExists, "Release-record JSON and Markdown must either both exist or both be absent.");
   assert.ok(jsonExists, "The current release record is required.");
-  const current = validateRecordPair({ label: "current release record", paths: RELEASE_RECORD_PATHS });
-  const archives = archiveDescriptors().map(validateRecordPair);
+  const current = validateRecordPair({ label: "current release record", paths: RELEASE_RECORD_PATHS }, validationInstant);
+  const archives = archiveDescriptors().map((pair) => validateRecordPair(pair, validationInstant));
   return { status: "VALID", record: current.record, metadataCommit: current.metadataCommit, records: [current, ...archives] };
 }
 
@@ -321,17 +334,19 @@ export function createReleaseRecord({ candidateSha, baseSha, candidateBranch, qu
   };
 }
 
-export function validateGeneratedReleaseRecord(record) {
-  validateRecordFacts(record, renderReleaseMarkdown(record), { label: "generated release record" });
+export function validateGeneratedReleaseRecord(record, validationInstant = new Date()) {
+  assertValidationInstant(validationInstant);
+  validateRecordFacts(record, renderReleaseMarkdown(record), { label: "generated release record" }, validationInstant);
 }
 
-export function assertReleaseRecordDestinationAvailable() {
+export function assertReleaseRecordDestinationAvailable(validationInstant = new Date()) {
+  assertValidationInstant(validationInstant);
   const jsonExists = existsSync(RELEASE_JSON_PATH);
   const markdownExists = existsSync(RELEASE_MARKDOWN_PATH);
   assert.equal(jsonExists, markdownExists, "Release-record JSON and Markdown must either both exist or both be absent.");
   if (!jsonExists) return;
 
-  const result = validateReleaseRecord();
+  const result = validateReleaseRecord(validationInstant);
   const candidateSha = result.record.candidate_sha;
   const archiveJsonPath = `${RELEASE_ARCHIVE_DIRECTORY}/v1-release-candidate-${candidateSha}.json`;
   const archiveMarkdownPath = `${RELEASE_ARCHIVE_DIRECTORY}/v1-release-candidate-${candidateSha}.md`;
@@ -347,9 +362,10 @@ export function assertReleaseRecordDestinationAvailable() {
   assert.equal(committedArchiveMarkdown, readFileSync(RELEASE_MARKDOWN_PATH, "utf8"), "Committed archived release-record Markdown must exactly match the current record before replacement.");
 }
 
-export function generateReleaseRecord(candidateArgument, baseArgument) {
+export function generateReleaseRecord(candidateArgument, baseArgument, validationInstant = new Date()) {
+  assertValidationInstant(validationInstant);
   assertAllowedWorkingTree();
-  assertReleaseRecordDestinationAvailable();
+  assertReleaseRecordDestinationAvailable(validationInstant);
   const candidateSha = fullCommit(candidateArgument || "HEAD");
   assert.equal(candidateSha, fullCommit("HEAD"), "Generate the release record only while HEAD is the candidate commit.");
   const baseSha = fullCommit(baseArgument || git(["merge-base", "main", candidateSha]));
@@ -357,9 +373,9 @@ export function generateReleaseRecord(candidateArgument, baseArgument) {
     candidateSha,
     baseSha,
     candidateBranch: git(["branch", "--show-current"]),
-    qualifiedAtUtc: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
+    qualifiedAtUtc: validationInstant.toISOString().replace(/\.\d{3}Z$/, "Z"),
   });
-  validateGeneratedReleaseRecord(record);
+  validateGeneratedReleaseRecord(record, validationInstant);
   writeFileSync(RELEASE_JSON_PATH, `${JSON.stringify(record, null, 2)}\n`);
   writeFileSync(RELEASE_MARKDOWN_PATH, renderReleaseMarkdown(record));
   console.log(`Generated and pre-commit validated release records for candidate ${candidateSha}. The previous record remains archived; commit only the canonical record pair, then run release:record validate.`);

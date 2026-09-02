@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "291c46a1ecceb1e3b80d495aeb5373eb91a828f6",
-  "repository_state_sha256": "c766249889ce541d21231728560ea1a96831ef46b5835edc22be9210deb229b6",
+  "repository_sha": "00c941c2e900c8820f4cd384cebb82ba8691d8f1",
+  "repository_state_sha256": "4a72a7ee213366327328a1ddd2355c896b318cafc3b61a95f573cfd75447c970",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -976,14 +976,19 @@
     {
       "acceptance_criteria": [
         "Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale.",
+        "Release qualification timestamps and interview-resource verification dates accept only their canonical formats, valid UTC calendar values, and values no later than their validation instant or date.",
         "Superseded pull-request runs may be cancelled, while push and scheduled CI or CodeQL runs retain exact-commit verification evidence."
       ],
       "code_paths": [
         ".github/workflows/ci.yml",
         ".github/workflows/codeql.yml",
         "scripts/product-blueprint-governance.mjs",
+        "scripts/release-record.mjs",
         "scripts/release-verification-manifest.mjs",
-        "scripts/test-v1-launch-readiness.mjs"
+        "scripts/test-interview-content-validator.mjs",
+        "scripts/test-release-record.mjs",
+        "scripts/test-v1-launch-readiness.mjs",
+        "scripts/validate-interview-content.mjs"
       ],
       "content_paths": [
         "docs/product-blueprint/registry/requirements.json",
@@ -1015,9 +1020,11 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run test:interview-content-validator",
         "npm run test:product-blueprint-governance",
         "npm run test:release-record",
         "npm run test:v1-launch-readiness",
+        "npm run validate:interview-content",
         "npm run validate:product-blueprint"
       ],
       "title": "Autonomous delivery and release governance",
