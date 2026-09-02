@@ -35,6 +35,7 @@ const SOURCE_CLASSES = new Set([
 ]);
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
+const MAX_NORMALIZED_STATE_BYTES = 512 * 1024 * 1024;
 
 function fail(message) {
   throw new Error(`Product blueprint governance: ${message}`);
@@ -226,12 +227,39 @@ function treeEntries(cwd, commit) {
 function objectContents(cwd, entries) {
   const objectIds = [...new Set(entries.map((entry) => entry.object))];
   if (objectIds.length === 0) return new Map();
+  const input = Buffer.from(`${objectIds.join("\n")}\n`);
+  let sizeOutput;
+  try {
+    sizeOutput = execFileSync("git", ["cat-file", "--batch-check=%(objectname) %(objecttype) %(objectsize)"], {
+      cwd,
+      encoding: "utf8",
+      input,
+      maxBuffer: Math.max(1024 * 1024, objectIds.length * 160),
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+  } catch (error) {
+    const detail = error?.stderr?.toString().trim();
+    fail(`${detail || "git cat-file --batch-check failed"}. Ensure the evaluated snapshot objects are available locally.`);
+  }
+  const objectSizes = new Map();
+  for (const line of sizeOutput.split("\n")) {
+    const match = line.match(/^([0-9a-f]+) ([^ ]+) (\d+)$/);
+    if (!match || !objectIds.includes(match[1])) fail(`git cat-file returned invalid size metadata: ${line}.`);
+    objectSizes.set(match[1], { type: match[2], size: Number(match[3]) });
+  }
+  if (objectSizes.size !== objectIds.length) fail("git cat-file did not report every evaluated snapshot object size.");
+  const expectedOutputBytes = objectIds.reduce((total, objectId) => {
+    const object = objectSizes.get(objectId);
+    return total + Buffer.byteLength(`${objectId} ${object.type} ${object.size}\n`) + object.size + 1;
+  }, 0);
+  if (!Number.isSafeInteger(expectedOutputBytes) || expectedOutputBytes > MAX_NORMALIZED_STATE_BYTES) fail(`normalized tracked state requires ${expectedOutputBytes} bytes, exceeding the ${MAX_NORMALIZED_STATE_BYTES}-byte safety limit.`);
   let output;
   try {
     output = execFileSync("git", ["cat-file", "--batch"], {
       cwd,
       encoding: "buffer",
-      input: Buffer.from(`${objectIds.join("\n")}\n`),
+      input,
+      maxBuffer: expectedOutputBytes + 1024,
       stdio: ["pipe", "pipe", "pipe"],
     });
   } catch (error) {

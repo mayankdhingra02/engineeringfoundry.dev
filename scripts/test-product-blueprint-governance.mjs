@@ -10,6 +10,7 @@ import {
   REQUIREMENTS_REGISTRY_PATH,
   SOURCES_REGISTRY_PATH,
   buildGovernanceArtifacts,
+  repositoryStateSha256,
   validateCommittedGovernance,
   writeGovernanceArtifacts,
 } from "./product-blueprint-governance.mjs";
@@ -133,6 +134,13 @@ for (const script of ["validate:product-blueprint", "report:product-blueprint-co
 
 const fixtureDirectories = [];
 try {
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    write(fixture.cwd, "large-tracked-fixture.bin", Buffer.alloc(1024 * 1024 + 257, 0x5a));
+    const largeSnapshot = commit(fixture.cwd, "test: add blob larger than default maxBuffer");
+    assert.match(repositoryStateSha256(fixture.cwd, largeSnapshot), /^[0-9a-f]{64}$/, "Normalized state hashing must support tracked blobs larger than Node's default maxBuffer.");
+  }
+
   {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     const beforeTimezone = buildGovernanceArtifacts(fixture.cwd, fixture.evaluated);
