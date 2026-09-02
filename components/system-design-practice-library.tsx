@@ -24,7 +24,7 @@ const filterGroups: Array<{ label: string; values: LibraryFilter[] }> = [
 ];
 const groupLabels: Record<SystemDesignRecommendationGroup, string> = { "focus-now": "Focus Now", "learn-next": "Learn Next", "skip-for-now": "Skip for Now" };
 
-export function SystemDesignPracticeLibrary({ progress = {}, attemptCounts = {}, signedIn = false, applicationId }: { progress?: Record<string, SystemDesignItemProgressRow>; attemptCounts?: Record<string, number>; signedIn?: boolean; applicationId?: string }) {
+export function SystemDesignPracticeLibrary({ progress = {}, attemptCounts = {}, signedIn = false, accountPlatformAvailable, applicationId }: { progress?: Record<string, SystemDesignItemProgressRow>; attemptCounts?: Record<string, number>; signedIn?: boolean; accountPlatformAvailable: boolean; applicationId?: string }) {
   const [filter, setFilter] = useState<LibraryFilter>("all");
   const [preferences, setPreferences] = useState<Preferences>({});
 
@@ -88,7 +88,9 @@ export function SystemDesignPracticeLibrary({ progress = {}, attemptCounts = {},
       {visible.length === 0 && <p className="sd-practice-empty">No published walkthrough matches this filter yet. Choose All to keep browsing.</p>}
     </section>
 
-    {!signedIn && <p className="sd-practice-personalization-note"><Link href="/signin?next=/system-design/practice">Sign in</Link> to keep private notes, confidence, bookmarks, and independent design attempts.</p>}
+    {!signedIn && (accountPlatformAvailable
+      ? <p className="sd-practice-personalization-note"><Link href="/signin?next=/system-design/practice">Sign in</Link> to keep private notes, confidence, bookmarks, and independent design attempts.</p>
+      : <p className="sd-practice-personalization-note"><strong>Public practice remains available.</strong> Account progress, private notes, bookmarks, and saved attempts are unavailable in this configuration.</p>)}
 
     <details className="sd-practice-upcoming"><summary>Also in the 60-problem catalog <span>{upcoming.length} upcoming</span></summary><div>{upcoming.map((item) => <span key={item.id}>{item.title}<small>{item.group}</small></span>)}</div></details>
   </div>;

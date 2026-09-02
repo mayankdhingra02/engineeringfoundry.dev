@@ -14,19 +14,21 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default function SystemDesignPlanPage() {
+  const accountPlatformAvailable = isAccountPlatformAvailable();
   return <div className="sd-doc-layout sd-plan-page-layout">
-    <SystemDesignSidebar curriculum={systemDesignCurriculum} />
+    <SystemDesignSidebar curriculum={systemDesignCurriculum} accountPlatformAvailable={accountPlatformAvailable} />
     <div className="sd-plan-page-column">
       <nav className="sd-breadcrumbs" aria-label="Breadcrumb"><Link href="/system-design/start-here/introduction"><ArrowLeft size={13} />System Design</Link><span>/ Study planner</span></nav>
       <header className="sd-plan-page-header">
         <h1>Build a focused System Design plan.</h1>
         <p>Choose your interview level, timeline, and available study time. The planner changes what to prioritize—not which lessons you can access.</p>
+        {!accountPlatformAvailable && <p><strong>Account saving is unavailable.</strong> You can still build a plan and save it in this browser when storage is available.</p>}
         <nav className="sd-plan-page-links" aria-label="System Design learning options">
           <Link className="button button-secondary" href="/system-design/start-here/introduction">Start learning<ArrowRight size={15} /></Link>
           <Link className="text-link" href="/system-design/problems">Browse practice problems<ArrowRight size={14} /></Link>
         </nav>
       </header>
-      <SystemDesignFocusPlanner accountPlatformAvailable={isAccountPlatformAvailable()} />
+      <SystemDesignFocusPlanner accountPlatformAvailable={accountPlatformAvailable} />
     </div>
   </div>;
 }

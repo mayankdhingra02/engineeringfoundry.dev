@@ -8,7 +8,9 @@ const date = (value: string) => new Intl.DateTimeFormat("en-US", { month: "short
 
 export async function SystemDesignProblemPracticePanel({ problemId, problemTitle, applicationId }: { problemId: string; problemTitle: string; applicationId?: string | null }) {
   const state = await getSystemDesignProblemAttempts(problemId);
-  if (!state.signedIn) return <aside className="sd-attempt-entry signed-out"><LockKeyhole size={19} /><div><h2>Build a private design attempt</h2><p>Public walkthroughs stay open. Sign in to save your own requirements, calculations, architecture decisions, and review notes.</p></div><Link className="button" href={`/signin?next=${encodeURIComponent(`/system-design/problems/${problemId}`)}`}>Sign in to practice</Link></aside>;
+  if (!state.signedIn) return state.accountPlatformAvailable
+    ? <aside className="sd-attempt-entry signed-out"><LockKeyhole size={19} /><div><h2>Build a private design attempt</h2><p>Public walkthroughs stay open. Sign in to save your own requirements, calculations, architecture decisions, and review notes.</p></div><Link className="button" href={`/signin?next=${encodeURIComponent(`/system-design/problems/${problemId}`)}`}>Sign in to practice</Link></aside>
+    : <aside className="sd-attempt-entry signed-out"><LockKeyhole size={19} aria-hidden="true" /><div><h2>Private design attempts are unavailable in this configuration</h2><p>Use the prompt and public walkthrough below for an unsaved rehearsal. Account notes, calculations, and review history are not stored.</p></div></aside>;
   const selectedApplication = state.applications.find((item) => item.id === applicationId);
   const create = createSystemDesignAttemptAction.bind(null, problemId);
   return <section className="sd-attempt-entry" aria-labelledby="design-attempts-heading">

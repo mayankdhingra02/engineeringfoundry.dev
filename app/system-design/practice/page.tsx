@@ -9,8 +9,7 @@ FINISH: Browser QA, detector, independent finish review, and documentation are r
 */
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Bookmark, FilePenLine, Filter, LockKeyhole } from "lucide-react";
-import { AccountUnavailable } from "@/components/account-unavailable";
+import { ArrowRight, BookOpen, Bookmark, FilePenLine, Filter, LockKeyhole } from "lucide-react";
 import { SystemDesignSidebar } from "@/components/system-design-sidebar";
 import { systemDesignCurriculum } from "@/data/system-design/curriculum";
 import { systemDesignTopicManifest } from "@/data/system-design/manifest";
@@ -26,10 +25,11 @@ export const dynamic = "force-dynamic";
 const when = (value: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
 
 export default async function SystemDesignPracticePage({ searchParams }: { searchParams: Promise<{ application?: string; q?: string; kind?: string; status?: string; bookmarked?: string }> }) {
-  if (!isAccountPlatformAvailable()) return <AccountUnavailable />;
+  const accountPlatformAvailable = isAccountPlatformAvailable();
+  if (!accountPlatformAvailable) return <div className="sd-doc-layout"><SystemDesignSidebar curriculum={systemDesignCurriculum} accountPlatformAvailable={accountPlatformAvailable} /><div className="sd-practice-home signed-out"><section><BookOpen size={24} aria-hidden="true" /><h1>Public System Design practice remains available</h1><p>Account-backed practice is unavailable in this configuration. Browse a problem for an unsaved rehearsal, or continue through the course without an account.</p><div><Link className="button" href="/system-design/problems">Browse public problems</Link><Link className="button button-secondary" href="/system-design/start-here/introduction">Start learning</Link></div></section></div></div>;
   const params = await searchParams;
   const state = await getSystemDesignWorkspaceState(params.application);
-  if (!state.signedIn) return <div className="sd-doc-layout"><SystemDesignSidebar curriculum={systemDesignCurriculum} /><div className="sd-practice-home signed-out"><section><LockKeyhole size={24} /><h1>Your System Design practice stays private</h1><p>Public lessons and walkthroughs remain available without an account. Sign in to keep concept notes, confidence, bookmarks, and independent design attempts.</p><div><Link className="button" href="/signin?next=/system-design/practice">Sign in</Link><Link className="button button-secondary" href="/system-design/problems">Browse public problems</Link></div></section></div></div>;
+  if (!state.signedIn) return <div className="sd-doc-layout"><SystemDesignSidebar curriculum={systemDesignCurriculum} accountPlatformAvailable={state.accountPlatformAvailable} /><div className="sd-practice-home signed-out"><section><LockKeyhole size={24} /><h1>Your System Design practice stays private</h1><p>Public lessons and walkthroughs remain available without an account. Sign in to keep concept notes, confidence, bookmarks, and independent design attempts.</p><div><Link className="button" href="/signin?next=/system-design/practice">Sign in</Link><Link className="button button-secondary" href="/system-design/problems">Browse public problems</Link></div></section></div></div>;
 
   const q = params.q?.trim().toLowerCase() ?? "";
   const catalog = [
@@ -56,7 +56,7 @@ export default async function SystemDesignPracticePage({ searchParams }: { searc
     return groups;
   }, new Map<string, { label: string; total: number; reviewed: number; comfortable: number }>()).values()];
 
-  return <div className="sd-doc-layout"><SystemDesignSidebar curriculum={systemDesignCurriculum} /><div className="sd-practice-home">
+  return <div className="sd-doc-layout"><SystemDesignSidebar curriculum={systemDesignCurriculum} accountPlatformAvailable={state.accountPlatformAvailable} /><div className="sd-practice-home">
     <header className="sd-practice-home-header"><div><h1>My System Design Practice</h1><p>Keep durable notes and separate rehearsals without changing the public curriculum.</p></div><Link className="button" href={`/system-design/problems${applicationSuffix}`}>Choose a design problem<ArrowRight size={15} /></Link></header>
     {state.application && <aside className="sd-practice-context"><strong>Preparing for {state.application.company_name}</strong><span>{state.application.role_title}</span><Link href="/system-design/practice">Clear context</Link></aside>}
     <section className="sd-practice-overview" aria-label="Saved System Design work">

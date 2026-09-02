@@ -18,7 +18,7 @@ const [route, planPage, introduction, planner, sidebar, practiceLibrary, nextCon
 assert.match(route, /lesson\.id === "introduction"[^\n]+<IntroductionLessonContent \/>/, "The introduction route must render the lesson directly.");
 assert.doesNotMatch(route, /curriculumIntroduction|SystemDesignFocusPlanner/, "The introduction route must not embed the planner.");
 assert.match(planPage, /path: "\/system-design\/plan"/, "The planner needs its own canonical metadata path.");
-assert.match(planPage, /<SystemDesignFocusPlanner accountPlatformAvailable=\{isAccountPlatformAvailable\(\)\} \/>/, "The dedicated planner route must render the existing planner with server-derived account availability.");
+assert.match(planPage, /const accountPlatformAvailable = isAccountPlatformAvailable\(\);[\s\S]*?<SystemDesignFocusPlanner accountPlatformAvailable=\{accountPlatformAvailable\} \/>/, "The dedicated planner route must render the existing planner with one server-derived account-availability value.");
 assert.doesNotMatch(planner, /curriculumIntroduction/, "The planner must not accept embedded lesson content.");
 assert.match(planner, /Previewing 5 of/, "The default planner must preview rather than dump the full curriculum.");
 assert.match(planner, /Browse all \{systemDesignTopics\.length\} topics/, "The full default curriculum must remain available on request.");

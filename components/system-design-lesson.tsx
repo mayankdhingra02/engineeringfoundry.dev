@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, CircleAlert, Clock3, Fac
 import type { SystemDesignCurriculumNode } from "@/data/system-design/curriculum";
 import { getSystemDesignLessonPager, getSystemDesignLessonTrail, systemDesignCurriculum } from "@/data/system-design/curriculum";
 import { siteConfig } from "@/config/site";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { ArticleTOC } from "./article-toc";
 import { SystemDesignSidebar } from "./system-design-sidebar";
 import { SystemDesignPrivateProgress } from "@/features/system-design/private-progress";
@@ -76,10 +77,11 @@ function BreadcrumbStructuredData({ lesson }: { lesson: SystemDesignCurriculumNo
 }
 
 export function SystemDesignLessonLayout({ lesson, children }: { lesson: SystemDesignCurriculumNode; children: React.ReactNode }) {
+  const accountPlatformAvailable = isAccountPlatformAvailable();
   return <>
     <BreadcrumbStructuredData lesson={lesson} />
     <div className="sd-doc-layout">
-      <SystemDesignSidebar curriculum={systemDesignCurriculum} />
+      <SystemDesignSidebar curriculum={systemDesignCurriculum} accountPlatformAvailable={accountPlatformAvailable} />
       <div className="sd-lesson-column" id="lesson-content">
         <LessonHeader lesson={lesson} />
         <ArticleTOC />
