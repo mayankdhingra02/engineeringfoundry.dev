@@ -137,12 +137,20 @@ async function cleanOwnedFixtures(account) {
   }
 }
 
+function cleanPublicExperienceFixtures() {
+  queryLocalDatabase(
+    "delete from public.interview_experiences where company_name = :'company_name' and summary like 'A bounded local qualification report%'",
+    { company_name: fixtureCompany },
+  );
+}
+
 const a = await ensureConfirmedUser("persistence-qualification-a@example.test");
 const b = await ensureConfirmedUser("persistence-qualification-b@example.test");
 const anonymous = client();
 
 await cleanOwnedFixtures(a);
 await cleanOwnedFixtures(b);
+cleanPublicExperienceFixtures();
 
 const fixture = {
   applicationId: null,
@@ -1468,6 +1476,7 @@ await check("User A can delete preparation preferences and progress", async () =
 
 await cleanOwnedFixtures(a);
 await cleanOwnedFixtures(b);
+cleanPublicExperienceFixtures();
 
 const failed = results.filter((result) => result.result === "FAIL");
 console.log(`SUMMARY ${results.length - failed.length}/${results.length} passed; ${failed.length} failed`);

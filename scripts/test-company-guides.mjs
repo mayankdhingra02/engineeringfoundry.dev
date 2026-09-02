@@ -4,6 +4,7 @@ import fs from "node:fs";
 const data = fs.readFileSync("data/company-guides/v1.ts", "utf8");
 const route = fs.readFileSync("app/companies/[slug]/page.tsx", "utf8");
 const ui = fs.readFileSync("features/company-guides/company-guide-v1.tsx", "utf8");
+const publicReports = fs.readFileSync("lib/supabase/public.ts", "utf8");
 const matureWorkspace = fs.readFileSync("features/company-guides/company-guide-workspace.tsx", "utf8");
 const indexPage = fs.readFileSync("app/companies/page.tsx", "utf8");
 const registry = fs.readFileSync("data/companies/companies.json", "utf8");
@@ -14,8 +15,10 @@ for (const slug of priority) {
 }
 for (const level of ["Entry", "Mid", "Senior", "Staff+"]) assert.ok(data.includes(`"${level}"`), `missing canonical level ${level}`);
 for (const id of ["dsa", "practical", "lld", "system-design", "ml-design", "behavioral"]) assert.match(data, new RegExp(`id: "${id}"`), `missing separated domain ${id}`);
-for (const marker of ["official", "candidate", "recommendation", "verifiedAt", "confidence", "applicability", "Processes vary by role, team, location, and time", "approved", "publication_consent"]) assert.match(`${data}\n${route}\n${ui}`, new RegExp(marker), `missing source, freshness, or experience boundary: ${marker}`);
-assert.match(route, /eq\("status", "approved"\)[\s\S]*eq\("publication_consent", true\)/, "company pages must query only approved, consented experiences");
+for (const marker of ["official", "candidate", "recommendation", "verifiedAt", "confidence", "applicability", "Processes vary by role, team, location, and time", "approved", "publication_consent"]) assert.match(`${data}\n${route}\n${ui}\n${publicReports}`, new RegExp(marker), `missing source, freshness, or experience boundary: ${marker}`);
+assert.match(publicReports, /eq\("status", "approved"\)[\s\S]*eq\("publication_consent", true\)/, "public reports must query only approved, consented experiences");
+assert.match(route, /dynamic = "force-dynamic"[\s\S]*listPublicInterviewExperiences\(\{ companyName: company\.name, limit: 6 \}\)/, "company pages must use the fresh sessionless company-scoped public report query");
+for (const marker of ["experienceAvailability", "temporarily unavailable", "cannot make a completeness claim", "/interview-experiences/${guide.slug}"]) assert.ok(ui.includes(marker), `company guide report handoff is missing ${marker}`);
 assert.match(route, /matureGuides:[\s\S]*amazon:[\s\S]*google:[\s\S]*meta:[\s\S]*walmart:/, "the company route must register all four mature guides for composition");
 assert.match(route, /matureGuide=\{matureGuide\}/, "the normalized route must pass the mature guide into the rendered P0.4 surface");
 assert.match(ui, /CompanyGuideWorkspace guide=\{matureGuide\} embedded/, "the normalized surface must actually render mature guide detail when supplied");
