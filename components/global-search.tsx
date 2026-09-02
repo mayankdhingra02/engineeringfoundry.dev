@@ -15,6 +15,20 @@ import {
 
 export const globalSearchOpenEvent = "engineering-foundry-open-search";
 
+type GlobalSearchOpenDetail = {
+  readonly invoker?: HTMLElement | null;
+  readonly fallbackFocusId?: string;
+};
+
+export function requestGlobalSearch(detail: GlobalSearchOpenDetail = {}) {
+  window.dispatchEvent(new CustomEvent<GlobalSearchOpenDetail>(globalSearchOpenEvent, { detail }));
+}
+
+function shortcutFallbackFocusId(invoker: HTMLElement | null) {
+  if (invoker?.closest("#mobile-menu")) return "mobile-navigation-trigger";
+  return invoker?.closest(".nav-dropdown")?.querySelector<HTMLButtonElement>("button[id]")?.id;
+}
+
 export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: string }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -23,12 +37,15 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const invokerRef = useRef<HTMLElement | null>(null);
+  const fallbackFocusIdRef = useRef<string | null>(null);
   const closeSearch = useCallback(() => {
     setOpen(false);
     setVisibleResultLimit(GLOBAL_SEARCH_INITIAL_RESULT_LIMIT);
     window.setTimeout(() => {
       const invoker = invokerRef.current;
+      const fallbackInvoker = fallbackFocusIdRef.current ? document.getElementById(fallbackFocusIdRef.current) : null;
       if (invoker?.isConnected) invoker.focus();
+      else if (fallbackInvoker?.isConnected) fallbackInvoker.focus();
       else triggerRef.current?.focus();
     }, 0);
   }, []);
@@ -41,13 +58,19 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
   const resultNoun = hasQuery ? "result" : "suggestion";
 
   useEffect(() => {
-    function openSearch() {
-      invokerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
+    function openSearch(event: Event) {
+      const detail = event instanceof CustomEvent ? event.detail as GlobalSearchOpenDetail | undefined : undefined;
+      invokerRef.current = detail?.invoker ?? (document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current);
+      fallbackFocusIdRef.current = detail?.fallbackFocusId ?? null;
       setVisibleResultLimit(GLOBAL_SEARCH_INITIAL_RESULT_LIMIT);
       setOpen(true);
     }
     function onKey(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openSearch(); }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        const invoker = document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
+        requestGlobalSearch({ invoker, fallbackFocusId: shortcutFallbackFocusId(invoker) });
+      }
       if (open && event.key === "Escape") closeSearch();
     }
     window.addEventListener("keydown", onKey);
@@ -80,7 +103,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
 
   return (
     <>
-      <button ref={triggerRef} className={triggerClass} onClick={(event) => { invokerRef.current = event.currentTarget; setVisibleResultLimit(GLOBAL_SEARCH_INITIAL_RESULT_LIMIT); setOpen(true); }} aria-label="Search Engineering Foundry">
+      <button ref={triggerRef} className={triggerClass} onClick={(event) => requestGlobalSearch({ invoker: event.currentTarget })} aria-label="Search Engineering Foundry">
         <Search size={17} /><span className="search-label">Search</span>
       </button>
       {open && (
