@@ -7,6 +7,8 @@ import {
   COVERAGE_PATH,
   REQUIRED_FAMILIES,
   REQUIRED_GAP_IDS,
+  REQUIRED_RESEARCH_ARTIFACTS,
+  RESEARCH_ARTIFACTS_REGISTRY_PATH,
   REQUIREMENTS_REGISTRY_PATH,
   SOURCES_REGISTRY_PATH,
   buildGovernanceArtifacts,
@@ -40,6 +42,7 @@ function requirement(id, gapInventoryIds = []) {
     publication_status: "unpublished",
     routes: [],
     source_ledger_ids: [],
+    research_artifact_ids: [],
     prerequisite_ids: [],
     code_paths: [],
     content_paths: [],
@@ -75,6 +78,7 @@ function requirementsRegistry() {
     priority: "excluded",
     status: "excluded",
   });
+  for (const artifact of REQUIRED_RESEARCH_ARTIFACTS) requirements.find((item) => item.id === artifact.familyId).research_artifact_ids.push(artifact.id);
   return {
     schema_version: 1,
     blueprint_version: "1.0",
@@ -84,13 +88,28 @@ function requirementsRegistry() {
       required_family_ids: REQUIRED_FAMILIES,
       required_gap_ids: REQUIRED_GAP_IDS,
     },
-    unmodeled_atomic_requirements: [],
+    unmodeled_atomic_requirements: [
+      { id: "EF-GLOBAL-ATOMIC-FIXTURE", section: "global", reason: "Required atomic fixture remains unmodeled.", priority: "required" },
+      { id: "EF-SD-ATOMIC-FIXTURE", section: "system-design", reason: "P1 atomic fixture remains unmodeled.", priority: "p1" },
+    ],
     requirements,
   };
 }
 
 function sourcesRegistry() {
   return { schema_version: 1, reviewed_at: "2026-09-02", sources: [] };
+}
+
+function researchArtifactsRegistry() {
+  return {
+    schema_version: 1,
+    reviewed_at: "2026-09-02",
+    artifacts: REQUIRED_RESEARCH_ARTIFACTS.map(({ id, title, familyId }) => ({
+      id, title, family_id: familyId, requirement_ids: [familyId],
+      repository_path: null, external_record: null, version_or_hash: null, availability: "missing",
+      approval_status: "unverified", verified_at: null, notes: "Synthetic unresolved input.",
+    })),
+  };
 }
 
 function gapInventory() {
@@ -109,6 +128,7 @@ function createFixture() {
   write(cwd, "fixture.mjs", "// fixture\n");
   write(cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(requirementsRegistry(), null, 2)}\n`);
   write(cwd, SOURCES_REGISTRY_PATH, `${JSON.stringify(sourcesRegistry(), null, 2)}\n`);
+  write(cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(researchArtifactsRegistry(), null, 2)}\n`);
   write(cwd, "docs/public-v1-content-gap-inventory.md", gapInventory());
   const evaluated = commit(cwd, "test: add evaluated governance inputs");
   return { cwd, evaluated };
@@ -148,13 +168,18 @@ try {
     assert.ok(coverage.endsWith("\n") && !coverage.endsWith("\n\n"), "Generated coverage must end with exactly one newline.");
     for (const heading of [
       "### Research status", "### Publication status", "## Requirements by family", "## Requirements by section",
-      "## Stale-review items", "## External owner gates and blocked items", "## Deferred and excluded items", "## Source completeness",
+      "## Required blockers", "## P1 blockers and dispositions", "## Stale-review items", "## External owner gates and blocked items",
+      "## Deferred and excluded items", "## Source record states", "## Research artifact inputs", "## Unresolved research artifact inputs",
     ]) assert.ok(coverage.includes(heading), `Coverage report is missing ${heading}.`);
     assert.match(coverage, /\| EF-COMP-GUIDE-COVERAGE \| ef-comp \| needs-current-verification \| 0 \|/, "Coverage must explicitly list stale-review requirements.");
-    assert.match(coverage, /\| EF-MOCK-PEER-FACILITATION \| external-owner-gate \| blocked \|/, "Coverage must separate external/blocked requirements.");
-    assert.match(coverage, /\| EF-AIB-KIDS \| excluded \| excluded \|/, "Coverage must separate deferred/excluded requirements.");
+    assert.match(coverage, /\| EF-MOCK-PEER-FACILITATION \| modeled \| external-owner-gate \| blocked \|/, "Coverage must separate external/blocked requirements.");
+    assert.match(coverage, /\| EF-AIB-KIDS \| modeled \| excluded \| excluded \|/, "Coverage must separate deferred/excluded requirements.");
     assert.match(coverage, /\| missing \| \d+ \|/, "Coverage must count requirements with missing source support.");
+    assert.match(coverage, /\| EF-GLOBAL-ATOMIC-FIXTURE \| unmodeled \| unmodeled \| Required atomic fixture remains unmodeled\. \|/, "Required blockers must include required unmodeled records without inventing a modeled status.");
+    assert.match(coverage, /\| EF-SD-ATOMIC-FIXTURE \| unmodeled \| unmodeled \| P1 atomic fixture remains unmodeled\. \|/, "P1 dispositions must include P1 unmodeled records.");
+    assert.match(coverage, /\| RA-SD-CURRICULUM-TOPIC-MAP \| missing \| unverified \|/, "Coverage must explicitly list unresolved research artifacts.");
     assert.ok(!/readiness percentage|overall completion percentage/i.test(coverage), "Coverage must not emit an aggregate readiness percentage.");
+    assert.ok(!coverage.includes("source-complete"), "Coverage must not overclaim source completeness.");
     const previousTimezone = process.env.TZ;
     process.env.TZ = "Pacific/Auckland";
     const afterTimezone = buildGovernanceArtifacts(fixture.cwd, fixture.evaluated);
@@ -188,6 +213,17 @@ try {
 
   {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    commitGeneratedSnapshot(fixture.cwd, fixture.evaluated);
+    write(fixture.cwd, "second-refresh-input.txt", "ordinary input change\n");
+    const secondEvaluated = commit(fixture.cwd, "test: add second evaluated input");
+    const secondMetadata = commitGeneratedSnapshot(fixture.cwd, secondEvaluated);
+    const result = validateCommittedGovernance(fixture.cwd);
+    assert.equal(result.repositorySha, secondEvaluated, "A refreshed snapshot must evaluate the second ordinary commit.");
+    assert.equal(result.metadataCommit, secondMetadata, "A refreshed snapshot must select the second output-only metadata commit when prior outputs exist.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     commitGeneratedSnapshot(fixture.cwd, fixture.evaluated, { mixed: true });
     assert.throws(() => validateCommittedGovernance(fixture.cwd), /coverage is stale|output-only metadata commit/, "A metadata commit mixed with ordinary changes must fail.");
   }
@@ -200,6 +236,101 @@ try {
     write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
     const cyclic = commit(fixture.cwd, "test: add prerequisite cycle");
     assert.throws(() => buildGovernanceArtifacts(fixture.cwd, cyclic), /prerequisite cycle detected/, "Prerequisite cycles must fail production validation.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    registry.requirements = registry.requirements.filter((item) => item.id !== "EF-SD");
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const missingRoot = commit(fixture.cwd, "test: remove exact family root");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, missingRoot), /missing exact required family root EF-SD/, "A prefixed gap record must not substitute for its exact family root.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    registry.unmodeled_atomic_requirements[0].id = "EF-GLOBAL";
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const collision = commit(fixture.cwd, "test: collide modeled and unmodeled IDs");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, collision), /collides with a modeled requirement ID/, "Unmodeled IDs must not collide with modeled requirements.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    delete registry.unmodeled_atomic_requirements[0].priority;
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const incompleteUnmodeled = commit(fixture.cwd, "test: omit unmodeled priority");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, incompleteUnmodeled), /\.priority is required/, "Unmodeled records must use the exact required schema.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    registry.requirements.find((item) => item.id === "EF-GLOBAL").known_gaps = [String.raw`windows\path | cell
+| injected |`];
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const adversarial = commit(fixture.cwd, "test: add adversarial markdown cell");
+    const coverage = buildGovernanceArtifacts(fixture.cwd, adversarial).files.get(COVERAGE_PATH);
+    assert.ok(coverage.includes("windows\\\\path \\| cell \\| injected \\|"), "Markdown cells must escape backslashes before pipes and flatten newlines.");
+    assert.ok(!coverage.includes("\n| injected |"), "Adversarial content must not inject a Markdown table row.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
+    registry.requirements.find((item) => item.id === "EF-SUP").routes = ["/catalog/[item]", "/dsa/languages/[slug]"];
+    write(fixture.cwd, "app/catalog/[slug]/page.tsx", "export default function Page() { return null; }\n");
+    write(fixture.cwd, "app/dsa/[...segments]/page.tsx", "export default function Page() { return null; }\n");
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const validRoutes = commit(fixture.cwd, "test: add dynamic and catch-all routes");
+    assert.doesNotThrow(() => buildGovernanceArtifacts(fixture.cwd, validRoutes), "Dynamic and catch-all App Router pages must cover compatible declared routes.");
+
+    registry.requirements.find((item) => item.id === "EF-SUP").routes = ["/does-not-exist"];
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const nonexistentRoute = commit(fixture.cwd, "test: add nonexistent route");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, nonexistentRoute), /nonexistent evaluated App Router route/, "Nonexistent routes must fail snapshot validation.");
+
+    registry.requirements.find((item) => item.id === "EF-SUP").routes = ["/bad//route"];
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const malformedRoute = commit(fixture.cwd, "test: add malformed route");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, malformedRoute), /malformed route/, "Malformed routes must fail snapshot validation.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const artifacts = researchArtifactsRegistry();
+    artifacts.artifacts.shift();
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const missingBootstrapArtifact = commit(fixture.cwd, "test: remove bootstrap research artifact");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, missingBootstrapArtifact), /exactly the 30 Section 25\.1 bootstrap artifact IDs/, "Deleting a required Section 25.1 artifact must fail validation.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const artifacts = researchArtifactsRegistry();
+    artifacts.artifacts[0].title = "Renamed bootstrap artifact";
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const renamedBootstrapArtifact = commit(fixture.cwd, "test: rename bootstrap research artifact");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, renamedBootstrapArtifact), /title must exactly match the Section 25\.1 bootstrap title/, "Renaming a required Section 25.1 artifact must fail validation.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const artifacts = researchArtifactsRegistry();
+    Object.assign(artifacts.artifacts[0], {
+      repository_path: "fixture.mjs", version_or_hash: "fixture-v1", availability: "repository-present",
+      approval_status: "approved", verified_at: "2026-09-02",
+    });
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const repositoryArtifact = commit(fixture.cwd, "test: add repository-present research artifact");
+    assert.doesNotThrow(() => buildGovernanceArtifacts(fixture.cwd, repositoryArtifact), "A repository-present artifact with complete provenance metadata must validate.");
+
+    artifacts.artifacts[0].repository_path = "missing-research-artifact.md";
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const missingArtifactPath = commit(fixture.cwd, "test: add missing research artifact path");
+    assert.throws(() => buildGovernanceArtifacts(fixture.cwd, missingArtifactPath), /missing evaluated-snapshot repository_path/, "Repository-present artifact paths must exist in the evaluated snapshot.");
   }
 
   {
@@ -222,7 +353,7 @@ try {
     const ledger = JSON.parse(generated.files.get("docs/product-blueprint/source-ledger.json"));
     assert.deepEqual(ledger.sources[0].claims_supported, [], "Discovery-only source seeds must retain an empty claims_supported array.");
     assert.equal(generated.model.requirements.find((item) => item.id === "EF-COMP-GUIDE-COVERAGE").research_status, "needs-current-verification", "A discovery-only seed must not promote research status.");
-    assert.match(generated.files.get(COVERAGE_PATH), /\| EF-COMP-GUIDE-COVERAGE \| needs-current-verification \| unresolved \| SRC-COMPANY-DISCOVERY \|/, "A discovery-only seed must be reported as unresolved rather than source-complete.");
+    assert.match(generated.files.get(COVERAGE_PATH), /\| EF-COMP-GUIDE-COVERAGE \| needs-current-verification \| discovery-recorded \| SRC-COMPANY-DISCOVERY \|/, "A discovery-only seed must be reported as discovery-recorded without a completeness claim.");
   }
 
   {

@@ -13,7 +13,7 @@ This is the owner-facing release checklist. It separates what the repository has
 
 Repository qualification can establish `REPOSITORY RC READY`; it cannot establish a public-production launch, production DNS/TLS, backups, legal sufficiency, provider delivery, or a live analytics configuration.
 
-Repository and route readiness also does not establish completion of the master research-backed curriculum. The authoritative blueprint, machine-readable bootstrap registry, and generated coverage report live under `docs/product-blueprint/`; `docs/public-v1-content-gap-inventory.md` remains the explicit list of research, source-import, product-decision, and editorial dependencies. A rendered route or passing route check must not promote an incomplete curriculum requirement to complete.
+Repository and route readiness also does not establish completion of the master research-backed curriculum. The authoritative blueprint, machine-readable bootstrap registries, Section 25.1 research-artifact inventory, and generated coverage report live under `docs/product-blueprint/`; `docs/public-v1-content-gap-inventory.md` remains the explicit list of research, source-import, product-decision, and editorial dependencies. Missing research originals, hashes, approvals, and verification dates remain inputs even when the master blueprint names their synthesis. A rendered route or passing route check must not promote an incomplete curriculum requirement to complete.
 
 ## P0 checkpoint status
 

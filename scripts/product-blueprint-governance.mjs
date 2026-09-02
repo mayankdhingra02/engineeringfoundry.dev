@@ -5,6 +5,7 @@ import path from "node:path";
 
 export const REQUIREMENTS_REGISTRY_PATH = "docs/product-blueprint/registry/requirements.json";
 export const SOURCES_REGISTRY_PATH = "docs/product-blueprint/registry/sources.json";
+export const RESEARCH_ARTIFACTS_REGISTRY_PATH = "docs/product-blueprint/registry/research-artifacts.json";
 export const GAP_INVENTORY_PATH = "docs/public-v1-content-gap-inventory.md";
 export const MANIFEST_PATH = "docs/product-blueprint/content-manifest.json";
 export const LEDGER_PATH = "docs/product-blueprint/source-ledger.json";
@@ -24,6 +25,39 @@ export const REQUIRED_GAP_IDS = [
   "EF-GLOBAL-CORE-CONCEPTS-SCOPE", "EF-SUP-REFERRAL-POLICY",
 ];
 
+export const REQUIRED_RESEARCH_ARTIFACTS = Object.freeze([
+  ["RA-LAUNCH-V1-FINISH-PLAN", "Engineering Foundry v1 Launch Finish Plan", "EF-OPS"],
+  ["RA-DSA-COMPETITIVE-RESEARCH", "Engineering Foundry DSA for Interviews: Competitive Research and Product Design", "EF-DSA"],
+  ["RA-DSA-ROLE-ROADMAPS", "Engineering Foundry DSA Roadmaps for SDE I, SDE II, and SDE III+", "EF-DSA"],
+  ["RA-DSA-PYTHON-JAVA-LANGUAGES", "Engineering Foundry Python and Java DSA Language Pages", "EF-DSA"],
+  ["RA-DSA-JAVASCRIPT-REQUEST", "JavaScript DSA research phase requested for Engineering Foundry", "EF-DSA"],
+  ["RA-SD-CURRICULUM-TOPIC-MAP", "Engineering Foundry System Design Curriculum: Deep Research and Recommended Topic Map", "EF-SD"],
+  ["RA-SD-CONTENT-RESEARCH-BLUEPRINT", "Engineering Foundry System Design Content Research Blueprint", "EF-SD"],
+  ["RA-ML-CORE-CONCEPTS", "Engineering Foundry ML Design Core Concepts Curriculum", "EF-ML"],
+  ["RA-ML-RECOMMENDATION-RANKING", "Engineering Foundry ML Design: Recommendation and Ranking Systems", "EF-ML"],
+  ["RA-ML-SEARCH-RETRIEVAL-ADVERTISING", "Engineering Foundry ML Design Research: Search, Retrieval, Query Understanding, Autocomplete, and Advertising", "EF-ML"],
+  ["RA-ML-TRUST-PREDICTION-DECISION", "Engineering Foundry ML Design: Trust, Prediction, Forecasting, and Decision Systems", "EF-ML"],
+  ["RA-ML-INFRA-MODERN-AI", "Engineering Foundry ML Design: ML Infrastructure and Modern AI System Design", "EF-ML"],
+  ["RA-ML-FINAL-SYNTHESIS", "Engineering Foundry ML Design: Final Synthesis, Quality Audit, and Implementation-Ready Content Specification", "EF-ML"],
+  ["RA-BEH-CURRICULUM-ARCHITECTURE", "Engineering Foundry Behavioral Interview Curriculum and Learning Architecture", "EF-BEH"],
+  ["RA-BEH-STORY-BANK-EXAMPLES", "Engineering Foundry Behavioral Interview Story Bank, Answer Construction, and Annotated Examples", "EF-BEH"],
+  ["RA-BEH-RUBRICS-SENIORITY", "Engineering Foundry Behavioral Evaluation Rubrics and Seniority Calibration", "EF-BEH"],
+  ["RA-BEH-COMPANY-GUIDES", "Engineering Foundry Behavioral Interview Company Guides: Evidence-Based Specification", "EF-BEH"],
+  ["RA-BEH-PRACTICE-MOCK-FEEDBACK", "Engineering Foundry Behavioral Practice, Follow-Ups, Mock Interviews, and Feedback UX", "EF-BEH"],
+  ["RA-BEH-FINAL-SYNTHESIS", "Engineering Foundry Behavioral Interview: Final Synthesis, Quality Audit, and Implementation Handoff", "EF-BEH"],
+  ["RA-PLAY-SCOPE-BOUNDARIES", "Engineering Foundry Interview Playbook: Final Scope, Information Architecture, and Product Boundaries", "EF-PLAY"],
+  ["RA-PLAY-DIAGNOSTIC-PLAN", "Engineering Foundry Interview Playbook: Preparation Diagnostic, Readiness Model, and Adaptive Plan Generator", "EF-PLAY"],
+  ["RA-PLAY-ROUND-EXECUTION", "Engineering Foundry Interview Playbook: Round-by-Round Interview Execution Playbooks", "EF-PLAY"],
+  ["RA-PLAY-MOCK-SIMULATIONS", "Engineering Foundry Interview Playbook: Mock Interviews, Full-Loop Simulations, and Readiness Evidence", "EF-PLAY"],
+  ["RA-PLAY-FINAL-WEEK-DEBRIEF", "Engineering Foundry Interview Playbook: Final Week, Interview Day, Recovery, and Post-Interview Debrief", "EF-PLAY"],
+  ["RA-PLAY-FINAL-SYNTHESIS", "Engineering Foundry Interview Playbook — Final Synthesis and Quality Audit", "EF-PLAY"],
+  ["RA-COMP-PRIORITY-COMPANIES", "Software-Engineering Interview Deep Research: priority companies", "EF-COMP"],
+  ["RA-LOW-LEVEL-SYSTEMS", "Low-Level Software Interview Preparation: Questions, Problem Sets, Resources, and Study Plans", "EF-LLD"],
+  ["RA-SAL-SECTION-BLUEPRINT", "Salary Negotiation: Research-Backed Website Section Blueprint", "EF-SAL"],
+  ["RA-AIB-MVP-RECOMMENDATION", "AI for Noobs at Engineering Foundry: Research and MVP Recommendation", "EF-AIB"],
+  ["RA-AIB-LEARNING-STRATEGY", "AI for Noobs: Research-Backed Learning Strategy for Engineering Foundry", "EF-AIB"],
+].map(([id, title, familyId]) => Object.freeze({ id, title, familyId })));
+
 const PRIORITIES = new Set(["required", "p1", "p2", "requires-founder-approval", "requires-new-research", "external-owner-gate", "excluded"]);
 const STATUSES = new Set(["not-started", "placeholder", "partial", "implemented-unverified", "implemented", "blocked", "deferred", "excluded"]);
 const RESEARCH_STATUSES = new Set(["approved", "approved-needs-source-import", "needs-current-verification", "needs-research", "not-applicable"]);
@@ -33,6 +67,8 @@ const SOURCE_CLASSES = new Set([
   "official company hiring/candidate", "institutional/career center", "candidate-reported",
   "respected secondary synthesis", "pedagogy/pain-point source", "Engineering Foundry editorial inference",
 ]);
+const ARTIFACT_AVAILABILITIES = new Set(["missing", "repository-present", "external-recorded"]);
+const ARTIFACT_APPROVAL_STATUSES = new Set(["unverified", "approved-needs-source-import", "needs-current-verification", "requires-founder-approval", "approved", "excluded"]);
 const SHA_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/;
 const MAX_NORMALIZED_STATE_BYTES = 512 * 1024 * 1024;
@@ -126,13 +162,14 @@ function normalizeScope(scope) {
 function normalizeUnmodeled(items) {
   if (!Array.isArray(items)) fail("unmodeled_atomic_requirements must be an array.");
   return items.map((item, index) => {
-    if (typeof item === "string") {
-      assertString(item, `unmodeled_atomic_requirements[${index}]`);
-      return { id: item, reason: "Not yet modeled during governance bootstrap." };
+    const label = `unmodeled_atomic_requirements[${index}]`;
+    assertObject(item, label);
+    assertOnlyKeys(item, new Set(["id", "section", "reason", "priority"]), label);
+    for (const field of ["id", "section", "reason", "priority"]) {
+      if (!Object.hasOwn(item, field)) fail(`${label}.${field} is required.`);
+      assertString(item[field], `${label}.${field}`);
     }
-    assertObject(item, `unmodeled_atomic_requirements[${index}]`);
-    assertString(item.id, `unmodeled_atomic_requirements[${index}].id`);
-    assertString(item.reason, `unmodeled_atomic_requirements[${index}].reason`);
+    if (!PRIORITIES.has(item.priority)) fail(`${item.id} has unsupported unmodeled priority ${item.priority}.`);
     if (!familyFor(item.id)) fail(`unmodeled atomic requirement ${item.id} does not belong to a registered EF family.`);
     return Object.fromEntries(Object.entries(item).sort(([left], [right]) => compareText(left, right)));
   }).sort((left, right) => compareText(left.id, right.id));
@@ -145,7 +182,7 @@ function validateRequirementShape(requirement, index) {
     "id", "section", "kind", "title", "priority", "status", "research_status", "publication_status",
     "routes", "source_ledger_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids",
     "test_commands", "acceptance_criteria", "known_gaps", "owner", "last_verified_at", "notes",
-    "gap_inventory_ids",
+    "gap_inventory_ids", "research_artifact_ids",
   ]);
   assertOnlyKeys(requirement, allowed, label);
   for (const field of ["id", "section", "kind", "title"]) assertString(requirement[field], `${label}.${field}`);
@@ -159,6 +196,8 @@ function validateRequirementShape(requirement, index) {
   }
   if (requirement.gap_inventory_ids === undefined) requirement.gap_inventory_ids = [];
   assertStringArray(requirement.gap_inventory_ids, `${requirement.id}.gap_inventory_ids`);
+  if (requirement.research_artifact_ids === undefined) fail(`${requirement.id}.research_artifact_ids is required.`);
+  assertStringArray(requirement.research_artifact_ids, `${requirement.id}.research_artifact_ids`);
   for (const route of requirement.routes) if (!route.startsWith("/") || /[?#\s]/.test(route)) fail(`${requirement.id} has invalid public route ${route}.`);
   assertString(requirement.owner, `${requirement.id}.owner`, { nullable: true });
   assertIsoDate(requirement.last_verified_at, `${requirement.id}.last_verified_at`, { nullable: true });
@@ -186,6 +225,24 @@ function validateSourceShape(source, index) {
   assertStringArray(source.applies_to, `${source.id}.applies_to`);
   assertStringArray(source.claims_supported, `${source.id}.claims_supported`);
   assertString(source.notes, `${source.id}.notes`, { nullable: true });
+}
+
+function validateResearchArtifactShape(artifact, index) {
+  const label = `artifacts[${index}]`;
+  assertObject(artifact, label);
+  const fields = ["id", "title", "family_id", "requirement_ids", "repository_path", "external_record", "version_or_hash", "availability", "approval_status", "verified_at", "notes"];
+  assertOnlyKeys(artifact, new Set(fields), label);
+  for (const field of fields) if (!Object.hasOwn(artifact, field)) fail(`${label}.${field} is required.`);
+  for (const field of ["id", "title", "family_id", "availability", "approval_status"]) assertString(artifact[field], `${label}.${field}`);
+  assertStringArray(artifact.requirement_ids, `${artifact.id}.requirement_ids`);
+  if (artifact.requirement_ids.length === 0) fail(`${artifact.id}.requirement_ids must not be empty.`);
+  for (const field of ["repository_path", "external_record", "version_or_hash", "notes"]) assertString(artifact[field], `${artifact.id}.${field}`, { nullable: true });
+  assertIsoDate(artifact.verified_at, `${artifact.id}.verified_at`, { nullable: true });
+  if (!ARTIFACT_AVAILABILITIES.has(artifact.availability)) fail(`${artifact.id} has unsupported availability ${artifact.availability}.`);
+  if (!ARTIFACT_APPROVAL_STATUSES.has(artifact.approval_status)) fail(`${artifact.id} has unsupported approval_status ${artifact.approval_status}.`);
+  if (artifact.availability === "repository-present" && (!artifact.repository_path || !artifact.version_or_hash || !artifact.verified_at)) fail(`${artifact.id} with repository-present availability requires repository_path, version_or_hash, and verified_at.`);
+  if (artifact.availability === "external-recorded" && (!artifact.external_record || !artifact.version_or_hash || !artifact.verified_at)) fail(`${artifact.id} with external-recorded availability requires external_record, version_or_hash, and verified_at.`);
+  if (artifact.availability === "missing" && [artifact.repository_path, artifact.external_record, artifact.version_or_hash, artifact.verified_at].some((value) => value !== null)) fail(`${artifact.id} with missing availability must keep repository_path, external_record, version_or_hash, and verified_at null.`);
 }
 
 function parseMarkdownRow(line) {
@@ -303,8 +360,66 @@ function pathExists(entries, candidate) {
   return entries.some((entry) => entry.path === normalized || entry.path.startsWith(`${normalized}/`));
 }
 
+function parseRoute(route, label) {
+  assertString(route, label);
+  if (!route.startsWith("/") || (route.length > 1 && route.endsWith("/")) || route.includes("//") || /[?#\\\s]/.test(route)) fail(`${label} has malformed route ${route}.`);
+  if (route === "/") return [];
+  const segments = route.slice(1).split("/").map((segment, index, all) => {
+    let match = segment.match(/^\[\[\.\.\.([A-Za-z][A-Za-z0-9_]*)\]\]$/);
+    if (match) {
+      if (index !== all.length - 1) fail(`${label} has a non-terminal optional catch-all in ${route}.`);
+      return { kind: "optional-catchall", value: match[1] };
+    }
+    match = segment.match(/^\[\.\.\.([A-Za-z][A-Za-z0-9_]*)\]$/);
+    if (match) {
+      if (index !== all.length - 1) fail(`${label} has a non-terminal catch-all in ${route}.`);
+      return { kind: "catchall", value: match[1] };
+    }
+    match = segment.match(/^\[([A-Za-z][A-Za-z0-9_]*)\]$/);
+    if (match) return { kind: "dynamic", value: match[1] };
+    if (!/^[A-Za-z0-9._~-]+$/.test(segment)) fail(`${label} has malformed route segment ${segment}.`);
+    return { kind: "static", value: segment };
+  });
+  const parameterNames = segments.filter((segment) => segment.kind !== "static").map((segment) => segment.value);
+  if (new Set(parameterNames).size !== parameterNames.length) fail(`${label} repeats a dynamic parameter in ${route}.`);
+  return segments;
+}
+
+function appRoutePatterns(entries) {
+  const patterns = [];
+  for (const entry of entries) {
+    const match = entry.path.match(/^app\/(.*\/)?page\.(?:js|jsx|ts|tsx)$/);
+    if (!match) continue;
+    const rawSegments = (match[1] ?? "").split("/").filter(Boolean);
+    const routeSegments = [];
+    for (const rawSegment of rawSegments) {
+      if (rawSegment.startsWith("@") || /^\([^)]*\)$/.test(rawSegment)) continue;
+      const segment = rawSegment.replace(/^(?:\(\.{1,3}\))+/, "");
+      if (segment) routeSegments.push(segment);
+    }
+    const route = routeSegments.length ? `/${routeSegments.join("/")}` : "/";
+    patterns.push({ route, segments: parseRoute(route, `evaluated App Router page ${entry.path}`) });
+  }
+  return patterns.sort((left, right) => compareText(left.route, right.route));
+}
+
+function minimumSegments(segments) {
+  return segments.reduce((count, segment) => count + (segment.kind === "optional-catchall" ? 0 : 1), 0);
+}
+
+function appRouteCovers(appSegments, declaredSegments, appIndex = 0, declaredIndex = 0) {
+  const appSegment = appSegments[appIndex];
+  const declaredSegment = declaredSegments[declaredIndex];
+  if (!appSegment) return !declaredSegment;
+  if (appSegment.kind === "optional-catchall") return true;
+  if (appSegment.kind === "catchall") return minimumSegments(declaredSegments.slice(declaredIndex)) >= 1;
+  if (!declaredSegment || declaredSegment.kind === "catchall" || declaredSegment.kind === "optional-catchall") return false;
+  if (appSegment.kind === "static" && (declaredSegment.kind !== "static" || appSegment.value !== declaredSegment.value)) return false;
+  return appRouteCovers(appSegments, declaredSegments, appIndex + 1, declaredIndex + 1);
+}
+
 function normalizedRequirement(requirement) {
-  const arrayFields = new Set(["routes", "source_ledger_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids", "test_commands", "gap_inventory_ids"]);
+  const arrayFields = new Set(["routes", "source_ledger_ids", "research_artifact_ids", "prerequisite_ids", "code_paths", "content_paths", "visual_ids", "test_commands", "gap_inventory_ids"]);
   return Object.fromEntries(Object.entries(requirement).map(([key, value]) => [key, arrayFields.has(key) ? stableStrings(value) : value]));
 }
 
@@ -313,42 +428,74 @@ function normalizedSource(source) {
   return Object.fromEntries(Object.entries(source).map(([key, value]) => [key, arrayFields.has(key) ? stableStrings(value) : value]));
 }
 
+function normalizedArtifact(artifact) {
+  return { ...artifact, requirement_ids: stableStrings(artifact.requirement_ids) };
+}
+
 export function loadAndValidateModel(cwd, repositorySha) {
   const requirementsRoot = parseJson(snapshotFile(cwd, repositorySha, REQUIREMENTS_REGISTRY_PATH), REQUIREMENTS_REGISTRY_PATH);
   const sourcesRoot = parseJson(snapshotFile(cwd, repositorySha, SOURCES_REGISTRY_PATH), SOURCES_REGISTRY_PATH);
+  const artifactsRoot = parseJson(snapshotFile(cwd, repositorySha, RESEARCH_ARTIFACTS_REGISTRY_PATH), RESEARCH_ARTIFACTS_REGISTRY_PATH);
   assertObject(requirementsRoot, "requirements registry");
   assertObject(sourcesRoot, "sources registry");
+  assertObject(artifactsRoot, "research artifacts registry");
   assertOnlyKeys(requirementsRoot, new Set(["schema_version", "blueprint_version", "reviewed_at", "scope", "unmodeled_atomic_requirements", "requirements"]), "requirements registry");
   assertOnlyKeys(sourcesRoot, new Set(["schema_version", "reviewed_at", "sources"]), "sources registry");
-  if (requirementsRoot.schema_version !== 1 || sourcesRoot.schema_version !== 1) fail("both registries must use schema_version 1.");
+  assertOnlyKeys(artifactsRoot, new Set(["schema_version", "reviewed_at", "artifacts"]), "research artifacts registry");
+  if (requirementsRoot.schema_version !== 1 || sourcesRoot.schema_version !== 1 || artifactsRoot.schema_version !== 1) fail("all governance registries must use schema_version 1.");
   assertString(requirementsRoot.blueprint_version, "requirements registry blueprint_version");
   assertIsoDate(requirementsRoot.reviewed_at, "requirements registry reviewed_at");
   assertIsoDate(sourcesRoot.reviewed_at, "sources registry reviewed_at");
-  if (requirementsRoot.reviewed_at !== sourcesRoot.reviewed_at) fail("requirements and source registries must share the same reviewed_at value.");
+  assertIsoDate(artifactsRoot.reviewed_at, "research artifacts registry reviewed_at");
+  if (requirementsRoot.reviewed_at !== sourcesRoot.reviewed_at || requirementsRoot.reviewed_at !== artifactsRoot.reviewed_at) fail("requirements, source, and research artifact registries must share the same reviewed_at value.");
   const scope = normalizeScope(requirementsRoot.scope);
   const unmodeled = normalizeUnmodeled(requirementsRoot.unmodeled_atomic_requirements);
   if (!Array.isArray(requirementsRoot.requirements)) fail("requirements registry requirements must be an array.");
   if (!Array.isArray(sourcesRoot.sources)) fail("sources registry sources must be an array.");
+  if (!Array.isArray(artifactsRoot.artifacts)) fail("research artifacts registry artifacts must be an array.");
   requirementsRoot.requirements.forEach(validateRequirementShape);
   sourcesRoot.sources.forEach(validateSourceShape);
+  artifactsRoot.artifacts.forEach(validateResearchArtifactShape);
   const requirements = requirementsRoot.requirements.map(normalizedRequirement).sort((left, right) => compareText(left.id, right.id));
   const sources = sourcesRoot.sources.map(normalizedSource).sort((left, right) => compareText(left.id, right.id));
+  const artifacts = artifactsRoot.artifacts.map(normalizedArtifact).sort((left, right) => compareText(left.id, right.id));
   const requirementIds = new Set(requirements.map((item) => item.id));
   const sourceIds = new Set(sources.map((item) => item.id));
+  const artifactIds = new Set(artifacts.map((item) => item.id));
   if (requirementIds.size !== requirements.length) fail("requirement IDs must be unique.");
   if (sourceIds.size !== sources.length) fail("source IDs must be unique.");
+  if (artifactIds.size !== artifacts.length) fail("research artifact IDs must be unique.");
+  const requiredArtifactById = new Map(REQUIRED_RESEARCH_ARTIFACTS.map((artifact) => [artifact.id, artifact]));
+  if (artifactIds.size !== requiredArtifactById.size || [...artifactIds].some((id) => !requiredArtifactById.has(id))) fail("research artifacts registry must contain exactly the 30 Section 25.1 bootstrap artifact IDs.");
+  for (const artifact of artifacts) {
+    const requiredArtifact = requiredArtifactById.get(artifact.id);
+    if (artifact.title !== requiredArtifact.title) fail(`${artifact.id} title must exactly match the Section 25.1 bootstrap title ${JSON.stringify(requiredArtifact.title)}.`);
+    if (artifact.family_id !== requiredArtifact.familyId) fail(`${artifact.id} family_id must be ${requiredArtifact.familyId}.`);
+  }
   if (new Set(unmodeled.map((item) => item.id)).size !== unmodeled.length) fail("unmodeled atomic requirement IDs must be unique.");
-  for (const family of REQUIRED_FAMILIES) if (!requirements.some((item) => familyFor(item.id) === family)) fail(`requirements registry does not represent required family ${family}.`);
+  for (const item of unmodeled) if (requirementIds.has(item.id)) fail(`unmodeled atomic requirement ${item.id} collides with a modeled requirement ID.`);
+  for (const family of REQUIRED_FAMILIES) if (!requirementIds.has(family)) fail(`requirements registry is missing exact required family root ${family}.`);
   for (const requirement of requirements) {
     for (const prerequisite of requirement.prerequisite_ids) if (!requirementIds.has(prerequisite)) fail(`${requirement.id} references unknown prerequisite ${prerequisite}.`);
     for (const sourceId of requirement.source_ledger_ids) {
       if (!sourceIds.has(sourceId)) fail(`${requirement.id} references unknown source ${sourceId}.`);
       if (!sources.find((source) => source.id === sourceId).applies_to.includes(requirement.id)) fail(`${requirement.id} -> ${sourceId} is missing the reverse source applies_to link.`);
     }
+    for (const artifactId of requirement.research_artifact_ids) {
+      if (!artifactIds.has(artifactId)) fail(`${requirement.id} references unknown research artifact ${artifactId}.`);
+      if (!artifacts.find((artifact) => artifact.id === artifactId).requirement_ids.includes(requirement.id)) fail(`${requirement.id} -> ${artifactId} is missing the reverse artifact requirement_ids link.`);
+    }
   }
   for (const source of sources) for (const requirementId of source.applies_to) {
     if (!requirementIds.has(requirementId)) fail(`${source.id} applies_to unknown requirement ${requirementId}.`);
     if (!requirements.find((item) => item.id === requirementId).source_ledger_ids.includes(source.id)) fail(`${source.id} -> ${requirementId} is missing the reverse requirement source_ledger_ids link.`);
+  }
+  for (const artifact of artifacts) {
+    if (!REQUIRED_FAMILIES.includes(artifact.family_id) || !requirementIds.has(artifact.family_id)) fail(`${artifact.id} references unknown family root ${artifact.family_id}.`);
+    for (const requirementId of artifact.requirement_ids) {
+      if (!requirementIds.has(requirementId)) fail(`${artifact.id} references unknown requirement ${requirementId}.`);
+      if (!requirements.find((item) => item.id === requirementId).research_artifact_ids.includes(artifact.id)) fail(`${artifact.id} -> ${requirementId} is missing the reverse requirement research_artifact_ids link.`);
+    }
   }
   const visiting = new Set(); const visited = new Set();
   const visit = (id, ancestry = []) => {
@@ -361,15 +508,21 @@ export function loadAndValidateModel(cwd, repositorySha) {
   for (const requirement of requirements) visit(requirement.id);
 
   const entries = treeEntries(cwd, repositorySha);
+  const routePatterns = appRoutePatterns(entries);
   const packageJson = parseJson(snapshotFile(cwd, repositorySha, "package.json"), "package.json");
   for (const requirement of requirements) {
     for (const candidate of [...requirement.code_paths, ...requirement.content_paths]) if (!pathExists(entries, candidate)) fail(`${requirement.id} references missing evaluated-snapshot path ${candidate}.`);
+    for (const route of requirement.routes) {
+      const declaredSegments = parseRoute(route, `${requirement.id}.routes`);
+      if (!routePatterns.some((pattern) => appRouteCovers(pattern.segments, declaredSegments))) fail(`${requirement.id} references nonexistent evaluated App Router route ${route}.`);
+    }
     for (const command of requirement.test_commands) {
       const match = command.match(/^npm run ([A-Za-z0-9:_-]+)$/);
       const script = match?.[1] ?? (packageJson.scripts?.[command] ? command : null);
       if (!script || !packageJson.scripts?.[script]) fail(`${requirement.id} references missing npm test command ${command}.`);
     }
   }
+  for (const artifact of artifacts) if (artifact.repository_path && !pathExists(entries, artifact.repository_path)) fail(`${artifact.id} references missing evaluated-snapshot repository_path ${artifact.repository_path}.`);
 
   const inventoryIds = stableStrings(gapInventoryIds(snapshotFile(cwd, repositorySha, GAP_INVENTORY_PATH)));
   if (JSON.stringify(inventoryIds) !== JSON.stringify(scope.requiredGapIds)) fail("gap inventory IDs must exactly match bootstrap scope.required_gap_ids.");
@@ -389,6 +542,7 @@ export function loadAndValidateModel(cwd, repositorySha) {
     unmodeled,
     requirements,
     sources,
+    artifacts,
     inventoryIds,
   };
 }
@@ -405,21 +559,14 @@ function canonicalJson(value) {
 
 function escapeCell(value) {
   if (value === null || value === undefined || value === "") return "—";
-  return String(value).replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+  return String(value).replace(/\\/g, "\\\\").replace(/\|/g, "\\|").replace(/\r\n?|\n/g, " ");
 }
 
-function sourceState(requirement, sourcesById) {
-  if (requirement.research_status === "not-applicable") return "source-complete";
+function sourceRecordState(requirement, sourcesById) {
+  if (requirement.research_status === "not-applicable") return "not-applicable";
   if (requirement.source_ledger_ids.length === 0) return "missing";
   const sources = requirement.source_ledger_ids.map((id) => sourcesById.get(id));
-  if (requirement.research_status === "approved" && sources.every((source) => source.claims_supported.length > 0)) return "source-complete";
-  return "unresolved";
-}
-
-function countBy(items, key) {
-  const counts = new Map();
-  for (const item of items) counts.set(key(item), (counts.get(key(item)) ?? 0) + 1);
-  return [...counts].sort(([left], [right]) => compareText(left, right));
+  return sources.some((source) => source.claims_supported.length > 0) ? "claim-recorded" : "discovery-recorded";
 }
 
 function renderCoverage(model, envelope) {
@@ -428,7 +575,14 @@ function renderCoverage(model, envelope) {
   const researchStatuses = [...RESEARCH_STATUSES];
   const publicationStatuses = [...PUBLICATION_STATUSES];
   const sourcesById = new Map(model.sources.map((source) => [source.id, source]));
-  const sourceStates = new Map(model.requirements.map((requirement) => [requirement.id, sourceState(requirement, sourcesById)]));
+  const sourceStates = new Map(model.requirements.map((requirement) => [requirement.id, sourceRecordState(requirement, sourcesById)]));
+  const priorityRecords = [...model.requirements.map((item) => ({ ...item, recordType: "modeled" })), ...model.unmodeled.map((item) => ({ ...item, recordType: "unmodeled" }))];
+  const familyCounts = REQUIRED_FAMILIES.map((family) => ({
+    family,
+    modeled: model.requirements.filter((item) => familyFor(item.id) === family).length,
+    unmodeled: model.unmodeled.filter((item) => familyFor(item.id) === family).length,
+  }));
+  const sectionNames = stableStrings(new Set(priorityRecords.map((item) => item.section)));
   const lines = [
     "---",
     `schema_version: ${envelope.schema_version}`,
@@ -443,30 +597,46 @@ function renderCoverage(model, envelope) {
     `- Sources: ${model.sources.length}`,
     `- Gap inventory IDs: ${model.inventoryIds.length}`,
     `- Explicitly unmodeled atomic requirements: ${model.unmodeled.length}`, "",
-    "### Implementation status", "",
+    "### Modeled implementation status", "",
     "| Status | Count |", "| --- | ---: |",
     ...statuses.map((status) => `| ${status} | ${model.requirements.filter((item) => item.status === status).length} |`), "",
-    "### Priority/disposition", "", "| Priority | Count |", "| --- | ---: |",
-    ...priorities.map((priority) => `| ${priority} | ${model.requirements.filter((item) => item.priority === priority).length} |`), "",
+    "### Priority/disposition across modeled and unmodeled records", "", "| Priority | Modeled | Unmodeled | Total |", "| --- | ---: | ---: | ---: |",
+    ...priorities.map((priority) => {
+      const modeled = model.requirements.filter((item) => item.priority === priority).length;
+      const unmodeled = model.unmodeled.filter((item) => item.priority === priority).length;
+      return `| ${priority} | ${modeled} | ${unmodeled} | ${modeled + unmodeled} |`;
+    }), "",
     "### Research status", "", "| Research status | Count |", "| --- | ---: |",
     ...researchStatuses.map((status) => `| ${status} | ${model.requirements.filter((item) => item.research_status === status).length} |`), "",
     "### Publication status", "", "| Publication status | Count |", "| --- | ---: |",
     ...publicationStatuses.map((status) => `| ${status} | ${model.requirements.filter((item) => item.publication_status === status).length} |`), "",
-    "## Requirements by family", "", "| Family | Count |", "| --- | ---: |",
-    ...countBy(model.requirements, (item) => familyFor(item.id)).map(([family, count]) => `| ${family} | ${count} |`), "",
-    "## Requirements by section", "", "| Section | Count |", "| --- | ---: |",
-    ...countBy(model.requirements, (item) => item.section).map(([section, count]) => `| ${escapeCell(section)} | ${count} |`), "",
+    "## Requirements by family", "", "| Family | Modeled | Unmodeled | Total |", "| --- | ---: | ---: | ---: |",
+    ...familyCounts.map(({ family, modeled, unmodeled }) => `| ${family} | ${modeled} | ${unmodeled} | ${modeled + unmodeled} |`), "",
+    "## Requirements by section", "", "| Section | Modeled | Unmodeled | Total |", "| --- | ---: | ---: | ---: |",
+    ...sectionNames.map((section) => {
+      const modeled = model.requirements.filter((item) => item.section === section).length;
+      const unmodeled = model.unmodeled.filter((item) => item.section === section).length;
+      return `| ${escapeCell(section)} | ${modeled} | ${unmodeled} | ${modeled + unmodeled} |`;
+    }), "",
     "## Requirement inventory", "",
     "| ID | Section | Priority | Status | Research | Publication | Source state | Routes | Sources | Tests | Gaps |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |",
     ...model.requirements.map((item) => `| ${escapeCell(item.id)} | ${escapeCell(item.section)} | ${escapeCell(item.priority)} | ${escapeCell(item.status)} | ${escapeCell(item.research_status)} | ${escapeCell(item.publication_status)} | ${sourceStates.get(item.id)} | ${escapeCell(item.routes.join(", "))} | ${item.source_ledger_ids.length} | ${item.test_commands.length} | ${escapeCell(item.known_gaps.join("; "))} |`), "",
     "## Required blockers", "",
   ];
-  const blockers = model.requirements.filter((item) => item.priority === "required" && item.status !== "implemented");
+  const blockers = priorityRecords.filter((item) => item.priority === "required" && (item.recordType === "unmodeled" || item.status !== "implemented"));
   if (blockers.length === 0) lines.push("None.", "");
   else {
-    lines.push("| ID | Status | Known gaps |", "| --- | --- | --- |");
-    for (const item of blockers) lines.push(`| ${escapeCell(item.id)} | ${escapeCell(item.status)} | ${escapeCell(item.known_gaps.join("; ") || "Not yet implemented")} |`);
+    lines.push("| ID | Record type | Status | Gap/reason |", "| --- | --- | --- | --- |");
+    for (const item of blockers) lines.push(`| ${escapeCell(item.id)} | ${item.recordType} | ${escapeCell(item.status ?? "unmodeled")} | ${escapeCell(item.recordType === "unmodeled" ? item.reason : item.known_gaps.join("; ") || "Not yet implemented")} |`);
+    lines.push("");
+  }
+  const p1Items = priorityRecords.filter((item) => item.priority === "p1" && (item.recordType === "unmodeled" || item.status !== "implemented"));
+  lines.push("## P1 blockers and dispositions", "");
+  if (p1Items.length === 0) lines.push("None.", "");
+  else {
+    lines.push("| ID | Record type | Status | Gap/reason |", "| --- | --- | --- | --- |");
+    for (const item of p1Items) lines.push(`| ${escapeCell(item.id)} | ${item.recordType} | ${escapeCell(item.status ?? "unmodeled")} | ${escapeCell(item.recordType === "unmodeled" ? item.reason : item.known_gaps.join("; ") || "Not yet implemented")} |`);
     lines.push("");
   }
   const staleItems = model.requirements.filter((item) => item.publication_status === "stale-review");
@@ -477,39 +647,54 @@ function renderCoverage(model, envelope) {
     for (const item of staleItems) lines.push(`| ${item.id} | ${escapeCell(item.section)} | ${item.research_status} | ${item.source_ledger_ids.length} |`);
     lines.push("");
   }
-  const externalOrBlocked = model.requirements.filter((item) => item.priority === "external-owner-gate" || item.status === "blocked");
+  const externalOrBlocked = priorityRecords.filter((item) => item.priority === "external-owner-gate" || item.status === "blocked");
   const externalOrBlockedIds = new Set(externalOrBlocked.map((item) => item.id));
   lines.push("## External owner gates and blocked items", "");
   if (externalOrBlocked.length === 0) lines.push("None.", "");
   else {
-    lines.push("| ID | Priority | Status | Known gaps |", "| --- | --- | --- | --- |");
-    for (const item of externalOrBlocked) lines.push(`| ${item.id} | ${item.priority} | ${item.status} | ${escapeCell(item.known_gaps.join("; "))} |`);
+    lines.push("| ID | Record type | Priority | Status | Gap/reason |", "| --- | --- | --- | --- | --- |");
+    for (const item of externalOrBlocked) lines.push(`| ${escapeCell(item.id)} | ${item.recordType} | ${item.priority} | ${escapeCell(item.status ?? "unmodeled")} | ${escapeCell(item.recordType === "unmodeled" ? item.reason : item.known_gaps.join("; "))} |`);
     lines.push("");
   }
-  const deferredOrExcluded = model.requirements.filter((item) => !externalOrBlockedIds.has(item.id) && (item.status === "deferred" || item.status === "excluded" || item.priority === "excluded"));
+  const deferredOrExcluded = priorityRecords.filter((item) => !externalOrBlockedIds.has(item.id) && (item.status === "deferred" || item.status === "excluded" || item.priority === "excluded"));
   lines.push("## Deferred and excluded items", "");
   if (deferredOrExcluded.length === 0) lines.push("None.", "");
   else {
-    lines.push("| ID | Priority | Status |", "| --- | --- | --- |");
-    for (const item of deferredOrExcluded) lines.push(`| ${item.id} | ${item.priority} | ${item.status} |`);
+    lines.push("| ID | Record type | Priority | Status |", "| --- | --- | --- | --- |");
+    for (const item of deferredOrExcluded) lines.push(`| ${escapeCell(item.id)} | ${item.recordType} | ${item.priority} | ${escapeCell(item.status ?? "unmodeled")} |`);
     lines.push("");
   }
-  lines.push("## Source completeness", "", "| Source state | Count |", "| --- | ---: |");
-  for (const state of ["source-complete", "missing", "unresolved"]) lines.push(`| ${state} | ${[...sourceStates.values()].filter((value) => value === state).length} |`);
+  lines.push("## Source record states", "", "These states describe recorded provenance only; they do not claim source completeness.", "", "| Source record state | Count |", "| --- | ---: |");
+  for (const state of ["not-applicable", "missing", "discovery-recorded", "claim-recorded"]) lines.push(`| ${state} | ${[...sourceStates.values()].filter((value) => value === state).length} |`);
   lines.push("", "| Requirement | Research status | Source state | Source IDs |", "| --- | --- | --- | --- |");
   for (const item of model.requirements) lines.push(`| ${item.id} | ${item.research_status} | ${sourceStates.get(item.id)} | ${escapeCell(item.source_ledger_ids.join(", "))} |`);
   lines.push("");
   lines.push("## Explicitly unmodeled atomic requirements", "");
   if (model.unmodeled.length === 0) lines.push("None.", "");
   else {
-    lines.push("| ID | Reason |", "| --- | --- |");
-    for (const item of model.unmodeled) lines.push(`| ${escapeCell(item.id)} | ${escapeCell(item.reason)} |`);
+    lines.push("| ID | Family | Section | Priority | Reason |", "| --- | --- | --- | --- | --- |");
+    for (const item of model.unmodeled) lines.push(`| ${escapeCell(item.id)} | ${familyFor(item.id)} | ${escapeCell(item.section)} | ${item.priority} | ${escapeCell(item.reason)} |`);
     lines.push("");
   }
   lines.push("## Source readiness", "", "| ID | Class | Verified | Applies to |", "| --- | --- | --- | --- |");
   for (const source of model.sources) lines.push(`| ${escapeCell(source.id)} | ${escapeCell(source.source_class)} | ${escapeCell(source.verified_at)} | ${escapeCell(source.applies_to.join(", "))} |`);
   if (model.sources.length === 0) lines.push("| — | — | — | — |");
   lines.push("");
+  lines.push("## Research artifact inputs", "", "### Availability", "", "| Availability | Count |", "| --- | ---: |");
+  for (const availability of ARTIFACT_AVAILABILITIES) lines.push(`| ${availability} | ${model.artifacts.filter((item) => item.availability === availability).length} |`);
+  lines.push("", "### Approval status", "", "| Approval status | Count |", "| --- | ---: |");
+  for (const approval of ARTIFACT_APPROVAL_STATUSES) lines.push(`| ${approval} | ${model.artifacts.filter((item) => item.approval_status === approval).length} |`);
+  lines.push("", "| ID | Family | Availability | Approval | Requirements | Repository path | External record |", "| --- | --- | --- | --- | --- | --- | --- |");
+  for (const artifact of model.artifacts) lines.push(`| ${escapeCell(artifact.id)} | ${artifact.family_id} | ${artifact.availability} | ${artifact.approval_status} | ${escapeCell(artifact.requirement_ids.join(", "))} | ${escapeCell(artifact.repository_path)} | ${escapeCell(artifact.external_record)} |`);
+  if (model.artifacts.length === 0) lines.push("| — | — | — | — | — | — | — |");
+  const unresolvedArtifacts = model.artifacts.filter((artifact) => artifact.approval_status !== "excluded" && (artifact.availability === "missing" || artifact.approval_status !== "approved"));
+  lines.push("", "## Unresolved research artifact inputs", "");
+  if (unresolvedArtifacts.length === 0) lines.push("None.", "");
+  else {
+    lines.push("| ID | Availability | Approval |", "| --- | --- | --- |");
+    for (const artifact of unresolvedArtifacts) lines.push(`| ${escapeCell(artifact.id)} | ${artifact.availability} | ${artifact.approval_status} |`);
+    lines.push("");
+  }
   return lines.join("\n");
 }
 
@@ -524,7 +709,7 @@ export function buildGovernanceArtifacts(cwd, repositorySha) {
     repository_sha: repositorySha,
     repository_state_sha256: digest,
   };
-  const manifest = { ...envelope, scope: model.scope, unmodeled_atomic_requirements: model.unmodeled, requirements: model.requirements };
+  const manifest = { ...envelope, scope: model.scope, unmodeled_atomic_requirements: model.unmodeled, research_artifacts: model.artifacts, requirements: model.requirements };
   const ledger = { ...envelope, sources: model.sources };
   return {
     repositorySha,
