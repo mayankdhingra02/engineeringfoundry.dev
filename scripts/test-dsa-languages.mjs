@@ -54,9 +54,10 @@ for (const marker of ['slug: "python"', 'slug: "java"', 'status: "published"']) 
 
 const css = read("app/globals.css");
 for (const marker of [".dsa-language-doc-layout", ".dsa-language-code", ".dsa-language-template", ".dsa-language-mistakes", "@media (max-width: 430px)", "prefers-reduced-motion"]) requireText(css, marker, `Language-guide styling lacks ${marker}.`);
+if (!/\.dsa-language-complexity td:nth-child\(2\),\s*\.dsa-language-mistakes h3\s*\{[^}]*font-size:\s*var\(--type-label\)\s*!important;?[^}]*\}/s.test(css)) failures.push("Language complexity values and mistake headings must retain the 12px readability floor.");
 
 if (failures.length) {
   console.error(`DSA language-guide regression failed:\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log(`DSA language-guide regression passed: ${pythonBlocks.length} Python examples parse, Java reference structure is valid, 30 canonical templates, copy controls, routes, and responsive styles hold.`);
+console.log(`DSA language-guide regression passed: ${pythonBlocks.length} Python examples parse, Java reference structure is valid, 30 canonical templates, copy controls, routes, responsive styles, and the 12px text floor hold.`);

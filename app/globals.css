@@ -4956,6 +4956,7 @@ p, li, dd { text-wrap: pretty; }
 .dsa-roadmap-panel-links button, .dsa-roadmap-start-label,
 .dsa-roadmap-topic-panel footer .button { font-size: var(--type-meta); }
 .dsa-language-doc-layout .sd-article, .dsa-strategy-doc-layout .sd-article { font-size: var(--type-body); line-height: 1.7; }
+.dsa-language-complexity td:nth-child(2), .dsa-language-mistakes h3 { font-size: var(--type-label) !important; }
 .dsa-strategy-actions a, .dsa-strategy-inline-links a, .dsa-strategy-ending a,
 .sd-article .dsa-strategy-patterns nav a, .sd-article .dsa-strategy-language-links a { font-size: var(--type-meta); }
 .dsa-strategy-caption, .dsa-strategy-code-compare figcaption,
