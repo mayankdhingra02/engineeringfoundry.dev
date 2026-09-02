@@ -1,40 +1,102 @@
 "use client";
 
 import { BookmarkCheck } from "lucide-react";
-import { useState } from "react";
-import { saveActiveStudyPlanAction, type SaveStudyPlanInput } from "@/features/preparation-progress/plan-actions";
+import { useRef, useState } from "react";
+import { saveActiveStudyPlanAction } from "@/features/preparation-progress/plan-actions";
 import { preparationProgressEvent, readLocalPreparationProgress, saveLocalPlan, writeLocalPreparationProgress } from "@/lib/preparation-progress/local";
+import {
+  resolveStudyPlanSaveOutcome,
+  studyPlanId,
+  type SaveStudyPlanInput,
+  type StudyPlanSaveAttempts,
+} from "@/lib/preparation-progress/plan-save";
 import { track } from "@/lib/analytics";
 
-export function SaveStudyPlanControl({ input, href, label }: { input: SaveStudyPlanInput; href: string; label: string }) {
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+type SaveState = {
+  requestId: number;
+  planKey: string;
+  status: "pending" | "settled";
+  message: string | null;
+};
+
+export function SaveStudyPlanControl({
+  input,
+  href,
+  label,
+  accountPlatformAvailable,
+}: {
+  input: SaveStudyPlanInput;
+  href: string;
+  label: string;
+  accountPlatformAvailable: boolean;
+}) {
+  const requestIdRef = useRef(0);
+  const [saveState, setSaveState] = useState<SaveState | null>(null);
+  const planId = studyPlanId(input);
+  const planKey = `${planId}\n${href}\n${label}`;
+  const currentSaveState = saveState?.planKey === planKey ? saveState : null;
+  const pending = saveState?.status === "pending";
+  const savingCurrentPlan = pending && saveState.planKey === planKey;
 
   async function save() {
-    setPending(true);
-    try {
-      let saved = false;
+    const requestId = ++requestIdRef.current;
+    setSaveState({ requestId, planKey, status: "pending", message: null });
+
+    let attempts: StudyPlanSaveAttempts;
+    if (accountPlatformAvailable) {
       try {
         const result = await saveActiveStudyPlanAction(input);
-        saved = result.saved;
-        setMessage(result.message);
-      } catch { setMessage("Saved in this browser. Sign in later to save it to your account."); }
-      let localSaved = false;
-      if (!saved) {
-        try {
-          const current = readLocalPreparationProgress(window.localStorage);
-          writeLocalPreparationProgress(window.localStorage, saveLocalPlan(current, { track: input.track, href, label }));
-          window.dispatchEvent(new CustomEvent(preparationProgressEvent));
-          localSaved = true;
-        } catch { /* Browser storage is optional; the selected plan remains visible this visit. */ }
+        if (result.saved) {
+          attempts = { accountStatus: "saved" };
+        } else {
+          attempts = {
+            accountStatus: "failed",
+            accountReason: result.reason,
+            localStatus: saveLocally(),
+          };
+        }
+      } catch {
+        attempts = {
+          accountStatus: "failed",
+          accountReason: "request-failed",
+          localStatus: saveLocally(),
+        };
       }
-      if (saved || localSaved) track("study_plan_activated", { track: input.track, plan_id: input.track === "dsa" ? `${input.level}-${input.duration}d` : `${input.level}-${input.preparationWindow}-${input.minutesPerDay}`, persistence: saved ? "account" : "local" });
-    } finally { setPending(false); }
+    } else {
+      attempts = {
+        accountStatus: "failed",
+        accountReason: "account-unavailable",
+        localStatus: saveLocally(),
+      };
+    }
+
+    const outcome = resolveStudyPlanSaveOutcome(attempts);
+    if (outcome.persisted) {
+      track("study_plan_activated", {
+        track: input.track,
+        plan_id: planId,
+        persistence: outcome.persistence,
+      });
+    }
+    setSaveState((current) => current?.requestId === requestId && current.planKey === planKey
+      ? { requestId, planKey, status: "settled", message: outcome.message }
+      : current);
+
+    function saveLocally(): "saved" | "failed" {
+      try {
+        const current = readLocalPreparationProgress(window.localStorage);
+        writeLocalPreparationProgress(window.localStorage, saveLocalPlan(current, { track: input.track, href, label }));
+        window.dispatchEvent(new CustomEvent(preparationProgressEvent));
+        return "saved";
+      } catch {
+        return "failed";
+      }
+    }
   }
 
   return <div className="save-study-plan-control">
-    <button type="button" className="button button-secondary" disabled={pending} onClick={() => { void save(); }}><BookmarkCheck size={15} aria-hidden="true" />{pending ? "Saving…" : "Save as active plan"}</button>
-    <small>Saving replaces the active plan for this track; it does not mark work complete.</small>
-    {message && <small role="status">{message}</small>}
+    <button type="button" className="button button-secondary" disabled={pending} onClick={() => { void save(); }}><BookmarkCheck size={15} aria-hidden="true" />{pending ? savingCurrentPlan ? "Saving…" : "Finishing previous plan save…" : "Save as active plan"}</button>
+    <small>{accountPlatformAvailable ? "Saving replaces the active plan for this track; it does not mark work complete." : "Account saving is unavailable. This control uses browser storage when available; it does not mark work complete."}</small>
+    <small role="status" aria-live="polite" aria-atomic="true">{pending ? savingCurrentPlan ? "Saving this plan…" : "Finishing previous plan save…" : currentSaveState?.message}</small>
   </div>;
 }

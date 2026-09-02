@@ -19,6 +19,7 @@ import { dsaCompanies, getDsaCompany } from "@/data/dsa/interview-prep";
 import { dsaLanguages, getDsaLanguage } from "@/data/dsa/languages";
 import { dsaInterviewQuestionDatabase, questionsForInterviewCompany } from "@/data/dsa/question-database";
 import { canonicalDsaQuestions, getCanonicalDsaQuestion } from "@/lib/dsa/catalog";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getDsaWorkspaceState } from "@/lib/dsa/queries";
 import { filterDsaQuestionsBySearch } from "@/lib/dsa/question-search";
 import { PracticeWorkspace } from "@/features/dsa/progress/practice-workspace";
@@ -126,7 +127,7 @@ function TopicDependencyMapPage() {
 }
 
 function StudyPlansPage() {
-  return <DSAWorkspacePageLayout eyebrow="Role-aware interview preparation" title="Study Plans" description="Choose your target level and interview timeline. We'll show you what to prioritize and when." badge="30 / 60 / 90 days" meta="Guidance only · no account or progress tracking required"><Suspense fallback={<div className="empty-inline" role="status" aria-live="polite">Loading study plan controls…</div>}><StudyPlanPage /></Suspense></DSAWorkspacePageLayout>;
+  return <DSAWorkspacePageLayout eyebrow="Role-aware interview preparation" title="Study Plans" description="Choose your target level and interview timeline. We'll show you what to prioritize and when." badge="30 / 60 / 90 days" meta="Guidance only · no account or progress tracking required"><Suspense fallback={<div className="empty-inline" role="status" aria-live="polite">Loading study plan controls…</div>}><StudyPlanPage accountPlatformAvailable={isAccountPlatformAvailable()} /></Suspense></DSAWorkspacePageLayout>;
 }
 
 function RoadmapPage({ roleSlug, durationSegment }: { roleSlug: string; durationSegment: string }) {

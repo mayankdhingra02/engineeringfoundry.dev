@@ -15,6 +15,7 @@ prohibit(data, /\b(?:streak|XP|success probability|expected interview score)\b/i
 
 const page = read("features/dsa/study-plans/study-plan-page.tsx");
 for (const marker of ["useSearchParams", "router.push", 'params.set(key, value)', "StudyPlanSelector", "StudyPlanOverview", "StudyPlanWeekList", "ReadinessChecklist", 'searchParams.get("company")']) requireText(page, marker, `Study plan page lacks ${marker}.`);
+for (const marker of ["accountPlatformAvailable: boolean", "accountPlatformAvailable={accountPlatformAvailable}", 'key={`${plan.level}-${plan.duration}`}']) requireText(page, marker, `DSA study-plan save wiring lacks ${marker}.`);
 
 const selector = read("features/dsa/study-plans/study-plan-selector.tsx");
 for (const marker of ["Target level", "Preparation time", "aria-pressed", "SDE I", "SDE II", "Senior / SDE III", "30 Days", "60 Days", "90 Days"]) requireText(selector + data, marker, `Study plan selector lacks ${marker}.`);
@@ -27,6 +28,7 @@ for (const marker of ["Low priority for this plan", "Already comfortable with th
 
 const route = read("app/dsa/[...segments]/page.tsx");
 for (const marker of ['segments[0] === "study-plans"', "StudyPlansPage", "StudyPlanPage", "30, 60 & 90 Day Coding Interview Study Plans"]) requireText(route, marker, `Study plan route lacks ${marker}.`);
+for (const marker of ['import { isAccountPlatformAvailable } from "@/lib/account-platform"', "<StudyPlanPage accountPlatformAvailable={isAccountPlatformAvailable()} />"]) requireText(route, marker, `The DSA study-plan route lacks its server-provided account availability contract: ${marker}.`);
 
 const workspace = read("components/dsa-workspace.tsx");
 for (const marker of ["Then choose your pace", "30 days for focus", "60 for balance", "90 for broader coverage", "/dsa/study-plans"]) requireText(workspace, marker, `DSA overview does not explain the role → timeframe hierarchy: ${marker}.`);
@@ -39,4 +41,4 @@ if (failures.length) {
   console.error(`DSA study-plan regression failed:\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log("DSA study-plan regression passed: nine role-aware plans, canonical roadmap topics, URL state, weekly disclosure, practice links, interview mode, and responsive accessibility hold.");
+console.log("DSA study-plan regression passed: nine role-aware plans, canonical roadmap topics, URL state, server-provided account availability wiring, weekly disclosure, practice links, interview mode, and responsive accessibility hold. Rendered save outcomes still require browser validation.");
