@@ -112,6 +112,23 @@ function researchArtifactsRegistry() {
   };
 }
 
+function sourceRecord(id, { publishedAt = null, verifiedAt = "2026-09-02" } = {}) {
+  return {
+    id,
+    title: `Fixture source ${id}`,
+    publisher: "Fixture",
+    url: `https://example.invalid/${id.toLowerCase()}`,
+    source_class: "official documentation",
+    published_at: publishedAt,
+    verified_at: verifiedAt,
+    volatility: "stable",
+    applies_to: ["EF-COMP-GUIDE-COVERAGE"],
+    claims_supported: [],
+    usage_limits: "Fixture only.",
+    notes: null,
+  };
+}
+
 function gapInventory() {
   return [
     "# Fixture gap inventory", "", "| Gap ID | Section |", "| --- | --- |",
@@ -154,6 +171,109 @@ for (const script of ["validate:product-blueprint", "report:product-blueprint-co
 
 const fixtureDirectories = [];
 try {
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const invalidCalendarCases = [
+      {
+        name: "requirements registry reviewed_at",
+        expectedLabel: "requirements registry reviewed_at",
+        mutate: (requirements) => { requirements.reviewed_at = "2026-02-29"; },
+      },
+      {
+        name: "sources registry reviewed_at",
+        expectedLabel: "sources registry reviewed_at",
+        mutate: (_requirements, sources) => { sources.reviewed_at = "2026-04-31"; },
+      },
+      {
+        name: "research artifacts registry reviewed_at",
+        expectedLabel: "research artifacts registry reviewed_at",
+        mutate: (_requirements, _sources, artifacts) => { artifacts.reviewed_at = "2026-09-02T24:00:00Z"; },
+      },
+      {
+        name: "requirement last_verified_at",
+        expectedLabel: "EF-GLOBAL.last_verified_at",
+        mutate: (requirements) => { requirements.requirements.find((item) => item.id === "EF-GLOBAL").last_verified_at = "2026-02-30"; },
+      },
+      {
+        name: "source published_at",
+        expectedLabel: "SRC-INVALID-PUBLISHED.published_at",
+        mutate: (requirements, sources) => {
+          requirements.requirements.find((item) => item.id === "EF-COMP-GUIDE-COVERAGE").source_ledger_ids = ["SRC-INVALID-PUBLISHED"];
+          sources.sources.push(sourceRecord("SRC-INVALID-PUBLISHED", { publishedAt: "2026-04-31" }));
+        },
+      },
+      {
+        name: "source verified_at",
+        expectedLabel: "SRC-INVALID-VERIFIED.verified_at",
+        mutate: (requirements, sources) => {
+          requirements.requirements.find((item) => item.id === "EF-COMP-GUIDE-COVERAGE").source_ledger_ids = ["SRC-INVALID-VERIFIED"];
+          sources.sources.push(sourceRecord("SRC-INVALID-VERIFIED", { verifiedAt: "2026-09-02T24:00:00Z" }));
+        },
+      },
+      {
+        name: "research artifact verified_at",
+        expectedLabel: "RA-SD-CURRICULUM-TOPIC-MAP.verified_at",
+        mutate: (_requirements, _sources, artifacts) => {
+          artifacts.artifacts.find((item) => item.id === "RA-SD-CURRICULUM-TOPIC-MAP").verified_at = "2026-02-29";
+        },
+      },
+      {
+        name: "noncanonical offset timestamp",
+        expectedLabel: "requirements registry reviewed_at",
+        mutate: (requirements) => { requirements.reviewed_at = "2026-09-02T12:34:56+00:00"; },
+      },
+      {
+        name: "noncanonical fractional timestamp",
+        expectedLabel: "sources registry reviewed_at",
+        mutate: (_requirements, sources) => { sources.reviewed_at = "2026-09-02T12:34:56.1Z"; },
+      },
+    ];
+
+    for (const invalidCase of invalidCalendarCases) {
+      const requirements = requirementsRegistry();
+      const sources = sourcesRegistry();
+      const artifacts = researchArtifactsRegistry();
+      invalidCase.mutate(requirements, sources, artifacts);
+      write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(requirements, null, 2)}\n`);
+      write(fixture.cwd, SOURCES_REGISTRY_PATH, `${JSON.stringify(sources, null, 2)}\n`);
+      write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+      const invalidCalendar = commit(fixture.cwd, `test: reject invalid ${invalidCase.name}`);
+      assert.throws(
+        () => buildGovernanceArtifacts(fixture.cwd, invalidCalendar),
+        (error) => error instanceof Error && error.message.includes(`${invalidCase.expectedLabel} must use YYYY-MM-DD, YYYY-MM-DDTHH:mm:ssZ, or YYYY-MM-DDTHH:mm:ss.SSSZ.`),
+        `An invalid or noncanonical ${invalidCase.name} must fail canonical calendar validation.`,
+      );
+    }
+
+    const requirements = requirementsRegistry();
+    const sources = sourcesRegistry();
+    const artifacts = researchArtifactsRegistry();
+    requirements.reviewed_at = "2028-02-29";
+    sources.reviewed_at = "2028-02-29";
+    artifacts.reviewed_at = "2028-02-29";
+    requirements.requirements.find((item) => item.id === "EF-GLOBAL").last_verified_at = "2028-02-29";
+    const sourcedRequirement = requirements.requirements.find((item) => item.id === "EF-COMP-GUIDE-COVERAGE");
+    sourcedRequirement.source_ledger_ids = ["SRC-VALID-DATED", "SRC-VALID-NULLABLE"];
+    sources.sources.push(
+      sourceRecord("SRC-VALID-DATED", { publishedAt: "2028-02-29T12:34:56.123Z", verifiedAt: "2028-02-29T23:59:59Z" }),
+      sourceRecord("SRC-VALID-NULLABLE", { publishedAt: null, verifiedAt: "2028-02-29" }),
+    );
+    Object.assign(artifacts.artifacts.find((item) => item.id === "RA-SD-CURRICULUM-TOPIC-MAP"), {
+      repository_path: "fixture.mjs",
+      version_or_hash: "fixture-leap-day",
+      availability: "repository-present",
+      verified_at: "2028-02-29T12:34:56.123Z",
+    });
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(requirements, null, 2)}\n`);
+    write(fixture.cwd, SOURCES_REGISTRY_PATH, `${JSON.stringify(sources, null, 2)}\n`);
+    write(fixture.cwd, RESEARCH_ARTIFACTS_REGISTRY_PATH, `${JSON.stringify(artifacts, null, 2)}\n`);
+    const validCalendar = commit(fixture.cwd, "test: accept canonical leap-day and nullable dates");
+    assert.doesNotThrow(
+      () => buildGovernanceArtifacts(fixture.cwd, validCalendar),
+      "Canonical leap-day dates, whole-second and millisecond UTC timestamps, and nullable governed dates must validate.",
+    );
+  }
+
   {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     write(fixture.cwd, "large-tracked-fixture.bin", Buffer.alloc(1024 * 1024 + 257, 0x5a));
