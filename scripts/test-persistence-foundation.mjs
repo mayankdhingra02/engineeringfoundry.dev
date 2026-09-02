@@ -96,7 +96,7 @@ assertNotMatches(repository, /export\s+(?:async\s+)?function\s+\w+\s*\([^)]*(?:u
 assertNotMatches(repository, /service[_-]?role|SUPABASE_SERVICE/i, "request persistence must not bypass RLS with service credentials");
 assertNotMatches(repository, /(?:error\.message|JSON\.stringify\(error\)|throw\s+error)/, "database errors must not be exposed through the repository result");
 
-const publicStaticEntryFiles = [
+const publicEntryFiles = [
   "app/page.tsx",
   "app/prepare/page.tsx",
   "app/dsa/page.tsx",
@@ -105,7 +105,7 @@ const publicStaticEntryFiles = [
   "app/system-design/plan/page.tsx",
   "app/companies/page.tsx",
 ];
-for (const path of publicStaticEntryFiles) {
+for (const path of publicEntryFiles) {
   const source = read(path);
   assertNotMatches(source, /@\/lib\/(?:auth\/actor|applications\/queries|behavioral\/queries|preparation-state)/, `${path} imports private user data into a public route`);
   assertNotMatches(source, /force-dynamic/, `${path} lost its public/static rendering boundary`);
@@ -113,10 +113,14 @@ for (const path of publicStaticEntryFiles) {
 
 for (const path of ["app/companies/[slug]/page.tsx", "app/interview-experiences/[company]/page.tsx"]) {
   const source = read(path);
-  assertNotMatches(source, /@\/lib\/(?:auth\/actor|applications\/queries|behavioral\/queries|preparation-state)/, `${path} imports private user data into a public route`);
-  assertContains(source, 'dynamic = "force-dynamic"', `${path} must read approved public reports per request instead of freezing moderation results at build time`);
+  assertContains(source, 'dynamic = "force-dynamic"', `${path} must fetch moderated public reports per request`);
+  assertContains(source, "listPublicInterviewExperiences", `${path} must use the sessionless public report boundary`);
+  assertNotMatches(source, /createSupabaseServerClient|@\/lib\/auth\/actor/, `${path} must not inherit a signed-in request role for its public report query`);
   assertNotMatches(source, /unstable_cache|cacheLife\(|cacheTag\(/, `${path} must not indefinitely cache moderated public reports`);
 }
+const interviewExperienceDirectory = read("app/interview-experiences/page.tsx");
+assertContains(interviewExperienceDirectory, 'dynamic = "force-dynamic"', "the mixed public/private Interview Experience directory must fetch per request");
+assertContains(interviewExperienceDirectory, "listPublicInterviewExperiences", "the main Interview Experience directory must keep its public query sessionless");
 
 const privatePages = [
   "app/applications/page.tsx",
