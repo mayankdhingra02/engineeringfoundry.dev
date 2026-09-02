@@ -118,7 +118,7 @@
       "source_ledger_ids": [],
       "research_artifact_ids": ["RA-ML-CORE-CONCEPTS", "RA-ML-FINAL-SYNTHESIS", "RA-ML-INFRA-MODERN-AI", "RA-ML-RECOMMENDATION-RANKING", "RA-ML-SEARCH-RETRIEVAL-ADVERTISING", "RA-ML-TRUST-PREDICTION-DECISION"],
       "prerequisite_ids": ["EF-GLOBAL"],
-      "code_paths": ["app/ml-design", "components/design-track-page.tsx", "data/ml-design", "lib/ml-design-routes.ts", "scripts/test-ml-design.mjs"],
+      "code_paths": ["app/ml-design", "app/sitemap.ts", "components/design-track-page.tsx", "data/ml-design", "lib/global-search.ts", "lib/ml-design-routes.ts", "scripts/test-ml-design.mjs"],
       "content_paths": [],
       "visual_ids": [],
       "test_commands": ["npm run test:ml-design", "npm run test:public-launch-integrity", "npm run validate:design-content"],
