@@ -43,7 +43,7 @@ function TopicCard({ topic, level, defaultOpen, visibleClassifications, visibleP
   </details>;
 }
 
-export function LevelRoadmapModule({ module, level, index, expanded, onToggle, visibleClassifications, visibleProblemIds, assignments, progress, signedIn, skippedTopicIds, onToggleSkipped }: { module: RoadmapModule; level: "sde1" | "sde2" | "sde3plus"; index: number; expanded: boolean; onToggle: () => void; visibleClassifications: readonly ProblemClassification[]; visibleProblemIds?: ReadonlySet<string>; assignments?: readonly RoadmapProblemAssignment[]; progress?: RoadmapProgressSnapshot; signedIn?: boolean; skippedTopicIds?: ReadonlySet<string>; onToggleSkipped?: (topicId: string) => void }) {
+export function LevelRoadmapModule({ module, level, index, expanded, onToggle, visibleClassifications, visibleProblemIds, assignments, progress, signedIn, accountPlatformAvailable, skippedTopicIds, onToggleSkipped }: { module: RoadmapModule; level: "sde1" | "sde2" | "sde3plus"; index: number; expanded: boolean; onToggle: () => void; visibleClassifications: readonly ProblemClassification[]; visibleProblemIds?: ReadonlySet<string>; assignments?: readonly RoadmapProblemAssignment[]; progress?: RoadmapProgressSnapshot; signedIn?: boolean; accountPlatformAvailable: boolean; skippedTopicIds?: ReadonlySet<string>; onToggleSkipped?: (topicId: string) => void }) {
   const priorityCounts = module.topics.reduce<Record<TopicPriority, number>>((counts, current) => {
     counts[current.priority] += 1;
     return counts;
@@ -63,7 +63,7 @@ export function LevelRoadmapModule({ module, level, index, expanded, onToggle, v
         {Object.entries(priorityCounts).filter(([, count]) => count > 0).map(([priority, count]) => <span key={priority} className={`dsa-level-priority ${priority}`}><Circle size={8} fill="currentColor" aria-hidden="true" />{count} {priorityLabels[priority as TopicPriority]}</span>)}
       </div>
       <div className="dsa-level-roadmap-topic-list">{module.topics.map((roadmapTopic, topicIndex) => <TopicCard key={roadmapTopic.id} topic={roadmapTopic} level={level} defaultOpen={index === 0 && topicIndex === 0} visibleClassifications={visibleClassifications} visibleProblemIds={visibleProblemIds} assignments={assignments} progress={progress} signedIn={signedIn} skipped={skippedTopicIds?.has(roadmapTopic.id)} onToggleSkipped={onToggleSkipped ? () => onToggleSkipped(roadmapTopic.id) : undefined} />)}</div>
-      <p className="dsa-level-roadmap-progress-note"><Clock3 size={15} aria-hidden="true" />{signedIn ? "Problem state is shared with My Practice. Session-only skips never change completion." : "Sign in to persist problem state across this roadmap and the question library."}</p>
+      <p className="dsa-level-roadmap-progress-note"><Clock3 size={15} aria-hidden="true" />{signedIn ? "Problem state is shared with My Practice. Session-only skips never change completion." : accountPlatformAvailable ? "Sign in to persist problem state across this roadmap and the question library." : "Roadmap planning remains public. Account-backed problem progress is unavailable in this configuration."}</p>
     </div>}
   </article>;
 }

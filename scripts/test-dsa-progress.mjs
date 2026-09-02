@@ -47,6 +47,14 @@ check("RLS and server-authoritative RPC are present", migration.includes("enable
 const routes = read("app/dsa/[...segments]/page.tsx");
 const browser = read("features/dsa/questions/question-browser.tsx");
 const practice = read("features/dsa/progress/practice-workspace.tsx");
+const querySource = read("lib/dsa/queries.ts");
+const questionTable = read("features/dsa/questions/question-table.tsx");
+const questionDetail = read("features/dsa/progress/question-detail.tsx");
+const roadmapExperience = read("features/dsa/roadmap/level-roadmap-experience.tsx");
+const roadmapModule = read("features/dsa/roadmap/level-roadmap-module.tsx");
+const activityControl = read("components/preparation-activity-control.tsx");
+const progressActions = read("features/dsa/progress/actions.ts");
+const preparationActions = read("features/preparation-progress/actions.ts");
 check("public questions and private My Practice share the existing route", routes.includes("libraryOnly={segments[0] === \"questions\"}") && routes.includes("PracticeWorkspace"));
 check("application context survives library filters and review navigation", browser.includes('params.set("application", retainedApplication)') && practice.includes('params.set("application", application.id)') && practice.includes('params.set("company", application.company_slug)'));
 check("question detail preserves application and company context", read("features/dsa/progress/question-detail.tsx").includes('params.set("application", applicationId)') && read("features/dsa/progress/question-detail.tsx").includes('params.set("company", companySlug)'));
@@ -57,9 +65,15 @@ check("dashboard coding context preserves the company slug", read("app/dashboard
 check("company question routes receive private progress when signed in", routes.includes("progress={state.progress} signedIn={state.signedIn}"));
 check("roadmap status uses status and confidence without legacy comfortable state", !read("data/dsa/roadmap-planning.ts").includes('"comfortable"') && read("data/dsa/roadmap-planning.ts").includes("confidenceByProblemId"));
 check("quick mutations expose pending and accessible error feedback", read("features/dsa/progress/quick-progress-actions.tsx").includes("Saving…") && read("features/dsa/progress/quick-progress-actions.tsx").includes('role="alert"') && read("features/dsa/progress/roadmap-preference-controls.tsx").includes("Saving preferred roadmap…"));
+check("workspace state distinguishes disabled accounts before actor resolution", querySource.indexOf("if (!accountPlatformAvailable) return") > -1 && querySource.indexOf("if (!accountPlatformAvailable) return") < querySource.indexOf("await getAuthenticatedActor()"));
+check("DSA routes propagate account availability through every public progress surface", routes.includes("accountPlatformAvailable={state.accountPlatformAvailable}") && read("app/dsa/page.tsx").includes("accountPlatformAvailable={accountPlatformAvailable}") && read("features/dsa/question-browser-preview.tsx").includes("accountPlatformAvailable={accountPlatformAvailable}"));
+check("enabled signed-out DSA surfaces retain intentional sign-in handoffs without account-state contradictions", practice.includes("accountPlatformAvailable ? <aside") && practice.includes('href={`/signin?next=') && questionTable.includes("accountPlatformAvailable ? <Link") && questionDetail.includes("accountPlatformAvailable ? <aside") && questionDetail.includes("Browser-local completion is recorded separately.") && questionDetail.includes("{signedIn ? <><h2>Current state</h2>") && roadmapModule.includes('accountPlatformAvailable ? "Sign in to persist'));
+check("disabled DSA surfaces render honest public and local states", practice.includes("Public practice remains available") && routes.includes("Account progress unavailable · demo associations") && routes.includes("Account progress unavailable · public roadmap") && questionTable.includes("Account progress unavailable") && !questionTable.includes('<span className="dsa-signin-progress">Account progress unavailable</span>') && questionDetail.includes("Browser-local practice") && questionDetail.includes("Private notes are unavailable in this configuration") && roadmapExperience.includes("accountPlatformAvailable={accountPlatformAvailable}") && roadmapModule.includes("Account-backed problem progress is unavailable in this configuration"));
+check("disabled DSA local activity skips its Server Action and reports persistence honestly", activityControl.includes('{ track: "dsa"; accountPlatformAvailable: boolean }') && activityControl.indexOf("if (accountPlatformAvailable)") > -1 && activityControl.indexOf("if (accountPlatformAvailable)") < activityControl.indexOf("recordPreparationActivityAction({ track, itemId, status: next })") && activityControl.includes("Saved in this browser. Account saving is unavailable in this configuration.") && activityControl.includes("Recorded for this visit. Browser storage and account saving are unavailable."));
+check("direct progress actions report disabled account persistence before actor resolution", progressActions.includes("if (!isAccountPlatformAvailable()) return accountUnavailable()") && progressActions.indexOf("if (!isAccountPlatformAvailable()) return accountUnavailable()") < progressActions.indexOf("await getAuthenticatedActor()") && preparationActions.indexOf("if (!isAccountPlatformAvailable()) return") < preparationActions.indexOf("await getAuthenticatedActor()"));
 
 const failed = checks.filter((entry) => !entry.ok);
-if (checks.length !== 31) throw new Error(`Expected 31 regression checks, found ${checks.length}.`);
+if (checks.length !== 37) throw new Error(`Expected 37 regression checks, found ${checks.length}.`);
 if (failed.length) {
   console.error(`DSA progress regression failed:\n- ${failed.map((entry) => entry.name).join("\n- ")}`);
   process.exit(1);

@@ -7,11 +7,20 @@ export const PUBLIC_ROUTES = [
   "/mock-interviews", "/referrals", "/challenges", "/community", "/leaderboard", "/interview-experiences",
   "/companies", "/faq", "/contact", "/feedback", "/dsa/arrays", "/dsa/questions", "/dsa/companies",
   "/dsa/companies/amazon", "/dsa/roadmap", "/dsa/roadmap?topic=trees", "/dsa/practice", "/dsa/company-questions", "/dsa/company-questions/amazon", "/dsa/languages", "/dsa/languages/python",
-  "/dsa/languages/choose-a-language", "/dsa/roadmaps", "/dsa/roadmaps/sde-2/60-day",
-  "/dsa/strategy", "/dsa/interview-strategy", "/dsa/interview-strategy/problem-solving-framework", "/system-design/plan",
+  "/dsa/languages/choose-a-language", "/dsa/roadmaps", "/dsa/roadmaps/sde-2/60-day", "/dsa/questions/two-sum",
+  "/dsa/strategy", "/dsa/interview-strategy", "/dsa/interview-strategy/problem-solving-framework", "/dsa/roadmap?level=sde2", "/system-design/plan",
   "/system-design/fundamentals/caching", "/system-design/patterns/circuit-breaker",
   "/ml-design/recommendation-system", "/companies/google", "/companies/amazon", "/companies/meta", "/companies/walmart", "/interview-experiences/google",
   "/challenges/bounded-stream-frequency-index", "/robots.txt", "/sitemap.xml",
+];
+
+export const DISABLED_ACCOUNT_DSA_EXPECTATIONS = [
+  { route: "/dsa", marker: "Account progress unavailable" },
+  { route: "/dsa/questions", marker: "Public practice remains available" },
+  { route: "/dsa/practice", marker: "Public practice remains available" },
+  { route: "/dsa/companies/amazon", marker: "Account progress unavailable" },
+  { route: "/dsa/roadmap?level=sde2", marker: "Account progress unavailable · public roadmap" },
+  { route: "/dsa/questions/two-sum", marker: "Private notes are unavailable in this configuration" },
 ];
 
 const ACCOUNT_ROUTES = [
@@ -63,6 +72,7 @@ function requestUrl(origin, route) {
 }
 
 export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {}) {
+  const publicBodies = new Map();
   async function request(route, expectedStatus = 200) {
     const response = await fetchImpl(requestUrl(origin, route), { redirect: "manual" });
     const body = await response.text();
@@ -82,6 +92,7 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
   for (const route of PUBLIC_ROUTES) {
     const { body } = await request(route);
     if (!body.trim()) throw new Error(`${route} returned an empty body.`);
+    publicBodies.set(route, body);
   }
 
   const retiredSystemDesignLanding = await request("/system-design", 308);
@@ -100,6 +111,13 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
   const home = await request("/");
   for (const unavailableCta of [">Sign in<", ">Create account<", ">Get started<", ">Dashboard<"]) {
     if (home.body.includes(unavailableCta)) throw new Error(`Homepage/header exposes disabled account CTA ${unavailableCta}.`);
+  }
+  for (const { route, marker } of DISABLED_ACCOUNT_DSA_EXPECTATIONS) {
+    const body = publicBodies.get(route) ?? (await request(route)).body;
+    for (const unavailableHandoff of ['href="/signin', "Sign in to track", "Sign in to persist", "Sign in to keep private notes", "Keep progress between sessions"]) {
+      if (body.includes(unavailableHandoff)) throw new Error(`${route} exposes disabled DSA account handoff ${unavailableHandoff}.`);
+    }
+    if (!body.includes(marker)) throw new Error(`${route} lacks the disabled-account DSA state: ${marker}.`);
   }
 
   const contact = await request("/contact");

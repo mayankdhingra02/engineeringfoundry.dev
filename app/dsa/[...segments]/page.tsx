@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (segments.length === 1 && (segments[0] === "questions" || segments[0] === "practice")) return createPageMetadata({ title: "DSA Practice Questions", description: "Search and filter Engineering Foundry's public DSA question metadata by company, difficulty, topic, and source.", path: "/dsa/questions" });
   if (segments.length === 2 && segments[0] === "questions") {
     const question = getCanonicalDsaQuestion(segments[1]); if (!question) notFound();
-    return createPageMetadata({ title: `${question.title} Practice`, description: `Track private practice status, confidence, bookmarks, and notes for ${question.title}.`, path });
+    return createPageMetadata({ title: `${question.title} Practice`, description: `Open public source metadata and record practice for ${question.title}. Account-backed notes are available only when account features are enabled.`, path });
   }
   if (segments.length === 1 && (segments[0] === "companies" || segments[0] === "company-questions")) return createPageMetadata({ title: "Company Tagged Coding Questions", description: "Browse company-specific coding interview preparation pages. Current company associations are clearly labeled demonstration data.", path: "/dsa/companies" });
   if (segments.length === 1 && segments[0] === "patterns") return createPageMetadata({ title: "Coding Interview Pattern Index", description: "A concise index of common coding interview patterns and recognition signals.", path });
@@ -91,7 +91,8 @@ async function CompanyPage({ companySlug }: { companySlug: string }) {
   const questions = questionsForInterviewCompany(companySlug);
   const topicCount = new Set(questions.flatMap((question) => question.topics)).size;
   const state = await getDsaWorkspaceState();
-  return <DSAWorkspacePageLayout eyebrow="Company question browser" title={`${company.name} Coding Interview Questions`} description={`Filter the current ${company.name} demonstration associations by difficulty, topic, source, or title. No frequency claims are shown.`} badge={state.signedIn ? "Private progress · demo associations" : "Demo associations"} meta={`${questions.length} sample question${questions.length === 1 ? "" : "s"} · ${topicCount} topic${topicCount === 1 ? "" : "s"}`}><QuestionBrowser companies={dsaCompanies} questions={dsaInterviewQuestionDatabase} fixedCompanySlug={companySlug} progress={state.progress} signedIn={state.signedIn} /></DSAWorkspacePageLayout>;
+  const badge = state.signedIn ? "Private progress · demo associations" : state.accountPlatformAvailable ? "Demo associations" : "Account progress unavailable · demo associations";
+  return <DSAWorkspacePageLayout eyebrow="Company question browser" title={`${company.name} Coding Interview Questions`} description={`Filter the current ${company.name} demonstration associations by difficulty, topic, source, or title. No frequency claims are shown.`} badge={badge} meta={`${questions.length} sample question${questions.length === 1 ? "" : "s"} · ${topicCount} topic${topicCount === 1 ? "" : "s"}`}><QuestionBrowser companies={dsaCompanies} questions={dsaInterviewQuestionDatabase} fixedCompanySlug={companySlug} progress={state.progress} signedIn={state.signedIn} accountPlatformAvailable={state.accountPlatformAvailable} /></DSAWorkspacePageLayout>;
 }
 
 function LanguageIndex() {
@@ -115,7 +116,8 @@ function RoadmapIndex() {
 
 async function LevelRoadmapPage() {
   const state = await getDsaWorkspaceState();
-  return <DSAWorkspacePageLayout eyebrow="Level-specific interview preparation" title="DSA Roadmaps" description="Choose your level, preparation window, and optional target company to get a focused plan from the shared curriculum." badge={state.signedIn ? "Account-backed progress" : "SDE I · SDE II · SDE III+"} meta="Linkable plans · researched company overlays · no fake readiness"><LevelRoadmapExperience accountProgress={state.progress} signedIn={state.signedIn} preferredRoadmap={state.preferredRoadmap} /></DSAWorkspacePageLayout>;
+  const badge = state.signedIn ? "Account-backed progress" : state.accountPlatformAvailable ? "SDE I · SDE II · SDE III+" : "Account progress unavailable · public roadmap";
+  return <DSAWorkspacePageLayout eyebrow="Level-specific interview preparation" title="DSA Roadmaps" description="Choose your level, preparation window, and optional target company to get a focused plan from the shared curriculum." badge={badge} meta="Linkable plans · researched company overlays · no fake readiness"><LevelRoadmapExperience accountProgress={state.progress} signedIn={state.signedIn} preferredRoadmap={state.preferredRoadmap} accountPlatformAvailable={state.accountPlatformAvailable} /></DSAWorkspacePageLayout>;
 }
 
 function TopicDependencyMapPage() {
@@ -148,7 +150,7 @@ async function QuestionDetailRoute({ questionId, searchParams }: { questionId: s
   const question = getCanonicalDsaQuestion(questionId); if (!question) notFound();
   const query = await searchParams;
   const state = await getDsaWorkspaceState(query.application);
-  return <DsaQuestionDetail question={question} signedIn={state.signedIn} progress={state.progress} applicationId={state.application?.id} companySlug={state.application?.company_slug ?? query.company} />;
+  return <DsaQuestionDetail question={question} signedIn={state.signedIn} progress={state.progress} applicationId={state.application?.id} companySlug={state.application?.company_slug ?? query.company} accountPlatformAvailable={state.accountPlatformAvailable} />;
 }
 
 function TopicPage({ slug }: { slug: string }) {

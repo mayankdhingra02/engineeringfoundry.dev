@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "d67ba04ee1cd65d1bd2dfe0005672fb24e58230e",
-  "repository_state_sha256": "663c864db604458a0adaa5618f1e6c0b8515f51c35911d39982ac7ee5870a793",
+  "repository_sha": "6f44bff1165272129ecda3571fcc61dbf6420fb3",
+  "repository_state_sha256": "27634bdd5107ee3fbe82a2572a4ed7f4c7d18e6ca922e5ea8f418d99799862cc",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -322,12 +322,19 @@
     },
     {
       "acceptance_criteria": [
-        "Canonical questions, patterns, topics, routes, filters, and published language guides remain internally consistent."
+        "Canonical questions, patterns, topics, routes, filters, and published language guides remain internally consistent.",
+        "Account-disabled DSA routes remain public and useful without inoperable sign-in or persistence handoffs, while browser-local activity is labeled honestly and enabled account modes retain their existing behavior."
       ],
       "code_paths": [
         "app/dsa",
+        "components/preparation-activity-control.tsx",
         "data/dsa",
-        "features/dsa"
+        "features/dsa",
+        "features/preparation-progress/actions.ts",
+        "lib/dsa/queries.ts",
+        "scripts/smoke-public-routes.mjs",
+        "scripts/test-dsa-progress.mjs",
+        "scripts/test-public-route-smoke.mjs"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
@@ -363,7 +370,9 @@
       "test_commands": [
         "npm run test:dsa-interview-prep",
         "npm run test:dsa-languages",
-        "npm run test:dsa-pattern-index"
+        "npm run test:dsa-pattern-index",
+        "npm run test:dsa-progress",
+        "npm run test:public-route-smoke"
       ],
       "title": "Data Structures and Algorithms",
       "visual_ids": []
