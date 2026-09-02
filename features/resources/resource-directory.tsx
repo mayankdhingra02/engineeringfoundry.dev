@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, CircleDotDashed, ExternalLink, Search } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { ArrowRight, BadgeCheck, CircleDotDashed, ExternalLink, RotateCcw, Search } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { activeResources, resourceAccessLevels, resourceCategories, resourceTypes } from "@/data/resources";
 import { track } from "@/lib/analytics";
+import {
+  canonicalizeResourceDirectoryUrlState,
+  defaultResourceDirectoryUrlState,
+  parseResourceDirectoryUrlState,
+  RESOURCE_DIRECTORY_SEARCH_LIMIT,
+  resourceDirectoryHref,
+  resourceSorts,
+  resourceSources,
+  type ResourceDirectoryUrlState,
+} from "@/lib/resources/resource-directory-url-state";
 import type { Resource } from "@/types";
-
-function setUrlParam(key: string, value: string) {
-  const params = new URLSearchParams(window.location.search);
-  if (!value || value.startsWith("All")) params.delete(key); else params.set(key, value);
-  window.history.replaceState(null, "", `${window.location.pathname}${params.size ? `?${params}` : ""}`);
-}
 
 function ResourceCard({ resource }: { resource: Resource }) {
   const external = !resource.isInternal;
@@ -34,17 +38,38 @@ function ResourceCard({ resource }: { resource: Resource }) {
 }
 
 export function ResourceDirectory() {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("search") ?? "");
-  const [category, setCategory] = useState(searchParams.get("category") ?? "All categories");
-  const [type, setType] = useState(searchParams.get("type") ?? "All types");
-  const [access, setAccess] = useState(searchParams.get("access") ?? "All access");
-  const [source, setSource] = useState(searchParams.get("source") ?? "All sources");
-  const [sort, setSort] = useState(searchParams.get("sort") ?? "Category");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const queryString = searchParams.toString();
+  const filters = useMemo(() => parseResourceDirectoryUrlState(queryString), [queryString]);
+  const canonicalFilters = useMemo(() => canonicalizeResourceDirectoryUrlState(filters), [filters]);
+  const { search, category, type, access, source, sort } = filters;
+
+  useEffect(() => {
+    const nextFilters = document.activeElement === searchInputRef.current ? filters : canonicalFilters;
+    const canonicalHref = resourceDirectoryHref(pathname, nextFilters, queryString, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (canonicalHref !== currentHref) window.history.replaceState(null, "", canonicalHref);
+  }, [canonicalFilters, filters, pathname, queryString]);
+
+  function commitFilters(next: ResourceDirectoryUrlState, mode: "push" | "replace") {
+    const href = resourceDirectoryHref(pathname, next, window.location.search, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (href === currentHref) return;
+    if (mode === "push") window.history.pushState(null, "", href);
+    else window.history.replaceState(null, "", href);
+  }
+
+  function updateFilter(key: keyof ResourceDirectoryUrlState, value: string, mode: "push" | "replace" = "push") {
+    const currentFilters = parseResourceDirectoryUrlState(window.location.search);
+    const baseFilters = key === "search" ? currentFilters : canonicalizeResourceDirectoryUrlState(currentFilters);
+    commitFilters({ ...baseFilters, [key]: value }, mode);
+  }
 
   const filtered = useMemo(() => activeResources.filter((resource) => {
     const searchable = `${resource.title} ${resource.description} ${resource.provider} ${resource.tags.join(" ")}`.toLowerCase();
-    return searchable.includes(query.trim().toLowerCase())
+    return searchable.includes(search.trim().toLowerCase())
       && (category === "All categories" || resource.category === category)
       && (type === "All types" || resource.type === type)
       && (access === "All access" || resource.access === access)
@@ -53,18 +78,20 @@ export function ResourceDirectory() {
     ? a.title.localeCompare(b.title)
     : sort === "Recently verified"
       ? (b.lastVerifiedAt ?? "").localeCompare(a.lastVerifiedAt ?? "") || a.title.localeCompare(b.title)
-      : a.category.localeCompare(b.category) || a.title.localeCompare(b.title)), [access, category, query, sort, source, type]);
+      : a.category.localeCompare(b.category) || a.title.localeCompare(b.title)), [access, category, search, sort, source, type]);
+
+  const filtersActive = Object.entries(canonicalFilters).some(([key, value]) => value !== defaultResourceDirectoryUrlState[key as keyof ResourceDirectoryUrlState]);
 
   return <>
     <div className="resource-filters" aria-label="Resource directory filters">
-      <label className="resource-search"><span>Search resources</span><div><Search size={16} aria-hidden="true" /><input value={query} onChange={(event) => { setQuery(event.target.value); setUrlParam("search", event.target.value); }} placeholder="Search title, provider, or topic" /></div></label>
-      <label><span>Category</span><select value={category} onChange={(event) => { setCategory(event.target.value); setUrlParam("category", event.target.value); }}><option>All categories</option>{resourceCategories.map((item) => <option key={item}>{item}</option>)}</select></label>
-      <label><span>Type</span><select value={type} onChange={(event) => { setType(event.target.value); setUrlParam("type", event.target.value); }}><option>All types</option>{resourceTypes.map((item) => <option key={item}>{item}</option>)}</select></label>
-      <label><span>Access</span><select value={access} onChange={(event) => { setAccess(event.target.value); setUrlParam("access", event.target.value); }}><option>All access</option>{resourceAccessLevels.map((item) => <option key={item}>{item}</option>)}</select></label>
-      <label><span>Source</span><select value={source} onChange={(event) => { setSource(event.target.value); setUrlParam("source", event.target.value); }}><option>All sources</option><option>Internal</option><option>External</option></select></label>
-      <label><span>Sort</span><select value={sort} onChange={(event) => { setSort(event.target.value); setUrlParam("sort", event.target.value); }}><option>Category</option><option>Alphabetical</option><option>Recently verified</option></select></label>
+      <label className="resource-search"><span>Search resources</span><div><Search size={16} aria-hidden="true" /><input ref={searchInputRef} value={search} maxLength={RESOURCE_DIRECTORY_SEARCH_LIMIT} onChange={(event) => updateFilter("search", event.target.value.slice(0, RESOURCE_DIRECTORY_SEARCH_LIMIT), "replace")} onBlur={() => commitFilters(canonicalFilters, "replace")} placeholder="Search title, provider, or topic" /></div></label>
+      <label><span>Category</span><select value={category} onChange={(event) => updateFilter("category", event.target.value)}><option>All categories</option>{resourceCategories.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label><span>Type</span><select value={type} onChange={(event) => updateFilter("type", event.target.value)}><option>All types</option>{resourceTypes.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label><span>Access</span><select value={access} onChange={(event) => updateFilter("access", event.target.value)}><option>All access</option>{resourceAccessLevels.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label><span>Source</span><select value={source} onChange={(event) => updateFilter("source", event.target.value)}><option>All sources</option>{resourceSources.map((item) => <option key={item}>{item}</option>)}</select></label>
+      <label><span>Sort</span><select value={sort} onChange={(event) => updateFilter("sort", event.target.value)}>{resourceSorts.map((item) => <option key={item}>{item}</option>)}</select></label>
     </div>
-    <div className="resource-result-meta"><span>{filtered.length} {filtered.length === 1 ? "resource" : "resources"}</span><span>Verification is evidence of a checked destination, not an endorsement.</span></div>
+    <div className="resource-result-meta"><span role="status" aria-live="polite" aria-atomic="true">{filtered.length} {filtered.length === 1 ? "resource" : "resources"}</span><button className="button button-ghost button-sm" type="button" disabled={!filtersActive} onClick={() => commitFilters(defaultResourceDirectoryUrlState, "push")}><RotateCcw size={13} aria-hidden="true" />Reset filters</button><span>Verification is evidence of a checked destination, not an endorsement.</span></div>
     <div className="resource-grid real-resource-grid">{filtered.map((resource) => <ResourceCard resource={resource} key={resource.id} />)}{!filtered.length && <div className="empty-state"><strong>No resources found</strong><p>Try a broader search or reset one of the filters.</p></div>}</div>
   </>;
 }

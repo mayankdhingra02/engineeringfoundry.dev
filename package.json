@@ -70,6 +70,7 @@
     "test:global-search": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-global-search.mjs",
     "test:header-navigation": "node --experimental-strip-types --no-warnings scripts/test-header-navigation.mjs",
     "test:practice-url-state": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-practice-url-state.mjs",
+    "test:resource-directory": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-resource-directory.mjs",
     "test:system-design-learning": "node --experimental-strip-types --no-warnings scripts/test-system-design-learning.mjs",
     "test:system-design-entry": "node --experimental-strip-types --no-warnings scripts/test-system-design-entry.mjs",
     "test:system-design-manifest": "node --experimental-strip-types --no-warnings scripts/test-system-design-manifest.mjs",

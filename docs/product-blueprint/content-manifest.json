@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "49c06e6bf8dcd8e461f3864144883ce60504b9ba",
-  "repository_state_sha256": "b27feed7b5a78368fdb39ac81ed0f252b16b380236048569d82642654f44c706",
+  "repository_sha": "d67ba04ee1cd65d1bd2dfe0005672fb24e58230e",
+  "repository_state_sha256": "663c864db604458a0adaa5618f1e6c0b8515f51c35911d39982ac7ee5870a793",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1412,7 +1412,8 @@
     },
     {
       "acceptance_criteria": [
-        "Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior."
+        "Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior.",
+        "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes."
       ],
       "code_paths": [
         "app/challenges",
@@ -1421,10 +1422,13 @@
         "app/referrals",
         "app/resources",
         "app/sitemap.ts",
+        "features/resources/resource-directory.tsx",
         "lib/global-search.ts",
+        "lib/resources/resource-directory-url-state.ts",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-global-search.mjs",
-        "scripts/test-public-launch-integrity.mjs"
+        "scripts/test-public-launch-integrity.mjs",
+        "scripts/test-resource-directory.mjs"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
@@ -1461,6 +1465,7 @@
         "npm run test:public-launch-integrity",
         "npm run test:public-route-smoke",
         "npm run test:referral-privacy",
+        "npm run test:resource-directory",
         "npm run validate:public-links"
       ],
       "title": "Supporting product routes",
