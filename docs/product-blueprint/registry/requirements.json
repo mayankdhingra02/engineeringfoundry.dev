@@ -262,7 +262,7 @@
       "source_ledger_ids": [],
       "research_artifact_ids": [],
       "prerequisite_ids": ["EF-GLOBAL"],
-      "code_paths": ["app/interview-experiences", "features/interview-experiences", "lib/supabase/public.ts"],
+      "code_paths": ["app/globals.css", "app/interview-experiences", "features/interview-experiences", "lib/supabase/public.ts"],
       "content_paths": [],
       "visual_ids": [],
       "test_commands": ["npm run test:interview-experiences-v1", "npm run test:experience-integrity", "npm run test:experience-privacy"],

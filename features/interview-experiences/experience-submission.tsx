@@ -46,7 +46,7 @@ export function ExperienceSubmission({ accountPlatformAvailable, signedIn, owned
   const cancelEdit = () => { setInput(initial); setView("form"); setMessage("Editing cancelled. You can start a new private report."); };
   const preview = bounded(input);
 
-  if (!accountPlatformAvailable) return <div className="experience-directory-empty"><div><strong>Contributions are not available in this public configuration.</strong><p>You can still read reviewed reports. Account-backed private drafts and moderation submissions require the account platform; nothing can be submitted from this state.</p></div></div>;
+  if (!accountPlatformAvailable) return <div className="experience-directory-empty"><div><strong>Contributions are not available in this public configuration.</strong><p>Use the reviewed-report directory above when it is available. Account-backed private drafts and moderation submissions require the account platform; nothing can be submitted from this state.</p></div></div>;
 
   if (!signedIn) return <div className="experience-directory-empty"><div><strong>Share a process-level experience when you are signed in.</strong><p>Your report starts private, goes through review, and only approved reports can appear here. Never include exact questions, interviewer identities, private links, or confidential material.</p></div><a className="button" href="/signin?next=/interview-experiences#contribute">Sign in to contribute</a></div>;
 
