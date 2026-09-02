@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { SystemDesignFocusPlanner } from "@/components/system-design-focus-planner";
 import { SystemDesignSidebar } from "@/components/system-design-sidebar";
 import { systemDesignCurriculum } from "@/data/system-design/curriculum";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata: Metadata = createPageMetadata({
@@ -25,7 +26,7 @@ export default function SystemDesignPlanPage() {
           <Link className="text-link" href="/system-design/problems">Browse practice problems<ArrowRight size={14} /></Link>
         </nav>
       </header>
-      <SystemDesignFocusPlanner />
+      <SystemDesignFocusPlanner accountPlatformAvailable={isAccountPlatformAvailable()} />
     </div>
   </div>;
 }

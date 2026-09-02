@@ -45,7 +45,7 @@ const p09Contracts = [
   ["continuation_presented", { track: "dsa", continuation_source: "account:active-plan", authenticated: true }],
   ["continuation_selected", { track: "system-design", continuation_source: "local:next", authenticated: false }],
   ["study_plan_activated", { track: "dsa", plan_id: "sde2-60d", persistence: "account" }],
-  ["study_plan_activated", { track: "system-design", plan_id: "senior-2-weeks-60", persistence: "local" }],
+  ["study_plan_activated", { track: "system-design", plan_id: "senior-2-weeks-infrastructure-60m", persistence: "local" }],
   ["study_plan_resumed", { track: "system-design", continuation_source: "account:active-plan", authenticated: true }],
   ["mock_review_saved", { track: "dsa", mode: "solo", prompt_id: "two-sum", rubric_id: "coding-foundations" }],
   ["salary_negotiation_module_viewed", { module_id: "compensation-package-anatomy" }],

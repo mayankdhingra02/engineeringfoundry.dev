@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "9c447aaffcafa5b72d3badeb79d19665831d32bf",
-  "repository_state_sha256": "1157db18c7edf585f772951462e00d40d49549015203e6350be98ac035b2c106",
+  "repository_sha": "112405df32458acca5284e8b8486aaff30e1f131",
+  "repository_state_sha256": "10d0d5ba29aa114c21c467c86836558690533a37529d65d4a9e43fbf778732c1",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -334,6 +334,7 @@
         "lib/dsa/queries.ts",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-dsa-progress.mjs",
+        "scripts/test-dsa-study-plans.mjs",
         "scripts/test-public-route-smoke.mjs"
       ],
       "content_paths": [],
@@ -372,6 +373,7 @@
         "npm run test:dsa-languages",
         "npm run test:dsa-pattern-index",
         "npm run test:dsa-progress",
+        "npm run test:dsa-study-plans",
         "npm run test:public-route-smoke"
       ],
       "title": "Data Structures and Algorithms",
@@ -517,17 +519,23 @@
     },
     {
       "acceptance_criteria": [
-        "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries."
+        "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries.",
+        "Shared study-plan controls announce only confirmed account, browser-local, or visit-only outcomes and never apply a stale save result to a different plan."
       ],
       "code_paths": [
+        "app/globals.css",
         "app/layout.tsx",
         "app/page.tsx",
         "components/global-search.tsx",
         "components/header.tsx",
         "components/home-entry-experience.tsx",
+        "components/save-study-plan-control.tsx",
+        "features/preparation-progress/plan-actions.ts",
         "lib/global-search.ts",
         "lib/header-navigation.ts",
-        "lib/home-track-catalog.ts"
+        "lib/home-track-catalog.ts",
+        "lib/preparation-progress/plan-save.ts",
+        "scripts/test-unified-progress.mjs"
       ],
       "content_paths": [
         "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
@@ -560,6 +568,7 @@
         "npm run test:header-navigation",
         "npm run test:homepage-entry",
         "npm run test:public-launch-integrity",
+        "npm run test:unified-progress",
         "npm run typecheck",
         "npm run validate:public-links"
       ],
@@ -1286,8 +1295,10 @@
       ],
       "code_paths": [
         "app/system-design",
+        "components/system-design-focus-planner.tsx",
         "content/system-design",
-        "data/system-design/manifest.ts"
+        "data/system-design/manifest.ts",
+        "scripts/test-system-design-study-plan.mjs"
       ],
       "content_paths": [
         "docs/system-design-content-inventory.json",
@@ -1324,7 +1335,8 @@
       "test_commands": [
         "npm run test:system-design-manifest",
         "npm run test:system-design-practice",
-        "npm run test:system-design-release-audit"
+        "npm run test:system-design-release-audit",
+        "npm run test:system-design-study-plan"
       ],
       "title": "System Design",
       "visual_ids": []

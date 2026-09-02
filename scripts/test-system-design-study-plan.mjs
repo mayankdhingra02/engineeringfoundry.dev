@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { systemDesignTopicManifest } from "../data/system-design/manifest.ts";
 import { systemDesignPracticeProblems, systemDesignTopics } from "../data/system-design/recommendations.ts";
 import { generateSystemDesignStudyPlan, getSystemDesignStudyPlanDays } from "../data/system-design/study-plan.ts";
+import { studyPlanId } from "../lib/preparation-progress/plan-save.ts";
 
 const windows = ["3-days", "1-week", "2-weeks", "1-month"];
 const studyTimes = [30, 60, 120, 180];
@@ -76,5 +78,15 @@ assert.ok(missed.days.every((day) => day.totalMinutes <= 120), "Redistribution m
 
 assert.ok(systemDesignTopics.every((topic) => !topic.prerequisites || topic.prerequisites.every((id) => systemDesignTopics.some((candidate) => candidate.id === id))), "All prerequisite IDs must resolve to canonical topics.");
 assert.ok(systemDesignPracticeProblems.every((problem) => problem.concepts.length > 0 && problem.concepts.every((id) => systemDesignTopics.some((topic) => topic.id === id))), "Every practice problem must reference canonical concepts.");
+assert.equal(studyPlanId({ track: "system-design", level: "senior", preparationWindow: "2-weeks", role: "infrastructure", minutesPerDay: 60 }), "senior-2-weeks-infrastructure-60m", "System Design analytics IDs must include the selected role.");
+assert.equal(studyPlanId({ track: "system-design", level: "mid", preparationWindow: "1-month", role: undefined, minutesPerDay: 30 }), "mid-1-month-general-30m", "System Design analytics IDs must distinguish the general-role plan.");
+
+const planPage = readFileSync("app/system-design/plan/page.tsx", "utf8");
+const planner = readFileSync("components/system-design-focus-planner.tsx", "utf8");
+const saveControl = readFileSync("components/save-study-plan-control.tsx", "utf8");
+assert.ok(planPage.includes('import { isAccountPlatformAvailable } from "@/lib/account-platform";') && planPage.includes("<SystemDesignFocusPlanner accountPlatformAvailable={isAccountPlatformAvailable()} />"), "The System Design plan route must pass server-derived account availability into the client planner.");
+assert.ok(planner.includes("{ accountPlatformAvailable }: { accountPlatformAvailable: boolean }") && planner.includes("useStudyPlanSaveCoordinator()") && planner.includes("accountPlatformAvailable={accountPlatformAvailable}") && planner.includes("coordinator={saveCoordinator}") && planner.includes("<StudyPlanSaveStatus coordinator={saveCoordinator} />"), "The System Design planner must own persistent save coordination, preserve its status across conditional controls, and forward account availability.");
+assert.ok(saveControl.includes("accountPlatformAvailable: boolean"), "The shared study-plan save control must require an explicit account-availability contract.");
+assert.ok(!saveControl.includes("Saved in this browser. Sign in later to save it to your account."), "The shared save control must not retain the stale message that hides a successful browser-local fallback.");
 
 console.log("System Design study-plan tests passed: durations, daily budgets, five personas, prerequisites, role ordering, practice readiness, progress preservation, missed-day redistribution, and duplicate prevention are valid.");

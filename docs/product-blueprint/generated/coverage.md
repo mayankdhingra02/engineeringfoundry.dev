@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 9c447aaffcafa5b72d3badeb79d19665831d32bf
-repository_state_sha256: 1157db18c7edf585f772951462e00d40d49549015203e6350be98ac035b2c106
+repository_sha: 112405df32458acca5284e8b8486aaff30e1f131
+repository_state_sha256: 10d0d5ba29aa114c21c467c86836558690533a37529d65d4a9e43fbf778732c1
 ---
 
 # Engineering Foundry requirement coverage
@@ -117,11 +117,11 @@ repository_state_sha256: 1157db18c7edf585f772951462e00d40d49549015203e6350be98ac
 | EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
 | EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
-| EF-DSA | dsa | required | partial | needs-research | stale-review | missing | /dsa | — | 0 | 5 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
+| EF-DSA | dsa | required | partial | needs-research | stale-review | missing | /dsa | — | 0 | 6 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
 | EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved-needs-source-import | stale-review | missing | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 0 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | missing | /dsa/languages | /dsa/languages/[slug] | 0 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 3 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
-| EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 7 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
+| EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 8 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
 | EF-LLD | low-level-design | required | partial | needs-research | stale-review | missing | /low-level-design | — | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
 | EF-LLD-REHEARSAL | low-level-design | p1 | partial | needs-research | unpublished | missing | /low-level-design | /low-level-design/practice/[slug] | 0 | 1 | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
@@ -138,7 +138,7 @@ repository_state_sha256: 1157db18c7edf585f772951462e00d40d49549015203e6350be98ac
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | — | /interview-tips/rounds/[slug] | 0 | 1 | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
 | EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | placeholder | needs-research | unpublished | missing | — | — | 0 | 1 | The index honestly identifies this role-specific guide as outside current v1. |
 | EF-SAL | salary-negotiation | required | partial | needs-current-verification | stale-review | missing | /salary-negotiation | — | 0 | 1 | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
-| EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | — | 0 | 3 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
+| EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | — | 0 | 4 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
 | EF-SD-PRACTICE-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | 27 of 60 walkthroughs are published; 33 remain researched and unpublished. |
 | EF-SD-TOPIC-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/[...segments] | 0 | 2 | 32 of 178 repository topics remain unpublished.; The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking. |
 | EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 8 | Employer-specific referral policy remains intentionally absent. |
