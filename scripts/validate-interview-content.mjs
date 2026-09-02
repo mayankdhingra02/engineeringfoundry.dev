@@ -21,13 +21,15 @@ const isCanonicalDate = (value) => {
   return !Number.isNaN(parsed.valueOf()) && parsed.toISOString() === normalized;
 };
 
-export function validateInterviewContent({ categories, frameworks, questions, tips, checklists, resources }) {
+export function validateInterviewContent({ categories, frameworks, questions, tips, checklists, resources, validationDate = new Date().toISOString().slice(0, 10) }) {
   const errors = [];
   const check = (condition, message) => { if (!condition) errors.push(message); };
   const unique = (items, field, label) => {
     const values = items.map((item) => item[field]);
     check(new Set(values).size === values.length, `${label} must have unique ${field} values`);
   };
+  const validationDateIsCanonical = isCanonicalDate(validationDate);
+  check(validationDateIsCanonical, "validationDate must use exact YYYY-MM-DD format and identify a real UTC calendar date");
 
   unique(categories, "id", "Behavioral categories");
   unique(categories, "name", "Behavioral categories");
@@ -98,7 +100,10 @@ export function validateInterviewContent({ categories, frameworks, questions, ti
       }
     }
     if (resource.verification === "verified") {
-      check(isCanonicalDate(resource.lastVerifiedAt), `Verified resource ${resource.id} requires a valid verification date`);
+      check(
+        validationDateIsCanonical && isCanonicalDate(resource.lastVerifiedAt) && resource.lastVerifiedAt <= validationDate,
+        `Verified resource ${resource.id} lastVerifiedAt must use exact YYYY-MM-DD format, identify a real UTC calendar date, and not be later than validationDate ${validationDate}`,
+      );
     } else {
       check(resource.lastVerifiedAt === null, `Unverified resource ${resource.id} must not include a verification date`);
     }

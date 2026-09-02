@@ -6,7 +6,8 @@ const [categories, frameworks, questions, tips, checklists, resources] = await P
   load("data/behavioral/categories.json"), load("data/behavioral/frameworks.json"), load("data/behavioral/questions.json"),
   load("data/interview-tips/tips.json"), load("data/interview-tips/checklists.json"), load("data/resources/resources.json"),
 ]);
-const validate = (overrides = {}) => validateInterviewContent({ categories, frameworks, questions, tips, checklists, resources, ...overrides });
+const validationDate = "2026-09-02";
+const validate = (overrides = {}) => validateInterviewContent({ categories, frameworks, questions, tips, checklists, resources, validationDate, ...overrides });
 
 if (questions.length < 31 || validate().length) throw new Error("The valid 31+ behavioral-question dataset failed validation");
 
@@ -23,8 +24,11 @@ const resourcesWithVerifiedDate = (lastVerifiedAt) => {
   verifiedResource.lastVerifiedAt = lastVerifiedAt;
   return datedResources;
 };
+const verifiedResourceId = resources.find((resource) => resource.verification === "verified")?.id;
+if (!verifiedResourceId) throw new Error("The date regression requires at least one verified resource fixture");
+const expectedDateError = `Verified resource ${verifiedResourceId} lastVerifiedAt must use exact YYYY-MM-DD format, identify a real UTC calendar date, and not be later than validationDate ${validationDate}`;
 
-for (const lastVerifiedAt of ["2000-02-29", "2026-12-31"]) {
+for (const lastVerifiedAt of ["2000-02-29", validationDate]) {
   const errors = validate({ resources: resourcesWithVerifiedDate(lastVerifiedAt) });
   if (errors.length) throw new Error(`A valid calendar boundary failed validation (${lastVerifiedAt}):\n${errors.join("\n")}`);
 }
@@ -34,11 +38,13 @@ const cases = [
   [validate({ resources: demoResource }), "active demo record"],
   [validate({ questions: companyTagged }), "must not contain company associations"],
 ];
-for (const lastVerifiedAt of ["2026-02-29", "2026-02-30", "2026-04-31", "2026-00-01", "2026-13-01", "2026-01-00"]) {
-  cases.push([validate({ resources: resourcesWithVerifiedDate(lastVerifiedAt) }), "valid verification date"]);
-}
 for (const [errors, expected] of cases) {
   if (!errors.some((error) => error.includes(expected))) throw new Error(`Expected validator failure was not produced: ${expected}`);
+}
+
+for (const lastVerifiedAt of ["1900-02-29", "2026-02-29", "2026-02-30", "2026-04-31", "2026-00-01", "2026-13-01", "2026-01-00", "2026-09-03"]) {
+  const errors = validate({ resources: resourcesWithVerifiedDate(lastVerifiedAt) });
+  if (!errors.includes(expectedDateError)) throw new Error(`Expected exact verification-date failure was not produced for ${lastVerifiedAt}`);
 }
 
 console.log("Interview content validator regression checks passed: 31+ prompt scale, malformed URL, active demo, company tag, and canonical verification dates.");

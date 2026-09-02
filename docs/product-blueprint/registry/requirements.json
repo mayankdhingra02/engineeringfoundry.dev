@@ -410,7 +410,7 @@
       "content_paths": ["docs/product-blueprint/registry/requirements.json", "docs/product-blueprint/registry/research-artifacts.json", "docs/product-blueprint/registry/sources.json"],
       "visual_ids": [],
       "test_commands": ["npm run validate:interview-content", "npm run validate:product-blueprint", "npm run test:interview-content-validator", "npm run test:product-blueprint-governance", "npm run test:release-record", "npm run test:v1-launch-readiness"],
-      "acceptance_criteria": ["Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale.", "Release qualification timestamps and interview-resource verification dates accept only their canonical formats and valid UTC calendar values.", "Superseded pull-request runs may be cancelled, while push and scheduled CI or CodeQL runs retain exact-commit verification evidence."],
+      "acceptance_criteria": ["Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale.", "Release qualification timestamps and interview-resource verification dates accept only their canonical formats, valid UTC calendar values, and values no later than their validation instant or date.", "Superseded pull-request runs may be cancelled, while push and scheduled CI or CodeQL runs retain exact-commit verification evidence."],
       "known_gaps": ["This bootstrap models families and current gap rows, not every atomic blueprint requirement.", "Generated outputs require their dedicated output-only metadata commit."],
       "owner": "release-governance",
       "last_verified_at": "2026-09-02",
