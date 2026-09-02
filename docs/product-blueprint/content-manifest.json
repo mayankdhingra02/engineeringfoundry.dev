@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "a2aa136eaa9beb48e9d7029ad78d85069eaf4e9d",
-  "repository_state_sha256": "bfbbd506fb245c20ab3b791bd6c588b2ab65b4fe1975df9edb0fdfc96e393077",
+  "repository_sha": "a39cbf56d8fc31b0ae8055479f3f7a87d8f92e14",
+  "repository_state_sha256": "dba15590becb80d87423c87ca0aef0dc164f15cd7ff28dd6f2ea3ff2bfb9b8ae",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -509,7 +509,7 @@
         "components/global-search.tsx",
         "components/header.tsx",
         "components/home-entry-experience.tsx",
-        "lib/global-search-results.ts",
+        "lib/global-search.ts",
         "lib/home-track-catalog.ts"
       ],
       "content_paths": [
