@@ -67,6 +67,7 @@
     "test:typography-readability": "node scripts/test-typography-readability.mjs",
     "test:local-supabase-helpers": "node scripts/test-local-supabase-helpers.mjs",
     "test:homepage-entry": "node --experimental-strip-types --no-warnings scripts/test-homepage-entry.mjs",
+    "test:global-search": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-global-search.mjs",
     "test:system-design-learning": "node --experimental-strip-types --no-warnings scripts/test-system-design-learning.mjs",
     "test:system-design-entry": "node --experimental-strip-types --no-warnings scripts/test-system-design-entry.mjs",
     "test:system-design-manifest": "node --experimental-strip-types --no-warnings scripts/test-system-design-manifest.mjs",

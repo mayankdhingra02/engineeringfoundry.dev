@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "3cdead85cc713a30871604e37e25c1b76f5a9dd8",
-  "repository_state_sha256": "0d8c96bda3d3dc3a940c7243f298331c384cd31ffdc90aba544f7fa14de01474",
+  "repository_sha": "a39cbf56d8fc31b0ae8055479f3f7a87d8f92e14",
+  "repository_state_sha256": "dba15590becb80d87423c87ca0aef0dc164f15cd7ff28dd6f2ea3ff2bfb9b8ae",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -509,6 +509,7 @@
         "components/global-search.tsx",
         "components/header.tsx",
         "components/home-entry-experience.tsx",
+        "lib/global-search.ts",
         "lib/home-track-catalog.ts"
       ],
       "content_paths": [
@@ -538,6 +539,7 @@
       "status": "partial",
       "test_commands": [
         "npm run lint",
+        "npm run test:global-search",
         "npm run test:homepage-entry",
         "npm run test:public-launch-integrity",
         "npm run typecheck",
@@ -1400,7 +1402,7 @@
       "id": "EF-SUP",
       "kind": "requirement-family",
       "known_gaps": [
-        "Broad-search recovery and feedback discovery remain repository P1 candidates.",
+        "Feedback discovery remains a repository P1 candidate.",
         "Employer-specific referral policy remains intentionally absent."
       ],
       "last_verified_at": "2026-09-02",
