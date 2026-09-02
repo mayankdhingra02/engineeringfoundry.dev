@@ -84,7 +84,7 @@ export function DesignTrackPage({
         <label><Filter size={15} /><span className="sr-only">Difficulty</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>All</option><option>Foundation</option><option>Intermediate</option><option>Advanced</option></select></label>
         <label><Waypoints size={15} /><span className="sr-only">Domain</span><select value={domain} onChange={(event) => setDomain(event.target.value)}><option>All</option>{domains.map((item) => <option key={item}>{item}</option>)}</select></label>
       </div>
-      <div className="design-result-meta">{filtered.length} {filtered.length === 1 ? "practice" : "practices"}</div>
+      <div className="design-result-meta" role="status" aria-live="polite" aria-atomic="true">{filtered.length} {filtered.length === 1 ? "practice" : "practices"}</div>
       <div className="design-problem-grid">{filtered.map((problem) => <Link className="design-problem-card" href={`${basePath}/${problem.slug}`} key={problem.id}><div className="design-card-meta"><StatusPill>{problem.difficulty}</StatusPill><span>{problem.domains.slice(0, 2).join(" · ")}</span></div><h3>{problem.title}</h3><p>{problem.summary}</p>{problem.patterns?.length ? <div className="design-tags">{problem.patterns.slice(0, 3).map((pattern) => <span key={pattern}>{pattern}</span>)}</div> : null}<span className="card-link">Start practice <ArrowRight size={15} /></span></Link>)}</div>
       {!filtered.length && <div className="empty-inline"><BookOpen size={18} /><strong>No practices match these filters.</strong><span>Try a broader title, difficulty, or domain.</span></div>}
     </div></section>

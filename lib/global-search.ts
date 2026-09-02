@@ -12,6 +12,7 @@ import { activeMlDesignProblems, mlDesignConcepts } from "@/data/ml-design";
 import { activeResources } from "@/data/resources";
 import { salaryNegotiationModules } from "@/data/salary-negotiation";
 import { systemDesignLessons } from "@/data/system-design/curriculum";
+import { mlDesignProblemHref } from "@/lib/ml-design-routes";
 
 export interface GlobalSearchItem {
   title: string;
@@ -67,7 +68,7 @@ export const globalSearchItems: readonly GlobalSearchItem[] = [
   ...lowLevelDesignLessons.filter((lesson) => lesson.status === "published").map((lesson) => ({ title: lesson.title, type: "Low-Level Design lesson", href: `/low-level-design/lessons/${lesson.slug}` })),
   ...lowLevelDesignPractice.filter((problem) => problem.status === "published").map((problem) => ({ title: problem.title, type: "Low-Level Design practice", href: `/low-level-design/practice/${problem.slug}` })),
   ...salaryNegotiationModules.filter((module) => module.status === "published").map((module) => ({ title: module.title, type: "Salary Negotiation module", href: `/salary-negotiation/${module.slug}` })),
-  ...activeMlDesignProblems.map((problem) => ({ title: problem.title, type: "ML Design problem", href: `/ml-design/${problem.slug}` })),
+  ...activeMlDesignProblems.map((problem) => ({ title: problem.title, type: "ML Design problem", href: mlDesignProblemHref(problem.slug) })),
   ...mlDesignConcepts.map((concept) => ({ title: concept.title, type: "ML Design concept", href: "/ml-design#concepts" })),
   ...behavioralCategories.map((category) => ({ title: category.name, type: "Behavioral category", href: `/behavioral?category=${encodeURIComponent(category.name)}` })),
   ...behavioralSearchQuestions.map((question) => ({ title: question.prompt, type: "Behavioral practice", href: `/behavioral?question=${question.slug}` })),
