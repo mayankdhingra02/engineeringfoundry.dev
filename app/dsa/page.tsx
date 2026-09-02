@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getDsaWorkspaceState } from "@/lib/dsa/queries";
 import { chooseContinueQuestion, getNeedsReview, getRoadmapProgress } from "@/lib/dsa/progress";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 
 export const metadata = createPageMetadata({
   title: "DSA Interview Prep Workspace",
@@ -25,12 +26,13 @@ async function AccountPracticePreview() {
 }
 
 export default function DsaPage() {
+  const accountPlatformAvailable = isAccountPlatformAvailable();
   return <div className="dsa-workspace-layout">
     <DSAWorkspaceSidebar />
     <div className="dsa-workspace-main">
       <DSAWorkspaceHeader />
       <Suspense fallback={null}><AccountPracticePreview /></Suspense>
-      <QuestionBrowserPreview questions={dsaInterviewQuestionDatabase} companies={dsaCompanies} />
+      <QuestionBrowserPreview questions={dsaInterviewQuestionDatabase} companies={dsaCompanies} accountPlatformAvailable={accountPlatformAvailable} />
       <div className="dsa-workspace-lower-grid"><RoadmapPreview /><ReviewPreview /></div>
     </div>
   </div>;

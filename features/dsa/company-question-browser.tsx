@@ -9,9 +9,9 @@ export function CompanyIndex({ companies, questions }: { companies: DSACompany[]
   return <CompanyDirectory companies={companies} questions={questions} />;
 }
 
-export function CompanyQuestionBrowser({ questions, companies, fixedCompanySlug }: {
-  questions: DSAInterviewQuestion[]; companies: DSACompany[]; fixedCompanySlug?: string;
+export function CompanyQuestionBrowser({ questions, companies, fixedCompanySlug, accountPlatformAvailable }: {
+  questions: DSAInterviewQuestion[]; companies: DSACompany[]; fixedCompanySlug?: string; accountPlatformAvailable: boolean;
   progressStatusById?: Readonly<Record<string, DSAQuestionProgressStatus>>;
 }) {
-  return <QuestionBrowser questions={questions} companies={companies} fixedCompanySlug={fixedCompanySlug} />;
+  return <QuestionBrowser questions={questions} companies={companies} fixedCompanySlug={fixedCompanySlug} accountPlatformAvailable={accountPlatformAvailable} />;
 }

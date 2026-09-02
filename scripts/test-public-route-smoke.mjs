@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import {
+  DISABLED_ACCOUNT_DSA_EXPECTATIONS,
   PUBLIC_ROUTES,
   normalizeHostedOrigin,
   runPublicRouteSmoke,
@@ -38,6 +39,7 @@ const notFoundRoutePattern = /not-a-(?:real-(?:topic|company|problem|lesson|chal
 const fixture = createServer((request, response) => {
   const url = new URL(request.url, "http://fixture.invalid");
   const pathname = url.pathname;
+  const route = `${pathname}${url.search}`;
   if (redirects.has(pathname)) {
     response.writeHead(308, { location: redirects.get(pathname) });
     response.end("redirect");
@@ -49,11 +51,12 @@ const fixture = createServer((request, response) => {
     return;
   }
 
+  const disabledDsaMarker = DISABLED_ACCOUNT_DSA_EXPECTATIONS.find((expectation) => expectation.route === route)?.marker;
   const body = pathname === "/contact"
     ? "Open Discord Open GitHub Issues"
     : accountRoutePattern.test(pathname)
       ? "Account features are not available yet."
-      : "public content";
+      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}`;
   response.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "x-content-type-options": "nosniff",
@@ -108,6 +111,7 @@ try {
   assert.equal(spawnCalled, false, "hosted mode must not spawn the local application server");
   assert.ok(requestedOrigins.length > PUBLIC_ROUTES.length, "hosted fixture must exercise the complete smoke assertion set");
   assert.ok(requestedOrigins.every((requestedOrigin) => requestedOrigin === origin), "hosted mode must request only the supplied origin");
+  assert.ok(DISABLED_ACCOUNT_DSA_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account DSA assertion must exercise a declared public route");
   const commandOutput = await runHostedCommand(origin);
   assert.match(commandOutput, /Public route smoke passed \(hosted\)/, "the hosted package command must exercise the supplied fixture");
 } finally {

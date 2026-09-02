@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { activeBehavioralQuestions } from "@/data/behavioral";
 import { activeMlDesignProblems } from "@/data/ml-design";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { canonicalDsaQuestionById } from "@/lib/dsa/catalog";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import {
@@ -33,6 +34,7 @@ export async function recordPreparationActivityAction(input: {
   itemId: string;
   status: LocalProgressStatus;
 }): Promise<PreparationActivityActionResult> {
+  if (!isAccountPlatformAvailable()) return { saved: false, message: "Account persistence is not available in this configuration." };
   const actor = await getAuthenticatedActor();
   if (!actor) return { saved: false, message: "Sign in to keep this activity with your account." };
 

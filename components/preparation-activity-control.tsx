@@ -13,7 +13,12 @@ import {
   type PreparationTrack,
 } from "@/lib/preparation-progress/local";
 
-export function PreparationActivityControl({ track, itemId, noun = "activity" }: { track: PreparationTrack; itemId: string; noun?: string }) {
+type PreparationActivityControlProps = { itemId: string; noun?: string } & (
+  | { track: "dsa"; accountPlatformAvailable: boolean }
+  | { track: Exclude<PreparationTrack, "dsa">; accountPlatformAvailable?: boolean }
+);
+
+export function PreparationActivityControl({ track, itemId, noun = "activity", accountPlatformAvailable = true }: PreparationActivityControlProps) {
   const [status, setStatus] = useState<LocalProgressStatus | "not-started">("not-started");
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -33,11 +38,13 @@ export function PreparationActivityControl({ track, itemId, noun = "activity" }:
     setPending(true);
     try {
       let saved = false;
-      try {
-        const result = await recordPreparationActivityAction({ track, itemId, status: next });
-        saved = result.saved;
-        setMessage(result.message);
-      } catch { setMessage("Saved in this browser. Sign in later to import it deliberately."); }
+      if (accountPlatformAvailable) {
+        try {
+          const result = await recordPreparationActivityAction({ track, itemId, status: next });
+          saved = result.saved;
+          setMessage(result.message);
+        } catch { setMessage("Saved in this browser. Sign in later to import it deliberately."); }
+      }
       let localRecorded = false;
       if (!saved) {
         try {
@@ -47,6 +54,7 @@ export function PreparationActivityControl({ track, itemId, noun = "activity" }:
           localRecorded = true;
         } catch { /* Browser storage is optional; the visible state remains useful for this visit. */ }
       }
+      if (!accountPlatformAvailable) setMessage(localRecorded ? "Saved in this browser. Account saving is unavailable in this configuration." : "Recorded for this visit. Browser storage and account saving are unavailable.");
       if (next === "completed" && (saved || localRecorded)) {
         trackAnalytics("preparation_activity_recorded", { track, item_id: itemId, status: next, persistence: saved ? "account" : "local" });
       }

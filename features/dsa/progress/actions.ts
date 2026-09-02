@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { canonicalDsaQuestionById } from "@/lib/dsa/catalog";
 import type { DsaConfidence, DsaQuestionStatus } from "@/lib/dsa/progress";
@@ -9,6 +10,8 @@ import type { RoadmapLevel } from "@/data/dsa/level-roadmaps";
 export type DsaProgressActionState = { status: "idle" | "success" | "error"; message: string; analytics?: { questionId: string; recordedStatus: DsaQuestionStatus } };
 const statuses = new Set<DsaQuestionStatus>(["not_started", "attempted", "solved", "review"]);
 const confidences = new Set<DsaConfidence>(["low", "medium", "high"]);
+
+const accountUnavailable = () => ({ status: "error", message: "Account persistence is not available in this configuration." } satisfies DsaProgressActionState);
 
 function refreshDsa(questionId?: string) {
   revalidatePath("/dsa");
@@ -20,6 +23,7 @@ function refreshDsa(questionId?: string) {
 }
 
 async function save(questionId: string, values: { status: DsaQuestionStatus; confidence: DsaConfidence | null; bookmarked: boolean; notes: string | null }) {
+  if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Sign in to save practice progress." } satisfies DsaProgressActionState;
   if (!canonicalDsaQuestionById.has(questionId)) return { status: "error", message: "That question is not in the canonical catalog." } satisfies DsaProgressActionState;
@@ -53,6 +57,7 @@ export async function updateDsaQuestionProgressAction(_: DsaProgressActionState,
 export async function quickDsaStatusAction(formData: FormData): Promise<DsaProgressActionState> {
   const questionId = String(formData.get("question_id") ?? "");
   const status = String(formData.get("status") ?? "attempted") as DsaQuestionStatus;
+  if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Sign in to update practice progress." };
   if (!canonicalDsaQuestionById.has(questionId) || !statuses.has(status)) return { status: "error", message: "That practice update is not valid." };
@@ -63,6 +68,7 @@ export async function quickDsaStatusAction(formData: FormData): Promise<DsaProgr
 
 export async function toggleDsaBookmarkAction(formData: FormData): Promise<DsaProgressActionState> {
   const questionId = String(formData.get("question_id") ?? "");
+  if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Sign in to update bookmarks." };
   if (!canonicalDsaQuestionById.has(questionId)) return { status: "error", message: "That question is not in the practice catalog." };
@@ -73,6 +79,7 @@ export async function toggleDsaBookmarkAction(formData: FormData): Promise<DsaPr
 
 export async function savePreferredDsaRoadmapAction(level: RoadmapLevel): Promise<DsaProgressActionState> {
   if (!["sde1", "sde2", "sde3plus"].includes(level)) return { status: "error", message: "Choose a valid roadmap level." };
+  if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Sign in to save a preferred roadmap." };
   const update = await actor.supabase.from("user_preparation_preferences").update({ dsa_level: level }).eq("user_id", actor.user.id).select("user_id");
