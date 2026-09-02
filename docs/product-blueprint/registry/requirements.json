@@ -90,7 +90,7 @@
       "status": "partial",
       "research_status": "needs-research",
       "publication_status": "stale-review",
-      "routes": ["/system-design"],
+      "routes": ["/system-design/start-here/introduction"],
       "source_ledger_ids": [],
       "research_artifact_ids": ["RA-SD-CONTENT-RESEARCH-BLUEPRINT", "RA-SD-CURRICULUM-TOPIC-MAP"],
       "prerequisite_ids": ["EF-GLOBAL"],
