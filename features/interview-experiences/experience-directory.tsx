@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { SearchCheck } from "lucide-react";
 
-export type PublicExperience = { id: string; company_name: string; role_title: string; role_level: string | null; region: string | null; interview_date: string | null; summary: string; preparation_lessons: string | null; public_identity: "anonymous" | "username"; interview_experience_rounds: { round_type: string; topic_labels: string[]; process_notes: string | null }[] | null };
+export type PublicExperience = { id: string; company_name: string; role_title: string; role_level: string | null; region: string | null; interview_date: string | null; summary: string; preparation_lessons: string | null; public_identity: "anonymous" | "username"; interview_experience_rounds: { round_type: string; topic_labels: string[] }[] | null };
 
 export function ExperienceDirectory({ experiences }: { experiences: readonly PublicExperience[] }) {
   const [company, setCompany] = useState(""); const [level, setLevel] = useState(""); const [region, setRegion] = useState(""); const [stage, setStage] = useState("");

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { queryLocalDatabase } from "./lib/local-supabase.mjs";
 
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -156,7 +157,55 @@ const fixture = {
   systemDesignAttemptId: null,
   preparationId: null,
   preparationTaskId: null,
+  publicExperienceId: null,
 };
+
+await check("public interview experience uses the exact anonymous nested projection", async () => {
+  const saved = expectSuccess(await a.authClient.rpc("save_interview_experience_draft", {
+    target_id: null,
+    payload: {
+      company_name: fixtureCompany,
+      role_title: "Software Engineer",
+      role_level: "Mid",
+      summary: "A bounded local qualification report that verifies the public nested projection without exposing private moderation fields.",
+      publication_consent: true,
+      public_identity: "anonymous",
+      rounds: [{
+        round_type: "Technical",
+        topic_labels: ["Algorithms"],
+        process_notes: "Private qualification process notes.",
+      }],
+    },
+  }), "experience draft creation failed");
+  fixture.publicExperienceId = saved;
+  expectSuccess(await a.authClient.rpc("submit_interview_experience", { target_id: saved }), "experience submission failed");
+  queryLocalDatabase(
+    "update public.interview_experiences set status = 'approved', reviewed_at = transaction_timestamp(), review_note = 'Private qualification moderation note.' where id = :'experience_id'::uuid",
+    { experience_id: saved },
+  );
+
+  const publicRead = expectSuccess(await anonymous
+    .from("interview_experiences")
+    .select("id,company_name,role_title,summary,public_identity,interview_experience_rounds(round_type,topic_labels)")
+    .eq("id", saved)
+    .single(), "anonymous nested experience read failed");
+  expect(
+    JSON.stringify(Object.keys(publicRead).sort()) === JSON.stringify(["company_name", "id", "interview_experience_rounds", "public_identity", "role_title", "summary"]),
+    `public report returned an unexpected shape: ${Object.keys(publicRead).sort().join(",")}`,
+  );
+  expect(publicRead.interview_experience_rounds?.length === 1, "public nested round was absent");
+  expect(
+    JSON.stringify(Object.keys(publicRead.interview_experience_rounds[0]).sort()) === JSON.stringify(["round_type", "topic_labels"]),
+    `public round returned an unexpected shape: ${Object.keys(publicRead.interview_experience_rounds[0]).sort().join(",")}`,
+  );
+
+  expectSqlError(await anonymous.from("interview_experiences").select("author_id,review_note").eq("id", saved), "42501");
+  expectSqlError(await anonymous.from("interview_experiences").select("id,interview_experience_rounds(process_notes)").eq("id", saved), "42501");
+  expectInvisible(await b.authClient.from("interview_experiences").select("id,author_id,review_note").eq("id", saved), "approved report base row for a non-owner");
+  const ownerRead = expectSuccess(await a.authClient.from("interview_experiences").select("author_id,review_note,created_at").eq("id", saved).single(), "owner internal read failed");
+  expect(ownerRead.author_id === a.user.id && ownerRead.review_note === "Private qualification moderation note.", "owner internal fields did not round-trip");
+  return "safe nested fields only; anon hidden columns denied; non-owner base row invisible";
+});
 
 await check("User A creates and reads an application through the public Data API", async () => {
   const insertion = await a.authClient
