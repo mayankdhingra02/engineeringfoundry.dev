@@ -137,7 +137,18 @@ function assertString(value, label, { nullable = false } = {}) {
 function assertIsoDate(value, label, { nullable = false } = {}) {
   if (nullable && value === null) return;
   assertString(value, label);
-  if (!/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z)?$/.test(value) || Number.isNaN(Date.parse(value))) fail(`${label} must be an ISO-8601 date or UTC timestamp.`);
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const wholeSecondTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(value);
+  const millisecondTimestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value);
+  if (!dateOnly && !wholeSecondTimestamp && !millisecondTimestamp) fail(`${label} must be an ISO-8601 date or UTC timestamp.`);
+
+  const normalized = dateOnly
+    ? `${value}T00:00:00.000Z`
+    : wholeSecondTimestamp
+      ? value.replace(/Z$/, ".000Z")
+      : value;
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.valueOf()) || parsed.toISOString() !== normalized) fail(`${label} must be an ISO-8601 date or UTC timestamp.`);
 }
 
 function assertStringArray(value, label) {
