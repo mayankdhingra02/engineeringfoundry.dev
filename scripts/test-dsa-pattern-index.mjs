@@ -9,6 +9,7 @@ const requireText = (source, text, message) => { if (!source.includes(text)) fai
 const prohibit = (source, pattern, message) => { if (pattern.test(source)) failures.push(message); };
 
 const route = read("app/dsa/[...segments]/page.tsx");
+const styles = read("app/globals.css");
 const browser = read("features/dsa/questions/question-browser.tsx");
 const search = read("components/global-search.tsx");
 
@@ -21,6 +22,8 @@ for (const pattern of dsaPatterns) {
 
 requireText(route, 'filterDsaQuestionsBySearch(dsaInterviewQuestionDatabase, pattern.slug).length', "Pattern card counts do not use the production browser search helper and public question collection.");
 requireText(route, 'className="pattern-grid"', "Pattern index does not use the responsive pattern-card grid.");
+requireText(route, '<h3 className="pattern-grid-title">{pattern.name}</h3>', "Topic pattern cards do not preserve semantic title hierarchy.");
+requireText(styles, ".pattern-grid h3.pattern-grid-title { margin: 0; font-size: 13px; font-weight: 700; }", "Topic pattern-card headings do not preserve their compact title styling.");
 requireText(route, 'dsaPatterns.map((pattern) =>', "Pattern index is not derived from curated pattern data.");
 for (const field of ["pattern.id", "pattern.name", "pattern.summary", "pattern.recognitionSignals.map", "pattern.commonMistakes.map"]) {
   requireText(route, field, `Pattern index does not render ${field} from curated data.`);
@@ -37,6 +40,10 @@ requireText(browser, 'window.history.replaceState(null, "", query ? `${pathname}
 requireText(browser, "filters={filters}", "Question browser does not reconcile every control and result set from URL-derived filters.");
 prohibit(browser, /<BrowserCore\s+key=/, "Question browser still remounts its interactive subtree when the query string changes, risking input-focus loss.");
 requireText(search, 'href: `/dsa/questions?q=${encodeURIComponent(pattern.slug)}`', "Global search pattern results do not use the canonical pattern query.");
+for (const marker of ["Reviewed report directory", "Private local reflection", "Reviewed reports · private local reflection"]) {
+  requireText(search, marker, `Global search does not accurately describe the live interview-experience surface: ${marker}.`);
+}
+prohibit(search, /Future reviewed directory|Private writing tool/, "Global search still describes the live interview-experience directory as future or private-only.");
 
 for (const pattern of dsaPatterns) {
   const slugResults = filterDsaQuestionsBySearch(dsaInterviewQuestionDatabase, pattern.slug);

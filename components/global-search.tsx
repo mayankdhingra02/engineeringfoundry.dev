@@ -34,8 +34,8 @@ const staticResults = [
   { title: "Engineering Challenge Lab", type: "Practice", href: "/challenges" },
   { title: "Community Hub", type: "Community", href: "/community" },
   { title: "Community Recognition Preview", type: "Community", href: "/leaderboard" },
-  { title: "Interview Experience Write-up Builder", type: "Private writing tool", href: "/interview-experiences" },
-  { title: "Interview Experiences", type: "Future reviewed directory", href: "/interview-experiences" },
+  { title: "Interview Experiences", type: "Reviewed report directory", href: "/interview-experiences" },
+  { title: "Interview Experience Reflection", type: "Private local reflection", href: "/interview-experiences" },
 ];
 
 const suggestedResults = [
@@ -74,7 +74,7 @@ export function GlobalSearch({ triggerClass = "icon-button" }: { triggerClass?: 
     ...dsaLanguages.map((language) => ({ title: `DSA in ${language.name}`, type: "DSA language guide", href: `/dsa/languages/${language.slug}` })),
     ...dsaRoadmaps.map((roadmap) => ({ title: `${roadmap.role} ${roadmap.durationDays}-day DSA roadmap`, type: "DSA roadmap", href: `/dsa/roadmaps/${roadmap.roleSlug}/${roadmap.durationDays}-day` })),
     ...companies.map((company) => ({ title: company.name, type: "Company guide", href: `/companies/${company.slug}` })),
-    ...companies.map((company) => ({ title: `${company.name} interview experience workspace`, type: "Private writing tool", href: `/interview-experiences/${company.slug}` })),
+    ...companies.map((company) => ({ title: `${company.name} interview experiences`, type: "Reviewed reports · private local reflection", href: `/interview-experiences/${company.slug}` })),
     ...activeChallenges.map((challenge) => ({ title: challenge.title, type: `${challenge.category} challenge`, href: `/challenges/${challenge.slug}` })),
     ...systemDesignLessons.map((lesson) => ({ title: lesson.navigationTitle ?? lesson.title, type: `System Design lesson · ${lesson.category}`, href: lesson.slug! })),
     ...lowLevelDesignLessons.filter((lesson) => lesson.status === "published").map((lesson) => ({ title: lesson.title, type: "Low-Level Design lesson", href: `/low-level-design/lessons/${lesson.slug}` })),
