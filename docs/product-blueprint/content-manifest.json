@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "1c14864a24b6282b47b83ce506548ae71b2b9c29",
-  "repository_state_sha256": "81ed571dc80ad42110d786172d0438b083edc6bc779a0e5be5f211a729da8b0b",
+  "repository_sha": "0ae9bd575072e535b57cf47be2dbc7e81860435e",
+  "repository_state_sha256": "26fa4cd5760f1b87df6e2076d4ccf13bfb549502206e3ee477c70dd76c1ddf33",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1396,7 +1396,7 @@
       "id": "EF-SUP",
       "kind": "requirement-family",
       "known_gaps": [
-        "Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.",
+        "Broad-search recovery and feedback discovery remain repository P1 candidates.",
         "Employer-specific referral policy remains intentionally absent."
       ],
       "last_verified_at": "2026-09-02",

@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 1c14864a24b6282b47b83ce506548ae71b2b9c29
-repository_state_sha256: 81ed571dc80ad42110d786172d0438b083edc6bc779a0e5be5f211a729da8b0b
+repository_sha: 0ae9bd575072e535b57cf47be2dbc7e81860435e
+repository_state_sha256: 26fa4cd5760f1b87df6e2076d4ccf13bfb549502206e3ee477c70dd76c1ddf33
 ---
 
 # Engineering Foundry requirement coverage
@@ -141,7 +141,7 @@ repository_state_sha256: 81ed571dc80ad42110d786172d0438b083edc6bc779a0e5be5f211a
 | EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | — | 0 | 3 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
 | EF-SD-PRACTICE-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | 27 of 60 walkthroughs are published; 33 remain researched and unpublished. |
 | EF-SD-TOPIC-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/[...segments] | 0 | 2 | 32 of 178 repository topics remain unpublished.; The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking. |
-| EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 4 | Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.; Employer-specific referral policy remains intentionally absent. |
+| EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 4 | Broad-search recovery and feedback discovery remain repository P1 candidates.; Employer-specific referral policy remains intentionally absent. |
 | EF-SUP-REFERRAL-POLICY | referrals | p2 | deferred | needs-current-verification | unpublished | missing | /referrals | — | 0 | 2 | The current local toolkit deliberately directs users to official employer rules and makes no employer-policy claims. |
 | EF-VIZ | visualization-lab | p1 | partial | approved-needs-source-import | unpublished | missing | — | — | 0 | 1 | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
 
@@ -161,7 +161,7 @@ repository_state_sha256: 81ed571dc80ad42110d786172d0438b083edc6bc779a0e5be5f211a
 | EF-PLAY | modeled | partial | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
 | EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
 | EF-SD | modeled | partial | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
-| EF-SUP | modeled | partial | Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.; Employer-specific referral policy remains intentionally absent. |
+| EF-SUP | modeled | partial | Broad-search recovery and feedback discovery remain repository P1 candidates.; Employer-specific referral policy remains intentionally absent. |
 | EF-GLOBAL-ATOMIC-COVERAGE | unmodeled | unmodeled | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
 
 ## P1 blockers and dispositions
