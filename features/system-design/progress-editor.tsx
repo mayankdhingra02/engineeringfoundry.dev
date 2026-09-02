@@ -37,6 +37,8 @@ export function SystemDesignProgressEditor({ itemId, itemType, progress, compact
   </details>;
 }
 
-export function SystemDesignSignedOutProgress() {
-  return <Link className="sd-progress-signin" href="/signin?next=/system-design/practice">Sign in to track progress</Link>;
+export function SystemDesignSignedOutProgress({ accountPlatformAvailable }: { accountPlatformAvailable: boolean }) {
+  return accountPlatformAvailable
+    ? <Link className="sd-progress-signin" href="/signin?next=/system-design/practice">Sign in to track progress</Link>
+    : <span className="sd-progress-loading">Account progress unavailable</span>;
 }

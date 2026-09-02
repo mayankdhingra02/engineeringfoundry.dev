@@ -3,8 +3,10 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import {
   DISABLED_ACCOUNT_DSA_EXPECTATIONS,
+  DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS,
   PUBLIC_ROUTES,
   normalizeHostedOrigin,
+  runPublicRouteAssertions,
   runPublicRouteSmoke,
   selectSmokeConfiguration,
 } from "./smoke-public-routes.mjs";
@@ -35,6 +37,8 @@ const redirects = new Map([
 ]);
 const accountRoutePattern = /^(?:\/signin|\/signup|\/forgot-password|\/reset-password|\/onboarding|\/dashboard|\/settings\/profile|\/applications(?:\/|$)|\/behavioral\/(?:workspace|questions|stories)(?:\/|$)|\/u\/not-a-qualified-profile$)/;
 const notFoundRoutePattern = /not-a-(?:real-(?:topic|company|problem|lesson|challenge)|role)/;
+let omittedSystemDesignMarkerRoute = null;
+let leakedSystemDesignHandoffRoute = null;
 
 const fixture = createServer((request, response) => {
   const url = new URL(request.url, "http://fixture.invalid");
@@ -52,11 +56,13 @@ const fixture = createServer((request, response) => {
   }
 
   const disabledDsaMarker = DISABLED_ACCOUNT_DSA_EXPECTATIONS.find((expectation) => expectation.route === route)?.marker;
+  const disabledSystemDesignMarker = route === omittedSystemDesignMarkerRoute ? undefined : DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS.find((expectation) => expectation.route === route)?.marker;
+  const leakedSystemDesignHandoff = route === leakedSystemDesignHandoffRoute ? ' href="/signin?next=/system-design/practice" Sign in to practice' : "";
   const body = pathname === "/contact"
     ? "Open Discord Open GitHub Issues"
     : accountRoutePattern.test(pathname)
       ? "Account features are not available yet."
-      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}`;
+      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}${disabledSystemDesignMarker ? ` ${disabledSystemDesignMarker}` : ""}${leakedSystemDesignHandoff}`;
   response.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "x-content-type-options": "nosniff",
@@ -112,6 +118,13 @@ try {
   assert.ok(requestedOrigins.length > PUBLIC_ROUTES.length, "hosted fixture must exercise the complete smoke assertion set");
   assert.ok(requestedOrigins.every((requestedOrigin) => requestedOrigin === origin), "hosted mode must request only the supplied origin");
   assert.ok(DISABLED_ACCOUNT_DSA_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account DSA assertion must exercise a declared public route");
+  assert.ok(DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account System Design assertion must exercise a declared public route");
+  omittedSystemDesignMarkerRoute = "/system-design/practice";
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/system-design\/practice lacks the disabled-account System Design state/, "hosted smoke must reject a missing server-rendered System Design disabled marker");
+  omittedSystemDesignMarkerRoute = null;
+  leakedSystemDesignHandoffRoute = "/system-design/start-here/introduction";
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /exposes disabled System Design account handoff/, "hosted smoke must reject a disabled-account sign-in handoff");
+  leakedSystemDesignHandoffRoute = null;
   const commandOutput = await runHostedCommand(origin);
   assert.match(commandOutput, /Public route smoke passed \(hosted\)/, "the hosted package command must exercise the supplied fixture");
 } finally {

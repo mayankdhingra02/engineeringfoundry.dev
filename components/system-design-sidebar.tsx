@@ -74,9 +74,9 @@ function CurriculumBranch({
   </li>;
 }
 
-export function SystemDesignSidebar({ curriculum, completedLessonSlugs = [] }: { curriculum: SystemDesignCurriculumNode[]; completedLessonSlugs?: readonly string[] }) {
+export function SystemDesignSidebar({ curriculum, completedLessonSlugs = [], accountPlatformAvailable }: { curriculum: SystemDesignCurriculumNode[]; completedLessonSlugs?: readonly string[]; accountPlatformAvailable: boolean }) {
   const pathname = usePathname();
-  const activeWorkspace = pathname === "/system-design/plan" ? "plan" : pathname === "/system-design/practice" ? "workspace" : pathname.startsWith("/system-design/problems") ? "practice" : "learn";
+  const activeWorkspace = pathname === "/system-design/plan" ? "plan" : pathname === "/system-design/practice" && accountPlatformAvailable ? "workspace" : pathname.startsWith("/system-design/problems") || pathname === "/system-design/practice" ? "practice" : "learn";
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const activeIds = useMemo(() => activeAncestorIds(curriculum, pathname), [curriculum, pathname]);
@@ -123,7 +123,7 @@ export function SystemDesignSidebar({ curriculum, completedLessonSlugs = [] }: {
     const items = [
       { id: "learn", label: "Learn", href: "/system-design/start-here/introduction", icon: BookOpen },
       { id: "practice", label: "Practice", href: "/system-design/problems", icon: ListChecks },
-      { id: "workspace", label: "My Practice", href: "/system-design/practice", icon: NotebookPen },
+      ...(accountPlatformAvailable ? [{ id: "workspace", label: "My Practice", href: "/system-design/practice", icon: NotebookPen }] : []),
       { id: "plan", label: "Plan", href: "/system-design/plan", icon: CalendarDays },
     ] as const;
     return <nav className="sd-workspace-nav" aria-label="System Design workspace">{items.map((item) => {

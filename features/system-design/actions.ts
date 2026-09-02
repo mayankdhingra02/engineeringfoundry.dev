@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import {
   attemptDocumentFromForm,
@@ -19,6 +20,7 @@ import {
 
 export type SystemDesignActionState = { status: "idle" | "success" | "error"; message: string; conflict?: boolean; revision?: number; analytics?: { itemId: string; itemType: "concept" | "design_problem"; recordedStatus: SystemDesignStatus } };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const accountUnavailable = () => ({ status: "error", message: "Account persistence is not available in this configuration." } satisfies SystemDesignActionState);
 
 function refreshSystemDesign(problemId?: string, attemptId?: string) {
   revalidatePath("/system-design/practice");
@@ -29,6 +31,7 @@ function refreshSystemDesign(problemId?: string, attemptId?: string) {
 }
 
 export async function saveSystemDesignProgressAction(_: SystemDesignActionState, formData: FormData): Promise<SystemDesignActionState> {
+  if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Sign in to save private System Design progress." };
   const itemId = String(formData.get("item_id") ?? "");
@@ -50,6 +53,7 @@ export async function saveSystemDesignProgressAction(_: SystemDesignActionState,
 }
 
 export async function createSystemDesignAttemptAction(problemId: string, formData: FormData) {
+  if (!isAccountPlatformAvailable()) return;
   const actor = await getAuthenticatedActor();
   const applicationId = String(formData.get("application_id") ?? "") || null;
   if (!actor) redirect(`/signin?next=${encodeURIComponent(`/system-design/problems/${problemId}`)}`);
@@ -66,6 +70,7 @@ export async function createSystemDesignAttemptAction(problemId: string, formDat
 }
 
 export async function saveSystemDesignAttemptAction(attemptId: string, problemId: string, _: SystemDesignActionState, formData: FormData): Promise<SystemDesignActionState> {
+  if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Your session expired. Sign in and reopen this attempt." };
   if (!UUID.test(attemptId) || !canonicalSystemDesignProblemIds.has(problemId)) return { status: "error", message: "This attempt could not be found." };
@@ -92,6 +97,7 @@ export async function saveSystemDesignAttemptAction(attemptId: string, problemId
 }
 
 export async function deleteSystemDesignAttemptAction(attemptId: string, problemId: string) {
+  if (!isAccountPlatformAvailable()) return;
   const actor = await getAuthenticatedActor();
   if (!actor) redirect("/signin?next=/system-design/practice");
   if (!UUID.test(attemptId) || !canonicalSystemDesignProblemIds.has(problemId)) return;

@@ -15,13 +15,20 @@ const check = (condition, message) => { assert.ok(condition, message); checks +=
 const migration = readFileSync(new URL("../supabase/migrations/202608140008_create_system_design_workspace.sql", import.meta.url), "utf8");
 const validationMigration = readFileSync(new URL("../supabase/migrations/202608140010_enforce_system_design_attempt_document_shape.sql", import.meta.url), "utf8");
 const actions = readFileSync(new URL("../features/system-design/actions.ts", import.meta.url), "utf8");
+const queries = readFileSync(new URL("../lib/system-design/queries.ts", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../features/system-design/attempt-editor.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../app/system-design/practice/page.tsx", import.meta.url), "utf8");
 const problemPanel = readFileSync(new URL("../features/system-design/problem-practice-panel.tsx", import.meta.url), "utf8");
+const privateProgress = readFileSync(new URL("../features/system-design/private-progress.tsx", import.meta.url), "utf8");
+const progressEditor = readFileSync(new URL("../features/system-design/progress-editor.tsx", import.meta.url), "utf8");
+const contentRoute = readFileSync(new URL("../app/system-design/[...segments]/page.tsx", import.meta.url), "utf8");
 const route = readFileSync(new URL("../app/system-design/problems/[slug]/practice/[attemptId]/page.tsx", import.meta.url), "utf8");
 const dashboard = readFileSync(new URL("../app/dashboard/page.tsx", import.meta.url), "utf8");
 const application = readFileSync(new URL("../app/applications/[id]/page.tsx", import.meta.url), "utf8");
 const practiceLibrary = readFileSync(new URL("../components/system-design-practice-library.tsx", import.meta.url), "utf8");
+const sidebar = readFileSync(new URL("../components/system-design-sidebar.tsx", import.meta.url), "utf8");
+const lesson = readFileSync(new URL("../components/system-design-lesson.tsx", import.meta.url), "utf8");
+const plan = readFileSync(new URL("../app/system-design/plan/page.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
 
 check(canonicalSystemDesignConceptIds.size === 146, "published concept catalog stays canonical");
@@ -98,6 +105,18 @@ check(actions.includes("canonicalSystemDesignProblemIds.has"), "server action va
 check(actions.includes("target_expected_revision"), "server action forwards concurrency token");
 check(actions.includes("getAuthenticatedActor"), "server actions derive actor from session");
 check(actions.includes("attemptDocumentFromForm"), "attempt document is server-validated");
+for (const actionName of ["saveSystemDesignProgressAction", "createSystemDesignAttemptAction", "saveSystemDesignAttemptAction", "deleteSystemDesignAttemptAction"]) {
+  const start = actions.indexOf(`export async function ${actionName}`);
+  const end = actions.indexOf("\nexport async function ", start + 1);
+  const body = actions.slice(start, end < 0 ? undefined : end);
+  check(start >= 0 && body.indexOf("isAccountPlatformAvailable()") < body.indexOf("getAuthenticatedActor()"), `${actionName} must reject disabled account persistence before resolving an actor`);
+}
+check(actions.includes('message: "Account persistence is not available in this configuration."'), "disabled progress and attempt saves return an explicit configuration error");
+check(actions.includes('redirect(`/signin?next=${encodeURIComponent(`/system-design/problems/${problemId}`)}`)') && actions.includes('redirect("/signin?next=/system-design/practice")'), "enabled signed-out attempt actions preserve their sign-in handoffs");
+check((queries.match(/if \(!accountPlatformAvailable\) return \{ accountPlatformAvailable, signedIn: false as const/g) ?? []).length === 3, "workspace, item, and problem queries expose a distinct disabled-account state");
+check((queries.match(/if \(!actor\) return \{ accountPlatformAvailable, signedIn: false as const/g) ?? []).length === 3, "enabled signed-out queries preserve account availability separately from authentication");
+check((queries.match(/accountPlatformAvailable,/g) ?? []).length >= 9 && queries.includes("signedIn: true as const"), "authenticated query results preserve the available state alongside account-backed data");
+check(queries.indexOf("if (!isAccountPlatformAvailable()) return null;") < queries.indexOf("const actor = await getAuthenticatedActor();", queries.indexOf("getSystemDesignAttempt")), "private attempt lookup fails closed before authentication when accounts are disabled");
 check(editor.includes("beforeunload"), "editor protects browser navigation with unsaved work");
 check(editor.includes("Unsaved changes"), "editor exposes dirty state");
 check(editor.includes("Save attempt"), "editor uses explicit save");
@@ -109,7 +128,15 @@ check(home.includes("chooseSystemDesignContinueTarget"), "workspace uses documen
 check(home.includes("Concept progress"), "workspace derives category-level concept progress");
 check(home.includes('details className="sd-practice-topic-progress"'), "category progress stays in a compact disclosure below filters");
 check(home.includes("slice(0, 80)"), "workspace bounds catalog rendering");
+check(home.indexOf("if (!accountPlatformAvailable)") < home.indexOf("const state = await getSystemDesignWorkspaceState"), "My Practice renders its public disabled state without invoking account queries");
+check(home.includes("Public System Design practice remains available") && home.includes('href="/system-design/problems"') && home.includes('href="/system-design/start-here/introduction"'), "disabled My Practice keeps System Design learning and public problems available");
+check(home.includes('href="/signin?next=/system-design/practice"'), "enabled signed-out My Practice retains its private-workspace sign-in handoff");
 check(practiceLibrary.includes("withApplication(item.slug)"), "public problem library preserves owned application context");
+check(practiceLibrary.includes("accountPlatformAvailable: boolean") && practiceLibrary.includes("Public practice remains available.") && practiceLibrary.includes('href="/signin?next=/system-design/practice"'), "problem library distinguishes disabled accounts from enabled signed-out visitors");
+check(problemPanel.includes("state.accountPlatformAvailable") && problemPanel.includes("Private design attempts are unavailable in this configuration") && problemPanel.includes("Sign in to practice"), "problem practice panel renders disabled, enabled signed-out, and authenticated attempt states");
+check(privateProgress.includes("accountPlatformAvailable={state.accountPlatformAvailable}") && progressEditor.includes("Account progress unavailable") && progressEditor.includes("Sign in to track progress"), "lesson progress distinguishes disabled accounts from enabled signed-out visitors");
+check(sidebar.includes("accountPlatformAvailable: boolean") && sidebar.includes("...(accountPlatformAvailable ?") && sidebar.includes('label: "My Practice"'), "sidebar exposes My Practice only when the account platform is available");
+check(contentRoute.includes("accountPlatformAvailable={state.accountPlatformAvailable}") && lesson.includes("accountPlatformAvailable={accountPlatformAvailable}") && plan.includes("accountPlatformAvailable={accountPlatformAvailable}"), "public problem, lesson, and plan routes forward server-derived account availability");
 check(editor.includes('role="status"'), "attempt save and error feedback is announced");
 check(editor.includes("<fieldset"), "structured attempt controls have a labeled semantic group");
 check(!editor.includes("<main>"), "attempt editor does not nest a main landmark");

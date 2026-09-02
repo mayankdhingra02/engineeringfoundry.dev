@@ -9,7 +9,7 @@ export const PUBLIC_ROUTES = [
   "/dsa/companies/amazon", "/dsa/roadmap", "/dsa/roadmap?topic=trees", "/dsa/practice", "/dsa/company-questions", "/dsa/company-questions/amazon", "/dsa/languages", "/dsa/languages/python",
   "/dsa/languages/choose-a-language", "/dsa/roadmaps", "/dsa/roadmaps/sde-2/60-day", "/dsa/questions/two-sum",
   "/dsa/strategy", "/dsa/interview-strategy", "/dsa/interview-strategy/problem-solving-framework", "/dsa/roadmap?level=sde2", "/system-design/plan",
-  "/system-design/fundamentals/caching", "/system-design/patterns/circuit-breaker",
+  "/system-design/problems", "/system-design/problems/url-shortener", "/system-design/practice", "/system-design/fundamentals/caching", "/system-design/patterns/circuit-breaker",
   "/ml-design/recommendation-system", "/companies/google", "/companies/amazon", "/companies/meta", "/companies/walmart", "/interview-experiences/google",
   "/challenges/bounded-stream-frequency-index", "/robots.txt", "/sitemap.xml",
 ];
@@ -21,6 +21,14 @@ export const DISABLED_ACCOUNT_DSA_EXPECTATIONS = [
   { route: "/dsa/companies/amazon", marker: "Account progress unavailable" },
   { route: "/dsa/roadmap?level=sde2", marker: "Account progress unavailable · public roadmap" },
   { route: "/dsa/questions/two-sum", marker: "Private notes are unavailable in this configuration" },
+];
+
+export const DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS = [
+  { route: "/system-design/start-here/introduction", marker: "Account progress unavailable" },
+  { route: "/system-design/problems", marker: "Public practice remains available" },
+  { route: "/system-design/problems/url-shortener", marker: "Private design attempts are unavailable in this configuration" },
+  { route: "/system-design/plan", marker: "Account saving is unavailable" },
+  { route: "/system-design/practice", marker: "Public System Design practice remains available" },
 ];
 
 const ACCOUNT_ROUTES = [
@@ -118,6 +126,13 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
       if (body.includes(unavailableHandoff)) throw new Error(`${route} exposes disabled DSA account handoff ${unavailableHandoff}.`);
     }
     if (!body.includes(marker)) throw new Error(`${route} lacks the disabled-account DSA state: ${marker}.`);
+  }
+  for (const { route, marker } of DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS) {
+    const body = publicBodies.get(route) ?? (await request(route)).body;
+    for (const unavailableHandoff of ['href="/signin', "Sign in to track", "Sign in to save", "Sign in to persist", "Sign in to keep private notes", "Sign in to practice", "Keep progress between sessions"]) {
+      if (body.includes(unavailableHandoff)) throw new Error(`${route} exposes disabled System Design account handoff ${unavailableHandoff}.`);
+    }
+    if (!body.includes(marker)) throw new Error(`${route} lacks the disabled-account System Design state: ${marker}.`);
   }
 
   const contact = await request("/contact");

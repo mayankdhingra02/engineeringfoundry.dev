@@ -63,21 +63,21 @@ const practiceLibraryLesson: SystemDesignCurriculumNode = {
 
 async function PersonalizedPracticeLibrary({ applicationId }: { applicationId?: string }) {
   const state = await getSystemDesignWorkspaceState(applicationId);
-  if (!state.signedIn) return <SystemDesignPracticeLibrary applicationId={applicationId} />;
+  if (!state.signedIn) return <SystemDesignPracticeLibrary accountPlatformAvailable={state.accountPlatformAvailable} applicationId={applicationId} />;
   const attemptCounts = state.attempts.reduce<Record<string, number>>((counts, attempt) => ({ ...counts, [attempt.problem_id]: (counts[attempt.problem_id] ?? 0) + 1 }), {});
-  return <SystemDesignPracticeLibrary signedIn progress={state.progress} attemptCounts={attemptCounts} applicationId={state.application?.id} />;
+  return <SystemDesignPracticeLibrary signedIn accountPlatformAvailable={state.accountPlatformAvailable} progress={state.progress} attemptCounts={attemptCounts} applicationId={state.application?.id} />;
 }
 
 export default async function SystemDesignContentPage({ params, searchParams }: { params: Promise<{ segments: string[] }>; searchParams: Promise<{ application?: string }> }) {
   const { segments } = await params;
   const context = await searchParams;
-  if (segments.length === 1 && segments[0] === "problems") return <SystemDesignLessonLayout lesson={practiceLibraryLesson}><Suspense fallback={<p className="sd-practice-loading">Loading practice progress…</p>}><PersonalizedPracticeLibrary applicationId={context.application} /></Suspense></SystemDesignLessonLayout>;
+  if (segments.length === 1 && segments[0] === "problems") return <SystemDesignLessonLayout lesson={practiceLibraryLesson}><Suspense fallback={<p className="sd-practice-loading">Loading practice library…</p>}><PersonalizedPracticeLibrary applicationId={context.application} /></Suspense></SystemDesignLessonLayout>;
 
   const lesson = getSystemDesignLesson(`/system-design/${segments.join("/")}`);
   if (!lesson) notFound();
   if (segments.length === 2 && segments[0] === "problems") {
     const problem = getSystemDesignPracticeContent(segments[1]);
-    if (problem) return <SystemDesignLessonLayout lesson={lesson}><Suspense fallback={<p className="sd-practice-loading">Loading your private attempts…</p>}><SystemDesignProblemPracticePanel problemId={problem.id} problemTitle={problem.title} applicationId={context.application} /></Suspense><SystemDesignPracticeProblemContent problem={problem} /></SystemDesignLessonLayout>;
+    if (problem) return <SystemDesignLessonLayout lesson={lesson}><Suspense fallback={<p className="sd-practice-loading">Loading practice options…</p>}><SystemDesignProblemPracticePanel problemId={problem.id} problemTitle={problem.title} applicationId={context.application} /></Suspense><SystemDesignPracticeProblemContent problem={problem} /></SystemDesignLessonLayout>;
   }
   if (cachingLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><CachingLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (lesson.id === "introduction") return <SystemDesignLessonLayout lesson={lesson}><IntroductionLessonContent /></SystemDesignLessonLayout>;
