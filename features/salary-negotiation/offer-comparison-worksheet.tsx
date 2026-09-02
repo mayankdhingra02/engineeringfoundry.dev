@@ -14,15 +14,25 @@ const money = (value: number) => new Intl.NumberFormat("en-US", { style: "curren
 export function OfferComparisonWorksheet() {
   const [offers, setOffers] = useState<DraftOffer[]>(() => [emptyOffer(1), emptyOffer(2)]);
   const [builder, setBuilder] = useState({ enthusiasm: "", request: "", rationale: "", flexibility: "", closing: "" });
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "unavailable">("idle");
   useEffect(() => { track("offer_comparison_opened", { surface: "salary-negotiation" }); }, []);
   const update = (id: string, key: keyof DraftOffer, value: string | boolean) => setOffers((current) => current.map((offer) => offer.id === id ? { ...offer, [key]: typeof value === "string" && ["baseSalary", "targetBonus", "signOn", "equityGrantValue", "vestingYears", "otherGuaranteedCompensation"].includes(key) ? asNumber(value) : value } : offer));
   const message = [builder.enthusiasm, builder.rationale, builder.request, builder.flexibility, builder.closing].map((part) => part.trim()).filter(Boolean).join(" ");
   const summaries = useMemo(() => offers.map((offer) => ({ offer, summary: calculateOfferComparison(offer) })), [offers]);
-  const copyMessage = async () => { if (!message) return; await navigator.clipboard?.writeText(message); setCopied(true); window.setTimeout(() => setCopied(false), 1800); };
+  const copyMessage = async () => {
+    if (!message) return;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(message);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("unavailable");
+    }
+    window.setTimeout(() => setCopyStatus("idle"), 2600);
+  };
 
   return <section className="salary-worksheet" id="compare-offers" aria-labelledby="offer-comparison-heading">
-    <header><div><h2 id="offer-comparison-heading">Private offer comparison</h2><p>Compare the terms you enter in this browser session. Nothing is sent to Engineering Foundry, analytics, a URL, or a server. Closing this page clears the worksheet.</p></div><button className="button button-secondary button-sm" type="button" onClick={() => setOffers((current) => current.length < MAX_OFFERS ? [...current, emptyOffer(current.length + 1)] : current)} disabled={offers.length >= MAX_OFFERS}><Plus size={15} />Add offer</button></header>
+    <header><div><h2 id="offer-comparison-heading">Private offer comparison</h2><p>Your inputs stay only in this page&apos;s in-memory state. Engineering Foundry does not transmit or store them; refreshing or closing the page clears them. If analytics is enabled and available, opening this page sends one fixed, value-free event that never includes anything you enter.</p></div><button className="button button-secondary button-sm" type="button" onClick={() => setOffers((current) => current.length < MAX_OFFERS ? [...current, emptyOffer(current.length + 1)] : current)} disabled={offers.length >= MAX_OFFERS}><Plus size={15} />Add offer</button></header>
     <p className="salary-worksheet-rule"><strong>Transparent math:</strong> first-year guaranteed cash = base + sign-on + other guaranteed compensation + bonus only when you mark it guaranteed. Target bonus and equity remain separate.</p>
     <div className="salary-offer-grid">
       {summaries.map(({ offer, summary }, index) => <article key={offer.id}>
@@ -40,7 +50,7 @@ export function OfferComparisonWorksheet() {
         <p className="salary-offer-warning">Annualized equity is only your entered grant value ÷ vesting years. It is not a realized value, market prediction, tax estimate, or recommendation.</p>
       </article>)}
     </div>
-    <section className="salary-message-builder" aria-labelledby="message-builder-heading"><header><div><h3 id="message-builder-heading">Review-and-copy message builder</h3><p>Private draft only. It does not send email or contact a recruiter.</p></div></header><div className="salary-builder-fields"><label><span>Enthusiasm</span><textarea value={builder.enthusiasm} onChange={(event) => setBuilder({ ...builder, enthusiasm: event.target.value })} placeholder="I’m excited about the role and team." rows={2} /></label><label><span>Rationale</span><textarea value={builder.rationale} onChange={(event) => setBuilder({ ...builder, rationale: event.target.value })} placeholder="The main gap for me is…" rows={2} /></label><label><span>Specific request</span><textarea value={builder.request} onChange={(event) => setBuilder({ ...builder, request: event.target.value })} placeholder="Could we revisit…" rows={2} /></label><label><span>Flexibility</span><textarea value={builder.flexibility} onChange={(event) => setBuilder({ ...builder, flexibility: event.target.value })} placeholder="If that is constrained, I’m open to…" rows={2} /></label><label className="salary-field-wide"><span>Closing</span><textarea value={builder.closing} onChange={(event) => setBuilder({ ...builder, closing: event.target.value })} placeholder="I appreciate your consideration." rows={2} /></label></div><div className="salary-message-output"><p>{message || "Your private draft will appear here as you add the parts you want to say."}</p><button type="button" className="button button-secondary button-sm" disabled={!message} onClick={copyMessage}><Copy size={14} />{copied ? "Copied" : "Copy draft"}</button></div></section>
+    <section className="salary-message-builder" aria-labelledby="message-builder-heading"><header><div><h3 id="message-builder-heading">Review-and-copy message builder</h3><p>Private draft only. Copy writes the assembled message to your clipboard; it does not send email or contact a recruiter.</p></div></header><div className="salary-builder-fields"><label><span>Enthusiasm</span><textarea value={builder.enthusiasm} onChange={(event) => setBuilder({ ...builder, enthusiasm: event.target.value })} placeholder="I’m excited about the role and team." rows={2} /></label><label><span>Rationale</span><textarea value={builder.rationale} onChange={(event) => setBuilder({ ...builder, rationale: event.target.value })} placeholder="The main gap for me is…" rows={2} /></label><label><span>Specific request</span><textarea value={builder.request} onChange={(event) => setBuilder({ ...builder, request: event.target.value })} placeholder="Could we revisit…" rows={2} /></label><label><span>Flexibility</span><textarea value={builder.flexibility} onChange={(event) => setBuilder({ ...builder, flexibility: event.target.value })} placeholder="If that is constrained, I’m open to…" rows={2} /></label><label className="salary-field-wide"><span>Closing</span><textarea value={builder.closing} onChange={(event) => setBuilder({ ...builder, closing: event.target.value })} placeholder="I appreciate your consideration." rows={2} /></label></div><div className="salary-message-output"><p>{message || "Your private draft will appear here as you add the parts you want to say."}</p><button type="button" className="button button-secondary button-sm" disabled={!message} onClick={copyMessage}><Copy size={14} />{copyStatus === "copied" ? "Copied" : "Copy draft"}</button><span role="status" aria-live="polite">{copyStatus === "copied" ? "Draft copied to your clipboard." : copyStatus === "unavailable" ? "Copy was unavailable. Select the draft and copy it manually." : ""}</span></div></section>
   </section>;
 }
 
