@@ -15,7 +15,7 @@ prohibit(data, /\b(?:streak|XP|success probability|expected interview score)\b/i
 
 const page = read("features/dsa/study-plans/study-plan-page.tsx");
 for (const marker of ["useSearchParams", "router.push", 'params.set(key, value)', "StudyPlanSelector", "StudyPlanOverview", "StudyPlanWeekList", "ReadinessChecklist", 'searchParams.get("company")']) requireText(page, marker, `Study plan page lacks ${marker}.`);
-for (const marker of ["accountPlatformAvailable: boolean", "accountPlatformAvailable={accountPlatformAvailable}", '<div className="dsa-plan-result">', '<StudyPlanWeekList key={`${plan.level}-${plan.duration}`} plan={plan} />']) requireText(page, marker, `DSA study-plan save wiring lacks ${marker}.`);
+for (const marker of ["accountPlatformAvailable: boolean", "useStudyPlanSaveCoordinator()", "coordinator={saveCoordinator}", "<StudyPlanSaveStatus coordinator={saveCoordinator} />", '<div className="dsa-plan-result">', '<StudyPlanWeekList key={`${plan.level}-${plan.duration}`} plan={plan} />']) requireText(page, marker, `DSA study-plan save wiring lacks ${marker}.`);
 prohibit(page, /<div key=\{`\$\{plan\.level\}-\$\{plan\.duration\}`\} className="dsa-plan-result">/, "The keyed DSA result must not remount an in-flight save control when the selected plan changes.");
 
 const selector = read("features/dsa/study-plans/study-plan-selector.tsx");

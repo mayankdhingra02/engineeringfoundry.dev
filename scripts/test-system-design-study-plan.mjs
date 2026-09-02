@@ -85,7 +85,7 @@ const planPage = readFileSync("app/system-design/plan/page.tsx", "utf8");
 const planner = readFileSync("components/system-design-focus-planner.tsx", "utf8");
 const saveControl = readFileSync("components/save-study-plan-control.tsx", "utf8");
 assert.ok(planPage.includes('import { isAccountPlatformAvailable } from "@/lib/account-platform";') && planPage.includes("<SystemDesignFocusPlanner accountPlatformAvailable={isAccountPlatformAvailable()} />"), "The System Design plan route must pass server-derived account availability into the client planner.");
-assert.ok(planner.includes("{ accountPlatformAvailable }: { accountPlatformAvailable: boolean }") && planner.includes("accountPlatformAvailable={accountPlatformAvailable}"), "The System Design planner must require and forward account availability to its shared save control.");
+assert.ok(planner.includes("{ accountPlatformAvailable }: { accountPlatformAvailable: boolean }") && planner.includes("useStudyPlanSaveCoordinator()") && planner.includes("accountPlatformAvailable={accountPlatformAvailable}") && planner.includes("coordinator={saveCoordinator}") && planner.includes("<StudyPlanSaveStatus coordinator={saveCoordinator} />"), "The System Design planner must own persistent save coordination, preserve its status across conditional controls, and forward account availability.");
 assert.ok(saveControl.includes("accountPlatformAvailable: boolean"), "The shared study-plan save control must require an explicit account-availability contract.");
 assert.ok(!saveControl.includes("Saved in this browser. Sign in later to save it to your account."), "The shared save control must not retain the stale message that hides a successful browser-local fallback.");
 

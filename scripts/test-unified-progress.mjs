@@ -91,7 +91,8 @@ for (const marker of ["on delete cascade", "enable row level security", "save_pr
 assert.ok(planControl.includes("Saving replaces the active plan"), "saved plan replacement must be deliberate rather than silent");
 assert.ok(planControl.includes("if (accountPlatformAvailable)"), "account-disabled study-plan saves must not invoke the Server Action");
 assert.ok(planControl.includes("browser storage when available"), "account-disabled helper copy must not promise optional browser persistence before it succeeds");
-assert.ok(planControl.includes('const pending = saveState?.status === "pending"') && planControl.includes("pendingRef.current") && planControl.includes("Finishing previous plan save…"), "an in-flight save must block duplicate or different-plan activation while the shared control remains mounted");
+assert.ok(planControl.includes("useStudyPlanSaveCoordinator") && planControl.includes('const pending = saveState?.status === "pending"') && planControl.includes("pendingRef.current") && planControl.includes("Finishing previous plan save…"), "a parent-owned coordinator must block duplicate or different-plan activation across conditional control remounts");
+assert.ok(planControl.includes("Previous save for ${saveState.label}"), "a completed prior-plan save must remain explicitly labeled in the live status after the visible plan changes");
 assert.ok(planControl.includes("aria-disabled={pending}") && !planControl.includes(" disabled={pending}"), "pending saves must retain trigger focus while preventing another activation");
 assert.equal((planControl.match(/track\("study_plan_activated"/g) ?? []).length, 1, "study-plan persistence must have one analytics emission point");
 assert.ok(planControl.includes("if (outcome.persisted)"), "study-plan analytics must require a resolved real persistence outcome");
