@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 149b43aea1a5c4366a9126b67869bbdbf8c47999
-repository_state_sha256: 21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb85f19d0aec
+repository_sha: 1c14864a24b6282b47b83ce506548ae71b2b9c29
+repository_state_sha256: 81ed571dc80ad42110d786172d0438b083edc6bc779a0e5be5f211a729da8b0b
 ---
 
 # Engineering Foundry requirement coverage
@@ -23,8 +23,8 @@ repository_state_sha256: 21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb8
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 1 |
-| partial | 24 |
-| implemented-unverified | 2 |
+| partial | 26 |
+| implemented-unverified | 0 |
 | implemented | 0 |
 | blocked | 2 |
 | deferred | 4 |
@@ -47,10 +47,10 @@ repository_state_sha256: 21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb8
 | Research status | Count |
 | --- | ---: |
 | approved | 0 |
-| approved-needs-source-import | 16 |
-| needs-current-verification | 5 |
-| needs-research | 7 |
-| not-applicable | 6 |
+| approved-needs-source-import | 7 |
+| needs-current-verification | 9 |
+| needs-research | 13 |
+| not-applicable | 5 |
 
 ### Publication status
 
@@ -108,42 +108,42 @@ repository_state_sha256: 21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb8
 
 ## Requirement inventory
 
-| ID | Section | Priority | Status | Research | Publication | Source state | Routes | Sources | Tests | Gaps |
-| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |
-| EF-AIB | ai-basics | requires-founder-approval | deferred | approved-needs-source-import | unpublished | missing | — | 0 | 0 | Audience, placement, source artifacts, and relationship to ML Design remain unresolved. |
-| EF-AIB-BEGINNER-SCOPE | ai-basics | requires-founder-approval | deferred | approved-needs-source-import | unpublished | missing | — | 0 | 0 | Learning outcomes, audience, relationship to ML Design, exercises, and source policy remain unresolved. |
-| EF-AIB-KIDS | ai-for-kids | excluded | excluded | not-applicable | unpublished | not-applicable | — | 0 | 0 | Explicitly excluded from the current product scope. |
-| EF-BEH | behavioral | required | partial | approved-needs-source-import | stale-review | missing | /behavioral | 0 | 2 | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete. |
-| EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | approved-needs-source-import | stale-review | missing | /behavioral | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
-| EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
-| EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
-| EF-DSA | dsa | required | partial | approved-needs-source-import | stale-review | missing | /dsa | 0 | 3 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
-| EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved-needs-source-import | stale-review | missing | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 0 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
-| EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | approved-needs-source-import | stale-review | missing | /dsa/languages, /dsa/languages/[slug] | 0 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
-| EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | 0 | 3 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
-| EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | 0 | 4 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
-| EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
-| EF-LLD | low-level-design | required | implemented-unverified | approved-needs-source-import | stale-review | missing | /low-level-design | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
-| EF-LLD-REHEARSAL | low-level-design | p1 | partial | needs-research | unpublished | missing | /low-level-design, /low-level-design/practice/[slug] | 0 | 1 | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
-| EF-ML | ml-design | required | partial | approved-needs-source-import | stale-review | missing | /ml-design | 0 | 2 | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; A dedicated ML route/data contract regression is absent.; Original research artifacts and claim-level provenance are not imported. |
-| EF-ML-CONCEPT-COVERAGE | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | 0 | 1 | Ten compact summaries exist versus the blueprint target of 20 concepts.; No approved deep-lesson route and provenance contract is implemented. |
-| EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | partial | approved-needs-source-import | stale-review | missing | /ml-design/[slug] | 0 | 1 | Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields. |
-| EF-ML-ROADMAP-MAPPING | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | 0 | 1 | Eight static stages have no approved mapping to concept IDs and practice records. |
-| EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | 0 | 2 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; URL Back/Forward synchronization lacks rendered behavior coverage. |
-| EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
-| EF-OPS | governance-and-release | required | partial | not-applicable | unpublished | not-applicable | — | 0 | 4 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
-| EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
-| EF-PLAY | interview-playbook | required | partial | approved-needs-source-import | stale-review | missing | /interview-playbook, /interview-tips | 0 | 3 | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
-| EF-PLAY-CURRICULUM-DEPTH | interview-playbook | p1 | partial | approved-needs-source-import | stale-review | missing | /interview-tips | 0 | 2 | Research methodology and master-depth acceptance mapping remain incomplete. |
-| EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | /interview-tips/rounds/[slug] | 0 | 1 | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
-| EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | placeholder | needs-research | unpublished | missing | — | 0 | 1 | The index honestly identifies this role-specific guide as outside current v1. |
-| EF-SAL | salary-negotiation | required | implemented-unverified | needs-current-verification | stale-review | missing | /salary-negotiation | 0 | 1 | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
-| EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | 0 | 3 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
-| EF-SD-PRACTICE-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | /system-design/problems/[problemId] | 0 | 1 | 27 of 60 walkthroughs are published; 33 remain researched and unpublished. |
-| EF-SD-TOPIC-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | /system-design/[...segments] | 0 | 2 | 32 of 178 repository topics remain unpublished.; The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking. |
-| EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | 0 | 4 | Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.; Employer-specific referral policy remains intentionally absent. |
-| EF-SUP-REFERRAL-POLICY | referrals | p2 | deferred | needs-current-verification | unpublished | missing | /referrals | 0 | 2 | The current local toolkit deliberately directs users to official employer rules and makes no employer-policy claims. |
-| EF-VIZ | visualization-lab | p1 | partial | approved-needs-source-import | unpublished | missing | — | 0 | 1 | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
+| ID | Section | Priority | Status | Research | Publication | Source state | Routes | Route families | Sources | Tests | Gaps |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- |
+| EF-AIB | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Audience, placement, source artifacts, and relationship to ML Design remain unresolved. |
+| EF-AIB-BEGINNER-SCOPE | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Learning outcomes, audience, relationship to ML Design, exercises, and source policy remain unresolved. |
+| EF-AIB-KIDS | ai-for-kids | excluded | excluded | not-applicable | unpublished | not-applicable | — | — | 0 | 0 | Explicitly excluded from the current product scope. |
+| EF-BEH | behavioral | required | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete. |
+| EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
+| EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
+| EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
+| EF-DSA | dsa | required | partial | needs-research | stale-review | missing | /dsa | — | 0 | 3 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
+| EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved-needs-source-import | stale-review | missing | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 0 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
+| EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | missing | /dsa/languages | /dsa/languages/[slug] | 0 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
+| EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 3 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
+| EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 4 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
+| EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
+| EF-LLD | low-level-design | required | partial | needs-research | stale-review | missing | /low-level-design | — | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
+| EF-LLD-REHEARSAL | low-level-design | p1 | partial | needs-research | unpublished | missing | /low-level-design | /low-level-design/practice/[slug] | 0 | 1 | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
+| EF-ML | ml-design | required | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 2 | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; A dedicated ML route/data contract regression is absent.; Original research artifacts and claim-level provenance are not imported. |
+| EF-ML-CONCEPT-COVERAGE | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Ten compact summaries exist versus the blueprint target of 20 concepts.; No approved deep-lesson route and provenance contract is implemented. |
+| EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | partial | approved-needs-source-import | stale-review | missing | — | /ml-design/[slug] | 0 | 1 | Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields. |
+| EF-ML-ROADMAP-MAPPING | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Eight static stages have no approved mapping to concept IDs and practice records. |
+| EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 2 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; URL Back/Forward synchronization lacks rendered behavior coverage. |
+| EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
+| EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 4 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
+| EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
+| EF-PLAY | interview-playbook | required | partial | needs-current-verification | stale-review | missing | /interview-playbook, /interview-tips | — | 0 | 3 | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
+| EF-PLAY-CURRICULUM-DEPTH | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | /interview-tips | — | 0 | 2 | Research methodology and master-depth acceptance mapping remain incomplete. |
+| EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | — | /interview-tips/rounds/[slug] | 0 | 1 | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
+| EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | placeholder | needs-research | unpublished | missing | — | — | 0 | 1 | The index honestly identifies this role-specific guide as outside current v1. |
+| EF-SAL | salary-negotiation | required | partial | needs-current-verification | stale-review | missing | /salary-negotiation | — | 0 | 1 | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
+| EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | — | 0 | 3 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
+| EF-SD-PRACTICE-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | 27 of 60 walkthroughs are published; 33 remain researched and unpublished. |
+| EF-SD-TOPIC-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/[...segments] | 0 | 2 | 32 of 178 repository topics remain unpublished.; The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking. |
+| EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 4 | Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.; Employer-specific referral policy remains intentionally absent. |
+| EF-SUP-REFERRAL-POLICY | referrals | p2 | deferred | needs-current-verification | unpublished | missing | /referrals | — | 0 | 2 | The current local toolkit deliberately directs users to official employer rules and makes no employer-policy claims. |
+| EF-VIZ | visualization-lab | p1 | partial | approved-needs-source-import | unpublished | missing | — | — | 0 | 1 | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
 
 ## Required blockers
 
@@ -154,12 +154,12 @@ repository_state_sha256: 21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb8
 | EF-DSA | modeled | partial | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
-| EF-LLD | modeled | implemented-unverified | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
+| EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
 | EF-ML | modeled | partial | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; A dedicated ML route/data contract regression is absent.; Original research artifacts and claim-level provenance are not imported. |
 | EF-MOCK | modeled | partial | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; URL Back/Forward synchronization lacks rendered behavior coverage. |
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-PLAY | modeled | partial | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
-| EF-SAL | modeled | implemented-unverified | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
+| EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
 | EF-SD | modeled | partial | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
 | EF-SUP | modeled | partial | Homepage track discoverability, broad-search recovery, and feedback discovery remain repository P1 candidates.; Employer-specific referral policy remains intentionally absent. |
 | EF-GLOBAL-ATOMIC-COVERAGE | unmodeled | unmodeled | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
@@ -185,21 +185,21 @@ repository_state_sha256: 21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb8
 
 | ID | Section | Research status | Sources |
 | --- | --- | --- | ---: |
-| EF-BEH | behavioral | approved-needs-source-import | 0 |
-| EF-BEH-CURRICULUM-DEPTH | behavioral | approved-needs-source-import | 0 |
+| EF-BEH | behavioral | needs-current-verification | 0 |
+| EF-BEH-CURRICULUM-DEPTH | behavioral | needs-current-verification | 0 |
 | EF-COMP | company-guides | needs-current-verification | 10 |
 | EF-COMP-GUIDE-COVERAGE | company-guides | needs-current-verification | 10 |
-| EF-DSA | dsa | approved-needs-source-import | 0 |
+| EF-DSA | dsa | needs-research | 0 |
 | EF-DSA-CURRICULUM-SHELLS | dsa | approved-needs-source-import | 0 |
-| EF-DSA-LANGUAGE-COVERAGE | dsa | approved-needs-source-import | 0 |
-| EF-LLD | low-level-design | approved-needs-source-import | 0 |
+| EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 0 |
+| EF-LLD | low-level-design | needs-research | 0 |
 | EF-ML | ml-design | approved-needs-source-import | 0 |
 | EF-ML-CONCEPT-COVERAGE | ml-design | approved-needs-source-import | 0 |
 | EF-ML-PRACTICE-PROVENANCE | ml-design | approved-needs-source-import | 0 |
 | EF-ML-ROADMAP-MAPPING | ml-design | approved-needs-source-import | 0 |
 | EF-MOCK | mock-interviews | approved-needs-source-import | 0 |
-| EF-PLAY | interview-playbook | approved-needs-source-import | 0 |
-| EF-PLAY-CURRICULUM-DEPTH | interview-playbook | approved-needs-source-import | 0 |
+| EF-PLAY | interview-playbook | needs-current-verification | 0 |
+| EF-PLAY-CURRICULUM-DEPTH | interview-playbook | needs-current-verification | 0 |
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | needs-current-verification | 0 |
 | EF-SAL | salary-negotiation | needs-current-verification | 0 |
 | EF-SD | system-design | needs-research | 0 |
@@ -229,27 +229,27 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Source record state | Count |
 | --- | ---: |
-| not-applicable | 6 |
-| missing | 26 |
+| not-applicable | 5 |
+| missing | 27 |
 | discovery-recorded | 2 |
 | claim-recorded | 0 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
-| EF-AIB | approved-needs-source-import | missing | — |
-| EF-AIB-BEGINNER-SCOPE | approved-needs-source-import | missing | — |
+| EF-AIB | needs-research | missing | — |
+| EF-AIB-BEGINNER-SCOPE | needs-research | missing | — |
 | EF-AIB-KIDS | not-applicable | not-applicable | — |
-| EF-BEH | approved-needs-source-import | missing | — |
-| EF-BEH-CURRICULUM-DEPTH | approved-needs-source-import | missing | — |
+| EF-BEH | needs-current-verification | missing | — |
+| EF-BEH-CURRICULUM-DEPTH | needs-current-verification | missing | — |
 | EF-COMP | needs-current-verification | discovery-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
 | EF-COMP-GUIDE-COVERAGE | needs-current-verification | discovery-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
-| EF-DSA | approved-needs-source-import | missing | — |
+| EF-DSA | needs-research | missing | — |
 | EF-DSA-CURRICULUM-SHELLS | approved-needs-source-import | missing | — |
-| EF-DSA-LANGUAGE-COVERAGE | approved-needs-source-import | missing | — |
+| EF-DSA-LANGUAGE-COVERAGE | needs-research | missing | — |
 | EF-EXP | not-applicable | not-applicable | — |
 | EF-GLOBAL | not-applicable | not-applicable | — |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | needs-research | missing | — |
-| EF-LLD | approved-needs-source-import | missing | — |
+| EF-LLD | needs-research | missing | — |
 | EF-LLD-REHEARSAL | needs-research | missing | — |
 | EF-ML | approved-needs-source-import | missing | — |
 | EF-ML-CONCEPT-COVERAGE | approved-needs-source-import | missing | — |
@@ -257,10 +257,10 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-ML-ROADMAP-MAPPING | approved-needs-source-import | missing | — |
 | EF-MOCK | approved-needs-source-import | missing | — |
 | EF-MOCK-PEER-FACILITATION | needs-research | missing | — |
-| EF-OPS | not-applicable | not-applicable | — |
+| EF-OPS | needs-research | missing | — |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | not-applicable | not-applicable | — |
-| EF-PLAY | approved-needs-source-import | missing | — |
-| EF-PLAY-CURRICULUM-DEPTH | approved-needs-source-import | missing | — |
+| EF-PLAY | needs-current-verification | missing | — |
+| EF-PLAY-CURRICULUM-DEPTH | needs-current-verification | missing | — |
 | EF-PLAY-ROUND-PROVENANCE | needs-current-verification | missing | — |
 | EF-PLAY-TECHNICAL-PRESENTATION | needs-research | missing | — |
 | EF-SAL | needs-current-verification | missing | — |
@@ -278,7 +278,7 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-GLOBAL-ATOMIC-COVERAGE | EF-GLOBAL | global | required | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
 | EF-SD-TAXONOMY-CROSSWALK | EF-SD | system-design | p1 | A reviewed crosswalk is still required between the blueprint's 161-row target and the repository's 178-topic manifest. |
 
-## Source readiness
+## Source records
 
 | ID | Class | Verified | Applies to |
 | --- | --- | --- | --- |
@@ -314,38 +314,38 @@ These states describe recorded provenance only; they do not claim source complet
 | approved | 0 |
 | excluded | 0 |
 
-| ID | Family | Availability | Approval | Requirements | Repository path | External record |
-| --- | --- | --- | --- | --- | --- | --- |
-| RA-AIB-LEARNING-STRATEGY | EF-AIB | missing | requires-founder-approval | EF-AIB, EF-AIB-BEGINNER-SCOPE | — | — |
-| RA-AIB-MVP-RECOMMENDATION | EF-AIB | missing | requires-founder-approval | EF-AIB, EF-AIB-BEGINNER-SCOPE | — | — |
-| RA-BEH-COMPANY-GUIDES | EF-BEH | missing | needs-current-verification | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
-| RA-BEH-CURRICULUM-ARCHITECTURE | EF-BEH | missing | approved-needs-source-import | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
-| RA-BEH-FINAL-SYNTHESIS | EF-BEH | missing | approved-needs-source-import | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
-| RA-BEH-PRACTICE-MOCK-FEEDBACK | EF-BEH | missing | approved-needs-source-import | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK | — | — |
-| RA-BEH-RUBRICS-SENIORITY | EF-BEH | missing | approved-needs-source-import | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
-| RA-BEH-STORY-BANK-EXAMPLES | EF-BEH | missing | approved-needs-source-import | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
-| RA-COMP-PRIORITY-COMPANIES | EF-COMP | missing | needs-current-verification | EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
-| RA-DSA-COMPETITIVE-RESEARCH | EF-DSA | missing | approved-needs-source-import | EF-DSA, EF-DSA-CURRICULUM-SHELLS | — | — |
-| RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | — | — |
-| RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | missing | approved-needs-source-import | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | — | — |
-| RA-DSA-ROLE-ROADMAPS | EF-DSA | missing | approved-needs-source-import | EF-DSA, EF-DSA-CURRICULUM-SHELLS | — | — |
-| RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | missing | unverified | EF-OPS | — | — |
-| RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | EF-DSA-LANGUAGE-COVERAGE, EF-LLD | — | — |
-| RA-ML-CORE-CONCEPTS | EF-ML | missing | approved-needs-source-import | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | — | — |
-| RA-ML-FINAL-SYNTHESIS | EF-ML | missing | approved-needs-source-import | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING | — | — |
-| RA-ML-INFRA-MODERN-AI | EF-ML | missing | approved-needs-source-import | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
-| RA-ML-RECOMMENDATION-RANKING | EF-ML | missing | approved-needs-source-import | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
-| RA-ML-SEARCH-RETRIEVAL-ADVERTISING | EF-ML | missing | approved-needs-source-import | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
-| RA-ML-TRUST-PREDICTION-DECISION | EF-ML | missing | approved-needs-source-import | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
-| RA-PLAY-DIAGNOSTIC-PLAN | EF-PLAY | missing | approved-needs-source-import | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
-| RA-PLAY-FINAL-SYNTHESIS | EF-PLAY | missing | approved-needs-source-import | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION | — | — |
-| RA-PLAY-FINAL-WEEK-DEBRIEF | EF-PLAY | missing | approved-needs-source-import | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
-| RA-PLAY-MOCK-SIMULATIONS | EF-PLAY | missing | approved-needs-source-import | EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
-| RA-PLAY-ROUND-EXECUTION | EF-PLAY | missing | needs-current-verification | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION | — | — |
-| RA-PLAY-SCOPE-BOUNDARIES | EF-PLAY | missing | approved-needs-source-import | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
-| RA-SAL-SECTION-BLUEPRINT | EF-SAL | missing | needs-current-verification | EF-SAL | — | — |
-| RA-SD-CONTENT-RESEARCH-BLUEPRINT | EF-SD | missing | unverified | EF-SD, EF-SD-PRACTICE-COVERAGE, EF-SD-TOPIC-COVERAGE | — | — |
-| RA-SD-CURRICULUM-TOPIC-MAP | EF-SD | missing | unverified | EF-SD, EF-SD-PRACTICE-COVERAGE, EF-SD-TOPIC-COVERAGE | — | — |
+| ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| RA-AIB-LEARNING-STRATEGY | EF-AIB | missing | requires-founder-approval | — | — | EF-AIB, EF-AIB-BEGINNER-SCOPE | — | — |
+| RA-AIB-MVP-RECOMMENDATION | EF-AIB | missing | requires-founder-approval | — | — | EF-AIB, EF-AIB-BEGINNER-SCOPE | — | — |
+| RA-BEH-COMPANY-GUIDES | EF-BEH | missing | needs-current-verification | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
+| RA-BEH-CURRICULUM-ARCHITECTURE | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
+| RA-BEH-FINAL-SYNTHESIS | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
+| RA-BEH-PRACTICE-MOCK-FEEDBACK | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK | — | — |
+| RA-BEH-RUBRICS-SENIORITY | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
+| RA-BEH-STORY-BANK-EXAMPLES | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
+| RA-COMP-PRIORITY-COMPANIES | EF-COMP | missing | needs-current-verification | — | — | EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
+| RA-DSA-COMPETITIVE-RESEARCH | EF-DSA | missing | approved-needs-source-import | — | — | EF-DSA, EF-DSA-CURRICULUM-SHELLS | — | — |
+| RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | — | — | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | — | — |
+| RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | missing | approved-needs-source-import | — | — | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | — | — |
+| RA-DSA-ROLE-ROADMAPS | EF-DSA | missing | approved-needs-source-import | — | — | EF-DSA, EF-DSA-CURRICULUM-SHELLS | — | — |
+| RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | missing | unverified | — | — | EF-OPS | — | — |
+| RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE, EF-LLD | — | — |
+| RA-ML-CORE-CONCEPTS | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | — | — |
+| RA-ML-FINAL-SYNTHESIS | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING | — | — |
+| RA-ML-INFRA-MODERN-AI | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
+| RA-ML-RECOMMENDATION-RANKING | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
+| RA-ML-SEARCH-RETRIEVAL-ADVERTISING | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
+| RA-ML-TRUST-PREDICTION-DECISION | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
+| RA-PLAY-DIAGNOSTIC-PLAN | EF-PLAY | missing | approved-needs-source-import | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
+| RA-PLAY-FINAL-SYNTHESIS | EF-PLAY | missing | approved-needs-source-import | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION | — | — |
+| RA-PLAY-FINAL-WEEK-DEBRIEF | EF-PLAY | missing | approved-needs-source-import | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
+| RA-PLAY-MOCK-SIMULATIONS | EF-PLAY | missing | approved-needs-source-import | — | — | EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
+| RA-PLAY-ROUND-EXECUTION | EF-PLAY | missing | needs-current-verification | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION | — | — |
+| RA-PLAY-SCOPE-BOUNDARIES | EF-PLAY | missing | approved-needs-source-import | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
+| RA-SAL-SECTION-BLUEPRINT | EF-SAL | missing | needs-current-verification | — | — | EF-SAL | — | — |
+| RA-SD-CONTENT-RESEARCH-BLUEPRINT | EF-SD | missing | unverified | — | — | EF-SD, EF-SD-PRACTICE-COVERAGE, EF-SD-TOPIC-COVERAGE | — | — |
+| RA-SD-CURRICULUM-TOPIC-MAP | EF-SD | missing | unverified | — | — | EF-SD, EF-SD-PRACTICE-COVERAGE, EF-SD-TOPIC-COVERAGE | — | — |
 
 ## Unresolved research artifact inputs
 

@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "149b43aea1a5c4366a9126b67869bbdbf8c47999",
-  "repository_state_sha256": "21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb85f19d0aec",
+  "repository_sha": "1c14864a24b6282b47b83ce506548ae71b2b9c29",
+  "repository_state_sha256": "81ed571dc80ad42110d786172d0438b083edc6bc779a0e5be5f211a729da8b0b",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -28,7 +28,8 @@
         "RA-AIB-LEARNING-STRATEGY",
         "RA-AIB-MVP-RECOMMENDATION"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-research",
+      "route_families": [],
       "routes": [],
       "section": "ai-basics",
       "source_ledger_ids": [],
@@ -65,7 +66,8 @@
         "RA-AIB-LEARNING-STRATEGY",
         "RA-AIB-MVP-RECOMMENDATION"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-research",
+      "route_families": [],
       "routes": [],
       "section": "ai-basics",
       "source_ledger_ids": [],
@@ -98,6 +100,7 @@
       "publication_status": "unpublished",
       "research_artifact_ids": [],
       "research_status": "not-applicable",
+      "route_families": [],
       "routes": [],
       "section": "ai-for-kids",
       "source_ledger_ids": [],
@@ -139,7 +142,8 @@
         "RA-BEH-RUBRICS-SENIORITY",
         "RA-BEH-STORY-BANK-EXAMPLES"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-current-verification",
+      "route_families": [],
       "routes": [
         "/behavioral"
       ],
@@ -186,7 +190,8 @@
         "RA-BEH-RUBRICS-SENIORITY",
         "RA-BEH-STORY-BANK-EXAMPLES"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-current-verification",
+      "route_families": [],
       "routes": [
         "/behavioral"
       ],
@@ -230,6 +235,7 @@
         "RA-COMP-PRIORITY-COMPANIES"
       ],
       "research_status": "needs-current-verification",
+      "route_families": [],
       "routes": [
         "/companies"
       ],
@@ -284,9 +290,10 @@
         "RA-COMP-PRIORITY-COMPANIES"
       ],
       "research_status": "needs-current-verification",
-      "routes": [
+      "route_families": [
         "/companies/[slug]"
       ],
+      "routes": [],
       "section": "company-guides",
       "source_ledger_ids": [
         "SRC-COMP-AMAZON-OFFICIAL",
@@ -340,7 +347,8 @@
         "RA-DSA-PYTHON-JAVA-LANGUAGES",
         "RA-DSA-ROLE-ROADMAPS"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-research",
+      "route_families": [],
       "routes": [
         "/dsa"
       ],
@@ -385,11 +393,12 @@
         "RA-DSA-ROLE-ROADMAPS"
       ],
       "research_status": "approved-needs-source-import",
-      "routes": [
+      "route_families": [
         "/dsa/interview-strategy/[...segments]",
         "/dsa/roadmaps/[...segments]",
         "/dsa/start-here/[...segments]"
       ],
+      "routes": [],
       "section": "dsa",
       "source_ledger_ids": [],
       "status": "partial",
@@ -432,10 +441,12 @@
         "RA-DSA-PYTHON-JAVA-LANGUAGES",
         "RA-LOW-LEVEL-SYSTEMS"
       ],
-      "research_status": "approved-needs-source-import",
-      "routes": [
-        "/dsa/languages",
+      "research_status": "needs-research",
+      "route_families": [
         "/dsa/languages/[slug]"
+      ],
+      "routes": [
+        "/dsa/languages"
       ],
       "section": "dsa",
       "source_ledger_ids": [],
@@ -473,6 +484,7 @@
       "publication_status": "published",
       "research_artifact_ids": [],
       "research_status": "not-applicable",
+      "route_families": [],
       "routes": [
         "/interview-experiences"
       ],
@@ -514,6 +526,7 @@
       "publication_status": "published",
       "research_artifact_ids": [],
       "research_status": "not-applicable",
+      "route_families": [],
       "routes": [
         "/"
       ],
@@ -553,6 +566,7 @@
       "publication_status": "unpublished",
       "research_artifact_ids": [],
       "research_status": "needs-research",
+      "route_families": [],
       "routes": [],
       "section": "core-concepts",
       "source_ledger_ids": [],
@@ -590,13 +604,14 @@
       "research_artifact_ids": [
         "RA-LOW-LEVEL-SYSTEMS"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-research",
+      "route_families": [],
       "routes": [
         "/low-level-design"
       ],
       "section": "low-level-design",
       "source_ledger_ids": [],
-      "status": "implemented-unverified",
+      "status": "partial",
       "test_commands": [
         "npm run test:low-level-design"
       ],
@@ -632,9 +647,11 @@
       "publication_status": "unpublished",
       "research_artifact_ids": [],
       "research_status": "needs-research",
-      "routes": [
-        "/low-level-design",
+      "route_families": [
         "/low-level-design/practice/[slug]"
+      ],
+      "routes": [
+        "/low-level-design"
       ],
       "section": "low-level-design",
       "source_ledger_ids": [],
@@ -679,6 +696,7 @@
         "RA-ML-TRUST-PREDICTION-DECISION"
       ],
       "research_status": "approved-needs-source-import",
+      "route_families": [],
       "routes": [
         "/ml-design"
       ],
@@ -726,6 +744,7 @@
         "RA-ML-TRUST-PREDICTION-DECISION"
       ],
       "research_status": "approved-needs-source-import",
+      "route_families": [],
       "routes": [
         "/ml-design"
       ],
@@ -770,9 +789,10 @@
         "RA-ML-TRUST-PREDICTION-DECISION"
       ],
       "research_status": "approved-needs-source-import",
-      "routes": [
+      "route_families": [
         "/ml-design/[slug]"
       ],
+      "routes": [],
       "section": "ml-design",
       "source_ledger_ids": [],
       "status": "partial",
@@ -811,6 +831,7 @@
         "RA-ML-FINAL-SYNTHESIS"
       ],
       "research_status": "approved-needs-source-import",
+      "route_families": [],
       "routes": [
         "/ml-design"
       ],
@@ -853,6 +874,7 @@
         "RA-PLAY-MOCK-SIMULATIONS"
       ],
       "research_status": "approved-needs-source-import",
+      "route_families": [],
       "routes": [
         "/mock-interviews"
       ],
@@ -893,6 +915,7 @@
       "publication_status": "unpublished",
       "research_artifact_ids": [],
       "research_status": "needs-research",
+      "route_families": [],
       "routes": [
         "/mock-interviews"
       ],
@@ -937,7 +960,8 @@
       "research_artifact_ids": [
         "RA-LAUNCH-V1-FINISH-PLAN"
       ],
-      "research_status": "not-applicable",
+      "research_status": "needs-research",
+      "route_families": [],
       "routes": [],
       "section": "governance-and-release",
       "source_ledger_ids": [],
@@ -979,6 +1003,7 @@
       "publication_status": "unpublished",
       "research_artifact_ids": [],
       "research_status": "not-applicable",
+      "route_families": [],
       "routes": [],
       "section": "governance-and-release",
       "source_ledger_ids": [],
@@ -1026,7 +1051,8 @@
         "RA-PLAY-ROUND-EXECUTION",
         "RA-PLAY-SCOPE-BOUNDARIES"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-current-verification",
+      "route_families": [],
       "routes": [
         "/interview-playbook",
         "/interview-tips"
@@ -1076,7 +1102,8 @@
         "RA-PLAY-ROUND-EXECUTION",
         "RA-PLAY-SCOPE-BOUNDARIES"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "needs-current-verification",
+      "route_families": [],
       "routes": [
         "/interview-tips"
       ],
@@ -1120,9 +1147,10 @@
         "RA-PLAY-ROUND-EXECUTION"
       ],
       "research_status": "needs-current-verification",
-      "routes": [
+      "route_families": [
         "/interview-tips/rounds/[slug]"
       ],
+      "routes": [],
       "section": "interview-playbook",
       "source_ledger_ids": [],
       "status": "partial",
@@ -1161,6 +1189,7 @@
         "RA-PLAY-ROUND-EXECUTION"
       ],
       "research_status": "needs-research",
+      "route_families": [],
       "routes": [],
       "section": "interview-playbook",
       "source_ledger_ids": [],
@@ -1199,12 +1228,13 @@
         "RA-SAL-SECTION-BLUEPRINT"
       ],
       "research_status": "needs-current-verification",
+      "route_families": [],
       "routes": [
         "/salary-negotiation"
       ],
       "section": "salary-negotiation",
       "source_ledger_ids": [],
-      "status": "implemented-unverified",
+      "status": "partial",
       "test_commands": [
         "npm run test:salary-negotiation"
       ],
@@ -1245,6 +1275,7 @@
         "RA-SD-CURRICULUM-TOPIC-MAP"
       ],
       "research_status": "needs-research",
+      "route_families": [],
       "routes": [
         "/system-design/start-here/introduction"
       ],
@@ -1289,9 +1320,10 @@
         "RA-SD-CURRICULUM-TOPIC-MAP"
       ],
       "research_status": "needs-research",
-      "routes": [
+      "route_families": [
         "/system-design/problems/[problemId]"
       ],
+      "routes": [],
       "section": "system-design",
       "source_ledger_ids": [],
       "status": "partial",
@@ -1334,9 +1366,10 @@
         "RA-SD-CURRICULUM-TOPIC-MAP"
       ],
       "research_status": "needs-research",
-      "routes": [
+      "route_families": [
         "/system-design/[...segments]"
       ],
+      "routes": [],
       "section": "system-design",
       "source_ledger_ids": [],
       "status": "partial",
@@ -1376,6 +1409,7 @@
       "publication_status": "published",
       "research_artifact_ids": [],
       "research_status": "not-applicable",
+      "route_families": [],
       "routes": [
         "/challenges",
         "/feedback",
@@ -1424,6 +1458,7 @@
       "publication_status": "unpublished",
       "research_artifact_ids": [],
       "research_status": "needs-current-verification",
+      "route_families": [],
       "routes": [
         "/referrals"
       ],
@@ -1464,6 +1499,7 @@
       "publication_status": "unpublished",
       "research_artifact_ids": [],
       "research_status": "approved-needs-source-import",
+      "route_families": [],
       "routes": [],
       "section": "visualization-lab",
       "source_ledger_ids": [],
