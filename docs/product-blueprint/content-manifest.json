@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "3474423a502ba063ae1a56f3be1ad4dd113a0ac3",
-  "repository_state_sha256": "27f98d6143e7d3e70658aa0c4427664f114d1b369d7ce9302a441b126b581183",
+  "repository_sha": "149b43aea1a5c4366a9126b67869bbdbf8c47999",
+  "repository_state_sha256": "21cf47776f8f9fd0bcef21b63249ceaea695ef67a530e260a66fcb85f19d0aec",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -24,6 +24,10 @@
       "prerequisite_ids": [],
       "priority": "requires-founder-approval",
       "publication_status": "unpublished",
+      "research_artifact_ids": [
+        "RA-AIB-LEARNING-STRATEGY",
+        "RA-AIB-MVP-RECOMMENDATION"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [],
       "section": "ai-basics",
@@ -57,6 +61,10 @@
       ],
       "priority": "requires-founder-approval",
       "publication_status": "unpublished",
+      "research_artifact_ids": [
+        "RA-AIB-LEARNING-STRATEGY",
+        "RA-AIB-MVP-RECOMMENDATION"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [],
       "section": "ai-basics",
@@ -88,6 +96,7 @@
       "prerequisite_ids": [],
       "priority": "excluded",
       "publication_status": "unpublished",
+      "research_artifact_ids": [],
       "research_status": "not-applicable",
       "routes": [],
       "section": "ai-for-kids",
@@ -122,6 +131,14 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-BEH-COMPANY-GUIDES",
+        "RA-BEH-CURRICULUM-ARCHITECTURE",
+        "RA-BEH-FINAL-SYNTHESIS",
+        "RA-BEH-PRACTICE-MOCK-FEEDBACK",
+        "RA-BEH-RUBRICS-SENIORITY",
+        "RA-BEH-STORY-BANK-EXAMPLES"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/behavioral"
@@ -161,6 +178,14 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-BEH-COMPANY-GUIDES",
+        "RA-BEH-CURRICULUM-ARCHITECTURE",
+        "RA-BEH-FINAL-SYNTHESIS",
+        "RA-BEH-PRACTICE-MOCK-FEEDBACK",
+        "RA-BEH-RUBRICS-SENIORITY",
+        "RA-BEH-STORY-BANK-EXAMPLES"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/behavioral"
@@ -200,6 +225,10 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-BEH-COMPANY-GUIDES",
+        "RA-COMP-PRIORITY-COMPANIES"
+      ],
       "research_status": "needs-current-verification",
       "routes": [
         "/companies"
@@ -250,6 +279,10 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-BEH-COMPANY-GUIDES",
+        "RA-COMP-PRIORITY-COMPANIES"
+      ],
       "research_status": "needs-current-verification",
       "routes": [
         "/companies/[slug]"
@@ -301,6 +334,12 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-DSA-COMPETITIVE-RESEARCH",
+        "RA-DSA-JAVASCRIPT-REQUEST",
+        "RA-DSA-PYTHON-JAVA-LANGUAGES",
+        "RA-DSA-ROLE-ROADMAPS"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/dsa"
@@ -341,6 +380,10 @@
       ],
       "priority": "p2",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-DSA-COMPETITIVE-RESEARCH",
+        "RA-DSA-ROLE-ROADMAPS"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/dsa/interview-strategy/[...segments]",
@@ -384,6 +427,11 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-DSA-JAVASCRIPT-REQUEST",
+        "RA-DSA-PYTHON-JAVA-LANGUAGES",
+        "RA-LOW-LEVEL-SYSTEMS"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/dsa/languages",
@@ -423,6 +471,7 @@
       ],
       "priority": "required",
       "publication_status": "published",
+      "research_artifact_ids": [],
       "research_status": "not-applicable",
       "routes": [
         "/interview-experiences"
@@ -463,6 +512,7 @@
       "prerequisite_ids": [],
       "priority": "required",
       "publication_status": "published",
+      "research_artifact_ids": [],
       "research_status": "not-applicable",
       "routes": [
         "/"
@@ -501,6 +551,7 @@
       "prerequisite_ids": [],
       "priority": "requires-new-research",
       "publication_status": "unpublished",
+      "research_artifact_ids": [],
       "research_status": "needs-research",
       "routes": [],
       "section": "core-concepts",
@@ -536,6 +587,9 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-LOW-LEVEL-SYSTEMS"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/low-level-design"
@@ -576,6 +630,7 @@
       ],
       "priority": "p1",
       "publication_status": "unpublished",
+      "research_artifact_ids": [],
       "research_status": "needs-research",
       "routes": [
         "/low-level-design",
@@ -615,6 +670,14 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-ML-CORE-CONCEPTS",
+        "RA-ML-FINAL-SYNTHESIS",
+        "RA-ML-INFRA-MODERN-AI",
+        "RA-ML-RECOMMENDATION-RANKING",
+        "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
+        "RA-ML-TRUST-PREDICTION-DECISION"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/ml-design"
@@ -654,6 +717,14 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-ML-CORE-CONCEPTS",
+        "RA-ML-FINAL-SYNTHESIS",
+        "RA-ML-INFRA-MODERN-AI",
+        "RA-ML-RECOMMENDATION-RANKING",
+        "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
+        "RA-ML-TRUST-PREDICTION-DECISION"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/ml-design"
@@ -691,6 +762,13 @@
       ],
       "priority": "p2",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-ML-FINAL-SYNTHESIS",
+        "RA-ML-INFRA-MODERN-AI",
+        "RA-ML-RECOMMENDATION-RANKING",
+        "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
+        "RA-ML-TRUST-PREDICTION-DECISION"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/ml-design/[slug]"
@@ -728,6 +806,10 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-ML-CORE-CONCEPTS",
+        "RA-ML-FINAL-SYNTHESIS"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/ml-design"
@@ -766,6 +848,10 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-BEH-PRACTICE-MOCK-FEEDBACK",
+        "RA-PLAY-MOCK-SIMULATIONS"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/mock-interviews"
@@ -805,6 +891,7 @@
       ],
       "priority": "p2",
       "publication_status": "unpublished",
+      "research_artifact_ids": [],
       "research_status": "needs-research",
       "routes": [
         "/mock-interviews"
@@ -829,6 +916,7 @@
       ],
       "content_paths": [
         "docs/product-blueprint/registry/requirements.json",
+        "docs/product-blueprint/registry/research-artifacts.json",
         "docs/product-blueprint/registry/sources.json"
       ],
       "gap_inventory_ids": [],
@@ -846,6 +934,9 @@
       ],
       "priority": "required",
       "publication_status": "unpublished",
+      "research_artifact_ids": [
+        "RA-LAUNCH-V1-FINISH-PLAN"
+      ],
       "research_status": "not-applicable",
       "routes": [],
       "section": "governance-and-release",
@@ -858,6 +949,45 @@
         "npm run validate:product-blueprint"
       ],
       "title": "Autonomous delivery and release governance",
+      "visual_ids": []
+    },
+    {
+      "acceptance_criteria": [
+        "Only dated owner or provider evidence can close deployment, hosted-service, legal, account, analytics, backup, and production-QA gates."
+      ],
+      "code_paths": [
+        "scripts/test-production-baseline.mjs",
+        "scripts/test-production-hardening.mjs"
+      ],
+      "content_paths": [
+        "docs/v1-launch-readiness.md"
+      ],
+      "gap_inventory_ids": [],
+      "id": "EF-OPS-EXTERNAL-PRODUCTION-GATES",
+      "kind": "external-owner-gate",
+      "known_gaps": [
+        "No production deployment is authorized in this repository mission.",
+        "DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials."
+      ],
+      "last_verified_at": "2026-09-02",
+      "notes": "Repository checks may verify plumbing but cannot substitute for external production evidence.",
+      "owner": "production-owner",
+      "prerequisite_ids": [
+        "EF-OPS"
+      ],
+      "priority": "external-owner-gate",
+      "publication_status": "unpublished",
+      "research_artifact_ids": [],
+      "research_status": "not-applicable",
+      "routes": [],
+      "section": "governance-and-release",
+      "source_ledger_ids": [],
+      "status": "blocked",
+      "test_commands": [
+        "npm run test:production-baseline",
+        "npm run test:production-hardening"
+      ],
+      "title": "External production owner gates",
       "visual_ids": []
     },
     {
@@ -888,6 +1018,14 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-PLAY-DIAGNOSTIC-PLAN",
+        "RA-PLAY-FINAL-SYNTHESIS",
+        "RA-PLAY-FINAL-WEEK-DEBRIEF",
+        "RA-PLAY-MOCK-SIMULATIONS",
+        "RA-PLAY-ROUND-EXECUTION",
+        "RA-PLAY-SCOPE-BOUNDARIES"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/interview-playbook",
@@ -930,6 +1068,14 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-PLAY-DIAGNOSTIC-PLAN",
+        "RA-PLAY-FINAL-SYNTHESIS",
+        "RA-PLAY-FINAL-WEEK-DEBRIEF",
+        "RA-PLAY-MOCK-SIMULATIONS",
+        "RA-PLAY-ROUND-EXECUTION",
+        "RA-PLAY-SCOPE-BOUNDARIES"
+      ],
       "research_status": "approved-needs-source-import",
       "routes": [
         "/interview-tips"
@@ -969,6 +1115,10 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-PLAY-FINAL-SYNTHESIS",
+        "RA-PLAY-ROUND-EXECUTION"
+      ],
       "research_status": "needs-current-verification",
       "routes": [
         "/interview-tips/rounds/[slug]"
@@ -1005,11 +1155,13 @@
         "EF-PLAY"
       ],
       "priority": "p2",
-      "publication_status": "noindex-draft",
-      "research_status": "needs-research",
-      "routes": [
-        "/interview-tips/rounds"
+      "publication_status": "unpublished",
+      "research_artifact_ids": [
+        "RA-PLAY-FINAL-SYNTHESIS",
+        "RA-PLAY-ROUND-EXECUTION"
       ],
+      "research_status": "needs-research",
+      "routes": [],
       "section": "interview-playbook",
       "source_ledger_ids": [],
       "status": "placeholder",
@@ -1043,6 +1195,9 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-SAL-SECTION-BLUEPRINT"
+      ],
       "research_status": "needs-current-verification",
       "routes": [
         "/salary-negotiation"
@@ -1085,9 +1240,13 @@
       ],
       "priority": "required",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-SD-CONTENT-RESEARCH-BLUEPRINT",
+        "RA-SD-CURRICULUM-TOPIC-MAP"
+      ],
       "research_status": "needs-research",
       "routes": [
-        "/system-design"
+        "/system-design/start-here/introduction"
       ],
       "section": "system-design",
       "source_ledger_ids": [],
@@ -1125,6 +1284,10 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-SD-CONTENT-RESEARCH-BLUEPRINT",
+        "RA-SD-CURRICULUM-TOPIC-MAP"
+      ],
       "research_status": "needs-research",
       "routes": [
         "/system-design/problems/[problemId]"
@@ -1166,6 +1329,10 @@
       ],
       "priority": "p1",
       "publication_status": "stale-review",
+      "research_artifact_ids": [
+        "RA-SD-CONTENT-RESEARCH-BLUEPRINT",
+        "RA-SD-CURRICULUM-TOPIC-MAP"
+      ],
       "research_status": "needs-research",
       "routes": [
         "/system-design/[...segments]"
@@ -1207,6 +1374,7 @@
       ],
       "priority": "required",
       "publication_status": "published",
+      "research_artifact_ids": [],
       "research_status": "not-applicable",
       "routes": [
         "/challenges",
@@ -1254,6 +1422,7 @@
       ],
       "priority": "p2",
       "publication_status": "unpublished",
+      "research_artifact_ids": [],
       "research_status": "needs-current-verification",
       "routes": [
         "/referrals"
@@ -1293,6 +1462,7 @@
       ],
       "priority": "p1",
       "publication_status": "unpublished",
+      "research_artifact_ids": [],
       "research_status": "approved-needs-source-import",
       "routes": [],
       "section": "visualization-lab",
@@ -1303,6 +1473,503 @@
       ],
       "title": "Visualization Lab",
       "visual_ids": []
+    }
+  ],
+  "research_artifacts": [
+    {
+      "approval_status": "requires-founder-approval",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-AIB",
+      "id": "RA-AIB-LEARNING-STRATEGY",
+      "notes": "The product remains unapproved; the original research artifact has not been imported or verified.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-AIB",
+        "EF-AIB-BEGINNER-SCOPE"
+      ],
+      "title": "AI for Noobs: Research-Backed Learning Strategy for Engineering Foundry",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "requires-founder-approval",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-AIB",
+      "id": "RA-AIB-MVP-RECOMMENDATION",
+      "notes": "The product remains unapproved; this synthesis title is not authority to create a route or curriculum.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-AIB",
+        "EF-AIB-BEGINNER-SCOPE"
+      ],
+      "title": "AI for Noobs at Engineering Foundry: Research and MVP Recommendation",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "needs-current-verification",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-BEH",
+      "id": "RA-BEH-COMPANY-GUIDES",
+      "notes": "Existing official discovery URLs do not substitute for this missing claim-level company-guide specification.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH",
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "title": "Engineering Foundry Behavioral Interview Company Guides: Evidence-Based Specification",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-BEH",
+      "id": "RA-BEH-CURRICULUM-ARCHITECTURE",
+      "notes": "The original sixteen-lesson architecture artifact has not been imported or verified.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Behavioral Interview Curriculum and Learning Architecture",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-BEH",
+      "id": "RA-BEH-FINAL-SYNTHESIS",
+      "notes": "The implementation handoff is named in synthesis only; the original artifact and approval evidence are missing.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Behavioral Interview: Final Synthesis, Quality Audit, and Implementation Handoff",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-BEH",
+      "id": "RA-BEH-PRACTICE-MOCK-FEEDBACK",
+      "notes": "The original practice, privacy, media, and feedback research artifact has not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH",
+        "EF-MOCK"
+      ],
+      "title": "Engineering Foundry Behavioral Practice, Follow-Ups, Mock Interviews, and Feedback UX",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-BEH",
+      "id": "RA-BEH-RUBRICS-SENIORITY",
+      "notes": "The original rubric research and calibration evidence have not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Behavioral Evaluation Rubrics and Seniority Calibration",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-BEH",
+      "id": "RA-BEH-STORY-BANK-EXAMPLES",
+      "notes": "No original story-bank research, example set, or editorial approval record is present.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Behavioral Interview Story Bank, Answer Construction, and Annotated Examples",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "needs-current-verification",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-COMP",
+      "id": "RA-COMP-PRIORITY-COMPANIES",
+      "notes": "Ten official discovery URLs are recorded separately; the original cross-company research and claim mappings are not present.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-COMP",
+        "EF-COMP-GUIDE-COVERAGE"
+      ],
+      "title": "Software-Engineering Interview Deep Research: priority companies",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-DSA",
+      "id": "RA-DSA-COMPETITIVE-RESEARCH",
+      "notes": "The synthesis records an approved direction only; the original artifact and source corpus are not repository evidence.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-DSA",
+        "EF-DSA-CURRICULUM-SHELLS"
+      ],
+      "title": "Engineering Foundry DSA for Interviews: Competitive Research and Product Design",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "unverified",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-DSA",
+      "id": "RA-DSA-JAVASCRIPT-REQUEST",
+      "notes": "This is a requested research phase, not an imported or approved JavaScript/TypeScript curriculum specification.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "title": "JavaScript DSA research phase requested for Engineering Foundry",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-DSA",
+      "id": "RA-DSA-PYTHON-JAVA-LANGUAGES",
+      "notes": "Published routes do not substitute for the missing original language research artifact and source review.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "title": "Engineering Foundry Python and Java DSA Language Pages",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-DSA",
+      "id": "RA-DSA-ROLE-ROADMAPS",
+      "notes": "The original roadmap research artifact has not been imported or verified.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-DSA",
+        "EF-DSA-CURRICULUM-SHELLS"
+      ],
+      "title": "Engineering Foundry DSA Roadmaps for SDE I, SDE II, and SDE III+",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "unverified",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-OPS",
+      "id": "RA-LAUNCH-V1-FINISH-PLAN",
+      "notes": "The master blueprint preserves only a synthesis title and contribution; the original research artifact has not been imported or verified.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-OPS"
+      ],
+      "title": "Engineering Foundry v1 Launch Finish Plan",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "unverified",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-LLD",
+      "id": "RA-LOW-LEVEL-SYSTEMS",
+      "notes": "This names a Low-Level Systems/C++ research boundary, not approval to expand the existing object-oriented Low-Level Design curriculum.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-DSA-LANGUAGE-COVERAGE",
+        "EF-LLD"
+      ],
+      "title": "Low-Level Software Interview Preparation: Questions, Problem Sets, Resources, and Study Plans",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-ML",
+      "id": "RA-ML-CORE-CONCEPTS",
+      "notes": "The normalized concept direction is synthesized, but the original research artifact and source mappings are unavailable.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-ML",
+        "EF-ML-CONCEPT-COVERAGE",
+        "EF-ML-ROADMAP-MAPPING"
+      ],
+      "title": "Engineering Foundry ML Design Core Concepts Curriculum",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-ML",
+      "id": "RA-ML-FINAL-SYNTHESIS",
+      "notes": "The synthesis title does not provide the original implementation-ready artifact, review record, or source corpus.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-ML",
+        "EF-ML-CONCEPT-COVERAGE",
+        "EF-ML-PRACTICE-PROVENANCE",
+        "EF-ML-ROADMAP-MAPPING"
+      ],
+      "title": "Engineering Foundry ML Design: Final Synthesis, Quality Audit, and Implementation-Ready Content Specification",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-ML",
+      "id": "RA-ML-INFRA-MODERN-AI",
+      "notes": "The original domain research and claim sources have not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-ML",
+        "EF-ML-CONCEPT-COVERAGE",
+        "EF-ML-PRACTICE-PROVENANCE"
+      ],
+      "title": "Engineering Foundry ML Design: ML Infrastructure and Modern AI System Design",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-ML",
+      "id": "RA-ML-RECOMMENDATION-RANKING",
+      "notes": "The original domain research and claim sources have not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-ML",
+        "EF-ML-CONCEPT-COVERAGE",
+        "EF-ML-PRACTICE-PROVENANCE"
+      ],
+      "title": "Engineering Foundry ML Design: Recommendation and Ranking Systems",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-ML",
+      "id": "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
+      "notes": "The original domain research and claim sources have not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-ML",
+        "EF-ML-CONCEPT-COVERAGE",
+        "EF-ML-PRACTICE-PROVENANCE"
+      ],
+      "title": "Engineering Foundry ML Design Research: Search, Retrieval, Query Understanding, Autocomplete, and Advertising",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-ML",
+      "id": "RA-ML-TRUST-PREDICTION-DECISION",
+      "notes": "The original domain research and claim sources have not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-ML",
+        "EF-ML-CONCEPT-COVERAGE",
+        "EF-ML-PRACTICE-PROVENANCE"
+      ],
+      "title": "Engineering Foundry ML Design: Trust, Prediction, Forecasting, and Decision Systems",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-PLAY",
+      "id": "RA-PLAY-DIAGNOSTIC-PLAN",
+      "notes": "The original diagnostic and planning evidence contract has not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-PLAY",
+        "EF-PLAY-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Interview Playbook: Preparation Diagnostic, Readiness Model, and Adaptive Plan Generator",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-PLAY",
+      "id": "RA-PLAY-FINAL-SYNTHESIS",
+      "notes": "The original final synthesis and audit record have not been imported or verified.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-PLAY",
+        "EF-PLAY-CURRICULUM-DEPTH",
+        "EF-PLAY-ROUND-PROVENANCE",
+        "EF-PLAY-TECHNICAL-PRESENTATION"
+      ],
+      "title": "Engineering Foundry Interview Playbook — Final Synthesis and Quality Audit",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-PLAY",
+      "id": "RA-PLAY-FINAL-WEEK-DEBRIEF",
+      "notes": "The original final-week and debrief research artifact has not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-PLAY",
+        "EF-PLAY-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Interview Playbook: Final Week, Interview Day, Recovery, and Post-Interview Debrief",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-PLAY",
+      "id": "RA-PLAY-MOCK-SIMULATIONS",
+      "notes": "The original simulation and readiness-evidence artifact has not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-MOCK",
+        "EF-PLAY",
+        "EF-PLAY-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Interview Playbook: Mock Interviews, Full-Loop Simulations, and Readiness Evidence",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "needs-current-verification",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-PLAY",
+      "id": "RA-PLAY-ROUND-EXECUTION",
+      "notes": "Current dossiers do not establish that the original taxonomy, source methodology, or technical-presentation specification is present.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-PLAY",
+        "EF-PLAY-CURRICULUM-DEPTH",
+        "EF-PLAY-ROUND-PROVENANCE",
+        "EF-PLAY-TECHNICAL-PRESENTATION"
+      ],
+      "title": "Engineering Foundry Interview Playbook: Round-by-Round Interview Execution Playbooks",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "approved-needs-source-import",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-PLAY",
+      "id": "RA-PLAY-SCOPE-BOUNDARIES",
+      "notes": "The original scope and information-architecture artifact has not been imported.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-PLAY",
+        "EF-PLAY-CURRICULUM-DEPTH"
+      ],
+      "title": "Engineering Foundry Interview Playbook: Final Scope, Information Architecture, and Product Boundaries",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "needs-current-verification",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-SAL",
+      "id": "RA-SAL-SECTION-BLUEPRINT",
+      "notes": "Existing modules do not substitute for the missing original research, freshness, legal, and editorial record.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-SAL"
+      ],
+      "title": "Salary Negotiation: Research-Backed Website Section Blueprint",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "unverified",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-SD",
+      "id": "RA-SD-CONTENT-RESEARCH-BLUEPRINT",
+      "notes": "The original editorial and source-hierarchy artifact has not been imported or verified.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-SD",
+        "EF-SD-PRACTICE-COVERAGE",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "title": "Engineering Foundry System Design Content Research Blueprint",
+      "verified_at": null,
+      "version_or_hash": null
+    },
+    {
+      "approval_status": "unverified",
+      "availability": "missing",
+      "external_record": null,
+      "family_id": "EF-SD",
+      "id": "RA-SD-CURRICULUM-TOPIC-MAP",
+      "notes": "The original topic-map research and source corpus have not been imported; the 161-to-178 scope mismatch remains unresolved.",
+      "repository_path": null,
+      "requirement_ids": [
+        "EF-SD",
+        "EF-SD-PRACTICE-COVERAGE",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "title": "Engineering Foundry System Design Curriculum: Deep Research and Recommended Topic Map",
+      "verified_at": null,
+      "version_or_hash": null
     }
   ],
   "schema_version": 1,
