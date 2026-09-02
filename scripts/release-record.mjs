@@ -31,16 +31,73 @@ function migrationStateAt(commit) {
   return { migration_count: migrations.length, final_migration_filename: migrations.at(-1) };
 }
 
+function stripJavaScriptComments(source) {
+  let output = "";
+  let quote = null;
+  let escaped = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    const next = source[index + 1];
+    if (quote) {
+      output += character;
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === quote) quote = null;
+      continue;
+    }
+    if (character === "`") assert.fail("Release verification manifests must use static quoted values, not template literals.");
+    if (character === '"' || character === "'") {
+      quote = character;
+      output += character;
+      continue;
+    }
+    if (character === "/" && next === "/") {
+      output += "  ";
+      index += 2;
+      while (index < source.length && source[index] !== "\n") {
+        output += " ";
+        index += 1;
+      }
+      if (index < source.length) output += "\n";
+      continue;
+    }
+    if (character === "/" && next === "*") {
+      output += "  ";
+      index += 2;
+      let closed = false;
+      while (index < source.length) {
+        if (source[index] === "*" && source[index + 1] === "/") {
+          output += "  ";
+          index += 1;
+          closed = true;
+          break;
+        }
+        output += source[index] === "\n" ? "\n" : " ";
+        index += 1;
+      }
+      assert.ok(closed, "Release verification manifest contains an unterminated block comment.");
+      continue;
+    }
+    output += character;
+  }
+  assert.equal(quote, null, "Release verification manifest contains an unterminated string.");
+  return output;
+}
+
 function manifestString(source, name) {
-  const match = source.match(new RegExp(`export const ${name} = ["']([^"']+)["'];`));
-  assert.ok(match, `Release verification manifest at the candidate must export ${name}.`);
-  return match[1];
+  const sanitized = stripJavaScriptComments(source);
+  const matches = [...sanitized.matchAll(new RegExp(`^[ \\t]*export[ \\t]+const[ \\t]+${name}[ \\t]*=[ \\t]*("(?:\\\\.|[^"\\\\])*")[ \\t]*;[ \\t]*$`, "gm"))];
+  assert.equal(matches.length, 1, `Release verification manifest at the candidate must export exactly one static ${name}.`);
+  return JSON.parse(matches[0][1]);
 }
 
 function manifestCommands(source) {
-  const match = source.match(/export const RELEASE_QUALIFICATION_COMMANDS = \[([\s\S]*?)\];/);
-  assert.ok(match, "Release verification manifest at the candidate must export qualification commands.");
-  const commands = [...match[1].matchAll(/["']([^"']+)["']/g)].map((entry) => entry[1]);
+  const sanitized = stripJavaScriptComments(source);
+  const matches = [...sanitized.matchAll(/^[ \t]*export[ \t]+const[ \t]+RELEASE_QUALIFICATION_COMMANDS[ \t]*=[ \t]*\[([\s\S]*?)\][ \t]*;[ \t]*$/gm)];
+  assert.equal(matches.length, 1, "Release verification manifest at the candidate must export exactly one static qualification-command array.");
+  assert.equal([...sanitized.matchAll(/\bRELEASE_QUALIFICATION_COMMANDS\b/g)].length, 1, "Candidate qualification commands must not be referenced or mutated after their static declaration.");
+  const commands = JSON.parse(`[${matches[0][1].replace(/,\s*$/, "")}]`);
+  assert.ok(Array.isArray(commands) && commands.every((command) => typeof command === "string"), "Candidate qualification commands must be a static string array.");
   assert.ok(commands.length > 0, "Candidate qualification commands must not be empty.");
   return commands;
 }
@@ -81,12 +138,22 @@ function candidateSnapshot(candidateSha) {
 }
 
 function workingTreePaths() {
-  const output = git(["status", "--porcelain=v1", "--untracked-files=all"]);
+  const output = execFileSync("git", ["status", "--porcelain=v1", "-z", "--untracked-files=all"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   if (!output) return [];
-  return output.split("\n").map((line) => {
-    const name = line.slice(3);
-    return name.includes(" -> ") ? name.split(" -> ").at(-1) : name;
-  });
+  const entries = output.split("\0");
+  const paths = [];
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    if (!entry) continue;
+    const status = entry.slice(0, 2);
+    paths.push(entry.slice(3));
+    if (status.includes("R") || status.includes("C")) {
+      index += 1;
+      assert.ok(entries[index], "Git porcelain rename/copy entry is missing its source path.");
+      paths.push(entries[index]);
+    }
+  }
+  return paths;
 }
 
 export function renderReleaseMarkdown(record) {
@@ -134,7 +201,7 @@ This record does not claim a deployment, hosted Supabase qualification, producti
 `;
 }
 
-function assertAllowedWorkingTree() {
+export function assertAllowedWorkingTree() {
   const unexpected = workingTreePaths().filter((name) => !RELEASE_RECORD_PATHS.includes(name));
   assert.deepEqual(unexpected, [], `Only release-record files may be dirty: ${unexpected.join(", ")}`);
 }
@@ -262,10 +329,25 @@ export function assertReleaseRecordDestinationAvailable() {
   const jsonExists = existsSync(RELEASE_JSON_PATH);
   const markdownExists = existsSync(RELEASE_MARKDOWN_PATH);
   assert.equal(jsonExists, markdownExists, "Release-record JSON and Markdown must either both exist or both be absent.");
-  assert.ok(!jsonExists, "Refusing to overwrite the current immutable release record. Archive the existing JSON/Markdown pair under docs/releases/archive before generating a new candidate record.");
+  if (!jsonExists) return;
+
+  const result = validateReleaseRecord();
+  const candidateSha = result.record.candidate_sha;
+  const archiveJsonPath = `${RELEASE_ARCHIVE_DIRECTORY}/v1-release-candidate-${candidateSha}.json`;
+  const archiveMarkdownPath = `${RELEASE_ARCHIVE_DIRECTORY}/v1-release-candidate-${candidateSha}.md`;
+  let committedArchiveJson;
+  let committedArchiveMarkdown;
+  try {
+    committedArchiveJson = gitFile("HEAD", archiveJsonPath);
+    committedArchiveMarkdown = gitFile("HEAD", archiveMarkdownPath);
+  } catch {
+    assert.fail(`Refusing to replace the current immutable release record until its exact pair is committed at HEAD:${archiveJsonPath} and HEAD:${archiveMarkdownPath}.`);
+  }
+  assert.equal(committedArchiveJson, readFileSync(RELEASE_JSON_PATH, "utf8"), "Committed archived release-record JSON must exactly match the current record before replacement.");
+  assert.equal(committedArchiveMarkdown, readFileSync(RELEASE_MARKDOWN_PATH, "utf8"), "Committed archived release-record Markdown must exactly match the current record before replacement.");
 }
 
-function generateReleaseRecord(candidateArgument, baseArgument) {
+export function generateReleaseRecord(candidateArgument, baseArgument) {
   assertAllowedWorkingTree();
   assertReleaseRecordDestinationAvailable();
   const candidateSha = fullCommit(candidateArgument || "HEAD");
@@ -280,7 +362,7 @@ function generateReleaseRecord(candidateArgument, baseArgument) {
   validateGeneratedReleaseRecord(record);
   writeFileSync(RELEASE_JSON_PATH, `${JSON.stringify(record, null, 2)}\n`);
   writeFileSync(RELEASE_MARKDOWN_PATH, renderReleaseMarkdown(record));
-  console.log(`Generated and pre-commit validated release records for candidate ${candidateSha}. Commit only the record pair, then run release:record validate.`);
+  console.log(`Generated and pre-commit validated release records for candidate ${candidateSha}. The previous record remains archived; commit only the canonical record pair, then run release:record validate.`);
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
