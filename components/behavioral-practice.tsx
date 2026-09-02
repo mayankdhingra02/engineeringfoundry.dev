@@ -17,7 +17,7 @@ import type { BehavioralQuestion } from "@/types";
 import { PageHero, SectionHeading } from "./page-shell";
 import { PreparationActivityControl } from "./preparation-activity-control";
 
-export function BehavioralPractice() {
+export function BehavioralPractice({ accountPlatformAvailable }: { accountPlatformAvailable: boolean }) {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const urlState = useMemo(() => parseBehavioralPracticeUrlState(queryString), [queryString]);
@@ -97,7 +97,9 @@ export function BehavioralPractice() {
   return <>
     <PageHero eyebrow="Behavioral interview practice" title="Build adaptable stories—not memorized scripts." description="Start with real stories, cover the question categories they can answer, tailor truthful framing, then rehearse the version you need.">
       <a className="button" href="#explorer">Explore 35 prompts <ArrowRight size={16} /></a>
-      <Link className="button button-secondary" href="/behavioral/workspace">Open private story workspace</Link>
+      {accountPlatformAvailable
+        ? <Link className="button button-secondary" href="/behavioral/workspace">Open private story workspace</Link>
+        : <a className="button button-secondary" href="#story-inventory">Review the on-page story worksheet</a>}
     </PageHero>
 
     <section className="section behavioral-framework-section"><div className="page-width">
@@ -133,7 +135,7 @@ export function BehavioralPractice() {
         <p>Pause here. Pick one truthful experience, identify your responsibility, and answer in your own words before opening any guidance.</p>
         <div className="behavioral-signal-list">{selected.signals.map((signal) => <span key={signal}>{signal}</span>)}</div>
       </article>
-      <PreparationActivityControl track="behavioral" itemId={selected.id} noun="prompt practice" />
+      <PreparationActivityControl track="behavioral" itemId={selected.id} noun="prompt practice" accountPlatformAvailable={accountPlatformAvailable} />
       <div className="behavioral-reveals">
         <details onToggle={(event) => trackReveal("answer_guidance", event.currentTarget.open)}><summary><span>01</span><div><strong>Reveal answer guidance</strong><small>What a strong answer should make clear</small></div></summary><ul>{selected.answerGuidance.map((item) => <li key={item}><CheckCircle2 size={14} />{item}</li>)}</ul></details>
         <details onToggle={(event) => trackReveal("follow_ups", event.currentTarget.open)}><summary><span>02</span><div><strong>Reveal possible follow-ups</strong><small>Questions that test ownership and judgment</small></div></summary><ul>{selected.followUps.map((item) => <li key={item}><CheckCircle2 size={14} />{item}</li>)}</ul></details>

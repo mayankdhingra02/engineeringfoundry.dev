@@ -111,8 +111,20 @@ export function recordLocalProgress(
   progress: LocalPreparationProgress,
   item: Omit<LocalProgressItem, "updatedAt"> & { updatedAt?: number },
 ): LocalPreparationProgress {
-  const parsed = parseLocalPreparationProgress({ ...progress, items: [...progress.items, { ...item, updatedAt: item.updatedAt ?? Date.now() }] });
-  return parsed;
+  const current = parseLocalPreparationProgress(progress);
+  const candidate = parseLocalPreparationProgress({
+    version: preparationProgressVersion,
+    items: [{ ...item, updatedAt: item.updatedAt ?? Date.now() }],
+    plans: [],
+  }).items[0];
+  if (!candidate) return current;
+  const candidateKey = `${candidate.track}:${candidate.itemId}`;
+  return parseLocalPreparationProgress({
+    ...current,
+    // Put the requested row before the bound so a full store retains the new
+    // or updated item and deterministically evicts the oldest existing row.
+    items: [candidate, ...current.items.filter((existing) => `${existing.track}:${existing.itemId}` !== candidateKey)],
+  });
 }
 
 export function saveLocalPlan(

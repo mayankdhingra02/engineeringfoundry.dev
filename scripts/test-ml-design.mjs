@@ -50,6 +50,13 @@ assert.match(dynamicRoute, /activeMlDesignProblems\.map\(\(problem\) => \(\{ slu
 assert.match(dynamicRoute, /getMlDesignProblem\(slug\)/, "the route must use the active-only lookup");
 assert.equal((dynamicRoute.match(/if \(!problem\) notFound\(\);/g) ?? []).length, 2, "metadata and page rendering must both fail closed for unknown practices");
 assert.match(dynamicRoute, /path: mlDesignProblemHref\(problem\.slug\)/, "practice metadata must use the canonical ML Design route helper");
+assert.match(dynamicRoute, /const accountPlatformAvailable = isAccountPlatformAvailable\(\);/, "ML Design practice must derive the account-platform boundary on the server");
+assert.match(dynamicRoute, /accountPlatformAvailable=\{accountPlatformAvailable\}/, "ML Design practice must pass the server-derived account-platform boundary to its client surface");
+const practicePage = read("components/design-practice-page.tsx");
+assert.match(practicePage, /accountPlatformAvailable: boolean;/, "the ML Design practice client must require an explicit account-platform boundary");
+assert.match(practicePage, /track="ml-design"[^>]+accountPlatformAvailable=\{accountPlatformAvailable\}/, "the ML Design practice client must pass account availability to its activity control");
+const activityControl = read("components/preparation-activity-control.tsx");
+assert.match(activityControl, /Account saving is unavailable\. This control uses browser storage when available;/, "disabled ML Design practice must render an honest account-saving marker through its activity control");
 
 const sitemapSource = read("app/sitemap.ts");
 assert.match(sitemapSource, /activeMlDesignProblems\.map\(\(problem\) => mlDesignProblemHref\(problem\.slug\)\)/, "sitemap routes must exactly follow the active ML Design catalog");
