@@ -76,20 +76,21 @@ A lower-priority source must not override a higher-priority source. Existing cod
 
 ## 0.2 Current integration checkpoint
 
-As of this specification date:
+As of the repository integration checkpoint on 2026-09-02:
 
-- Draft PR `#34` targets `main`.
-- Its verified head is expected to be `cdc641f12c9fc052f3f33c31991732588aab1a10`.
-- Its six required GitHub checks were reported successful.
-- It remained open, draft, and unmerged at the time this document was generated.
+- PR `#35` merged the historical release-record validation repair at main merge commit `dd9e44ab77bbb26788537fc0abab5e2f7d49c040`.
+- PR `#36` merged the anonymous Interview Experience column-privacy repair at main merge commit `af6968d18dec6c7d5bb3ac0be57b49b601227141`.
+- PR `#34` was reviewed at final head `4d701df41012fbeefcd70ca6684780abde3f8521` and merged normally at main merge commit `7b7a414053dde308af01a42f2633cfe0a13eaf9c`.
+- Static, Database, Production, Dependency Review, JavaScript/TypeScript analysis, and CodeQL checks succeeded on PR `#34`; the main-push Static, Database, Production, and CodeQL lanes also succeeded.
+- The check evidence was reverified on 2026-09-02 in the immutable [PR #34 CI run](https://github.com/mayankdhingra02/engineeringfoundry.dev/actions/runs/33594000255), [PR #34 CodeQL run](https://github.com/mayankdhingra02/engineeringfoundry.dev/actions/runs/33594000246), [PR #34 Dependency Review run](https://github.com/mayankdhingra02/engineeringfoundry.dev/actions/runs/33594000313), [main CI run](https://github.com/mayankdhingra02/engineeringfoundry.dev/actions/runs/33594505214), and [main CodeQL run](https://github.com/mayankdhingra02/engineeringfoundry.dev/actions/runs/33594505212).
+- The source branches were retained. No production deployment, hosted-service configuration, account enablement, analytics enablement, or generic curriculum expansion occurred during integration.
 
-Codex must re-fetch GitHub state before acting.
+Codex must still re-fetch GitHub state before every later operation.
 
-- If PR `#34` is still open and green, finish review, keep the description accurate, mark it ready, merge it through a normal non-destructive strategy, and verify `main` CI before starting blueprint implementation.
-- If it has already merged, begin from the latest verified `main`.
-- If its head, checks, or base have changed, investigate. Do not reset, overwrite, or force-push unfamiliar work.
-- This master specification should be committed on a separate documentation branch before large content implementation begins.
-- Do not add master-blueprint work to PR `#34`.
+- Begin blueprint governance work from the latest verified `main`; do not assume the recorded SHA remains current.
+- If branch, check, or base state differs, investigate. Do not reset, overwrite, rebase, or force-push unfamiliar shared work.
+- Commit this master specification through its dedicated documentation branch before broader blueprint implementation.
+- After the documentation PR merges and main is green, create or refresh the machine-readable requirement manifest, source ledger, and generated coverage report before research-backed curriculum implementation.
 
 ## 0.3 Mission
 
@@ -4679,7 +4680,7 @@ Recommended schema:
   "schema_version": 1,
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "ISO-8601",
-  "repository_base_sha": "full SHA",
+  "repository_sha": "full evaluated commit SHA",
   "requirements": [
     {
       "id": "EF-ML-CONCEPT-01",
@@ -4768,6 +4769,7 @@ archived
 - “Coming soon” does not count as completion.
 - A page with only generic definitions does not satisfy a detailed lesson requirement.
 - A generated report must identify the exact commit used.
+- `repository_sha` means the full commit actually evaluated; the manifest and generated coverage report must record the same value and validation must reject a mismatch.
 
 ## 20.4 Source ledger
 
@@ -4781,22 +4783,31 @@ Fields:
 
 ```json
 {
-  "id": "SRC-SD-REDIS-CACHE",
-  "title": "Official source title",
-  "publisher": "Publisher",
-  "url": "https://...",
-  "source_class": "official-documentation",
-  "published_at": null,
-  "verified_at": "2026-09-01",
-  "volatility": "periodic",
-  "applies_to": ["EF-SD-CACHE-01"],
-  "claims_supported": [
-    "Atomic statement or mechanism"
-  ],
-  "usage_limits": "Paraphrase; do not copy figures or prose",
-  "notes": null
+  "schema_version": 1,
+  "generated_or_reviewed_at": "ISO-8601",
+  "repository_sha": "full evaluated commit SHA",
+  "sources": [
+    {
+      "id": "SRC-SD-REDIS-CACHE",
+      "title": "Official source title",
+      "publisher": "Publisher",
+      "url": "https://...",
+      "source_class": "official-documentation",
+      "published_at": null,
+      "verified_at": "2026-09-01",
+      "volatility": "periodic",
+      "applies_to": ["EF-SD-CACHE-01"],
+      "claims_supported": [
+        "Atomic statement or mechanism"
+      ],
+      "usage_limits": "Paraphrase; do not copy figures or prose",
+      "notes": null
+    }
+  ]
 }
 ```
+
+The validator must reject duplicate source IDs, reverse links to unknown requirement IDs, manifest source references that do not resolve to one ledger record, and a ledger `repository_sha` that differs from the manifest or generated coverage report.
 
 Source classes:
 
@@ -4821,6 +4832,7 @@ docs/product-blueprint/generated/coverage.md
 
 The report must be reproducible and show:
 
+- The exact evaluated `repository_sha`, equal to the manifest and source ledger.
 - Requirements by section/status.
 - Published versus draft.
 - Source-complete versus missing.
@@ -4924,14 +4936,12 @@ At the beginning of every resumed Goal session:
 8. Build or refresh the requirement coverage report.
 9. Choose the highest-priority unblocked batch.
 
-Current special case:
+Completed predecessor integration:
 
-- PR #34 at `cdc641f12c9fc052f3f33c31991732588aab1a10` was green but still draft/unmerged when this document was prepared.
-- Re-fetch it.
-- When still green and unchanged, independently review, mark ready, merge normally, and verify main-push CI.
-- When changed, investigate.
-- Do not add this blueprint to PR #34.
-- Commit this document on a new documentation branch after PR #34 integration.
+- PRs `#35`, `#36`, and `#34` were independently reviewed, merged normally, and verified on main as recorded in Section 0.2.
+- The blueprint remained isolated from those product and security pull requests.
+- Re-fetch current main and GitHub state rather than treating the recorded integration SHAs as permanent branch tips.
+- Commit this document through its existing dedicated documentation branch before creating manifest, source-ledger, or coverage-report implementation batches.
 
 ## 21.3 Recommended delivery sequence
 
@@ -4939,8 +4949,8 @@ The lead may adapt boundaries when repository reality justifies it, but must pre
 
 | Order | Pull request / batch | Outcome | Boundary |
 | --- | --- | --- | --- |
-| 0 | Merge green PR #34 | Complete current handoff/release-evidence repair; main CI green. | No new feature code. |
-| 1 | Commit master blueprint | Add this document and initial manifest/source-ledger scaffolding. | Documentation-only; no content implementation. |
+| 0 | Merge predecessor PRs | Completed: release-record, public-report privacy, and P1 handoff integration; main CI green. | No blueprint work mixed into predecessor PRs. |
+| 1 | Commit master blueprint | Add this document through its dedicated documentation PR. | Documentation-only; no manifest or content implementation. |
 | 2 | Implementation-truth audit | Map every requirement to current code/content/test/status; generated coverage report. | No invented completion; minimal code only for validator/report. |
 | 3 | Cross-cutting P1 defects | History/focus/account-disabled/mobile/accessibility fixes from Section 19. | Small coherent defect PRs; do not mix curricula. |
 | 4A | System Design architecture and manifest | Normalize routes/status/schema/source contracts before bulk writing. | Preserve existing published URLs; no shallow duplicate pages. |
@@ -5723,6 +5733,8 @@ Codex cannot promote scope merely because it can implement it.
 
 This master file incorporates the following completed research families. The original research files should be preserved when available, but Codex must not require chat history to understand the product decisions encoded here.
 
+The titles below record synthesis inputs, not proof that each original artifact or its underlying source corpus is present in this repository. The first governance/coverage batch must record a stable artifact ID, repository path or external record, version or content hash, availability, approval status, and verification date for each artifact. Until that record exists, affected manifest rows may be at most `approved-needs-source-import`, `needs-current-verification`, or `needs-research`; they must not be marked `approved` merely because this synthesis names the artifact. Reconcile `docs/public-v1-content-gap-inventory.md` with those records in that batch. Implementation plumbing may proceed, but substantive curriculum drafting waits for this source-artifact gate.
+
 | Area | Research artifact | Primary contribution |
 | --- | --- | --- |
 | Launch governance | Engineering Foundry v1 Launch Finish Plan | Product scope, operating model, P0/P1 boundaries, definition of done and metrics. |
@@ -5844,11 +5856,12 @@ Read the complete master specification at:
 Treat it as the authoritative Engineering Foundry product, content, quality,
 and autonomous-delivery goal.
 
-First verify live GitHub/repository state and finish any unchanged green
-predecessor pull request described in the document. Then create or refresh the
-machine-readable requirement manifest and coverage report. Continue through
-small, reviewable pull requests until every item marked Required satisfies its
-acceptance criteria and the final Definition of Done is met.
+First verify live GitHub/repository state and confirm that the predecessor
+integration recorded in Section 0.2 remains present on the latest green main.
+Then create or refresh the machine-readable requirement manifest, source
+ledger, and coverage report. Continue through small, reviewable pull requests
+until every item marked Required satisfies its acceptance criteria and the
+final Definition of Done is met.
 
 Use real Codex subagents for independent discovery, source verification,
 implementation, and review. Give every write agent exclusive file ownership.
