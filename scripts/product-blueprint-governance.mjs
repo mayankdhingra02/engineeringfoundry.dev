@@ -510,7 +510,7 @@ function renderCoverage(model, envelope) {
   for (const source of model.sources) lines.push(`| ${escapeCell(source.id)} | ${escapeCell(source.source_class)} | ${escapeCell(source.verified_at)} | ${escapeCell(source.applies_to.join(", "))} |`);
   if (model.sources.length === 0) lines.push("| — | — | — | — |");
   lines.push("");
-  return `${lines.join("\n")}\n`;
+  return lines.join("\n");
 }
 
 export function buildGovernanceArtifacts(cwd, repositorySha) {

@@ -145,6 +145,7 @@ try {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     const beforeTimezone = buildGovernanceArtifacts(fixture.cwd, fixture.evaluated);
     const coverage = beforeTimezone.files.get(COVERAGE_PATH);
+    assert.ok(coverage.endsWith("\n") && !coverage.endsWith("\n\n"), "Generated coverage must end with exactly one newline.");
     for (const heading of [
       "### Research status", "### Publication status", "## Requirements by family", "## Requirements by section",
       "## Stale-review items", "## External owner gates and blocked items", "## Deferred and excluded items", "## Source completeness",
