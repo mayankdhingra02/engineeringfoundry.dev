@@ -37,6 +37,7 @@ const staticResults: readonly GlobalSearchItem[] = [
   { title: "Community Recognition Preview", type: "Community", href: "/leaderboard" },
   { title: "Interview Experiences", type: "Reviewed report directory", href: "/interview-experiences" },
   { title: "Interview Experience Reflection", type: "Private local reflection", href: "/interview-experiences" },
+  { title: "Private website feedback", type: "Support", href: "/feedback" },
 ];
 
 export const suggestedGlobalSearchItems: readonly GlobalSearchItem[] = [

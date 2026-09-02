@@ -36,6 +36,7 @@ for (const page of dsaCurriculumPages.filter((item) => item.status !== "publishe
 for (const language of dsaLanguages.filter((item) => item.status !== "published")) assert.ok(!indexedHrefs.has(`/dsa/languages/${language.slug}`), `unpublished DSA language leaked into search: ${language.slug}`);
 for (const roadmap of dsaRoadmaps.filter((item) => item.status !== "published")) assert.ok(!indexedHrefs.has(`/dsa/roadmaps/${roadmap.roleSlug}/${roadmap.durationDays}-day`), `unpublished DSA roadmap leaked into search: ${roadmap.roleSlug}/${roadmap.durationDays}`);
 for (const lesson of systemDesignLessons.filter((item) => item.status !== "published")) assert.ok(!indexedHrefs.has(lesson.slug), `unpublished System Design lesson leaked into search: ${lesson.slug}`);
+assert.ok(matchingGlobalSearchItems("feedback").some((item) => item.href === "/feedback" && item.title === "Private website feedback" && item.type === "Support"), "private feedback must have a precise searchable public handoff");
 
 const component = readFileSync(new URL("../components/global-search.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
