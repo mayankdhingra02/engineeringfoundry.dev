@@ -9,7 +9,13 @@ import {
   removeLocalProgressItems,
   saveLocalPlan,
 } from "../lib/preparation-progress/local.ts";
-import { choosePreparationContinuation, localContinuationCandidates } from "../lib/preparation-progress/continuation.ts";
+import {
+  choosePreparationContinuation,
+  createUnavailableAccountPreparationContinuationState,
+  localContinuationCandidates,
+  normalizeAccountPreparationContinuationResponse,
+  resolveAccountPreparationContinuationState,
+} from "../lib/preparation-progress/continuation.ts";
 import {
   preparationActivityKey,
   resolvePreparationActivitySaveOutcome,
@@ -54,6 +60,78 @@ assert.equal(choosePreparationContinuation([account, upcomingInterview], candida
 assert.equal(choosePreparationContinuation([], []) , null, "new users must not receive fabricated continuation");
 assert.equal(removeLocalProgressItems(local, ["dsa:two-sum"]).items.some((item) => item.itemId === "two-sum"), false, "only confirmed imports may clear their browser activity");
 assert.equal(preparationActivityDaysThisWeek([{ updatedAt: Date.parse("2026-08-20T10:00:00Z") }, { updatedAt: Date.parse("2026-08-20T15:00:00Z") }, { updatedAt: Date.parse("2026-08-18T10:00:00Z") }], Date.parse("2026-08-21T12:00:00Z")), 2, "weekly momentum counts distinct activity days, not clicks or a streak");
+
+const anonymousContinuationState = { status: "anonymous", authenticated: false, candidates: [], weeklyActivityDays: 0 };
+const emptyReadyContinuationState = { status: "ready", authenticated: true, candidates: [], weeklyActivityDays: 0 };
+const readyContinuationState = { status: "ready", authenticated: true, candidates: [account], weeklyActivityDays: 2 };
+const unavailableContinuationState = { status: "unavailable", candidates: [], weeklyActivityDays: 0 };
+
+assert.deepEqual(normalizeAccountPreparationContinuationResponse(anonymousContinuationState), anonymousContinuationState, "an exact anonymous response must remain distinct from an unavailable response");
+assert.deepEqual(normalizeAccountPreparationContinuationResponse(emptyReadyContinuationState), emptyReadyContinuationState, "an authenticated account with genuinely empty progress must remain a successful ready response");
+assert.deepEqual(normalizeAccountPreparationContinuationResponse(readyContinuationState), readyContinuationState, "a valid account continuation response must preserve its bounded public candidate");
+assert.deepEqual(normalizeAccountPreparationContinuationResponse(unavailableContinuationState), unavailableContinuationState, "the exact unavailable response must remain explicit and unauthenticated-neutral");
+assert.deepEqual(createUnavailableAccountPreparationContinuationState(), unavailableContinuationState, "transport and malformed-response failures must share one conservative unavailable state");
+
+assert.deepEqual(resolveAccountPreparationContinuationState({ authenticated: false, queryFailed: false, candidates: [], weeklyActivityDays: 0 }), anonymousContinuationState, "a successful anonymous account lookup must resolve to anonymous rather than unavailable");
+assert.deepEqual(resolveAccountPreparationContinuationState({ authenticated: false, queryFailed: true, candidates: [], weeklyActivityDays: 0 }), unavailableContinuationState, "an explicit continuation-data failure must resolve unavailable even when no authenticated continuation can be established");
+assert.deepEqual(resolveAccountPreparationContinuationState({ authenticated: true, queryFailed: false, candidates: [], weeklyActivityDays: 0 }), emptyReadyContinuationState, "successful zero-row account queries must resolve to a genuine ready-empty state");
+assert.deepEqual(resolveAccountPreparationContinuationState({ authenticated: true, queryFailed: false, candidates: [account], weeklyActivityDays: 2 }), readyContinuationState, "successful account queries must resolve to ready with their validated candidate");
+assert.deepEqual(resolveAccountPreparationContinuationState({ authenticated: true, queryFailed: true, candidates: [account], weeklyActivityDays: 2 }), unavailableContinuationState, "any account-query failure must discard partial rows and resolve unavailable rather than empty-ready");
+
+for (const malformed of [
+  null,
+  undefined,
+  false,
+  0,
+  "ready",
+  [],
+  {},
+  { ...anonymousContinuationState, extra: true },
+  { ...anonymousContinuationState, authenticated: true },
+  { ...anonymousContinuationState, candidates: [account] },
+  { ...anonymousContinuationState, weeklyActivityDays: 1 },
+  { ...emptyReadyContinuationState, authenticated: false },
+  { ...emptyReadyContinuationState, candidates: {} },
+  { ...unavailableContinuationState, authenticated: false },
+  { ...unavailableContinuationState, candidates: [account] },
+  { ...unavailableContinuationState, weeklyActivityDays: 1 },
+]) {
+  assert.equal(normalizeAccountPreparationContinuationResponse(malformed), null, `malformed/cross-correlated continuation response must fail closed: ${JSON.stringify(malformed)}`);
+}
+
+for (const weeklyActivityDays of [-1, 1.5, 8, Number.NaN, Number.POSITIVE_INFINITY, "2", null]) {
+  assert.equal(
+    normalizeAccountPreparationContinuationResponse({ ...emptyReadyContinuationState, weeklyActivityDays }),
+    null,
+    `ready continuation activity days must be an integer from zero through seven: ${String(weeklyActivityDays)}`,
+  );
+}
+
+const invalidCandidateMutations = [
+  { ...account, extra: true },
+  { ...account, track: "salary" },
+  { ...account, title: "" },
+  { ...account, title: " Padded title " },
+  { ...account, title: "Unsafe\nTitle" },
+  { ...account, href: "https://evil.example/path" },
+  { ...account, href: "//evil.example/path" },
+  { ...account, href: "/behavioral workspace" },
+  { ...account, href: "/behavioral\\workspace" },
+  { ...account, context: "" },
+  { ...account, context: " Unsafe context " },
+  { ...account, source: "local" },
+  { ...account, kind: "unknown" },
+  { ...account, updatedAt: -1 },
+  { ...account, updatedAt: Number.NaN },
+  { ...account, updatedAt: "10" },
+];
+for (const candidate of invalidCandidateMutations) {
+  assert.equal(
+    normalizeAccountPreparationContinuationResponse({ ...emptyReadyContinuationState, candidates: [candidate] }),
+    null,
+    `unsafe or malformed account continuation candidate must fail closed: ${JSON.stringify(candidate)}`,
+  );
+}
 
 const accountFailureReasons = ["account-unavailable", "unauthenticated", "invalid-input", "persistence-failed", "request-failed"];
 
@@ -126,6 +204,7 @@ const read = (path) => readFileSync(path, "utf8");
 const activityAction = read("features/preparation-progress/actions.ts");
 const importRoute = read("app/api/preparation/import/route.ts");
 const continuationRoute = read("app/api/preparation/continuation/route.ts");
+const accountContinuationQuery = read("lib/preparation-progress/account.ts");
 const activityMigration = read("supabase/migrations/202608220002_create_preparation_track_progress.sql");
 const planControl = read("components/save-study-plan-control.tsx");
 const planAction = read("features/preparation-progress/plan-actions.ts");
@@ -133,7 +212,19 @@ const activityControl = read("components/preparation-activity-control.tsx");
 const homeExperience = read("components/home-entry-experience.tsx");
 for (const marker of ["canonicalDsaQuestionById", "canonicalSystemDesignConceptIds", "activeMlDesignProblems", "activeBehavioralQuestions", "target_notes: null"]) assert.ok(activityAction.includes(marker), `durable activity action must preserve canonical/no-note semantics: ${marker}`);
 for (const marker of ["parseLocalPreparationProgress", "dsaKeys.has", "systemKeys.has", "trackKeys.has", "removeLocalProgressItems"]) assert.ok(importRoute.includes(marker) || read("components/home-entry-experience.tsx").includes(marker), `explicit import must validate and avoid overwrite: ${marker}`);
-assert.ok(continuationRoute.includes('"private, no-store"'), "private continuation must never be shared-cached");
+assert.match(
+  accountContinuationQuery,
+  /\[upcomingRoundResult, preferencesResult, dsaResult, systemProgressResult, attemptsResult, trackResult, behavioralResult\]\.some\(\(result\) => result\.error\)[\s\S]*authenticated: true, queryFailed: true/,
+  "any account continuation query error must resolve unavailable instead of returning authenticated empty/zero progress",
+);
+assert.match(accountContinuationQuery, /if \(!actor\)[\s\S]*authenticated: false, queryFailed: false/, "a successful signed-out lookup must remain anonymous rather than unavailable");
+assert.match(accountContinuationQuery, /authenticated: true,[\s\S]*queryFailed: false,[\s\S]*candidates,[\s\S]*weeklyActivityDays:/, "successful account queries must retain genuine ready, including ready-empty, semantics");
+assert.ok(accountContinuationQuery.includes('select("id,problem_id,status,updated_at")') && !accountContinuationQuery.includes('select("id,problem_id,title,status,updated_at")'), "account continuation queries must derive attempt titles from the canonical public catalog rather than selecting private attempt text");
+assert.match(continuationRoute, /status: state\.status === "unavailable" \? 503 : 200/, "the continuation route must return 503 only for the explicit unavailable state");
+assert.equal((continuationRoute.match(/503/g) ?? []).length, 1, "the continuation route must have one explicit unavailable HTTP status boundary");
+for (const marker of ['"private, no-store"', 'Pragma: "no-cache"', '"X-Robots-Tag": "noindex, nofollow"', 'export const dynamic = "force-dynamic"']) {
+  assert.ok(continuationRoute.includes(marker), `private continuation responses must preserve the request-time privacy/cache contract: ${marker}`);
+}
 for (const marker of ["on delete cascade", "enable row level security", "save_preparation_track_progress", "security definer"]) assert.ok(activityMigration.includes(marker), `durable activity schema is missing ${marker}`);
 assert.ok(planControl.includes("Saving replaces the active plan"), "saved plan replacement must be deliberate rather than silent");
 assert.ok(planControl.includes("if (accountPlatformAvailable)"), "account-disabled study-plan saves must not invoke the Server Action");

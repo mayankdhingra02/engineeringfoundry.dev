@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "16cafdb9abfc57c595a70eace7d01dc5e7fb0555",
-  "repository_state_sha256": "45e52131c94b87220bdc2e4444e3766d3a36fff8e4c63e261d5d66818f93303c",
+  "repository_sha": "c4981cfaf603810ecd24133564692d712c0c822c",
+  "repository_state_sha256": "1aa3d817334aa4509e3fb6193ede1161b889069bec32b20745735e252ed67c8f",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -549,12 +549,14 @@
     {
       "acceptance_criteria": [
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
+        "Homepage account continuation distinguishes anonymous, ready (including genuinely empty), and unavailable states; authenticated continuation-data query failures plus client transport and malformed-response failures cannot masquerade as signed-out or zero activity, account import requires a ready response, browser-local continuation remains available, and retry status and guarded focus recovery are source-regressed without claiming rendered browser automation. The shared actor boundary still does not distinguish an authentication-service failure from a legitimate anonymous session.",
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
         "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values.",
         "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed."
       ],
       "code_paths": [
+        "app/api/preparation/continuation/route.ts",
         "app/globals.css",
         "app/layout.tsx",
         "app/page.tsx",
@@ -577,7 +579,9 @@
         "lib/global-search.ts",
         "lib/header-navigation.ts",
         "lib/home-track-catalog.ts",
+        "lib/preparation-progress/account.ts",
         "lib/preparation-progress/activity-save.ts",
+        "lib/preparation-progress/continuation.ts",
         "lib/preparation-progress/plan-save.ts",
         "lib/public-route-inventory.ts",
         "scripts/qualify-auth-local.mjs",
@@ -585,6 +589,7 @@
         "scripts/test-account-lifecycle.mjs",
         "scripts/test-analytics-launch-evidence.mjs",
         "scripts/test-auth-foundation.mjs",
+        "scripts/test-homepage-entry.mjs",
         "scripts/test-public-links.mjs",
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-unified-progress.mjs",

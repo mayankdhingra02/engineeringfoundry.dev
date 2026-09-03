@@ -16,8 +16,11 @@ import {
   writeLocalPreparationProgress,
 } from "@/lib/preparation-progress/local";
 import {
+  createUnavailableAccountPreparationContinuationState,
   choosePreparationContinuation,
   localContinuationCandidates,
+  normalizeAccountPreparationContinuationResponse,
+  type AccountPreparationContinuationState,
   type ContinuationCatalog,
   type PreparationContinuation,
 } from "@/lib/preparation-progress/continuation";
@@ -46,15 +49,21 @@ function readBrowserProgressWithLegacy() {
 
 export function HomeEntryExperience({ continuationCatalog }: { continuationCatalog: ContinuationCatalog }) {
   const [localCandidates, setLocalCandidates] = useState<PreparationContinuation[]>([]);
-  const [accountCandidates, setAccountCandidates] = useState<PreparationContinuation[]>([]);
   const [localWeeklyActivityDays, setLocalWeeklyActivityDays] = useState(0);
-  const [accountWeeklyActivityDays, setAccountWeeklyActivityDays] = useState(0);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [accountChecked, setAccountChecked] = useState(false);
+  const [accountState, setAccountState] = useState<AccountPreparationContinuationState | null>(null);
+  const [accountRequestPending, setAccountRequestPending] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [progressChecked, setProgressChecked] = useState(false);
   const presentedContinuations = useRef(new Set<string>());
+  const mountedRef = useRef(false);
+  const accountRequestIdRef = useRef(0);
+  const accountRequestPendingRef = useRef(false);
+  const retryButtonRef = useRef<HTMLButtonElement>(null);
+  const recoverFocusAfterRetryRef = useRef(false);
+  const focusFrameRef = useRef<number | null>(null);
+  const continuationHeadingRef = useRef<HTMLHeadingElement>(null);
+  const trackHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const readProgress = useCallback(() => {
     try {
@@ -66,6 +75,36 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
     }
     setProgressChecked(true);
   }, [continuationCatalog]);
+
+  const loadAccountProgress = useCallback(async (requestedByRetry = false) => {
+    if (!mountedRef.current || accountRequestPendingRef.current) return;
+    accountRequestPendingRef.current = true;
+    recoverFocusAfterRetryRef.current = false;
+    const requestId = ++accountRequestIdRef.current;
+    setAccountRequestPending(true);
+
+    try {
+      const response = await fetch("/api/preparation/continuation", { cache: "no-store" });
+      const payload: unknown = await response.json().catch(() => null);
+      const parsed = normalizeAccountPreparationContinuationResponse(payload);
+      const nextState = response.ok && parsed
+        ? parsed
+        : createUnavailableAccountPreparationContinuationState();
+      if (!mountedRef.current || requestId !== accountRequestIdRef.current) return;
+      recoverFocusAfterRetryRef.current = requestedByRetry
+        && nextState.status !== "unavailable"
+        && document.activeElement === retryButtonRef.current;
+      setAccountState(nextState);
+    } catch {
+      if (!mountedRef.current || requestId !== accountRequestIdRef.current) return;
+      setAccountState(createUnavailableAccountPreparationContinuationState());
+    } finally {
+      if (mountedRef.current && requestId === accountRequestIdRef.current) {
+        accountRequestPendingRef.current = false;
+        setAccountRequestPending(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const animationFrame = window.requestAnimationFrame(readProgress);
@@ -81,13 +120,16 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
   }, [readProgress]);
 
   useEffect(() => {
-    let active = true;
-    void fetch("/api/preparation/continuation", { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() as Promise<{ authenticated?: boolean; candidates?: PreparationContinuation[]; weeklyActivityDays?: number }> : { authenticated: false, candidates: [], weeklyActivityDays: 0 })
-      .then((data) => { if (active) { setAuthenticated(Boolean(data.authenticated)); setAccountCandidates(data.candidates ?? []); setAccountWeeklyActivityDays(data.weeklyActivityDays ?? 0); setAccountChecked(true); } })
-      .catch(() => { if (active) setAccountChecked(true); });
-    return () => { active = false; };
-  }, []);
+    mountedRef.current = true;
+    const initialRequestFrame = window.requestAnimationFrame(() => { void loadAccountProgress(); });
+    return () => {
+      window.cancelAnimationFrame(initialRequestFrame);
+      mountedRef.current = false;
+      accountRequestIdRef.current += 1;
+      accountRequestPendingRef.current = false;
+      if (focusFrameRef.current !== null) window.cancelAnimationFrame(focusFrameRef.current);
+    };
+  }, [loadAccountProgress]);
 
   async function importBrowserActivity() {
     setImporting(true);
@@ -107,21 +149,34 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
         window.dispatchEvent(new CustomEvent(preparationProgressEvent));
       }
       setImportMessage(`${result.imported?.length ?? 0} activities imported${result.skipped?.length ? `; ${result.skipped.length} existing account activities were left unchanged.` : "."}${result.plansRequireChoice ? " Saved plans remain in this browser until you choose one on its plan page." : ""}`);
-      const fresh = await fetch("/api/preparation/continuation", { cache: "no-store" });
-      if (fresh.ok) { const data = await fresh.json() as { authenticated?: boolean; candidates?: PreparationContinuation[]; weeklyActivityDays?: number }; setAuthenticated(Boolean(data.authenticated)); setAccountCandidates(data.candidates ?? []); setAccountWeeklyActivityDays(data.weeklyActivityDays ?? 0); }
+      await loadAccountProgress();
     } catch (error) { setImportMessage(error instanceof Error ? error.message : "Browser activity could not be imported."); }
     finally { setImporting(false); }
   }
 
+  const accountCandidates = accountState?.status === "ready" ? accountState.candidates : [];
+  const accountWeeklyActivityDays = accountState?.status === "ready" ? accountState.weeklyActivityDays : 0;
+  const authenticated = accountState?.status === "ready";
   const continuation = choosePreparationContinuation(accountCandidates, localCandidates);
   const weeklyActivityDays = accountWeeklyActivityDays || localWeeklyActivityDays;
   const continuationSource = continuation ? `${continuation.source}:${continuation.kind}` : null;
 
   useEffect(() => {
-    if (!progressChecked || !continuation || !continuationSource || presentedContinuations.current.has(continuationSource)) return;
+    if (!recoverFocusAfterRetryRef.current || accountState?.status === "unavailable") return;
+    recoverFocusAfterRetryRef.current = false;
+    focusFrameRef.current = window.requestAnimationFrame(() => {
+      focusFrameRef.current = null;
+      if (!mountedRef.current) return;
+      if (document.activeElement && document.activeElement !== document.body) return;
+      (continuationHeadingRef.current ?? trackHeadingRef.current)?.focus();
+    });
+  }, [accountState?.status, continuation]);
+
+  useEffect(() => {
+    if (!accountState || accountState.status === "unavailable" || !progressChecked || !continuation || !continuationSource || presentedContinuations.current.has(continuationSource)) return;
     presentedContinuations.current.add(continuationSource);
     track("continuation_presented", { track: continuation.track, continuation_source: continuationSource, authenticated });
-  }, [authenticated, continuation, continuationSource, progressChecked]);
+  }, [accountState, authenticated, continuation, continuationSource, progressChecked]);
 
   return (
     <div className={`home-entry-experience${continuation ? " is-returning" : ""}`}>
@@ -129,15 +184,37 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
         <section className="home-continue" aria-labelledby="home-continue-title" aria-live="polite">
           <div>
             <span>Continue preparation</span>
-            <h2 id="home-continue-title">{continuation.title}</h2>
+            <h2 id="home-continue-title" ref={continuationHeadingRef} tabIndex={-1}>{continuation.title}</h2>
             <p>{continuation.context}</p>
             {weeklyActivityDays > 0 && <small className="home-momentum">Preparation recorded on {weeklyActivityDays} {weeklyActivityDays === 1 ? "day" : "days"} this week.</small>}
           </div>
-          <Link className="button" href={continuation.href} onClick={() => { track("continuation_selected", { track: continuation.track, continuation_source: continuationSource, authenticated }); if (continuation.kind === "active-plan") track("study_plan_resumed", { track: continuation.track, continuation_source: continuationSource, authenticated }); }}>Continue {continuation.track === "interview" ? "interview prep" : continuation.track === "dsa" ? "DSA" : continuation.track === "system-design" ? "System Design" : continuation.track === "ml-design" ? "ML Design" : "Behavioral"} <ArrowRight size={16} aria-hidden="true" /></Link>
+          <Link className="button" href={continuation.href} onClick={() => { if (!accountState || accountState.status === "unavailable") return; track("continuation_selected", { track: continuation.track, continuation_source: continuationSource, authenticated }); if (continuation.kind === "active-plan") track("study_plan_resumed", { track: continuation.track, continuation_source: continuationSource, authenticated }); }}>Continue {continuation.track === "interview" ? "interview prep" : continuation.track === "dsa" ? "DSA" : continuation.track === "system-design" ? "System Design" : continuation.track === "ml-design" ? "ML Design" : "Behavioral"} <ArrowRight size={16} aria-hidden="true" /></Link>
         </section>
       )}
 
-      {accountChecked && authenticated && localCandidates.length > 0 && (
+      {accountState?.status === "unavailable" && (
+        <aside className="home-local-import">
+          <div id="home-account-progress-status" role="status" aria-live="polite" aria-atomic="true" aria-busy={accountRequestPending}>
+            <strong>Account progress couldn’t load.</strong>
+            <p>Public preparation remains available. Retry before relying on account-based continuation or weekly activity.</p>
+          </div>
+          <button
+            ref={retryButtonRef}
+            type="button"
+            className="button button-secondary"
+            aria-disabled={accountRequestPending}
+            aria-describedby="home-account-progress-status"
+            onClick={() => {
+              if (accountRequestPendingRef.current) return;
+              void loadAccountProgress(true);
+            }}
+          >
+            {accountRequestPending ? "Retrying account progress…" : "Retry account progress"}
+          </button>
+        </aside>
+      )}
+
+      {accountState?.status === "ready" && localCandidates.length > 0 && (
         <aside className="home-local-import" aria-live="polite">
           <div><strong>Browser activity found</strong><p>Import only activity that is not already in your account. Existing account progress is never overwritten.</p></div>
           <button type="button" className="button button-secondary" disabled={importing} onClick={() => { void importBrowserActivity(); }}>{importing ? "Importing…" : "Import activity"}</button>
@@ -147,7 +224,7 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
 
       <div className="home-track-heading">
         <div>
-          <h2>{continuation ? "Choose another track" : "Choose a track"}</h2>
+          <h2 ref={trackHeadingRef} tabIndex={-1}>{continuation ? "Choose another track" : "Choose a track"}</h2>
           <p>Everything is public. You can switch tracks whenever your interview plan changes.</p>
         </div>
         <Link className="home-help-link" href="/prepare">Not sure where to start? <span>Compare tracks</span></Link>

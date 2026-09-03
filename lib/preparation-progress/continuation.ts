@@ -14,6 +14,32 @@ export type PreparationContinuation = {
   updatedAt: number;
 };
 
+export type AccountPreparationContinuationState =
+  | {
+    status: "anonymous";
+    authenticated: false;
+    candidates: [];
+    weeklyActivityDays: 0;
+  }
+  | {
+    status: "ready";
+    authenticated: true;
+    candidates: PreparationContinuation[];
+    weeklyActivityDays: number;
+  }
+  | {
+    status: "unavailable";
+    candidates: [];
+    weeklyActivityDays: 0;
+  };
+
+export type AccountPreparationContinuationResolution = {
+  authenticated: boolean;
+  queryFailed: boolean;
+  candidates: readonly PreparationContinuation[];
+  weeklyActivityDays: number;
+};
+
 export type ContinuationCatalogItem = { id: string; title: string; href: string };
 export type ContinuationCatalog = Readonly<Record<PreparationTrack, readonly ContinuationCatalogItem[]>>;
 
@@ -24,6 +50,122 @@ const kindPriority: Record<ContinuationKind, number> = {
   next: 3,
   recent: 4,
 };
+
+const continuationTracks = new Set<ContinuationTrack>(["dsa", "system-design", "ml-design", "behavioral", "interview"]);
+const continuationKinds = new Set<ContinuationKind>(["upcoming-interview", "active-plan", "in-progress", "next", "recent"]);
+const candidateKeys = ["track", "title", "href", "context", "source", "kind", "updatedAt"] as const;
+const authenticatedStateKeys = ["status", "authenticated", "candidates", "weeklyActivityDays"] as const;
+const unavailableStateKeys = ["status", "candidates", "weeklyActivityDays"] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]) {
+  const actualKeys = Object.keys(value);
+  return actualKeys.length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+}
+
+function containsControlCharacter(value: string) {
+  return Array.from(value).some((character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return codePoint <= 31 || codePoint === 127;
+  });
+}
+
+function isNonemptyDisplayText(value: unknown): value is string {
+  return typeof value === "string"
+    && value.length > 0
+    && value.trim() === value
+    && !containsControlCharacter(value);
+}
+
+function isSafeInternalHref(value: unknown): value is string {
+  return typeof value === "string"
+    && value.startsWith("/")
+    && !value.startsWith("//")
+    && !/[\\\s]/.test(value)
+    && !containsControlCharacter(value);
+}
+
+function normalizeAccountCandidate(value: unknown): PreparationContinuation | null {
+  if (!isRecord(value) || !hasExactKeys(value, candidateKeys)) return null;
+  if (typeof value.track !== "string" || !continuationTracks.has(value.track as ContinuationTrack)) return null;
+  if (!isNonemptyDisplayText(value.title) || !isSafeInternalHref(value.href) || !isNonemptyDisplayText(value.context)) return null;
+  if (value.source !== "account") return null;
+  if (typeof value.kind !== "string" || !continuationKinds.has(value.kind as ContinuationKind)) return null;
+  if (typeof value.updatedAt !== "number" || !Number.isFinite(value.updatedAt) || value.updatedAt < 0) return null;
+
+  return {
+    track: value.track as ContinuationTrack,
+    title: value.title,
+    href: value.href,
+    context: value.context,
+    source: "account",
+    kind: value.kind as ContinuationKind,
+    updatedAt: value.updatedAt,
+  };
+}
+
+export function createUnavailableAccountPreparationContinuationState(): AccountPreparationContinuationState {
+  return { status: "unavailable", candidates: [], weeklyActivityDays: 0 };
+}
+
+/**
+ * Converts an untrusted API payload into the client-safe continuation state.
+ * Malformed or internally inconsistent payloads return null so callers can
+ * fail closed to an unavailable transport state rather than anonymous state.
+ */
+export function normalizeAccountPreparationContinuationResponse(
+  value: unknown,
+): AccountPreparationContinuationState | null {
+  if (!isRecord(value) || !Array.isArray(value.candidates)) return null;
+
+  if (value.status === "unavailable") {
+    return hasExactKeys(value, unavailableStateKeys)
+      && value.candidates.length === 0
+      && value.weeklyActivityDays === 0
+      ? createUnavailableAccountPreparationContinuationState()
+      : null;
+  }
+
+  if (value.status === "anonymous") {
+    return hasExactKeys(value, authenticatedStateKeys)
+      && value.authenticated === false
+      && value.candidates.length === 0
+      && value.weeklyActivityDays === 0
+      ? { status: "anonymous", authenticated: false, candidates: [], weeklyActivityDays: 0 }
+      : null;
+  }
+
+  if (value.status !== "ready" || !hasExactKeys(value, authenticatedStateKeys) || value.authenticated !== true) return null;
+  if (typeof value.weeklyActivityDays !== "number" || !Number.isInteger(value.weeklyActivityDays) || value.weeklyActivityDays < 0 || value.weeklyActivityDays > 7) return null;
+  const candidates = value.candidates.map(normalizeAccountCandidate);
+  if (candidates.some((candidate) => candidate === null)) return null;
+
+  return {
+    status: "ready",
+    authenticated: true,
+    candidates: candidates as PreparationContinuation[],
+    weeklyActivityDays: value.weeklyActivityDays,
+  };
+}
+
+/** Resolves trusted account-query outcomes through the same client-safe schema. */
+export function resolveAccountPreparationContinuationState(
+  input: AccountPreparationContinuationResolution,
+): AccountPreparationContinuationState {
+  if (input.queryFailed) return createUnavailableAccountPreparationContinuationState();
+  if (!input.authenticated) return { status: "anonymous", authenticated: false, candidates: [], weeklyActivityDays: 0 };
+
+  const normalized = normalizeAccountPreparationContinuationResponse({
+    status: "ready",
+    authenticated: true,
+    candidates: input.candidates,
+    weeklyActivityDays: input.weeklyActivityDays,
+  });
+  return normalized?.status === "ready" ? normalized : createUnavailableAccountPreparationContinuationState();
+}
 
 export function choosePreparationContinuation(
   accountCandidates: readonly PreparationContinuation[],
