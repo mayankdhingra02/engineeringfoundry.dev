@@ -6,7 +6,7 @@ export const PUBLIC_ROUTES = [
   "/", "/prepare", "/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral", "/interview-tips", "/resources",
   "/mock-interviews", "/referrals", "/challenges", "/community", "/leaderboard", "/interview-experiences",
   "/companies", "/faq", "/contact", "/feedback", "/dsa/arrays", "/dsa/questions", "/dsa/companies",
-  "/dsa/companies/amazon", "/dsa/roadmap", "/dsa/roadmap?topic=trees", "/dsa/practice", "/dsa/company-questions", "/dsa/company-questions/amazon", "/dsa/languages", "/dsa/languages/python",
+  "/dsa/companies/amazon", "/dsa/roadmap", "/dsa/roadmap/topic-map?topic=trees", "/dsa/practice", "/dsa/company-questions", "/dsa/company-questions/amazon", "/dsa/languages", "/dsa/languages/python",
   "/dsa/languages/choose-a-language", "/dsa/roadmaps", "/dsa/roadmaps/sde-2/60-day", "/dsa/questions/two-sum",
   "/dsa/strategy", "/dsa/interview-strategy", "/dsa/interview-strategy/problem-solving-framework", "/dsa/roadmap?level=sde2", "/system-design/plan",
   "/system-design/problems", "/system-design/problems/url-shortener", "/system-design/practice", "/system-design/fundamentals/caching", "/system-design/patterns/circuit-breaker",

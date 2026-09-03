@@ -1,9 +1,12 @@
 import { readFileSync } from "node:fs";
+import { getCoreRoadmapTopicHref } from "../data/dsa/core-roadmap.ts";
 
 const failures = [];
 const read = (file) => readFileSync(file, "utf8");
 const requireText = (source, text, message) => { if (!source.includes(text)) failures.push(message); };
 const prohibit = (source, pattern, message) => { if (pattern.test(source)) failures.push(message); };
+
+if (getCoreRoadmapTopicHref("two-pointers") !== "/dsa/roadmap/topic-map?topic=two-pointers") failures.push("Canonical Two Pointers roadmap handoff does not open its topic-map panel.");
 
 const page = read("features/dsa/strategy/strategy-page.tsx");
 const flow = read("features/dsa/strategy/interview-flow.tsx");
@@ -29,7 +32,11 @@ const core = read("data/dsa/core-roadmap.ts");
 const coreTopicIds = new Set([...core.matchAll(/\{ id: "([^"]+)", title:/g)].map((match) => match[1]));
 for (const match of data.matchAll(/roadmapTopicId: "([^"]+)"/g)) if (!coreTopicIds.has(match[1])) failures.push(`Strategy pattern references unknown roadmap topic ${match[1]}.`);
 const pattern = read("features/dsa/strategy/pattern-reference.tsx");
-for (const marker of ["getCoreRoadmapTopic", "getRoadmapPracticeHref", "/dsa/roadmap?topic="]) requireText(pattern, marker, `Strategy roadmap/practice integration lacks ${marker}.`);
+for (const source of [pattern, stuck]) {
+  requireText(source, "getCoreRoadmapTopicHref", "Strategy roadmap handoff does not use the canonical topic-map helper.");
+  prohibit(source, /\/dsa\/roadmap\?topic=/, "Strategy still hands a topic off to the level planner instead of the topic map.");
+}
+for (const marker of ["getCoreRoadmapTopic", "getRoadmapPracticeHref"]) requireText(pattern, marker, `Strategy roadmap/practice integration lacks ${marker}.`);
 for (const href of ["/dsa/languages/python", "/dsa/languages/java", "/dsa/questions", "/dsa/study-plans"]) requireText(page, href, `Strategy guide lacks integration link ${href}.`);
 
 const studyOverview = read("features/dsa/study-plans/study-plan-overview.tsx");

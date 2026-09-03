@@ -1,9 +1,16 @@
 import { readFileSync } from "node:fs";
+import { coreInterviewRoadmap, getCoreRoadmapTopicHref } from "../data/dsa/core-roadmap.ts";
 
 const failures = [];
 const read = (file) => readFileSync(file, "utf8");
 const requireText = (source, text, message) => { if (!source.includes(text)) failures.push(message); };
 const prohibit = (source, pattern, message) => { if (pattern.test(source)) failures.push(message); };
+
+if (getCoreRoadmapTopicHref("trees") !== "/dsa/roadmap/topic-map?topic=trees") failures.push("Canonical Trees roadmap handoff does not open its topic-map panel.");
+if (getCoreRoadmapTopicHref("not-a-roadmap-topic") !== undefined) failures.push("Unknown roadmap topics must not produce public handoff URLs.");
+for (const topic of coreInterviewRoadmap.topics) {
+  if (getCoreRoadmapTopicHref(topic.id) !== `/dsa/roadmap/topic-map?topic=${topic.id}`) failures.push(`Canonical roadmap topic ${topic.id} does not round-trip to its topic-map panel.`);
+}
 
 const data = read("data/dsa/study-plans.ts");
 for (const marker of ["StudyPlanLevel", "StudyPlanDuration", "StudyPlanPhase", "StudyPlanWeek", "StudyPlanDay", "StudyPlanPriority", "assertStudyPlanIntegrity", "coreInterviewRoadmap", "getRoadmapPracticeHref"]) requireText(data, marker, `Study plan data lacks ${marker}.`);
@@ -22,7 +29,8 @@ const selector = read("features/dsa/study-plans/study-plan-selector.tsx");
 for (const marker of ["Target level", "Preparation time", "aria-pressed", "SDE I", "SDE II", "Senior / SDE III", "30 Days", "60 Days", "90 Days"]) requireText(selector + data, marker, `Study plan selector lacks ${marker}.`);
 
 const week = read("features/dsa/study-plans/study-plan-week.tsx");
-for (const marker of ["aria-expanded", "aria-controls", "/dsa/roadmap?topic=", "getStudyPlanPracticeHref", "Interview focus", "Checkpoint", "Suggested daily rhythm", "Must Know", "Important", "Optional"]) requireText(week, marker, `Study plan week lacks ${marker}.`);
+for (const marker of ["aria-expanded", "aria-controls", "getCoreRoadmapTopicHref", "getStudyPlanPracticeHref", "Interview focus", "Checkpoint", "Suggested daily rhythm", "Must Know", "Important", "Optional"]) requireText(week, marker, `Study plan week lacks ${marker}.`);
+prohibit(week, /\/dsa\/roadmap\?topic=/, "Study-plan topics still hand off to the level planner instead of the topic map.");
 
 const readiness = read("features/dsa/study-plans/readiness-checklist.tsx");
 for (const marker of ["Low priority for this plan", "Already comfortable with the fundamentals?", "Jump to interview practice", "Before interviewing, you should be able to:", "/dsa/strategy#communication", "not saved progress"]) requireText(readiness, marker, `Study plan readiness UI lacks ${marker}.`);

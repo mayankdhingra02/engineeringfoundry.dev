@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "a8b60c24c9cf5f1b8094b2ad5d91907979ce1660",
-  "repository_state_sha256": "c587b83879dfcccea7538d0351c85f681785982c6b5ec0666a2d7d1d2d9b3836",
+  "repository_sha": "c4b9caa0122dd33d37f176231ec8d0d0d0a1cf0c",
+  "repository_state_sha256": "ba5e3cc20dedb09b4782aa3fac75505f1e590c6208cd527b17725d17e490286e",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -333,6 +333,7 @@
     {
       "acceptance_criteria": [
         "Canonical questions, patterns, topics, routes, filters, and published language guides remain internally consistent.",
+        "Every DSA topic handoff uses the canonical topic-map route with the selected canonical topic ID; unknown topic IDs fail closed without producing a misleading link.",
         "Account-disabled DSA routes remain public and useful without inoperable sign-in or persistence handoffs, while browser-local activity is labeled honestly and enabled account modes retain their existing behavior.",
         "The shared activity control requires explicit account availability, retains the bounded 160-item fallback, and never applies a stale item result to a different DSA item."
       ],
@@ -340,12 +341,19 @@
         "app/dsa",
         "components/preparation-activity-control.tsx",
         "data/dsa",
+        "data/dsa/core-roadmap.ts",
         "features/dsa",
+        "features/dsa/languages/interview-template.tsx",
+        "features/dsa/strategy/pattern-reference.tsx",
+        "features/dsa/strategy/stuck-recovery.tsx",
+        "features/dsa/study-plans/study-plan-week.tsx",
         "features/preparation-progress/actions.ts",
         "lib/dsa/queries.ts",
         "lib/preparation-progress/activity-save.ts",
         "scripts/smoke-public-routes.mjs",
+        "scripts/test-dsa-languages.mjs",
         "scripts/test-dsa-progress.mjs",
+        "scripts/test-dsa-strategy.mjs",
         "scripts/test-dsa-study-plans.mjs",
         "scripts/test-public-route-smoke.mjs"
       ],
@@ -385,6 +393,7 @@
         "npm run test:dsa-languages",
         "npm run test:dsa-pattern-index",
         "npm run test:dsa-progress",
+        "npm run test:dsa-strategy",
         "npm run test:dsa-study-plans",
         "npm run test:public-route-smoke"
       ],
