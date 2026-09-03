@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 261fddfbdfefffd8fe896b0a7f41d4f758f4397e
-repository_state_sha256: de2e4aea2e78ca3e36f61b6e0741cf98805f3c3aeea62876e5a62f78222d9ce2
+repository_sha: 622bad32b2ab9addbc209e6fe016fa785d989e9b
+repository_state_sha256: 559b99541e4eea8882289e1d505a55db81d50948628f5d445211c480e1709fe6
 ---
 
 # Engineering Foundry requirement coverage
@@ -131,7 +131,7 @@ repository_state_sha256: de2e4aea2e78ca3e36f61b6e0741cf98805f3c3aeea62876e5a62f7
 | EF-ML-ROADMAP-MAPPING | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Eight static stages have no approved mapping to concept IDs and practice records. |
 | EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 3 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
-| EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 6 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
+| EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 8 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
 | EF-PLAY | interview-playbook | required | partial | needs-current-verification | stale-review | missing | /interview-playbook, /interview-tips | — | 0 | 3 | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
 | EF-PLAY-CURRICULUM-DEPTH | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | /interview-tips | — | 0 | 2 | Research methodology and master-depth acceptance mapping remain incomplete. |

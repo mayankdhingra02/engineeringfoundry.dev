@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "261fddfbdfefffd8fe896b0a7f41d4f758f4397e",
-  "repository_state_sha256": "de2e4aea2e78ca3e36f61b6e0741cf98805f3c3aeea62876e5a62f78222d9ce2",
+  "repository_sha": "622bad32b2ab9addbc209e6fe016fa785d989e9b",
+  "repository_state_sha256": "559b99541e4eea8882289e1d505a55db81d50948628f5d445211c480e1709fe6",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1011,6 +1011,7 @@
       "acceptance_criteria": [
         "Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale.",
         "Release qualification timestamps and interview-resource verification dates accept only their canonical formats, valid UTC calendar values, and values no later than their validation instant or date.",
+        "Impact-ledger records fail closed on unknown top-level and nested keys; accept only real canonical calendar dates and ordered, completed snapshot windows bounded to the filename month; require full 40-character Git SHAs, nonnegative integer count aggregates, and a seven-day return rate from 0 through 1.",
         "Superseded pull-request runs may be cancelled, while push and scheduled CI or CodeQL runs retain exact-commit verification evidence."
       ],
       "code_paths": [
@@ -1019,12 +1020,15 @@
         "scripts/product-blueprint-governance.mjs",
         "scripts/release-record.mjs",
         "scripts/release-verification-manifest.mjs",
+        "scripts/test-analytics-launch-evidence.mjs",
         "scripts/test-interview-content-validator.mjs",
         "scripts/test-release-record.mjs",
         "scripts/test-v1-launch-readiness.mjs",
+        "scripts/validate-impact-ledger.mjs",
         "scripts/validate-interview-content.mjs"
       ],
       "content_paths": [
+        "docs/impact-ledger/README.md",
         "docs/product-blueprint/registry/requirements.json",
         "docs/product-blueprint/registry/research-artifacts.json",
         "docs/product-blueprint/registry/sources.json"
@@ -1054,10 +1058,12 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run test:analytics-launch-evidence",
         "npm run test:interview-content-validator",
         "npm run test:product-blueprint-governance",
         "npm run test:release-record",
         "npm run test:v1-launch-readiness",
+        "npm run validate:impact-ledger",
         "npm run validate:interview-content",
         "npm run validate:product-blueprint"
       ],
