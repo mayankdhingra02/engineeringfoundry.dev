@@ -112,7 +112,8 @@ function isCanonicalStartedAtTimestamp(
 ): value is string {
   if (
     typeof value !== "string" ||
-    !MILLISECOND_UTC_TIMESTAMP_PATTERN.test(value)
+    !MILLISECOND_UTC_TIMESTAMP_PATTERN.test(value) ||
+    value.startsWith("0000-")
   ) {
     return false;
   }
@@ -129,6 +130,7 @@ function isCanonicalStartedAtTimestamp(
 function isReflection(value: unknown): value is string {
   return (
     typeof value === "string" &&
+    !value.includes("\0") &&
     Array.from(value).length <= REFLECTION_CHARACTER_LIMIT
   );
 }

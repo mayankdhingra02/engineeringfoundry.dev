@@ -693,6 +693,8 @@ button.flow-card { cursor: pointer; }
 .mock-prompt-picker p strong { color: var(--text-secondary); }
 .mock-builder-actions, .mock-feedback-actions { padding-top: 15px; display: flex; align-items: center; gap: 9px; border-top: 1px solid var(--line); }
 .mock-builder-actions > span, .mock-feedback-actions > span { color: var(--muted); font-size: var(--type-meta); line-height: 1.45; }
+.mock-feedback-actions .button[aria-disabled="true"] { cursor: wait; opacity: .7; transform: none; }
+.mock-feedback-actions .button-secondary[aria-disabled="true"]:hover { background: var(--surface); border-color: var(--control-border, var(--line-strong)); }
 .mock-workspace-section { border-block: 1px solid var(--line); }
 .mock-session-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 25px; margin-bottom: 18px; }
 .mock-session-heading h2 { margin: 9px 0 5px; font-size: clamp(27px, 4vw, 42px); letter-spacing: -.045em; }

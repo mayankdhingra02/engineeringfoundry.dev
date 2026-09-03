@@ -100,6 +100,7 @@ for (const startedAt of ["2000-02-29T23:59:59.999Z", validationInstant.toISOStri
   assert.ok(parseMockInterviewReviewInput(validInput(undefined, { startedAt }), validationInstant).ok, `Real UTC timestamp within the clock-skew boundary ${startedAt} must parse.`);
 }
 for (const startedAt of [
+  "0000-01-01T00:00:00.000Z",
   "1900-02-29T12:00:00.000Z",
   "2026-02-29T12:00:00.000Z",
   "2026-02-30T12:00:00.000Z",
@@ -128,7 +129,7 @@ for (const elapsedSeconds of [-1, 0.5, 2_147_483_648, Number.MAX_SAFE_INTEGER, N
 
 for (const field of ["strength", "improvement", "followUp"]) {
   assert.ok(parseMockInterviewReviewInput(validInput(undefined, { [field]: "x".repeat(5_000) }), validationInstant).ok, `${field} must accept the documented 5,000-character boundary.`);
-  for (const value of ["x".repeat(5_001), null, false, 1, {}, []]) {
+  for (const value of ["x".repeat(5_001), "before\0after", null, false, 1, {}, []]) {
     mustReject(validInput(undefined, { [field]: value }), `${field} must reject invalid or over-limit reflection text.`);
   }
 }
@@ -194,6 +195,7 @@ for (const marker of [
 ]) assert.ok(actionBody.includes(marker), `The action is missing stable result contract ${marker}.`);
 
 const component = read("components/mock-interview-lab.tsx");
+const styles = read("app/globals.css");
 const saveStart = component.indexOf("async function savePracticeReview()");
 const saveEnd = component.indexOf("function trackGuidance", saveStart);
 const saveBody = component.slice(saveStart, saveEnd);
@@ -235,6 +237,7 @@ for (const marker of [
   'aria-describedby="mock-review-save-status"',
   'id="mock-review-save-status" role="status" aria-live="polite" aria-atomic="true"',
 ]) assert.ok(component.includes(marker), `The client review contract is missing ${marker}.`);
+assert.ok(styles.includes('.mock-feedback-actions .button[aria-disabled="true"]') && styles.includes('.mock-feedback-actions .button-secondary[aria-disabled="true"]:hover'), "The pending save trigger must retain a distinct non-hovering visual state while it remains focusable.");
 assert.equal((saveBody.match(/track\("mock_review_saved"/g) ?? []).length, 1, "A successful review must have exactly one analytics emission point.");
 for (const privateField of ["strength", "improvement", "followUp", "ratings", "elapsedSeconds", "startedAt", "sessionId"]) {
   const analyticsCall = saveBody.slice(analyticsIndex, identityGuardIndex);
