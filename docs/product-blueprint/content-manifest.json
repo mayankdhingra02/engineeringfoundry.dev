@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "ad5bb3c6069bca63f2db3875bf50bdbd92fadd76",
-  "repository_state_sha256": "ea904f2204d0057c8b927fa23fc34f0aa8e9661f677e244ca1809404d6c481f4",
+  "repository_sha": "fb6f61f3dc7335763a68ffeb5e78a86a09e753a2",
+  "repository_state_sha256": "84bcff18ec0c9eb6c1a9feaf9610028acdff75fbc40103ed54c274699bde6a7e",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1491,21 +1491,29 @@
     {
       "acceptance_criteria": [
         "Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior.",
+        "When public Supabase intake is configured, anonymous feedback remains available through the controlled submission boundary even while accounts are disabled; when it is unconfigured, Feedback renders a server-rendered unavailable state and public-channel warning without a form, submit control, or account-free intake promise, and Contact removes its private-feedback handoff.",
         "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes."
       ],
       "code_paths": [
         "app/challenges",
+        "app/contact/page.tsx",
         "app/feedback",
         "app/prepare",
         "app/referrals",
         "app/resources",
         "app/sitemap.ts",
+        "features/feedback/actions.ts",
+        "features/feedback/feedback-form.tsx",
         "features/resources/resource-directory.tsx",
+        "lib/account-platform.ts",
         "lib/global-search.ts",
         "lib/resources/resource-directory-url-state.ts",
+        "lib/supabase/public.ts",
         "scripts/smoke-public-routes.mjs",
+        "scripts/test-feedback-admin-operations.mjs",
         "scripts/test-global-search.mjs",
         "scripts/test-public-launch-integrity.mjs",
+        "scripts/test-public-route-smoke.mjs",
         "scripts/test-resource-directory.mjs"
       ],
       "content_paths": [],
@@ -1538,6 +1546,7 @@
       "status": "partial",
       "test_commands": [
         "npm run test:challenge-privacy",
+        "npm run test:feedback-admin-operations",
         "npm run test:global-search",
         "npm run test:homepage-entry",
         "npm run test:public-launch-integrity",
