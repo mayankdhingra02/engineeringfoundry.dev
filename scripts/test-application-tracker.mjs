@@ -44,6 +44,10 @@ for (const marker of ["validHttpUrl", "validEmail", "zonedDateTimeToUtc", "durat
 
 const dashboard = read("app/dashboard/page.tsx");
 for (const marker of ["getDashboardPipeline", "Your interview pipeline", "Upcoming interviews", "Applications needing attention", "Add an application", "formatCountdown"]) requireText(dashboard, marker, `Dashboard tracker integration lacks ${marker}.`);
+requireText(dashboard, "<PreparationCountsStatus status={preparationCounts.status} />", "Dashboard does not expose the shared preparation-count recovery state.");
+if (!/preparationCounts\.status === "unavailable" \? "Task count unavailable\." : count \? `\$\{count\.completed\}\/\$\{count\.total\} tasks` : "Start plan"/.test(dashboard)) failures.push("Dashboard can still present unavailable preparation counts as a fresh plan.");
+requireText(detail, "<PreparationCountsStatus status={preparationCounts.status} />", "Application Detail does not expose the shared preparation-count recovery state.");
+if (!/preparationCounts\.status === "unavailable" \? "Task count unavailable\." : count \? `\$\{count\.completed\} of \$\{count\.total\} tasks complete` : "Build a focused preparation plan"/.test(detail)) failures.push("Application Detail can still present unavailable preparation counts as an untouched plan.");
 
 const css = read("app/globals.css");
 for (const marker of [".tracker-workspace", ".tracker-table-wrap", ".tracker-mobile-list", ".tracker-timeline", "@media (max-width: 800px)"]) requireText(css, marker, `Tracker responsive styling lacks ${marker}.`);

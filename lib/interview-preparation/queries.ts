@@ -7,6 +7,7 @@ import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { PrivateDataUnavailableError } from "@/lib/persistence/errors";
 import type { Application, InterviewPreparation, InterviewPreparationCustomTask, InterviewRound } from "@/lib/supabase/database.types";
 import { checklistForRound, resolveRoundPreparationContext, resolvePreparationCompanySlug, roadmapLevelForRole } from "./model";
+import { resolvePreparationCounts, type PreparationCountsResult } from "./preparation-counts";
 
 type OwnedRound = InterviewRound & { application: Pick<Application, "id" | "company_name" | "company_slug" | "role_title" | "role_level" | "status"> };
 
@@ -104,20 +105,23 @@ export async function getInterviewPreparationHub(roundId: string) {
   };
 }
 
-export async function getPreparationCounts(roundIds: string[]) {
-  if (!roundIds.length) return new Map<string, { completed: number; total: number }>();
+export async function getPreparationCounts(roundIds: readonly string[]): Promise<PreparationCountsResult> {
+  if (!roundIds.length) {
+    return resolvePreparationCounts({ queryFailed: false, rounds: [], preparations: [], tasks: [] });
+  }
   const actor = await getAuthenticatedActor();
-  if (!actor) return new Map();
+  if (!actor) {
+    return resolvePreparationCounts({ queryFailed: true, rounds: [], preparations: [], tasks: [] });
+  }
   const [rounds, preparations, tasks] = await Promise.all([
     actor.supabase.from("interview_rounds").select("id,round_type").eq("user_id", actor.user.id).in("id", roundIds),
     actor.supabase.from("interview_preparations").select("round_id,completed_template_item_ids").eq("user_id", actor.user.id).in("round_id", roundIds),
     actor.supabase.from("interview_preparation_custom_tasks").select("round_id,completed").eq("user_id", actor.user.id).in("round_id", roundIds),
   ]);
-  if (rounds.error || preparations.error || tasks.error) return new Map();
-  return new Map((rounds.data ?? []).map((round) => {
-    const checklist = checklistForRound(round.round_type);
-    const completedIds = new Set((preparations.data ?? []).find((item) => item.round_id === round.id)?.completed_template_item_ids ?? []);
-    const roundTasks = (tasks.data ?? []).filter((task) => task.round_id === round.id);
-    return [round.id, { completed: checklist.filter((item) => completedIds.has(item.id)).length + roundTasks.filter((task) => task.completed).length, total: checklist.length + roundTasks.length }];
-  }));
+  return resolvePreparationCounts({
+    queryFailed: Boolean(rounds.error || preparations.error || tasks.error),
+    rounds: rounds.data ?? [],
+    preparations: preparations.data ?? [],
+    tasks: tasks.data ?? [],
+  });
 }

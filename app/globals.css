@@ -5448,6 +5448,13 @@ p, li, dd { text-wrap: pretty; }
 .dashboard-attention-list div > span, .dashboard-attention-list p { color: var(--muted); font-size: var(--type-meta); }
 .dashboard-attention-list p { margin: 0; }
 .dashboard-attention-clear { margin: 0; padding: 18px 20px; color: var(--muted); font-size: var(--type-small); }
+.preparation-counts-status { margin-top: 12px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); }
+.preparation-counts-status > div { min-width: 0; }
+.preparation-counts-status strong { display: block; font-size: var(--type-small); }
+.preparation-counts-status p { margin: 3px 0 0; color: var(--muted); font-size: var(--type-meta); line-height: 1.5; }
+.preparation-counts-status .button { flex: none; }
+.preparation-counts-status .button[aria-disabled="true"] { cursor: wait; opacity: .7; transform: none; }
+.preparation-counts-status .button-secondary[aria-disabled="true"]:hover { background: var(--surface); border-color: var(--control-border, var(--line-strong)); }
 .tracker-loading-heading, .tracker-loading-card, .tracker-loading-table { border-radius: 9px; background: var(--surface); animation: pulse 1.5s ease-in-out infinite; }
 .tracker-loading-heading { width: 55%; height: 95px; }
 .tracker-loading-card { height: 72px; }
@@ -5519,6 +5526,8 @@ p, li, dd { text-wrap: pretty; }
   .dashboard-attention-list p { grid-column: auto; }
   .dashboard-attention-list .tracker-badge { justify-self: start; }
   .dashboard-upcoming-empty { align-items: stretch; flex-direction: column; }
+  .preparation-counts-status { align-items: stretch; flex-direction: column; }
+  .preparation-counts-status .button { width: 100%; }
   .dashboard-behavioral-cue, .dashboard-dsa-cue { grid-template-columns: auto minmax(0, 1fr); }
   .dashboard-behavioral-cue > a, .dashboard-dsa-cue > a { grid-column: 2; }
   .dashboard-dsa-summary, .tracker-behavioral-cta, .tracker-dsa-cta { align-items: stretch; flex-direction: column; }
