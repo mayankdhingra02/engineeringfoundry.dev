@@ -16,9 +16,11 @@ prohibit(questions, /frequency:\s*"(?:Low|Medium|High)"/, "Sample data invents c
 prohibit(questions, /lastSeen:\s*["']\d/, "Sample data invents last-seen dates.");
 
 const browser = read("features/dsa/questions/question-browser.tsx");
+const browserUrlState = read("lib/dsa/question-browser-url-state.ts");
 for (const label of ["Company", "Difficulty", "Topics", "Source", "Search", "Rows per page"]) requireText(browser, `>${label}<`, `Question browser lacks a ${label} control.`);
-for (const parameter of ['params.get("q")', 'params.get("company")', 'params.get("difficulty")', 'params.get("topic")', 'params.get("source")', 'params.get("page")', 'params.get("pageSize")']) requireText(browser, parameter, `Question browser URL state lacks ${parameter}.`);
-for (const marker of ["QuestionStats", "TopicQuickFilters", "No questions match these filters", "[25, 50, 100]", "useDeferredValue"]) requireText(browser, marker, `Question browser lacks ${marker}.`);
+for (const parameter of ["q", "company", "difficulty", "topic", "source", "page", "pageSize"]) requireText(browserUrlState, `singleValue(params, "${parameter}")`, `Question browser URL state lacks validated ${parameter} parsing.`);
+for (const marker of ["QuestionStats", "TopicQuickFilters", "No questions match these filters", "useDeferredValue"]) requireText(browser, marker, `Question browser lacks ${marker}.`);
+requireText(browserUrlState, "[25, 50, 100] as const", "Question browser URL state lacks the supported page sizes.");
 requireText(browser, "Demo company tags", "Question browser does not visibly label demo company associations.");
 for (const marker of ["More filters", "dsa-active-filters", "selectedCompanySlug", "filtered.slice(0, 4)"]) requireText(browser, marker, `Question browser lacks the Phase 3B progressive-disclosure behavior: ${marker}.`);
 

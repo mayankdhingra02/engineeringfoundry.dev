@@ -3,9 +3,11 @@ import "server-only";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { getNeedsReview, getRoadmapProgress, progressByQuestionId } from "@/lib/dsa/progress";
+import { parseDsaQuestionBrowserApplicationId } from "@/lib/dsa/question-browser-url-state";
 import type { RoadmapLevel } from "@/data/dsa/level-roadmaps";
 
-export async function getDsaWorkspaceState(applicationId?: string | null) {
+export async function getDsaWorkspaceState(applicationId?: unknown) {
+  const canonicalApplicationId = parseDsaQuestionBrowserApplicationId(applicationId);
   const accountPlatformAvailable = isAccountPlatformAvailable();
   if (!accountPlatformAvailable) return { accountPlatformAvailable, signedIn: false as const, progress: {}, preferredRoadmap: "sde2" as RoadmapLevel, application: null };
   const actor = await getAuthenticatedActor();
@@ -13,8 +15,8 @@ export async function getDsaWorkspaceState(applicationId?: string | null) {
   const [progressResult, preferenceResult, applicationResult] = await Promise.all([
     actor.supabase.from("dsa_question_progress").select("*").eq("user_id", actor.user.id).order("last_practiced_at", { ascending: false, nullsFirst: false }),
     actor.supabase.from("user_preparation_preferences").select("dsa_level").eq("user_id", actor.user.id).maybeSingle(),
-    applicationId
-      ? actor.supabase.from("applications").select("id,company_name,company_slug,role_title").eq("id", applicationId).eq("user_id", actor.user.id).maybeSingle()
+    canonicalApplicationId
+      ? actor.supabase.from("applications").select("id,company_name,company_slug,role_title").eq("id", canonicalApplicationId).eq("user_id", actor.user.id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
   if (progressResult.error) throw new Error("Could not load DSA question progress.");
