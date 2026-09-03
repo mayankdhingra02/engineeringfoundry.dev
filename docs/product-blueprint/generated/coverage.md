@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 8e80771033a1d96526785d5c96dd703bdcd79625
-repository_state_sha256: c3cb4e1c001dc6a7981dffc24954f73b01432fe4a8d57037759e3ab17dddcbee
+repository_sha: 21262e4240814726da0f22a57f605aeb6f754513
+repository_state_sha256: c4c6220a17fc400ee547d39c14a540a7c0893ab7a608076cc6910a072da57dce
 ---
 
 # Engineering Foundry requirement coverage
@@ -129,7 +129,7 @@ repository_state_sha256: c3cb4e1c001dc6a7981dffc24954f73b01432fe4a8d57037759e3ab
 | EF-ML-CONCEPT-COVERAGE | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Ten compact summaries exist versus the blueprint target of 20 concepts.; No approved deep-lesson route and provenance contract is implemented. |
 | EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | partial | approved-needs-source-import | stale-review | missing | — | /ml-design/[slug] | 0 | 1 | Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields. |
 | EF-ML-ROADMAP-MAPPING | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Eight static stages have no approved mapping to concept IDs and practice records. |
-| EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 3 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
+| EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 4 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
 | EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 8 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
