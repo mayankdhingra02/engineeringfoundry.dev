@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "95796bcbd5f2446462a332b32cdd6c34e6d58784",
-  "repository_state_sha256": "4ecdfa535b4d5b30499126799b1b4f112cdf768f16bea77fa36d9a4ea9f4b819",
+  "repository_sha": "7fd3c4542e7d3da2f1a067d48c1ca878992fa3c8",
+  "repository_state_sha256": "bcb09a3958852a63e01070f114353730afc6a92c1857d641345e1e39b879d10d",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -550,7 +550,8 @@
       "acceptance_criteria": [
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
-        "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection."
+        "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
+        "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values."
       ],
       "code_paths": [
         "app/globals.css",
@@ -565,20 +566,27 @@
         "features/account/actions.ts",
         "features/preparation-progress/actions.ts",
         "features/preparation-progress/plan-actions.ts",
+        "features/profile/actions.ts",
+        "features/profile/profile-form.tsx",
         "lib/auth/account-deletion.ts",
+        "lib/auth/profile-links.ts",
         "lib/auth/public-profile-query.ts",
         "lib/auth/queries.ts",
+        "lib/auth/validation.ts",
         "lib/global-search.ts",
         "lib/header-navigation.ts",
         "lib/home-track-catalog.ts",
         "lib/preparation-progress/activity-save.ts",
         "lib/preparation-progress/plan-save.ts",
+        "scripts/qualify-auth-local.mjs",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-account-lifecycle.mjs",
         "scripts/test-analytics-launch-evidence.mjs",
         "scripts/test-auth-foundation.mjs",
         "scripts/test-public-route-smoke.mjs",
-        "scripts/test-unified-progress.mjs"
+        "scripts/test-unified-progress.mjs",
+        "supabase/migrations/202608240001_harden_profile_professional_links.sql",
+        "supabase/tests/database/auth_profile_hardening.test.sql"
       ],
       "content_paths": [
         "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
@@ -607,6 +615,7 @@
       "status": "partial",
       "test_commands": [
         "npm run lint",
+        "npm run qualify:auth-local",
         "npm run test:account-lifecycle",
         "npm run test:analytics-launch-evidence",
         "npm run test:auth-foundation",
@@ -1102,6 +1111,8 @@
         "scripts/test-production-hardening.mjs"
       ],
       "content_paths": [
+        "docs/production-launch-checklist.md",
+        "docs/production-operations-runbook.md",
         "docs/v1-launch-readiness.md"
       ],
       "gap_inventory_ids": [],

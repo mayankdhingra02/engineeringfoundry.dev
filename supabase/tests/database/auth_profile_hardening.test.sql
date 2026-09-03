@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(36);
+select plan(72);
 
 select ok(
   not has_function_privilege('anon', 'public.set_updated_at()', 'execute'),
@@ -19,6 +19,24 @@ select ok(
 select ok(
   not has_function_privilege('authenticated', 'public.handle_new_user()', 'execute'),
   'authenticated cannot execute handle_new_user'
+);
+select ok(
+  not has_function_privilege('anon', 'public.enforce_profile_professional_urls()', 'execute'),
+  'anon cannot execute the professional URL trigger function'
+);
+select ok(
+  not has_function_privilege('authenticated', 'public.enforce_profile_professional_urls()', 'execute'),
+  'authenticated cannot execute the professional URL trigger function'
+);
+select ok(
+  exists (
+    select 1
+    from pg_catalog.pg_trigger
+    where tgrelid = 'public.profiles'::regclass
+      and tgname = 'profiles_enforce_professional_urls'
+      and not tgisinternal
+  ),
+  'profiles use the professional URL enforcement trigger'
 );
 select ok(
   has_function_privilege('anon', 'public.get_public_profile(text)', 'execute'),
@@ -99,7 +117,9 @@ select throws_ok(
 
 update public.profiles
 set username = 'member-a', display_name = 'Member A', is_public = true,
-    onboarding_complete = true, onboarding_completed_at = now()
+    onboarding_complete = true, onboarding_completed_at = now(),
+    github_url = 'https://github.com/member-a',
+    linkedin_url = 'https://www.linkedin.com/in/member-a'
 where id = '11111111-1111-4111-8111-111111111111';
 
 update public.profiles
@@ -134,6 +154,16 @@ select is(
   (select username from public.get_public_profile('member-a')),
   'member-a',
   'anon can retrieve a completed public profile through the RPC'
+);
+select is(
+  (select github_url from public.get_public_profile('member-a')),
+  'https://github.com/member-a',
+  'the public RPC preserves a canonical GitHub URL'
+);
+select is(
+  (select linkedin_url from public.get_public_profile('member-a')),
+  'https://www.linkedin.com/in/member-a',
+  'the public RPC preserves a canonical LinkedIn URL'
 );
 select is(
   (
@@ -203,6 +233,103 @@ select results_eq(
   $$values ('11111111-1111-4111-8111-111111111111'::uuid)$$,
   'authenticated user can update exactly their own profile'
 );
+select lives_ok(
+  $$
+    update public.profiles
+    set github_url = null, linkedin_url = null
+    where id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'owner can clear both optional professional URLs'
+);
+select lives_ok(
+  $$
+    update public.profiles
+    set github_url = 'https://github.com/member-a',
+        linkedin_url = 'https://www.linkedin.com/in/member-a'
+    where id = '11111111-1111-4111-8111-111111111111'
+  $$,
+  'owner can store canonical professional URLs directly'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://example.test/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects an off-domain URL'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://github.com.evil.test/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects a deceptive hostname suffix'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://github.com@evil.test/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects a deceptive userinfo URL'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'http://github.com/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub requires HTTPS'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://github.com:443/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects explicit ports'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://github.com/member-a?tab=repositories' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects query strings'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://github.com/member-a#profile' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects fragments'
+);
+select throws_ok(
+  $$update public.profiles set github_url = E'https://github.com\\evil.test/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects backslash URL delimiters'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://github.com/' || repeat('a', 482) where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects URLs longer than 500 characters'
+);
+select throws_ok(
+  $$update public.profiles set github_url = 'https://www.linkedin.com/in/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid GitHub URL', 'GitHub rejects a LinkedIn URL'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://example.test/in/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects an off-domain URL'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://www.linkedin.com.evil.test/in/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects a deceptive hostname suffix'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://www.linkedin.com@evil.test/in/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects a deceptive userinfo URL'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'http://www.linkedin.com/in/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn requires HTTPS'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://www.linkedin.com:443/in/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects explicit ports'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://www.linkedin.com/in/member-a?trk=profile' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects query strings'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://www.linkedin.com/in/member-a#profile' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects fragments'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = E'https://www.linkedin.com\\evil.test/in/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects backslash URL delimiters'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://www.linkedin.com/' || repeat('a', 476) where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects URLs longer than 500 characters'
+);
+select throws_ok(
+  $$update public.profiles set linkedin_url = 'https://github.com/member-a' where id = '11111111-1111-4111-8111-111111111111'$$,
+  '23514', 'Invalid LinkedIn URL', 'LinkedIn rejects a GitHub URL'
+);
 select is_empty(
   $$
     update public.profiles
@@ -222,6 +349,95 @@ select throws_ok(
 );
 
 reset role;
+
+alter table public.profiles disable trigger profiles_enforce_professional_urls;
+update public.profiles
+set github_url = 'https://evil.example/member-a',
+    linkedin_url = 'https://www.linkedin.com/in/member-a'
+where id = '11111111-1111-4111-8111-111111111111';
+alter table public.profiles enable trigger profiles_enforce_professional_urls;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111111', true);
+select lives_ok(
+  $$update public.profiles set display_name = 'Legacy Member A' where id = '11111111-1111-4111-8111-111111111111'$$,
+  'an unrelated owner update remains possible on a legacy-invalid row'
+);
+reset role;
+
+set local role anon;
+select is(
+  (select github_url from public.get_public_profile('member-a')),
+  null,
+  'the public RPC masks a legacy-invalid GitHub URL'
+);
+select is(
+  (select linkedin_url from public.get_public_profile('member-a')),
+  'https://www.linkedin.com/in/member-a',
+  'the public RPC preserves a safe LinkedIn sibling URL'
+);
+reset role;
+
+alter table public.profiles disable trigger profiles_enforce_professional_urls;
+update public.profiles
+set github_url = 'https://github.com/member-a',
+    linkedin_url = 'https://evil.example/in/member-a'
+where id = '11111111-1111-4111-8111-111111111111';
+alter table public.profiles enable trigger profiles_enforce_professional_urls;
+
+set local role anon;
+select is(
+  (select linkedin_url from public.get_public_profile('member-a')),
+  null,
+  'the public RPC masks a legacy-invalid LinkedIn URL'
+);
+select is(
+  (select github_url from public.get_public_profile('member-a')),
+  'https://github.com/member-a',
+  'the public RPC preserves a safe GitHub sibling URL'
+);
+reset role;
+
+alter table public.profiles disable trigger profiles_enforce_professional_urls;
+update public.profiles
+set github_url = 'https://www.github.com/member-a',
+    linkedin_url = 'https://linkedin.com/in/member-a'
+where id = '11111111-1111-4111-8111-111111111111';
+alter table public.profiles enable trigger profiles_enforce_professional_urls;
+
+set local role anon;
+select is(
+  (select github_url from public.get_public_profile('member-a')),
+  'https://www.github.com/member-a',
+  'the public RPC preserves the safe legacy www GitHub alias'
+);
+select is(
+  (select linkedin_url from public.get_public_profile('member-a')),
+  'https://linkedin.com/in/member-a',
+  'the public RPC preserves the safe legacy bare LinkedIn alias'
+);
+reset role;
+
+alter table public.profiles disable trigger profiles_enforce_professional_urls;
+update public.profiles
+set github_url = E'https://github.com\\evil.test/member-a',
+    linkedin_url = 'https://www.linkedin.com/in/member-a'
+where id = '11111111-1111-4111-8111-111111111111';
+alter table public.profiles enable trigger profiles_enforce_professional_urls;
+
+set local role anon;
+select is(
+  (select github_url from public.get_public_profile('member-a')),
+  null,
+  'the public RPC masks a legacy GitHub URL with a backslash delimiter'
+);
+select is(
+  (select linkedin_url from public.get_public_profile('member-a')),
+  'https://www.linkedin.com/in/member-a',
+  'the public RPC preserves a safe sibling when masking a backslash URL'
+);
+reset role;
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '22222222-2222-4222-8222-222222222222', true);
 select is(

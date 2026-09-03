@@ -162,6 +162,34 @@ await check("User A updates their own base profile and updated_at advances", asy
   expect(new Date(update.data.updated_at) > new Date(before.data.updated_at), "updated_at did not advance");
 });
 
+await check("User A stores canonical professional URLs", async () => {
+  const update = await a.authClient.from("profiles").update({
+    github_url: "https://github.com/qualification-a",
+    linkedin_url: "https://www.linkedin.com/in/qualification-a",
+  }).eq("id", a.user.id).select("github_url,linkedin_url").maybeSingle();
+  expect(!update.error && update.data, update.error?.message ?? "no row updated");
+  expect(update.data.github_url === "https://github.com/qualification-a", "canonical GitHub URL was not stored");
+  expect(update.data.linkedin_url === "https://www.linkedin.com/in/qualification-a", "canonical LinkedIn URL was not stored");
+});
+
+await check("deceptive GitHub URL is rejected", async () => {
+  const update = await a.authClient.from("profiles")
+    .update({ github_url: "https://github.com.evil.example/qualification-a" })
+    .eq("id", a.user.id);
+  expect(update.error?.code === "23514", `expected 23514, observed ${update.error?.code ?? "no error"}`);
+  expect(update.error.message.includes("Invalid GitHub URL"), `unexpected error: ${update.error.message}`);
+  return "SQLSTATE 23514";
+});
+
+await check("deceptive LinkedIn URL is rejected", async () => {
+  const update = await a.authClient.from("profiles")
+    .update({ linkedin_url: "https://www.linkedin.com@evil.example/in/qualification-a" })
+    .eq("id", a.user.id);
+  expect(update.error?.code === "23514", `expected 23514, observed ${update.error?.code ?? "no error"}`);
+  expect(update.error.message.includes("Invalid LinkedIn URL"), `unexpected error: ${update.error.message}`);
+  return "SQLSTATE 23514";
+});
+
 await check("User A cannot read User B base profile", async () => {
   const read = await a.authClient.from("profiles").select("id").eq("id", b.user.id);
   expect(!read.error && read.data.length === 0, read.error?.message ?? "User B row was visible");
@@ -213,6 +241,13 @@ for (const [actor, actorClient] of [["anonymous", anonymous], ["User A", a.authC
     return keys.join(", ");
   });
 }
+
+await check("public RPC preserves canonical professional URLs", async () => {
+  const rpc = await anonymous.rpc("get_public_profile", { profile_username: "qualification-a" }).maybeSingle();
+  expect(!rpc.error && rpc.data, rpc.error?.message ?? "public profile absent");
+  expect(rpc.data.github_url === "https://github.com/qualification-a", "canonical GitHub URL was not returned");
+  expect(rpc.data.linkedin_url === "https://www.linkedin.com/in/qualification-a", "canonical LinkedIn URL was not returned");
+});
 
 await check("User B can make their profile private", async () => {
   const update = await b.authClient.from("profiles").update({ is_public: false }).eq("id", b.user.id).select("is_public").maybeSingle();
