@@ -2288,6 +2288,8 @@ button.flow-card { cursor: pointer; }
 /* Referral request builder and referrer toolkit */
 .referral-loading { padding: 34px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); background: var(--surface); text-align: center; }
 .referral-workspace { min-width: 0; display: grid; gap: 14px; }
+.referral-mode-panel { min-width: 0; display: grid; gap: 14px; }
+.referral-mode-panel[hidden] { display: none; }
 .referral-mode-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .referral-mode-picker button { min-width: 0; min-height: 92px; padding: 16px 18px; display: grid; grid-template-columns: 42px 1fr; align-items: center; gap: 14px; border: 1px solid var(--line); border-radius: 11px; color: var(--text); background: var(--surface); text-align: left; cursor: pointer; }
 .referral-mode-picker button > svg { width: 40px; height: 40px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; color: var(--accent); background: var(--surface-2); }
