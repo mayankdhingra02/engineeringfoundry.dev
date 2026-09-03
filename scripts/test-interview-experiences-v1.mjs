@@ -1,4 +1,8 @@
 import fs from "node:fs";
+import {
+  parseInterviewExperienceManagementInput,
+  parseInterviewExperienceSaveInput,
+} from "../lib/interview-experiences/action-input.ts";
 
 const read = (path) => fs.readFileSync(path, "utf8");
 const migration = read("supabase/migrations/202608220001_create_interview_experiences_v1.sql");
@@ -13,6 +17,76 @@ const form = read("features/interview-experiences/experience-submission.tsx");
 const globalStyles = read("app/globals.css");
 const failures = [];
 const expect = (condition, message) => { if (!condition) failures.push(message); };
+
+const validId = "123e4567-e89b-42d3-a456-426614174000";
+const validSubmission = {
+  id: validId,
+  companyName: "  Example Company  ",
+  roleTitle: "  Senior Engineer  ",
+  roleLevel: "Senior",
+  region: "  Chicago  ",
+  interviewDate: "2026-09",
+  summary: "  A high-level account of the interview process and preparation lessons.  ",
+  preparationLessons: "  Practice concise tradeoff explanations.  ",
+  publicIdentity: "anonymous",
+  publicationConsent: true,
+  roundType: "  System design  ",
+  topics: ["  Scalability  ", "", "Caching"],
+};
+
+const newDraftInput = { ...validSubmission };
+delete newDraftInput.id;
+const draft = parseInterviewExperienceSaveInput(newDraftInput, false);
+expect(draft.ok && draft.value.submit === false && draft.value.input.id === undefined, "A valid new private-draft request must parse without requiring an ID or becoming a submission.");
+expect(draft.ok && draft.value.input.companyName === "Example Company" && draft.value.input.topics.join(",") === "Scalability,Caching", "The production parser must apply the bounded normalization used by persistence.");
+const submission = parseInterviewExperienceSaveInput(validSubmission, true);
+expect(submission.ok && submission.value.submit === true && submission.value.input.id === validId, "A valid submission request must preserve its explicit submit decision and UUID.");
+for (const action of ["withdraw", "delete"]) {
+  const result = parseInterviewExperienceManagementInput(validId, action);
+  expect(result.ok && result.value.action === action && result.value.id === validId, `A valid ${action} request must parse exactly.`);
+}
+
+for (const input of [null, undefined, "submission", 1, true, [], [validSubmission]]) {
+  expect(!parseInterviewExperienceSaveInput(input, false).ok, "Submission input must be a non-array object.");
+}
+for (const field of ["companyName", "roleTitle", "roleLevel", "region", "interviewDate", "summary", "preparationLessons", "publicIdentity", "publicationConsent", "roundType", "topics"]) {
+  const input = { ...validSubmission };
+  delete input[field];
+  expect(!parseInterviewExperienceSaveInput(input, false).ok, `Submission input must reject a missing ${field}.`);
+}
+for (const field of ["companyName", "roleTitle", "roleLevel", "region", "interviewDate", "summary", "preparationLessons", "roundType"]) {
+  for (const value of [null, false, 1, {}, []]) {
+    expect(!parseInterviewExperienceSaveInput({ ...validSubmission, [field]: value }, false).ok, `${field} must reject non-string values.`);
+  }
+}
+for (const value of [null, "true", 1, 0, {}, []]) {
+  expect(!parseInterviewExperienceSaveInput({ ...validSubmission, publicationConsent: value }, false).ok, "Publication consent must be a boolean.");
+}
+for (const value of [null, "Caching", {}, true, 1]) {
+  expect(!parseInterviewExperienceSaveInput({ ...validSubmission, topics: value }, false).ok, "Topics must be an array.");
+}
+for (const value of [null, 1, true, {}, [], ["nested"]]) {
+  expect(!parseInterviewExperienceSaveInput({ ...validSubmission, topics: ["Caching", value] }, false).ok, "Every topic must be a string.");
+}
+for (const value of ["Anonymous", "USERNAME", "public", "", null, 1]) {
+  expect(!parseInterviewExperienceSaveInput({ ...validSubmission, publicIdentity: value }, false).ok, "Public identity must use an exact allowed value.");
+}
+for (const value of ["entry", "Senior ", "Director", null, 1]) {
+  expect(!parseInterviewExperienceSaveInput({ ...validSubmission, roleLevel: value }, false).ok, "Role level must use an exact allowed value.");
+}
+for (const value of ["2026-00", "2026-13", "2026-1", "026-01", "0000-01", "2026-01-01", "September 2026"]) {
+  expect(!parseInterviewExperienceSaveInput({ ...validSubmission, interviewDate: value }, false).ok, `Interview month must reject ${value}.`);
+}
+for (const value of [undefined, null, 0, 1, "false", "true", {}, []]) {
+  expect(!parseInterviewExperienceSaveInput(validSubmission, value).ok, "The submit decision must be a boolean.");
+}
+for (const value of [null, undefined, "", "not-a-uuid", "00000000-0000-0000-0000-000000000000", 1, {}, []]) {
+  if (value !== undefined) expect(!parseInterviewExperienceSaveInput({ ...validSubmission, id: value }, false).ok, "Save actions must reject invalid supplied UUIDs.");
+  expect(!parseInterviewExperienceManagementInput(value, "withdraw").ok, "Management actions must reject invalid UUIDs.");
+}
+for (const value of [undefined, null, "", "archive", "submit", "Withdraw", "DELETE", 1, {}, []]) {
+  expect(!parseInterviewExperienceManagementInput(validId, value).ok, "Management verbs must be present and match the exact allowlist.");
+}
 
 for (const marker of ["interview_experiences", "interview_experience_rounds", "draft','submitted','needs_changes','approved','rejected','archived","enable row level security", "approved experiences are publicly readable", "authors read own experiences", "revoke insert, update, delete", "save_interview_experience_draft", "submit_interview_experience", "withdraw_interview_experience", "delete_interview_experience"]) expect(migration.includes(marker), `Migration is missing ${marker}.`);
 expect(migration.includes("status = 'approved' and publication_consent"), "Public access must be limited to approved consented reports.");
@@ -55,7 +129,12 @@ expect(form.slice(signedOutBranchStart).includes("/signin?next=/interview-experi
 expect(/\.experience-directory-empty p\s*\{[^}]*font-size:\s*var\(--type-meta\)/s.test(globalStyles), "Unavailable-state explanatory copy must preserve the 13px readability floor.");
 expect(actions.includes("getAuthenticatedActor") && actions.includes("save_interview_experience_draft"), "Mutations must authenticate and use the controlled RPC boundary.");
 expect(!actions.includes("author_id:"), "Caller-controlled author identity is forbidden.");
+const saveAction = actions.slice(actions.indexOf("export async function saveInterviewExperience"), actions.indexOf("const managementRpc"));
+const manageAction = actions.slice(actions.indexOf("export async function manageInterviewExperience"));
+expect(saveAction.indexOf("parseInterviewExperienceSaveInput") >= 0 && saveAction.indexOf("parseInterviewExperienceSaveInput") < saveAction.indexOf("getAuthenticatedActor") && saveAction.indexOf("getAuthenticatedActor") < saveAction.indexOf('rpc("save_interview_experience_draft"'), "Save input must be parsed before actor lookup and draft persistence.");
+expect(manageAction.indexOf("parseInterviewExperienceManagementInput") >= 0 && manageAction.indexOf("parseInterviewExperienceManagementInput") < manageAction.indexOf("getAuthenticatedActor") && manageAction.indexOf("getAuthenticatedActor") < manageAction.indexOf("actor.supabase.rpc"), "Management input must be parsed before actor lookup and destructive RPC dispatch.");
+expect(actions.includes("managementRpc[parsed.value.action]") && !manageAction.includes('const rpc = action === "withdraw"'), "Management RPC selection must use only the parsed exact action allowlist without a delete fallback.");
 for (const marker of ["Save private draft", "Submit for review", "Withdraw", "Delete", "publicationConsent", "exact proprietary questions", "editableStatuses", "setInput({ id: item.id", "Cancel edit", "Preview report", "Return to edit", "This is not public yet", "preview.publicationConsent"]) expect(form.includes(marker), `Submission UI is missing ${marker}.`);
 expect(form.includes('editableStatuses.has(item.status) && <button') && !form.includes('submitted", "approved"'), "Only draft, needs_changes, and withdrawn reports may enter edit mode.");
 if (failures.length) { console.error(failures.join("\n")); process.exit(1); }
-console.log("Interview Experiences v1 passed: directory-first, authenticated submission, moderation states, and controlled publication boundaries are present.");
+console.log("Interview Experiences v1 passed: directory-first publication, executable action validation, authenticated submission, moderation states, and controlled publication boundaries are present.");

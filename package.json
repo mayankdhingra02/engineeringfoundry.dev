@@ -20,7 +20,7 @@
     "test:recognition-integrity": "node scripts/test-recognition-integrity.mjs",
     "test:experience-privacy": "node scripts/test-experience-privacy.mjs",
     "test:experience-integrity": "node scripts/test-experience-integrity.mjs",
-    "test:interview-experiences-v1": "node scripts/test-interview-experiences-v1.mjs",
+    "test:interview-experiences-v1": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-interview-experiences-v1.mjs",
     "test:public-launch-integrity": "node scripts/test-public-launch-integrity.mjs",
     "test:auth-foundation": "node --experimental-strip-types --no-warnings scripts/test-auth-foundation.mjs",
     "test:application-tracker": "node --experimental-strip-types --no-warnings scripts/test-application-tracker.mjs",
