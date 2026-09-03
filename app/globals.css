@@ -5730,6 +5730,8 @@ p, li, dd { text-wrap: pretty; }
 .home-local-import strong { display: block; font-size: var(--type-small); }
 .home-local-import p, .home-local-import small { margin: 2px 0 0; color: var(--text-secondary); font-size: var(--type-meta); line-height: 1.45; }
 .home-local-import > small { grid-column: 1 / -1; }
+.home-local-import .button[aria-disabled="true"] { cursor: wait; opacity: .7; transform: none; }
+.home-local-import .button-secondary[aria-disabled="true"]:hover { background: var(--surface); border-color: var(--control-border, var(--line-strong)); }
 .preparation-activity-control, .save-study-plan-control { display: grid; gap: 6px; }
 .preparation-activity-control > button {
   width: fit-content;
