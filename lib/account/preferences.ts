@@ -26,25 +26,6 @@ export const dsaLevelOptions: ReadonlyArray<{ value: PreferredDsaLevel; label: s
   { value: "sde3plus", label: "Senior / SDE III+ roadmap" },
 ];
 
-const roleValues = new Set(roleLevelOptions.map((option) => option.value));
-const focusValues = new Set(focusOptions.map((option) => option.value));
-const dsaValues = new Set(dsaLevelOptions.map((option) => option.value));
-
-export function parsePreferredRoleLevel(value: FormDataEntryValue | null): PreferredRoleLevel | null {
-  const parsed = typeof value === "string" ? value : "";
-  return roleValues.has(parsed as PreferredRoleLevel) ? parsed as PreferredRoleLevel : null;
-}
-
-export function parsePreparationFocus(value: FormDataEntryValue | null): PrimaryPreparationFocus | null {
-  const parsed = typeof value === "string" ? value : "";
-  return focusValues.has(parsed as PrimaryPreparationFocus) ? parsed as PrimaryPreparationFocus : null;
-}
-
-export function parseDsaLevel(value: FormDataEntryValue | null): PreferredDsaLevel | null {
-  const parsed = typeof value === "string" ? value : "";
-  return dsaValues.has(parsed as PreferredDsaLevel) ? parsed as PreferredDsaLevel : null;
-}
-
 export function onboardingDestination(input: {
   hasUpcomingInterview: boolean;
   interviewScheduled: boolean;
