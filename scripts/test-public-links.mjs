@@ -220,6 +220,13 @@ expectError(validateSynthetic({
   routeEntries: [{ file: "app/api/write-only/route.ts", source: "export async function POST() {}" }],
   sourceEntries: [{ file: "components/post-route.tsx", source: '<a href="/api/write-only">Write only</a>' }],
 }), /does not resolve to an application page or public asset/);
+expectError(validateSynthetic({
+  routeEntries: [{
+    file: "app/api/comment-only/route.ts",
+    source: '// export function GET() must not make this navigable\nexport async function POST() { return new Response("ok"); }',
+  }],
+  sourceEntries: [{ file: "components/comment-route.tsx", source: '<a href="/api/comment-only">Comment only</a>' }],
+}), /does not resolve to an application page or public asset/);
 expectError(validateSynthetic({ resourceSource: '[{"url":"http://example.com"}]' }), /prohibited external-link pattern/);
 expectValid(validateSynthetic({ discordUrl: "https://discord.gg/invite" }));
 for (const discordUrl of [

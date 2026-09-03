@@ -2,6 +2,7 @@ import { existsSync, statSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import ts from "typescript";
 import sitemap from "../app/sitemap.ts";
 import { siteConfig } from "../config/site.ts";
 import { globalSearchItems } from "../lib/global-search.ts";
@@ -238,9 +239,23 @@ function extractLiteralInternalLinks(source, file) {
 }
 
 function hasNavigationRouteMethod(source) {
-  return /\bexport\s+(?:async\s+)?function\s+(?:GET|HEAD)\b/.test(source)
-    || /\bexport\s+const\s+(?:GET|HEAD)\b/.test(source)
-    || /\bexport\s*\{[^}]*\b(?:GET|HEAD)\b[^}]*\}/s.test(source);
+  const sourceFile = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const isNavigationName = (name) => name === "GET" || name === "HEAD";
+  const isExported = (node) => ts.canHaveModifiers(node)
+    && (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
+
+  return sourceFile.statements.some((statement) => {
+    if (ts.isFunctionDeclaration(statement)) {
+      return isExported(statement) && isNavigationName(statement.name?.text);
+    }
+    if (ts.isVariableStatement(statement) && isExported(statement)) {
+      return statement.declarationList.declarations.some((declaration) => ts.isIdentifier(declaration.name) && isNavigationName(declaration.name.text));
+    }
+    if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+      return statement.exportClause.elements.some((element) => isNavigationName(element.name.text));
+    }
+    return false;
+  });
 }
 
 function resolveInternalPath(pathname, context) {
