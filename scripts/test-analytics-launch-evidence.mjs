@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
@@ -97,9 +97,9 @@ const snapshot = {
   analytics_definition_version: ANALYTICS_DEFINITION_VERSION,
   month: "2026-08",
   measurement_window: { start: "2026-08-01T00:00:00Z", end: "2026-09-01T00:00:00Z" },
-  analytics_source_reference: "docs/impact-ledger/references/analytics-2026-08.json",
-  account_source_reference: "docs/impact-ledger/references/accounts-2026-08.json",
-  product_data_source_reference: "docs/impact-ledger/references/approvals-2026-08.json",
+  analytics_source_reference: "docs/analytics.md",
+  account_source_reference: "docs/analytics-launch-operations.md",
+  product_data_source_reference: "docs/impact-ledger/README.md",
   metrics: Object.fromEntries(Object.keys(monthlySnapshotTemplate.metrics).map((metric) => [metric, 0])),
   notes: "Verified aggregate fixture.",
 };
@@ -119,6 +119,8 @@ for (const [reference, expected, message] of [
   ["http://example.com/analytics.json", /must use (?:the )?exact https:\/\/ form/, "HTTP aggregate evidence references must be rejected"],
   ["https://user:password@example.com/analytics.json", /must not contain URL credentials/, "credential-bearing aggregate evidence references must be rejected"],
   ["docs/impact-ledger/references/analytics\nprivate.json", /bounded single-line reference without control characters/, "control characters in aggregate evidence references must be rejected"],
+  ["docs/impact-ledger/not-present.json", /repository-relative path must identify an existing regular file/, "nonexistent aggregate evidence references must be rejected"],
+  ["docs/impact-ledger", /repository-relative path must identify an existing regular file/, "directory aggregate evidence references must be rejected"],
 ]) mustReject(
   () => validateSnapshot({ ...snapshot, analytics_source_reference: reference }, snapshotPath, validationOptions),
   message,
@@ -212,8 +214,8 @@ const evidence = {
 const evidencePath = "docs/impact-ledger/records/2026-09-01-independent-review.json";
 assert.doesNotThrow(() => validateEvidence(evidence, evidencePath, validationOptions), "canonical non-testimonial evidence must validate at an injected instant");
 assert.doesNotThrow(
-  () => validateEvidence({ ...evidence, evidence_reference: "docs/impact-ledger/references/independent-review.json" }, evidencePath, validationOptions),
-  "a clearly shaped safe repository-relative evidence reference must remain valid",
+  () => validateEvidence({ ...evidence, evidence_reference: "docs/impact-ledger/README.md" }, evidencePath, validationOptions),
+  "an existing committed regular-file evidence reference must remain valid",
 );
 mustReject(() => validateEvidence(evidence, evidencePath, { validationInstant: new Date("invalid") }), "evidence validation must reject an invalid injected clock", /validationInstant must be a valid Date/);
 const testimonial = {
@@ -253,25 +255,78 @@ mustReject(
   /verified_at must not be earlier than the evidence date/,
 );
 
-const dispatcherRoot = mkdtempSync(join(tmpdir(), "engineering-foundry-impact-ledger-"));
+const dispatcherRepositoryRoot = mkdtempSync(join(tmpdir(), "engineering-foundry-impact-repository-"));
+const dispatcherRoot = join(dispatcherRepositoryRoot, "docs/impact-ledger");
 const writeLedgerFile = (relativePath, value) => {
   const path = join(dispatcherRoot, relativePath);
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, typeof value === "string" ? value : `${JSON.stringify(value)}\n`, "utf8");
   return path;
 };
+const writeRepositoryFile = (relativePath, value = "verified aggregate fixture\n") => {
+  const path = join(dispatcherRepositoryRoot, relativePath);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, value, "utf8");
+  return path;
+};
 try {
+  const dispatcherSnapshot = {
+    ...snapshot,
+    analytics_source_reference: "evidence-fixtures/analytics-2026-08.json",
+    account_source_reference: "evidence-fixtures/accounts-2026-08.json",
+    product_data_source_reference: "evidence-fixtures/approvals-2026-08.json",
+  };
+  const dispatcherEvidence = { ...evidence, evidence_reference: "evidence-fixtures/independent-review.json" };
+  for (const reference of [
+    dispatcherSnapshot.analytics_source_reference,
+    dispatcherSnapshot.account_source_reference,
+    dispatcherSnapshot.product_data_source_reference,
+    dispatcherEvidence.evidence_reference,
+  ]) writeRepositoryFile(reference);
   for (const templatePath of ["monthly-snapshot.template.json", "release-record.template.json", "evidence-record.template.json"]) {
     writeLedgerFile(templatePath, read(`docs/impact-ledger/${templatePath}`));
   }
-  writeLedgerFile("snapshots/2026-08.json", snapshot);
+  const dispatcherSnapshotPath = writeLedgerFile("snapshots/2026-08.json", dispatcherSnapshot);
   writeLedgerFile("releases/2026-09-02-v1.2.3.json", release);
-  writeLedgerFile("records/2026-09-01-independent-review.json", evidence);
+  writeLedgerFile("records/2026-09-01-independent-review.json", dispatcherEvidence);
   assert.deepEqual(
-    validateImpactLedger(dispatcherRoot, validationOptions).map((path) => relative(dispatcherRoot, path)).sort(),
+    validateImpactLedger(dispatcherRoot, { ...validationOptions, repositoryRoot: dispatcherRepositoryRoot }).map((path) => relative(dispatcherRoot, path)).sort(),
     ["records/2026-09-01-independent-review.json", "releases/2026-09-02-v1.2.3.json", "snapshots/2026-08.json"],
-    "the dispatcher must skip only the three canonical root templates and validate each direct real-record family",
+    "the dispatcher must skip only the three canonical root templates and validate each direct real-record family against actual reference files",
   );
+
+  writeLedgerFile("snapshots/2026-08.json", { ...dispatcherSnapshot, analytics_source_reference: "evidence-fixtures/not-present.json" });
+  mustReject(
+    () => validateImpactLedger(dispatcherRoot, { ...validationOptions, repositoryRoot: dispatcherRepositoryRoot }),
+    "the dispatcher must reject a real snapshot whose repository-relative evidence file does not exist",
+    /analytics_source_reference repository-relative path must identify an existing regular file/,
+  );
+  writeFileSync(dispatcherSnapshotPath, `${JSON.stringify(dispatcherSnapshot)}\n`, "utf8");
+
+  const outsideReferenceRoot = mkdtempSync(join(tmpdir(), "engineering-foundry-impact-outside-"));
+  try {
+    const outsideReference = join(outsideReferenceRoot, "private.json");
+    writeFileSync(outsideReference, "private fixture\n", "utf8");
+    const symlinkReference = join(dispatcherRepositoryRoot, "evidence-fixtures/symlink-escape.json");
+    let symlinkAvailable = true;
+    try {
+      symlinkSync(outsideReference, symlinkReference);
+    } catch (error) {
+      if (!["EPERM", "EACCES", "ENOSYS"].includes(error?.code)) throw error;
+      symlinkAvailable = false;
+    }
+    if (symlinkAvailable) {
+      writeLedgerFile("snapshots/2026-08.json", { ...dispatcherSnapshot, analytics_source_reference: "evidence-fixtures/symlink-escape.json" });
+      mustReject(
+        () => validateImpactLedger(dispatcherRoot, { ...validationOptions, repositoryRoot: dispatcherRepositoryRoot }),
+        "the dispatcher must reject a repository-relative evidence symlink that escapes the repository root",
+        /repository-relative path must not escape repositoryRoot through a symlink/,
+      );
+      writeFileSync(dispatcherSnapshotPath, `${JSON.stringify(dispatcherSnapshot)}\n`, "utf8");
+    }
+  } finally {
+    rmSync(outsideReferenceRoot, { recursive: true, force: true });
+  }
 
   for (const [fixturePath, record, expected, message] of [
     ["snapshots/monthly-snapshot.template.json", { record_kind: "template" }, /real records must declare record_kind: evidence/, "a canonical template name outside the ledger root must not be skipped"],
@@ -279,19 +334,19 @@ try {
     ["releases/archive/2026-09-02-v1.2.3.json", release, /release record filename must be YYYY-MM-DD-nonempty-safe-suffix\.json directly under releases/, "nested release records must be rejected"],
     ["releases/release.json", release, /release record filename must be YYYY-MM-DD-nonempty-safe-suffix\.json directly under releases/, "arbitrarily named release records must be rejected"],
     ["releases/2026-09-01-v1.2.3.json", release, /date must equal the release filename date prefix/, "release filenames must match the record date"],
-    ["records/archive/2026-09-01-independent-review.json", evidence, /evidence record filename must be YYYY-MM-DD-nonempty-safe-suffix\.json directly under records/, "nested evidence records must be rejected"],
-    ["records/review.json", evidence, /evidence record filename must be YYYY-MM-DD-nonempty-safe-suffix\.json directly under records/, "arbitrarily named evidence records must be rejected"],
-    ["records/2026-08-31-independent-review.json", evidence, /date must equal the evidence filename date prefix/, "evidence filenames must match the record date"],
+    ["records/archive/2026-09-01-independent-review.json", dispatcherEvidence, /evidence record filename must be YYYY-MM-DD-nonempty-safe-suffix\.json directly under records/, "nested evidence records must be rejected"],
+    ["records/review.json", dispatcherEvidence, /evidence record filename must be YYYY-MM-DD-nonempty-safe-suffix\.json directly under records/, "arbitrarily named evidence records must be rejected"],
+    ["records/2026-08-31-independent-review.json", dispatcherEvidence, /date must equal the evidence filename date prefix/, "evidence filenames must match the record date"],
   ]) {
     const fixture = writeLedgerFile(fixturePath, record);
     try {
-      mustReject(() => validateImpactLedger(dispatcherRoot, validationOptions), message, expected);
+      mustReject(() => validateImpactLedger(dispatcherRoot, { ...validationOptions, repositoryRoot: dispatcherRepositoryRoot }), message, expected);
     } finally {
       rmSync(fixture);
     }
   }
 } finally {
-  rmSync(dispatcherRoot, { recursive: true, force: true });
+  rmSync(dispatcherRepositoryRoot, { recursive: true, force: true });
 }
 
 console.log(`P0.9 analytics/evidence regression passed: ${FIRST_USEFUL_ACTION_EVENTS.length} first-useful-action events, explicit property allowlists, post-success activity semantics, dashboard/runbook definitions, and no fabricated evidence.`);

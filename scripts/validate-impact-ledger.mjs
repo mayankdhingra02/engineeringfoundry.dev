@@ -1,10 +1,11 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { strict as assert } from "node:assert";
 import { ANALYTICS_DEFINITION_VERSION } from "../lib/analytics/launch-metrics.ts";
 
 const ROOT = "docs/impact-ledger";
+const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 export const METRIC_IDS = [
   "unique_visitors", "registered_accounts", "first_useful_action_users", "engaged_users", "seven_day_returning_users", "seven_day_return_rate",
   "dsa_starts", "system_design_starts", "ml_design_starts", "behavioral_starts", "low_level_design_starts",
@@ -55,7 +56,21 @@ function safeReferenceCharacters(value, label) {
   assert.ok(value.length <= 2_048 && !hasControlCharacter, `${label} must be a bounded single-line reference without control characters`);
 }
 
-function safeReference(value, label) {
+function validatedRepositoryRoot(repositoryRoot) {
+  assert.ok(typeof repositoryRoot === "string" && repositoryRoot.length > 0, "repositoryRoot must be a non-empty path string");
+  let realRoot;
+  try { realRoot = realpathSync(resolve(repositoryRoot)); }
+  catch { assert.fail("repositoryRoot must identify an existing directory"); }
+  assert.ok(statSync(realRoot).isDirectory(), "repositoryRoot must identify an existing directory");
+  return realRoot;
+}
+
+function isWithinRoot(root, path) {
+  const pathFromRoot = relative(root, path);
+  return pathFromRoot === "" || (!isAbsolute(pathFromRoot) && pathFromRoot !== ".." && !pathFromRoot.startsWith(`..${sep}`));
+}
+
+function safeReference(value, label, repositoryRoot) {
   requiredString(value, label);
   safeReferenceCharacters(value, label);
   assert.ok(!value.includes("\\") && !value.startsWith("/") && !value.split("/").includes(".."), `${label} must not be an absolute, backslash, or traversing path`);
@@ -72,6 +87,13 @@ function safeReference(value, label) {
   const safeSegments = segments.every((segment) => segment.length > 0 && segment !== "." && segment !== ".." && /^[A-Za-z0-9._-]+$/.test(segment));
   const shapedLikePath = segments.length > 1 || /^[A-Za-z0-9_-][A-Za-z0-9._-]*\.[A-Za-z0-9._-]+$/.test(value);
   assert.ok(safeSegments && shapedLikePath, `${label} must be a valid HTTPS URL or clearly shaped safe repository-relative path`);
+  const candidate = resolve(repositoryRoot, ...segments);
+  assert.ok(isWithinRoot(repositoryRoot, candidate), `${label} must resolve within repositoryRoot`);
+  let realCandidate;
+  try { realCandidate = realpathSync(candidate); }
+  catch { assert.fail(`${label} repository-relative path must identify an existing regular file`); }
+  assert.ok(isWithinRoot(repositoryRoot, realCandidate), `${label} repository-relative path must not escape repositoryRoot through a symlink`);
+  assert.ok(statSync(realCandidate).isFile(), `${label} repository-relative path must identify an existing regular file`);
 }
 
 function httpsUrl(value, label) {
@@ -136,8 +158,9 @@ function nonnegativeSafeInteger(value, label) {
   assert.ok(Number.isSafeInteger(value) && value >= 0, `${label} must be a nonnegative safe integer`);
 }
 
-export function validateSnapshot(record, path = "snapshot", { validationInstant = new Date(), root = ROOT } = {}) {
+export function validateSnapshot(record, path = "snapshot", { validationInstant = new Date(), root = ROOT, repositoryRoot = REPOSITORY_ROOT } = {}) {
   validationUtcDate(validationInstant);
+  const resolvedRepositoryRoot = validatedRepositoryRoot(repositoryRoot);
   exactKeys(record, SNAPSHOT_KEYS, `${path}: snapshot`);
   assert.equal(record.record_kind, "evidence", `${path}: real snapshot must declare record_kind: evidence`);
   const filenameMonth = snapshotFileMonth(path, root);
@@ -156,7 +179,7 @@ export function validateSnapshot(record, path = "snapshot", { validationInstant 
   assert.equal(record.measurement_window.end, expectedEnd, `${path}: measurement_window.end must be the canonical UTC start of the following month`);
   assert.ok(Date.parse(record.measurement_window.start) < Date.parse(record.measurement_window.end), `${path}: measurement_window must be ordered`);
   assert.ok(Date.parse(record.measurement_window.end) <= validationInstant.valueOf(), `${path}: measurement_window must not end after validationInstant`);
-  for (const sourceReference of Object.keys(METRIC_SOURCE_REFERENCES)) safeReference(record[sourceReference], `${path}: ${sourceReference}`);
+  for (const sourceReference of Object.keys(METRIC_SOURCE_REFERENCES)) safeReference(record[sourceReference], `${path}: ${sourceReference}`, resolvedRepositoryRoot);
   exactKeys(record.metrics, METRIC_IDS, `${path}: metrics`);
   for (const metric of METRIC_IDS) {
     if (metric === "seven_day_return_rate") continue;
@@ -166,8 +189,9 @@ export function validateSnapshot(record, path = "snapshot", { validationInstant 
   requiredString(record.notes, `${path}: notes`);
 }
 
-export function validateRelease(record, path = "release", { validationInstant = new Date(), root = ROOT } = {}) {
+export function validateRelease(record, path = "release", { validationInstant = new Date(), root = ROOT, repositoryRoot = REPOSITORY_ROOT } = {}) {
   validationUtcDate(validationInstant);
+  validatedRepositoryRoot(repositoryRoot);
   exactKeys(record, RELEASE_KEYS, `${path}: release record`);
   assert.equal(record.record_kind, "evidence", `${path}: real release must declare record_kind: evidence`);
   requiredString(record.release, `${path}: release`);
@@ -189,8 +213,9 @@ export function validateRelease(record, path = "release", { validationInstant = 
   requiredString(record.notes, `${path}: notes`);
 }
 
-export function validateEvidence(record, path = "evidence record", { validationInstant = new Date(), root = ROOT } = {}) {
+export function validateEvidence(record, path = "evidence record", { validationInstant = new Date(), root = ROOT, repositoryRoot = REPOSITORY_ROOT } = {}) {
   validationUtcDate(validationInstant);
+  const resolvedRepositoryRoot = validatedRepositoryRoot(repositoryRoot);
   const keys = record?.type === "testimonial" ? [...EVIDENCE_KEYS, "testimonial_permission"] : EVIDENCE_KEYS;
   exactKeys(record, keys, `${path}: evidence record`);
   assert.equal(record.record_kind, "evidence", `${path}: real evidence record must declare record_kind: evidence`);
@@ -199,7 +224,7 @@ export function validateEvidence(record, path = "evidence record", { validationI
   assert.ok(EVIDENCE_TYPES.has(record.type), `${path}: type must be a registered evidence type`);
   requiredString(record.title, `${path}: title`);
   requiredString(record.source, `${path}: source`);
-  safeReference(record.evidence_reference, `${path}: evidence_reference`);
+  safeReference(record.evidence_reference, `${path}: evidence_reference`, resolvedRepositoryRoot);
   requiredString(record.verified_by, `${path}: verified_by`);
   canonicalDate(record.verified_at, `${path}: verified_at`, validationInstant);
   assert.ok(record.verified_at >= record.date, `${path}: verified_at must not be earlier than the evidence date`);
@@ -213,8 +238,9 @@ export function validateEvidence(record, path = "evidence record", { validationI
   }
 }
 
-export function validateImpactLedger(root = ROOT, { validationInstant = new Date() } = {}) {
+export function validateImpactLedger(root = ROOT, { validationInstant = new Date(), repositoryRoot = REPOSITORY_ROOT } = {}) {
   validationUtcDate(validationInstant);
+  const resolvedRepositoryRoot = validatedRepositoryRoot(repositoryRoot);
   const errors = [];
   const realRecords = [];
   for (const path of files(root)) {
@@ -223,9 +249,9 @@ export function validateImpactLedger(root = ROOT, { validationInstant = new Date
       const ledgerPath = ledgerRelativePath(path, root);
       if (record.record_kind === "template" && TEMPLATE_PATHS.has(ledgerPath)) continue;
       assert.ok(record.record_kind === "evidence", `${path}: real records must declare record_kind: evidence`);
-      if (ledgerPath.startsWith("snapshots/")) validateSnapshot(record, path, { validationInstant, root });
-      else if (ledgerPath.startsWith("releases/")) validateRelease(record, path, { validationInstant, root });
-      else if (ledgerPath.startsWith("records/")) validateEvidence(record, path, { validationInstant, root });
+      if (ledgerPath.startsWith("snapshots/")) validateSnapshot(record, path, { validationInstant, root, repositoryRoot: resolvedRepositoryRoot });
+      else if (ledgerPath.startsWith("releases/")) validateRelease(record, path, { validationInstant, root, repositoryRoot: resolvedRepositoryRoot });
+      else if (ledgerPath.startsWith("records/")) validateEvidence(record, path, { validationInstant, root, repositoryRoot: resolvedRepositoryRoot });
       else throw new Error(`${path}: real records belong in snapshots/, releases/, or records/`);
       realRecords.push(path);
     } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
