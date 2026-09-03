@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 71b343b1e2ab356a181a777747ca2514aa0b82f3
-repository_state_sha256: 4df815f0c9b93d34e2bf7f37f1c956e37ee87c391fb2c761ccec321405e6d224
+repository_sha: fd004de6b1f41085d66dd46c3e639874237fdc6d
+repository_state_sha256: e0f96f5d9eadea5c619773afe8e08f137ff3c048dd20aaea53192e24ec1f204e
 ---
 
 # Engineering Foundry requirement coverage
@@ -133,7 +133,7 @@ repository_state_sha256: 4df815f0c9b93d34e2bf7f37f1c956e37ee87c391fb2c761ccec321
 | EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
 | EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 10 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
-| EF-PLAY | interview-playbook | required | partial | needs-current-verification | stale-review | missing | /interview-playbook, /interview-tips | — | 0 | 5 | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
+| EF-PLAY | interview-playbook | required | partial | needs-current-verification | stale-review | missing | /interview-playbook, /interview-tips | — | 0 | 6 | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
 | EF-PLAY-CURRICULUM-DEPTH | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | /interview-tips | — | 0 | 2 | Research methodology and master-depth acceptance mapping remain incomplete. |
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | — | /interview-tips/rounds/[slug] | 0 | 1 | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
 | EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | placeholder | needs-research | unpublished | missing | — | — | 0 | 1 | The index honestly identifies this role-specific guide as outside current v1. |
