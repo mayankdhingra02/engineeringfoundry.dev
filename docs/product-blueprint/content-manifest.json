@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "25ef47114a07dd1c673b6048239f49bfeab89948",
-  "repository_state_sha256": "5ac7289586772f8e346fca30a14956631267031d9e970748fc69af4dd1d83470",
+  "repository_sha": "7fd3c4542e7d3da2f1a067d48c1ca878992fa3c8",
+  "repository_state_sha256": "bcb09a3958852a63e01070f114353730afc6a92c1857d641345e1e39b879d10d",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -551,7 +551,7 @@
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
-        "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; form parsing and changed-column database enforcement reject unsafe new values, while both the public RPC and application query independently mask unsafe legacy values without destructively rewriting stored profile data."
+        "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values."
       ],
       "code_paths": [
         "app/globals.css",
