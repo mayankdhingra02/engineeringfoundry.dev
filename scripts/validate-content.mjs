@@ -1,28 +1,39 @@
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { validateCanonicalHttpsUrl } from "./canonical-content-url.mjs";
 
 const slugPattern = /^([a-z0-9]+-)*[a-z0-9]+$/;
 const sourcePlatforms = new Set(["leetcode", "hackerrank", "codeforces", "geeksforgeeks", "official", "community", "original", "other"]);
 const verificationStates = new Set(["verified", "community-reported", "unverified", "demo"]);
 const contentStatuses = new Set(["active", "unavailable", "needs_review"]);
-
-const isHttpsUrl = (value) => {
-  try { return new URL(value).protocol === "https:"; } catch { return false; }
-};
+const sourceIdentityByPlatform = new Map([
+  ["leetcode", { name: "LeetCode", hostnames: ["leetcode.com"] }],
+  ["hackerrank", { name: "HackerRank", hostnames: ["www.hackerrank.com"] }],
+  ["codeforces", { name: "Codeforces", hostnames: ["codeforces.com"] }],
+  ["geeksforgeeks", { name: "GeeksForGeeks", hostnames: ["www.geeksforgeeks.org"] }],
+]);
+const reservedSourceIdentityByNormalizedName = new Map(
+  [...sourceIdentityByPlatform].map(([platform, identity]) => [
+    identity.name.toLowerCase(),
+    { platform, name: identity.name },
+  ]),
+);
 
 const isIsoDate = (value) => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
   return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
 };
 
-export function validateContent({ topics, patterns, roadmap, companies, questions }) {
+export function validateContent({ topics, patterns, roadmap, companies, questions, validationDate = new Date().toISOString().slice(0, 10) }) {
   const errors = [];
   const check = (condition, message) => { if (!condition) errors.push(message); };
   const unique = (items, field, label) => {
     const values = items.map((item) => item[field]);
     check(new Set(values).size === values.length, `${label} must have unique ${field} values`);
   };
+  const validationDateIsCanonical = isIsoDate(validationDate);
+  check(validationDateIsCanonical, "validationDate must use exact YYYY-MM-DD format and identify a real UTC calendar date");
   const validateSource = (source, label, { requireHttps = false } = {}) => {
     check(Boolean(source && typeof source === "object"), `${label} must include a source`);
     if (!source || typeof source !== "object") return;
@@ -30,9 +41,26 @@ export function validateContent({ topics, patterns, roadmap, companies, question
     check(typeof source.name === "string" && source.name.trim().length > 0, `${label} source name must be non-empty`);
     check(sourcePlatforms.has(source.platform), `${label} has invalid source platform`);
     check(verificationStates.has(source.verification), `${label} has invalid source verification`);
-    if (requireHttps) check(isHttpsUrl(source.url), `${label} must include an HTTPS source URL`);
+    const brandedIdentity = sourceIdentityByPlatform.get(source.platform);
+    const reservedIdentity = typeof source.name === "string"
+      ? reservedSourceIdentityByNormalizedName.get(source.name.trim().toLowerCase())
+      : undefined;
+    if (reservedIdentity) check(source.platform === reservedIdentity.platform, `${label} source name ${reservedIdentity.name} is reserved for platform ${reservedIdentity.platform}`);
+    if (brandedIdentity) check(source.name === brandedIdentity.name, `${label} source platform ${source.platform} must use exact source name ${brandedIdentity.name}`);
+    if (source.platform === "original") {
+      check(source.url === null, `${label} original source URL must be null`);
+      check(!requireHttps, `${label} requiring external provenance must not use the original source platform`);
+    } else if (requireHttps) {
+      const urlResult = validateCanonicalHttpsUrl(source.url, {
+        allowedHostnames: brandedIdentity?.hostnames,
+      });
+      check(urlResult.ok, `${label} must include a canonical HTTPS source URL: ${urlResult.ok ? "" : urlResult.reason}`);
+    }
     if (source.lastVerifiedAt !== null && source.lastVerifiedAt !== undefined) {
-      check(typeof source.lastVerifiedAt === "string" && isIsoDate(source.lastVerifiedAt), `${label} has invalid source lastVerifiedAt`);
+      check(
+        validationDateIsCanonical && isIsoDate(source.lastVerifiedAt) && source.lastVerifiedAt <= validationDate,
+        `${label} has invalid source lastVerifiedAt; it must use exact YYYY-MM-DD format, identify a real UTC calendar date, and not be later than validationDate ${validationDate}`,
+      );
     }
   };
 
@@ -81,7 +109,12 @@ export function validateContent({ topics, patterns, roadmap, companies, question
     question.patterns.forEach((slug) => check(patternSlugs.has(slug), `Question ${question.id} references unknown pattern ${slug}`));
     check(contentStatuses.has(question.status), `Question ${question.id} has invalid status`);
     check(verificationStates.has(question.verification), `Question ${question.id} has invalid verification`);
-    if (question.lastVerifiedAt) check(isIsoDate(question.lastVerifiedAt), `Question ${question.id} has invalid lastVerifiedAt`);
+    if (question.lastVerifiedAt !== null && question.lastVerifiedAt !== undefined) {
+      check(
+        validationDateIsCanonical && isIsoDate(question.lastVerifiedAt) && question.lastVerifiedAt <= validationDate,
+        `Question ${question.id} has invalid lastVerifiedAt; it must use exact YYYY-MM-DD format, identify a real UTC calendar date, and not be later than validationDate ${validationDate}`,
+      );
+    }
     validateSource(question.source, `Question ${question.id}`, { requireHttps: !question.isOriginal });
 
     if (question.isOriginal) {
@@ -90,7 +123,11 @@ export function validateContent({ topics, patterns, roadmap, companies, question
       check(Boolean(question.originalPrompt), `Original question ${question.id} must include its original prompt`);
       check(question.verification === "verified", `Original question ${question.id} must be verified`);
     } else {
-      check(isHttpsUrl(question.externalUrl), `External question ${question.id} must have a valid HTTPS URL`);
+      const externalUrlResult = validateCanonicalHttpsUrl(question.externalUrl, {
+        allowedHostnames: sourceIdentityByPlatform.get(question.source?.platform)?.hostnames,
+      });
+      check(externalUrlResult.ok, `External question ${question.id} must have a canonical HTTPS URL: ${externalUrlResult.ok ? "" : externalUrlResult.reason}`);
+      check(question.source?.platform !== "original", `External question ${question.id} must not use original source provenance`);
       check(!question.originalPrompt, `External question ${question.id} must not reproduce a problem statement`);
       check(question.source?.url === question.externalUrl, `Question ${question.id} source URL must match its external URL`);
     }
