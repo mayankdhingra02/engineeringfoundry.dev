@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { validateCanonicalHttpsUrl } from "./canonical-content-url.mjs";
 
 const slugPattern = /^([a-z0-9]+-)*[a-z0-9]+$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -11,6 +12,26 @@ const resourceAccess = new Set(["Free", "Paid", "Freemium"]);
 const resourceVerification = new Set(["verified", "unverified", "needs_review"]);
 const internalPaths = new Set(["/dsa", "/system-design/start-here/introduction", "/ml-design", "/behavioral", "/interview-tips"]);
 const trackingParams = /^(utm_.+|ref|referrer|affiliate|aff|source)$/i;
+const resourceUrlPolicyByProvider = new Map([
+  ["AWS", { hostnames: ["aws.amazon.com"] }],
+  ["Full Stack Deep Learning", { hostnames: ["fullstackdeeplearning.com"] }],
+  ["GitHub", { hostnames: ["skills.github.com"] }],
+  ["Google Developers", { hostnames: ["developers.google.com"] }],
+  ["Google SRE", { hostnames: ["sre.google"] }],
+  ["Harvard FAS Mignone Center for Career Success", { hostnames: ["careerservices.fas.harvard.edu"] }],
+  ["Hugging Face", { hostnames: ["huggingface.co"] }],
+  ["LeetCode", { hostnames: ["leetcode.com"] }],
+  ["MDN Web Docs", { hostnames: ["developer.mozilla.org"] }],
+  ["Made With ML by Anyscale", { hostnames: ["madewithml.com"] }],
+  ["System Design Primer", {
+    hostnames: ["github.com"],
+    exactUrl: "https://github.com/donnemartin/system-design-primer",
+  }],
+  ["Tech Interview Handbook", { hostnames: ["www.techinterviewhandbook.org"] }],
+  ["UC Berkeley Career Engagement", { hostnames: ["www.career.berkeley.edu"] }],
+  ["VisuAlgo", { hostnames: ["visualgo.net"] }],
+  ["roadmap.sh", { hostnames: ["roadmap.sh"] }],
+]);
 
 const nonEmptyString = (value) => typeof value === "string" && value.trim().length > 0;
 const nonEmptyList = (value) => Array.isArray(value) && value.length > 0 && value.every(nonEmptyString);
@@ -91,13 +112,12 @@ export function validateInterviewContent({ categories, frameworks, questions, ti
     if (resource.isInternal) {
       check(internalPaths.has(resource.url), `Internal resource ${resource.id} references invalid site path ${resource.url}`);
     } else {
-      try {
-        const url = new URL(resource.url);
-        check(url.protocol === "https:", `External resource ${resource.id} must use an HTTPS URL`);
-        check(![...url.searchParams.keys()].some((key) => trackingParams.test(key)), `External resource ${resource.id} must not include affiliate or tracking parameters`);
-      } catch {
-        check(false, `External resource ${resource.id} has a malformed URL`);
-      }
+      const urlPolicy = resourceUrlPolicyByProvider.get(resource.provider);
+      check(Boolean(urlPolicy), `External resource ${resource.id} provider must have a registered exact hostname policy`);
+      const urlResult = validateCanonicalHttpsUrl(resource.url, { allowedHostnames: urlPolicy?.hostnames });
+      check(urlResult.ok, `External resource ${resource.id} URL ${urlResult.ok ? "is valid" : urlResult.reason}`);
+      if (urlResult.ok && urlPolicy?.exactUrl) check(resource.url === urlPolicy.exactUrl, `External resource ${resource.id} URL must equal the provider's exact canonical URL ${urlPolicy.exactUrl}`);
+      if (urlResult.ok) check(![...urlResult.url.searchParams.keys()].some((key) => trackingParams.test(key)), `External resource ${resource.id} must not include affiliate or tracking parameters`);
     }
     if (resource.verification === "verified") {
       check(
