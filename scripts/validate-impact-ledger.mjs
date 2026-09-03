@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { basename, join, relative, resolve, sep } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { strict as assert } from "node:assert";
 import { ANALYTICS_DEFINITION_VERSION } from "../lib/analytics/launch-metrics.ts";
@@ -20,6 +20,7 @@ const SNAPSHOT_KEYS = ["record_kind", "analytics_definition_version", "month", "
 const RELEASE_KEYS = ["record_kind", "release", "date", "git_sha", "major_capabilities", "deployment", "ci_run", "latest_migration", "owner_verification", "notes"];
 const EVIDENCE_KEYS = ["record_kind", "date", "type", "title", "source", "evidence_reference", "verified_by", "verified_at", "notes"];
 const TESTIMONIAL_PERMISSION_KEYS = ["retention_allowed", "public_attribution_allowed", "approved_excerpt"];
+const TEMPLATE_PATHS = new Set(["monthly-snapshot.template.json", "release-record.template.json", "evidence-record.template.json"]);
 
 function files(directory) {
   if (!existsSync(directory)) return [];
@@ -57,19 +58,29 @@ function safeReferenceCharacters(value, label) {
 function safeReference(value, label) {
   requiredString(value, label);
   safeReferenceCharacters(value, label);
-  assert.ok(!value.includes("\\") && !value.startsWith("/") && !value.split("/").includes(".."), `${label} must not be an absolute or traversing path`);
-  const scheme = value.match(/^([A-Za-z][A-Za-z0-9+.-]*):/);
-  if (!scheme) return;
-  assert.equal(scheme[1].toLowerCase(), "https", `${label} must use HTTPS when it is a URL`);
-  let url;
-  try { url = new URL(value); }
-  catch { assert.fail(`${label} must be a valid HTTPS URL or safe repository-relative reference`); }
-  assert.ok(!url.username && !url.password, `${label} must not contain URL credentials`);
+  assert.ok(!value.includes("\\") && !value.startsWith("/") && !value.split("/").includes(".."), `${label} must not be an absolute, backslash, or traversing path`);
+  if (value.startsWith("https://")) {
+    let url;
+    try { url = new URL(value); }
+    catch { assert.fail(`${label} must be a valid HTTPS URL or safe repository-relative path`); }
+    assert.equal(url.protocol, "https:", `${label} must use the exact https:// form when it is a URL`);
+    assert.ok(!url.username && !url.password, `${label} must not contain URL credentials`);
+    return;
+  }
+  assert.ok(!/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value), `${label} must use the exact https:// form when it is a URL`);
+  const segments = value.split("/");
+  const safeSegments = segments.every((segment) => segment.length > 0 && segment !== "." && segment !== ".." && /^[A-Za-z0-9._-]+$/.test(segment));
+  const shapedLikePath = segments.length > 1 || /^[A-Za-z0-9_-][A-Za-z0-9._-]*\.[A-Za-z0-9._-]+$/.test(value);
+  assert.ok(safeSegments && shapedLikePath, `${label} must be a valid HTTPS URL or clearly shaped safe repository-relative path`);
 }
 
 function httpsUrl(value, label) {
   requiredString(value, label);
   safeReferenceCharacters(value, label);
+  if (!value.startsWith("https://")) {
+    if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value)) assert.fail(`${label} must use HTTPS in exact https:// form`);
+    assert.fail(`${label} must be a valid HTTPS URL`);
+  }
   let url;
   try { url = new URL(value); }
   catch { assert.fail(`${label} must be a valid HTTPS URL`); }
@@ -99,10 +110,20 @@ function canonicalMonth(value, label) {
   assert.ok(Number.isFinite(parsed.valueOf()) && parsed.toISOString() === normalized, `${label} must identify a real UTC calendar month`);
 }
 
+function ledgerRelativePath(path, root) {
+  return relative(resolve(root), resolve(path)).split(sep).join("/");
+}
+
 function snapshotFileMonth(path, root) {
-  const relativePath = relative(join(root, "snapshots"), path).split(sep).join("/");
-  assert.match(relativePath, /^\d{4}-\d{2}\.json$/, `${path}: snapshot filename must be YYYY-MM.json directly under snapshots/`);
-  return basename(relativePath, ".json");
+  const match = ledgerRelativePath(path, root).match(/^snapshots\/(\d{4}-\d{2})\.json$/);
+  assert.ok(match, `${path}: snapshot filename must be YYYY-MM.json directly under snapshots/`);
+  return match[1];
+}
+
+function datedRecordFileDate(path, root, directory, label) {
+  const match = ledgerRelativePath(path, root).match(new RegExp(`^${directory}/(\\d{4}-\\d{2}-\\d{2})-[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*\\.json$`));
+  assert.ok(match, `${path}: ${label} filename must be YYYY-MM-DD-nonempty-safe-suffix.json directly under ${directory}/`);
+  return match[1];
 }
 
 function nextMonthStart(month) {
@@ -145,12 +166,13 @@ export function validateSnapshot(record, path = "snapshot", { validationInstant 
   requiredString(record.notes, `${path}: notes`);
 }
 
-export function validateRelease(record, path = "release", { validationInstant = new Date() } = {}) {
+export function validateRelease(record, path = "release", { validationInstant = new Date(), root = ROOT } = {}) {
   validationUtcDate(validationInstant);
   exactKeys(record, RELEASE_KEYS, `${path}: release record`);
   assert.equal(record.record_kind, "evidence", `${path}: real release must declare record_kind: evidence`);
   requiredString(record.release, `${path}: release`);
   canonicalDate(record.date, `${path}: date`, validationInstant);
+  assert.equal(record.date, datedRecordFileDate(path, root, "releases", "release record"), `${path}: date must equal the release filename date prefix`);
   assert.match(record.git_sha, /^[0-9a-f]{40}$/, `${path}: git_sha must be a full lowercase 40-hex commit SHA`);
   assert.ok(Array.isArray(record.major_capabilities) && record.major_capabilities.length > 0, `${path}: major_capabilities must be a non-empty array`);
   for (const [index, capability] of record.major_capabilities.entries()) requiredString(capability, `${path}: major_capabilities[${index}]`);
@@ -163,27 +185,31 @@ export function validateRelease(record, path = "release", { validationInstant = 
   exactKeys(record.owner_verification, ["verified_by", "verified_at"], `${path}: owner_verification`);
   requiredString(record.owner_verification.verified_by, `${path}: owner_verification.verified_by`);
   canonicalDate(record.owner_verification.verified_at, `${path}: owner_verification.verified_at`, validationInstant);
+  assert.ok(record.owner_verification.verified_at >= record.date, `${path}: owner_verification.verified_at must not be earlier than the release date`);
   requiredString(record.notes, `${path}: notes`);
 }
 
-export function validateEvidence(record, path = "evidence record", { validationInstant = new Date() } = {}) {
+export function validateEvidence(record, path = "evidence record", { validationInstant = new Date(), root = ROOT } = {}) {
   validationUtcDate(validationInstant);
   const keys = record?.type === "testimonial" ? [...EVIDENCE_KEYS, "testimonial_permission"] : EVIDENCE_KEYS;
   exactKeys(record, keys, `${path}: evidence record`);
   assert.equal(record.record_kind, "evidence", `${path}: real evidence record must declare record_kind: evidence`);
   canonicalDate(record.date, `${path}: date`, validationInstant);
+  assert.equal(record.date, datedRecordFileDate(path, root, "records", "evidence record"), `${path}: date must equal the evidence filename date prefix`);
   assert.ok(EVIDENCE_TYPES.has(record.type), `${path}: type must be a registered evidence type`);
   requiredString(record.title, `${path}: title`);
   requiredString(record.source, `${path}: source`);
   safeReference(record.evidence_reference, `${path}: evidence_reference`);
   requiredString(record.verified_by, `${path}: verified_by`);
   canonicalDate(record.verified_at, `${path}: verified_at`, validationInstant);
+  assert.ok(record.verified_at >= record.date, `${path}: verified_at must not be earlier than the evidence date`);
   requiredString(record.notes, `${path}: notes`);
   if (record.type === "testimonial") {
     exactKeys(record.testimonial_permission, TESTIMONIAL_PERMISSION_KEYS, `${path}: testimonial_permission`);
-    assert.equal(typeof record.testimonial_permission.retention_allowed, "boolean", `${path}: testimonial retention consent must be explicit`);
+    assert.equal(record.testimonial_permission.retention_allowed, true, `${path}: real testimonial retention consent must be explicitly true`);
     assert.equal(typeof record.testimonial_permission.public_attribution_allowed, "boolean", `${path}: testimonial attribution consent must be explicit`);
     if (record.testimonial_permission.approved_excerpt !== null) requiredString(record.testimonial_permission.approved_excerpt, `${path}: testimonial_permission.approved_excerpt`);
+    if (!record.testimonial_permission.public_attribution_allowed) assert.equal(record.testimonial_permission.approved_excerpt, null, `${path}: approved_excerpt must be null unless public attribution is allowed`);
   }
 }
 
@@ -194,12 +220,12 @@ export function validateImpactLedger(root = ROOT, { validationInstant = new Date
   for (const path of files(root)) {
     try {
       const record = readJson(path);
-      if (record.record_kind === "template") continue;
+      const ledgerPath = ledgerRelativePath(path, root);
+      if (record.record_kind === "template" && TEMPLATE_PATHS.has(ledgerPath)) continue;
       assert.ok(record.record_kind === "evidence", `${path}: real records must declare record_kind: evidence`);
-      const ledgerPath = relative(root, path).split(sep).join("/");
       if (ledgerPath.startsWith("snapshots/")) validateSnapshot(record, path, { validationInstant, root });
-      else if (ledgerPath.startsWith("releases/")) validateRelease(record, path, { validationInstant });
-      else if (ledgerPath.startsWith("records/")) validateEvidence(record, path, { validationInstant });
+      else if (ledgerPath.startsWith("releases/")) validateRelease(record, path, { validationInstant, root });
+      else if (ledgerPath.startsWith("records/")) validateEvidence(record, path, { validationInstant, root });
       else throw new Error(`${path}: real records belong in snapshots/, releases/, or records/`);
       realRecords.push(path);
     } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
