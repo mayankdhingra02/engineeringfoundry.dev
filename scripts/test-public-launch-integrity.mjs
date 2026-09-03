@@ -10,6 +10,24 @@ const accountGate = read("lib/account-platform.ts");
 requireText(accountGate, 'process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED === "true"', "Accounts must require an explicit true feature flag.");
 requireText(accountGate, "areAccountsEnabled() && isSupabaseConfigured()", "Account availability must require both explicit enablement and Supabase configuration.");
 
+// Next 16's error-boundary `retry` contract re-fetches and re-renders the
+// boundary's children; the legacy `reset` callback only re-renders without a
+// fetch and cannot recover a failed private Server Component read.
+const appError = read("app/error.tsx");
+for (const expected of [
+  '"use client"',
+  "{ retry }",
+  "retry: () => void",
+  'role="alert"',
+  'aria-labelledby="page-error-title"',
+  '<h1 id="page-error-title">This page couldn’t load.</h1>',
+  "The issue appears temporary. Your public content and account data were not changed.",
+]) requireText(appError, expected, `The application error boundary lacks: ${expected}.`);
+if (!/<button\b[^>]*onClick=\{retry\}[^>]*>Try again<\/button>/.test(appError)) {
+  failures.push("The application error boundary's Try again button does not invoke the Next 16 refetching retry callback.");
+}
+prohibit(appError, /\breset\b/, "The application error boundary still uses the legacy non-refetching reset callback.");
+
 for (const file of ["lib/supabase/client.ts", "lib/supabase/server.ts", "lib/supabase/proxy.ts"]) {
   requireText(read(file), "isAccountPlatformAvailable()", `${file} does not enforce the centralized account gate.`);
 }

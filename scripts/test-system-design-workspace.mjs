@@ -9,6 +9,12 @@ import {
   emptySystemDesignAttemptDocument,
   validateSystemDesignAttemptDocument,
 } from "../lib/system-design/workspace.ts";
+import {
+  isSystemDesignAttemptId,
+  resolveSystemDesignAttemptQuery,
+  SYSTEM_DESIGN_ATTEMPT_PRIVATE_DATA_DOMAIN,
+} from "../lib/system-design/attempt-query.ts";
+import { PrivateDataUnavailableError } from "../lib/persistence/errors.ts";
 
 let checks = 0;
 const check = (condition, message) => { assert.ok(condition, message); checks += 1; };
@@ -16,6 +22,7 @@ const migration = readFileSync(new URL("../supabase/migrations/202608140008_crea
 const validationMigration = readFileSync(new URL("../supabase/migrations/202608140010_enforce_system_design_attempt_document_shape.sql", import.meta.url), "utf8");
 const actions = readFileSync(new URL("../features/system-design/actions.ts", import.meta.url), "utf8");
 const queries = readFileSync(new URL("../lib/system-design/queries.ts", import.meta.url), "utf8");
+const attemptQuery = readFileSync(new URL("../lib/system-design/attempt-query.ts", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../features/system-design/attempt-editor.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../app/system-design/practice/page.tsx", import.meta.url), "utf8");
 const problemPanel = readFileSync(new URL("../features/system-design/problem-practice-panel.tsx", import.meta.url), "utf8");
@@ -30,6 +37,10 @@ const sidebar = readFileSync(new URL("../components/system-design-sidebar.tsx", 
 const lesson = readFileSync(new URL("../components/system-design-lesson.tsx", import.meta.url), "utf8");
 const plan = readFileSync(new URL("../app/system-design/plan/page.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+const attemptQueryStart = queries.indexOf("export async function getSystemDesignAttempt");
+const attemptQueryEnd = queries.indexOf("\nexport async function ", attemptQueryStart + 1);
+const attemptQueryBody = queries.slice(attemptQueryStart, attemptQueryEnd < 0 ? undefined : attemptQueryEnd);
+const attemptRouteBody = route.slice(route.indexOf("export default async function SystemDesignAttemptPage"));
 
 check(canonicalSystemDesignConceptIds.size === 146, "published concept catalog stays canonical");
 check(canonicalSystemDesignProblemIds.size === 27, "published problem catalog stays canonical");
@@ -50,6 +61,77 @@ check(validateSystemDesignAttemptDocument({ ...blank, functional_requirements: [
 check(validateSystemDesignAttemptDocument({ ...blank, capacity: { assumptions: [{ label: "DAU", value: "10M", unit: "users/day" }], calculations: [{ label: "RPS", formula: "10M / 86400", result: "116" }] } }).ok, "transparent capacity rows are accepted");
 check(!validateSystemDesignAttemptDocument({ ...blank, apis: [{ path: "/v1" }] }).ok, "partial API rows are rejected");
 check(!validateSystemDesignAttemptDocument({ ...blank, failure_modes: Array.from({ length: 51 }, () => ({ failure: "x", impact: "y", mitigation: "z" })) }).ok, "row counts are bounded");
+
+const canonicalAttemptId = "11111111-1111-4111-8111-111111111111";
+for (const id of [
+  "11111111-1111-1111-8111-111111111111",
+  canonicalAttemptId,
+  "11111111-1111-5111-b111-111111111111",
+  canonicalAttemptId.toUpperCase(),
+]) {
+  check(isSystemDesignAttemptId(id), `canonical RFC 4122 attempt ID shape ${id} is accepted regardless of hex case`);
+}
+for (const [label, id] of [
+  ["missing", undefined],
+  ["null", null],
+  ["empty", ""],
+  ["leading whitespace", ` ${canonicalAttemptId}`],
+  ["trailing whitespace", `${canonicalAttemptId} `],
+  ["nil/version zero", "00000000-0000-0000-0000-000000000000"],
+  ["unsupported version", "11111111-1111-6111-8111-111111111111"],
+  ["invalid variant", "11111111-1111-4111-7111-111111111111"],
+  ["missing separators", "11111111111141118111111111111111"],
+  ["non-hex lookalike", "g1111111-1111-4111-8111-111111111111"],
+  ["query suffix", `${canonicalAttemptId}?next=/dashboard`],
+  ["encoded path suffix", `${canonicalAttemptId}%2Fworkspace`],
+  ["SQL-shaped suffix", `${canonicalAttemptId}' OR '1'='1`],
+  ["array", [canonicalAttemptId]],
+  ["object", { id: canonicalAttemptId }],
+]) {
+  check(!isSystemDesignAttemptId(id), `${label} attempt ID is rejected`);
+}
+
+const validPersistedAttempt = {
+  id: canonicalAttemptId,
+  user_id: "22222222-2222-4222-8222-222222222222",
+  problem_id: "url-shortener",
+  catalog_item_type: "design_problem",
+  application_id: null,
+  title: "URL Shortener",
+  status: "draft",
+  confidence: null,
+  document: blank,
+  revision: 1,
+  first_practiced_at: null,
+  last_practiced_at: null,
+  created_at: "2026-08-14T12:00:00.000Z",
+  updated_at: "2026-08-14T12:00:00.000Z",
+};
+const resolvedPersistedAttempt = resolveSystemDesignAttemptQuery({ data: validPersistedAttempt, error: null });
+check(resolvedPersistedAttempt?.id === canonicalAttemptId && resolvedPersistedAttempt.document.functional_requirements.length === 0, "a valid owner-scoped row resolves to its validated attempt");
+check(resolveSystemDesignAttemptQuery({ data: null, error: null }) === null, "a genuine zero-row result remains a not-found null");
+
+const unavailableMessage = "Your private System Design attempt data is temporarily unavailable. Please try again.";
+function captureUnavailable(result) {
+  try {
+    resolveSystemDesignAttemptQuery(result);
+  } catch (error) {
+    return error;
+  }
+  return null;
+}
+for (const [label, result, forbiddenDetail] of [
+  ["query error", { data: null, error: { message: "relation system_design_attempts timed out" } }, "system_design_attempts"],
+  ["error with row", { data: validPersistedAttempt, error: { message: `owner ${validPersistedAttempt.user_id} failed` } }, validPersistedAttempt.user_id],
+  ["missing error member", { data: validPersistedAttempt }, canonicalAttemptId],
+  ["invalid persisted document", { data: { ...validPersistedAttempt, document: { ...blank, unsupported_private_field: "do not expose" } }, error: null }, "unsupported_private_field"],
+]) {
+  const error = captureUnavailable(result);
+  check(error instanceof PrivateDataUnavailableError, `${label} raises the shared private-data-unavailable error`);
+  check(error?.message === unavailableMessage && error?.name === "PrivateDataUnavailableError", `${label} uses the exact stable System Design attempt message`);
+  check(!error?.message.includes(forbiddenDetail), `${label} does not expose database, owner, or persisted-document details`);
+}
+check(SYSTEM_DESIGN_ATTEMPT_PRIVATE_DATA_DOMAIN === "System Design attempt", "attempt errors use the fixed sanitized private-data domain");
 
 const form = new FormData();
 form.set("functional_requirements", "Create link\nResolve link");
@@ -117,6 +199,11 @@ check((queries.match(/if \(!accountPlatformAvailable\) return \{ accountPlatform
 check((queries.match(/if \(!actor\) return \{ accountPlatformAvailable, signedIn: false as const/g) ?? []).length === 3, "enabled signed-out queries preserve account availability separately from authentication");
 check((queries.match(/accountPlatformAvailable,/g) ?? []).length >= 9 && queries.includes("signedIn: true as const"), "authenticated query results preserve the available state alongside account-backed data");
 check(queries.indexOf("if (!isAccountPlatformAvailable()) return null;") < queries.indexOf("const actor = await getAuthenticatedActor();", queries.indexOf("getSystemDesignAttempt")), "private attempt lookup fails closed before authentication when accounts are disabled");
+check(attemptQuery.includes("if (result.error !== null) unavailable();") && attemptQuery.indexOf("if (result.error !== null) unavailable();") < attemptQuery.indexOf("if (result.data === null) return null;"), "attempt resolver gives every non-null or malformed error state precedence over rows while preserving genuine null");
+check(attemptQuery.includes("if (!isPersistedAttemptRow(result.data)) unavailable();") && attemptQuery.includes("return asSystemDesignAttempt(result.data) ?? unavailable();"), "attempt resolver validates both the persisted row and structured document before returning private data");
+check(attemptQueryBody.includes("if (!isSystemDesignAttemptId(attemptId))") && attemptQueryBody.includes("if (!actor) throw new PrivateDataUnavailableError") && attemptQueryBody.indexOf("if (!isSystemDesignAttemptId(attemptId))") < attemptQueryBody.indexOf("getAuthenticatedActor()"), "attempt query rejects malformed IDs and missing actors as unavailable before database access");
+check(attemptQueryBody.includes('const result = await actor.supabase.from("system_design_attempts").select("*").eq("id", attemptId).eq("user_id", actor.user.id).maybeSingle()'), "attempt query retains the full result and scopes the lookup by both attempt and owner ID");
+check(attemptQueryBody.includes("return resolveSystemDesignAttemptQuery(result)"), "attempt query delegates data/error interpretation to the strict resolver");
 check(editor.includes("beforeunload"), "editor protects browser navigation with unsaved work");
 check(editor.includes("Unsaved changes"), "editor exposes dirty state");
 check(editor.includes("Save attempt"), "editor uses explicit save");
@@ -144,6 +231,9 @@ check(problemPanel.includes("Each attempt remains independent"), "problem UI exp
 check(problemPanel.includes("ConfirmAction"), "attempt deletion requires confirmation");
 check(route.includes("attempt.problem_id !== slug"), "route prevents cross-problem attempt spoofing");
 check(route.includes("requireMemberProfile"), "attempt editor requires member auth");
+check(attemptRouteBody.indexOf("if (!isSystemDesignAttemptId(attemptId)) notFound()") >= 0 && attemptRouteBody.indexOf("if (!isSystemDesignAttemptId(attemptId)) notFound()") < attemptRouteBody.indexOf("requireMemberProfile(") && attemptRouteBody.indexOf("if (!isSystemDesignAttemptId(attemptId)) notFound()") < attemptRouteBody.indexOf("getSystemDesignAttempt(attemptId)"), "attempt route rejects malformed IDs before its member guard and private queries");
+check(attemptRouteBody.includes("if (!attempt || attempt.problem_id !== slug || !problem || !workspace.signedIn) notFound()"), "attempt route preserves genuine null and problem-mismatch not-found behavior");
+check(!attemptRouteBody.includes("catch") && !attemptRouteBody.includes("try {"), "attempt route does not convert private query failures into false not-found responses");
 check(dashboard.includes("getSystemDesignDashboardSummary"), "dashboard reads real persistent summary");
 check(dashboard.includes("application=${systemDesignRound.application.id}"), "dashboard passes exact application context");
 check(application.includes("/system-design/practice?application=${application.id}"), "application detail passes exact context");

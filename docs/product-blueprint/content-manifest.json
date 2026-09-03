@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "2191ee69e365522c32001c1be975d7c83b6ad91e",
-  "repository_state_sha256": "90b99ceed565acfd5d14df31e413f61bd86bebeb7c462e297d6ea0e09af29e4c",
+  "repository_sha": "44bd69b7c3f0dbd11edad47bfd412e454f902364",
+  "repository_state_sha256": "ce98d2895ae879ca19fde6efa4f66bfc6e747e939526252a2c9d5ddace9ea6b9",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -553,10 +553,12 @@
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
         "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values.",
-        "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed."
+        "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed.",
+        "Uncaught private Server Component failures reach the accessible temporary application error state, whose explicit Try again control uses Next 16's refetching retry contract; this source regression does not claim rendered browser execution."
       ],
       "code_paths": [
         "app/api/preparation/continuation/route.ts",
+        "app/error.tsx",
         "app/globals.css",
         "app/layout.tsx",
         "app/page.tsx",
@@ -590,6 +592,7 @@
         "scripts/test-analytics-launch-evidence.mjs",
         "scripts/test-auth-foundation.mjs",
         "scripts/test-homepage-entry.mjs",
+        "scripts/test-public-launch-integrity.mjs",
         "scripts/test-public-links.mjs",
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-unified-progress.mjs",
@@ -1404,16 +1407,19 @@
     {
       "acceptance_criteria": [
         "Published lessons and walkthroughs remain route-valid while unpublished records stay honest and noindex.",
-        "Account-disabled System Design routes remain public and useful without inoperable sign-in or persistence handoffs, while enabled signed-out and signed-in modes retain their existing behavior."
+        "Account-disabled System Design routes remain public and useful without inoperable sign-in or persistence handoffs, while enabled signed-out and signed-in modes retain their existing behavior.",
+        "Private System Design attempt routes reject malformed canonical IDs before member or query work, preserve genuine absent and problem-mismatch not-found outcomes, and propagate owner-scoped query or persisted-document failures through one sanitized unavailable error rather than presenting them as missing attempts."
       ],
       "code_paths": [
         "app/system-design",
+        "app/system-design/problems/[slug]/practice/[attemptId]/page.tsx",
         "components/system-design-focus-planner.tsx",
         "components/system-design-practice-library.tsx",
         "components/system-design-sidebar.tsx",
         "content/system-design",
         "data/system-design/manifest.ts",
         "features/system-design",
+        "lib/system-design/attempt-query.ts",
         "lib/system-design/queries.ts",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-public-route-smoke.mjs",
