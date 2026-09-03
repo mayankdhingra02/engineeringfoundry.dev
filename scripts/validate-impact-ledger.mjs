@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { basename, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { strict as assert } from "node:assert";
 import { ANALYTICS_DEFINITION_VERSION } from "../lib/analytics/launch-metrics.ts";
@@ -16,6 +16,10 @@ export const METRIC_SOURCE_REFERENCES = {
   product_data_source_reference: ["interview_experience_approvals"],
 };
 const EVIDENCE_TYPES = new Set(["testimonial", "article", "podcast", "talk", "workshop", "adoption", "invitation", "citation", "technical_contribution"]);
+const SNAPSHOT_KEYS = ["record_kind", "analytics_definition_version", "month", "measurement_window", "analytics_source_reference", "account_source_reference", "product_data_source_reference", "metrics", "notes"];
+const RELEASE_KEYS = ["record_kind", "release", "date", "git_sha", "major_capabilities", "deployment", "ci_run", "latest_migration", "owner_verification", "notes"];
+const EVIDENCE_KEYS = ["record_kind", "date", "type", "title", "source", "evidence_reference", "verified_by", "verified_at", "notes"];
+const TESTIMONIAL_PERMISSION_KEYS = ["retention_allowed", "public_attribution_allowed", "approved_excerpt"];
 
 function files(directory) {
   if (!existsSync(directory)) return [];
@@ -30,54 +34,161 @@ function readJson(path) {
   catch (error) { throw new Error(`${path}: invalid JSON (${error instanceof Error ? error.message : String(error)})`); }
 }
 
-function required(record, key, path) {
-  assert.ok(typeof record[key] === "string" && record[key].trim(), `${path}: missing ${key}`);
+function object(value, label) {
+  assert.ok(value && typeof value === "object" && !Array.isArray(value), `${label} must be an object`);
 }
 
-function nonnegative(value, label, path) {
-  assert.ok(typeof value === "number" && Number.isFinite(value) && value >= 0, `${path}: ${label} must be a nonnegative finite number`);
+function exactKeys(record, keys, label) {
+  object(record, label);
+  const expected = [...keys].sort();
+  const actual = Object.keys(record).sort();
+  assert.deepEqual(actual, expected, `${label} must contain exactly: ${expected.join(", ")}`);
 }
 
-export function validateSnapshot(record, path = "snapshot") {
-  assert.match(relative(join(ROOT, "snapshots"), path), /^\d{4}-\d{2}\.json$/, `${path}: snapshot filename must be YYYY-MM.json`);
+function requiredString(value, label) {
+  assert.ok(typeof value === "string" && value.trim() === value && value.length > 0, `${label} must be a non-empty trimmed string`);
+}
+
+function safeReferenceCharacters(value, label) {
+  const hasControlCharacter = [...value].some((character) => character.charCodeAt(0) <= 31 || character.charCodeAt(0) === 127);
+  assert.ok(value.length <= 2_048 && !hasControlCharacter, `${label} must be a bounded single-line reference without control characters`);
+}
+
+function safeReference(value, label) {
+  requiredString(value, label);
+  safeReferenceCharacters(value, label);
+  assert.ok(!value.includes("\\") && !value.startsWith("/") && !value.split("/").includes(".."), `${label} must not be an absolute or traversing path`);
+  const scheme = value.match(/^([A-Za-z][A-Za-z0-9+.-]*):/);
+  if (!scheme) return;
+  assert.equal(scheme[1].toLowerCase(), "https", `${label} must use HTTPS when it is a URL`);
+  let url;
+  try { url = new URL(value); }
+  catch { assert.fail(`${label} must be a valid HTTPS URL or safe repository-relative reference`); }
+  assert.ok(!url.username && !url.password, `${label} must not contain URL credentials`);
+}
+
+function httpsUrl(value, label) {
+  requiredString(value, label);
+  safeReferenceCharacters(value, label);
+  let url;
+  try { url = new URL(value); }
+  catch { assert.fail(`${label} must be a valid HTTPS URL`); }
+  assert.equal(url.protocol, "https:", `${label} must use HTTPS`);
+  assert.ok(!url.username && !url.password, `${label} must not contain URL credentials`);
+}
+
+function validationUtcDate(validationInstant) {
+  assert.ok(validationInstant instanceof Date && Number.isFinite(validationInstant.valueOf()), "validationInstant must be a valid Date");
+  return validationInstant.toISOString().slice(0, 10);
+}
+
+function canonicalDate(value, label, validationInstant) {
+  requiredString(value, label);
+  assert.match(value, /^\d{4}-\d{2}-\d{2}$/, `${label} must use exact YYYY-MM-DD format`);
+  const normalized = `${value}T00:00:00.000Z`;
+  const parsed = new Date(normalized);
+  assert.ok(Number.isFinite(parsed.valueOf()) && parsed.toISOString() === normalized, `${label} must identify a real UTC calendar date`);
+  assert.ok(value <= validationUtcDate(validationInstant), `${label} must not be later than the validation date`);
+}
+
+function canonicalMonth(value, label) {
+  requiredString(value, label);
+  assert.match(value, /^\d{4}-\d{2}$/, `${label} must use exact YYYY-MM format`);
+  const normalized = `${value}-01T00:00:00.000Z`;
+  const parsed = new Date(normalized);
+  assert.ok(Number.isFinite(parsed.valueOf()) && parsed.toISOString() === normalized, `${label} must identify a real UTC calendar month`);
+}
+
+function snapshotFileMonth(path, root) {
+  const relativePath = relative(join(root, "snapshots"), path).split(sep).join("/");
+  assert.match(relativePath, /^\d{4}-\d{2}\.json$/, `${path}: snapshot filename must be YYYY-MM.json directly under snapshots/`);
+  return basename(relativePath, ".json");
+}
+
+function nextMonthStart(month) {
+  const start = new Date(`${month}-01T00:00:00.000Z`);
+  start.setUTCMonth(start.getUTCMonth() + 1);
+  return start.toISOString().replace(".000Z", "Z");
+}
+
+function nonnegativeSafeInteger(value, label) {
+  assert.ok(Number.isSafeInteger(value) && value >= 0, `${label} must be a nonnegative safe integer`);
+}
+
+export function validateSnapshot(record, path = "snapshot", { validationInstant = new Date(), root = ROOT } = {}) {
+  validationUtcDate(validationInstant);
+  exactKeys(record, SNAPSHOT_KEYS, `${path}: snapshot`);
+  assert.equal(record.record_kind, "evidence", `${path}: real snapshot must declare record_kind: evidence`);
+  const filenameMonth = snapshotFileMonth(path, root);
   assert.equal(record.analytics_definition_version, ANALYTICS_DEFINITION_VERSION, `${path}: use the current explicit analytics definition version`);
   assert.deepEqual(
     Object.values(METRIC_SOURCE_REFERENCES).flat().sort(),
     [...METRIC_IDS].sort(),
     "impact-ledger metric source mapping must cover every required metric exactly once",
   );
-  assert.match(record.month ?? "", /^\d{4}-\d{2}$/, `${path}: month must be YYYY-MM`);
-  assert.ok(record.measurement_window && typeof record.measurement_window === "object", `${path}: missing measurement_window`);
-  required(record.measurement_window, "start", path); required(record.measurement_window, "end", path);
-  for (const sourceReference of Object.keys(METRIC_SOURCE_REFERENCES)) required(record, sourceReference, path);
-  assert.ok(record.metrics && typeof record.metrics === "object" && !Array.isArray(record.metrics), `${path}: metrics must be an object`);
-  for (const metric of METRIC_IDS) nonnegative(record.metrics[metric], metric, path);
-  assert.ok(record.metrics.seven_day_return_rate <= 1, `${path}: seven_day_return_rate must be a decimal from 0 to 1`);
+  canonicalMonth(record.month, `${path}: month`);
+  assert.equal(record.month, filenameMonth, `${path}: month must equal snapshot filename ${filenameMonth}`);
+  exactKeys(record.measurement_window, ["start", "end"], `${path}: measurement_window`);
+  const expectedStart = `${record.month}-01T00:00:00Z`;
+  const expectedEnd = nextMonthStart(record.month);
+  assert.equal(record.measurement_window.start, expectedStart, `${path}: measurement_window.start must be the canonical UTC start of ${record.month}`);
+  assert.equal(record.measurement_window.end, expectedEnd, `${path}: measurement_window.end must be the canonical UTC start of the following month`);
+  assert.ok(Date.parse(record.measurement_window.start) < Date.parse(record.measurement_window.end), `${path}: measurement_window must be ordered`);
+  assert.ok(Date.parse(record.measurement_window.end) <= validationInstant.valueOf(), `${path}: measurement_window must not end after validationInstant`);
+  for (const sourceReference of Object.keys(METRIC_SOURCE_REFERENCES)) safeReference(record[sourceReference], `${path}: ${sourceReference}`);
+  exactKeys(record.metrics, METRIC_IDS, `${path}: metrics`);
+  for (const metric of METRIC_IDS) {
+    if (metric === "seven_day_return_rate") continue;
+    nonnegativeSafeInteger(record.metrics[metric], `${path}: ${metric}`);
+  }
+  assert.ok(typeof record.metrics.seven_day_return_rate === "number" && Number.isFinite(record.metrics.seven_day_return_rate) && record.metrics.seven_day_return_rate >= 0 && record.metrics.seven_day_return_rate <= 1, `${path}: seven_day_return_rate must be a finite decimal from 0 to 1`);
+  requiredString(record.notes, `${path}: notes`);
 }
 
-function validateRelease(record, path) {
-  for (const key of ["release", "date", "git_sha", "ci_run", "latest_migration"]) required(record, key, path);
-  assert.match(record.date, /^\d{4}-\d{2}-\d{2}$/, `${path}: date must be YYYY-MM-DD`);
-  assert.match(record.git_sha, /^[0-9a-f]{7,64}$/i, `${path}: git_sha must be a commit SHA`);
-  assert.ok(Array.isArray(record.major_capabilities) && record.major_capabilities.length, `${path}: list major_capabilities`);
-  assert.ok(record.deployment && typeof record.deployment === "object", `${path}: missing deployment`);
-  required(record.deployment, "environment", path); required(record.deployment, "url", path);
-  assert.ok(record.owner_verification && typeof record.owner_verification === "object", `${path}: missing owner_verification`);
-  required(record.owner_verification, "verified_by", path); required(record.owner_verification, "verified_at", path);
+export function validateRelease(record, path = "release", { validationInstant = new Date() } = {}) {
+  validationUtcDate(validationInstant);
+  exactKeys(record, RELEASE_KEYS, `${path}: release record`);
+  assert.equal(record.record_kind, "evidence", `${path}: real release must declare record_kind: evidence`);
+  requiredString(record.release, `${path}: release`);
+  canonicalDate(record.date, `${path}: date`, validationInstant);
+  assert.match(record.git_sha, /^[0-9a-f]{40}$/, `${path}: git_sha must be a full lowercase 40-hex commit SHA`);
+  assert.ok(Array.isArray(record.major_capabilities) && record.major_capabilities.length > 0, `${path}: major_capabilities must be a non-empty array`);
+  for (const [index, capability] of record.major_capabilities.entries()) requiredString(capability, `${path}: major_capabilities[${index}]`);
+  assert.equal(new Set(record.major_capabilities).size, record.major_capabilities.length, `${path}: major_capabilities must not contain duplicates`);
+  exactKeys(record.deployment, ["environment", "url"], `${path}: deployment`);
+  requiredString(record.deployment.environment, `${path}: deployment.environment`);
+  httpsUrl(record.deployment.url, `${path}: deployment.url`);
+  httpsUrl(record.ci_run, `${path}: ci_run`);
+  requiredString(record.latest_migration, `${path}: latest_migration`);
+  exactKeys(record.owner_verification, ["verified_by", "verified_at"], `${path}: owner_verification`);
+  requiredString(record.owner_verification.verified_by, `${path}: owner_verification.verified_by`);
+  canonicalDate(record.owner_verification.verified_at, `${path}: owner_verification.verified_at`, validationInstant);
+  requiredString(record.notes, `${path}: notes`);
 }
 
-function validateEvidence(record, path) {
-  for (const key of ["date", "type", "title", "source", "evidence_reference", "verified_by", "verified_at"]) required(record, key, path);
-  assert.match(record.date, /^\d{4}-\d{2}-\d{2}$/, `${path}: date must be YYYY-MM-DD`);
+export function validateEvidence(record, path = "evidence record", { validationInstant = new Date() } = {}) {
+  validationUtcDate(validationInstant);
+  const keys = record?.type === "testimonial" ? [...EVIDENCE_KEYS, "testimonial_permission"] : EVIDENCE_KEYS;
+  exactKeys(record, keys, `${path}: evidence record`);
+  assert.equal(record.record_kind, "evidence", `${path}: real evidence record must declare record_kind: evidence`);
+  canonicalDate(record.date, `${path}: date`, validationInstant);
   assert.ok(EVIDENCE_TYPES.has(record.type), `${path}: type must be a registered evidence type`);
+  requiredString(record.title, `${path}: title`);
+  requiredString(record.source, `${path}: source`);
+  safeReference(record.evidence_reference, `${path}: evidence_reference`);
+  requiredString(record.verified_by, `${path}: verified_by`);
+  canonicalDate(record.verified_at, `${path}: verified_at`, validationInstant);
+  requiredString(record.notes, `${path}: notes`);
   if (record.type === "testimonial") {
-    assert.ok(record.testimonial_permission && typeof record.testimonial_permission === "object", `${path}: testimonial requires permission metadata`);
+    exactKeys(record.testimonial_permission, TESTIMONIAL_PERMISSION_KEYS, `${path}: testimonial_permission`);
     assert.equal(typeof record.testimonial_permission.retention_allowed, "boolean", `${path}: testimonial retention consent must be explicit`);
     assert.equal(typeof record.testimonial_permission.public_attribution_allowed, "boolean", `${path}: testimonial attribution consent must be explicit`);
+    if (record.testimonial_permission.approved_excerpt !== null) requiredString(record.testimonial_permission.approved_excerpt, `${path}: testimonial_permission.approved_excerpt`);
   }
 }
 
-export function validateImpactLedger(root = ROOT) {
+export function validateImpactLedger(root = ROOT, { validationInstant = new Date() } = {}) {
+  validationUtcDate(validationInstant);
   const errors = [];
   const realRecords = [];
   for (const path of files(root)) {
@@ -85,9 +196,10 @@ export function validateImpactLedger(root = ROOT) {
       const record = readJson(path);
       if (record.record_kind === "template") continue;
       assert.ok(record.record_kind === "evidence", `${path}: real records must declare record_kind: evidence`);
-      if (path.includes("/snapshots/")) validateSnapshot(record, path);
-      else if (path.includes("/releases/")) validateRelease(record, path);
-      else if (path.includes("/records/")) validateEvidence(record, path);
+      const ledgerPath = relative(root, path).split(sep).join("/");
+      if (ledgerPath.startsWith("snapshots/")) validateSnapshot(record, path, { validationInstant, root });
+      else if (ledgerPath.startsWith("releases/")) validateRelease(record, path, { validationInstant });
+      else if (ledgerPath.startsWith("records/")) validateEvidence(record, path, { validationInstant });
       else throw new Error(`${path}: real records belong in snapshots/, releases/, or records/`);
       realRecords.push(path);
     } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }

@@ -6,7 +6,7 @@ import {
   P09_EVENT_PROPERTY_ALLOWLIST,
   sanitizeP09AnalyticsProperties,
 } from "../lib/analytics/launch-metrics.ts";
-import { validateSnapshot } from "./validate-impact-ledger.mjs";
+import { validateEvidence, validateRelease, validateSnapshot } from "./validate-impact-ledger.mjs";
 import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
@@ -99,9 +99,107 @@ const snapshot = {
   account_source_reference: "Supabase aggregate account count",
   product_data_source_reference: "Supabase aggregate approval count",
   metrics: Object.fromEntries(Object.keys(monthlySnapshotTemplate.metrics).map((metric) => [metric, 0])),
+  notes: "Verified aggregate fixture.",
 };
-assert.doesNotThrow(() => validateSnapshot(snapshot, "docs/impact-ledger/snapshots/2026-08.json"), "snapshot source provenance must cover analytics, account, and product-data metrics");
-assert.throws(() => validateSnapshot({ ...snapshot, account_source_reference: "" }, "docs/impact-ledger/snapshots/2026-08.json"), /account_source_reference/, "registered accounts require authoritative account provenance");
-assert.throws(() => validateSnapshot({ ...snapshot, metrics: { ...snapshot.metrics, registered_accounts: -1 } }, "docs/impact-ledger/snapshots/2026-08.json"), /registered_accounts/, "impossible account metrics must be rejected");
+const validationInstant = new Date("2026-09-02T12:00:00.000Z");
+const validationOptions = { validationInstant };
+const snapshotPath = "docs/impact-ledger/snapshots/2026-08.json";
+const clone = (value) => structuredClone(value);
+const mustReject = (validate, message, expected = undefined) => assert.throws(validate, expected, message);
+
+assert.doesNotThrow(() => validateSnapshot(snapshot, snapshotPath, validationOptions), "snapshot source provenance must cover analytics, account, and product-data metrics at an injected validation instant");
+mustReject(() => validateSnapshot({ ...snapshot, account_source_reference: "" }, snapshotPath, validationOptions), "registered accounts require authoritative account provenance", /account_source_reference must be a non-empty trimmed string/);
+mustReject(() => validateSnapshot(snapshot, snapshotPath, { validationInstant: new Date("invalid") }), "snapshot validation must reject an invalid injected clock before validating record fields", /validationInstant must be a valid Date/);
+for (const [record, path, expected, message] of [
+  [{ ...snapshot, month: "2026-13" }, "docs/impact-ledger/snapshots/2026-13.json", /month must identify a real UTC calendar month/, "out-of-range snapshot months must be rejected"],
+  [snapshot, "docs/impact-ledger/snapshots/2026-07.json", /month must equal snapshot filename 2026-07/, "snapshot month must match its filename"],
+  [{ ...snapshot, measurement_window: { start: "2026-08-01", end: snapshot.measurement_window.end } }, snapshotPath, /measurement_window\.start must be the canonical UTC start/, "malformed measurement timestamps must be rejected"],
+  [{ ...snapshot, measurement_window: { start: "2026-08-32T00:00:00Z", end: snapshot.measurement_window.end } }, snapshotPath, /measurement_window\.start must be the canonical UTC start/, "rollover measurement dates must be rejected"],
+  [{ ...snapshot, measurement_window: { start: "2026-10-01T00:00:00Z", end: "2026-11-01T00:00:00Z" }, month: "2026-10" }, "docs/impact-ledger/snapshots/2026-10.json", /measurement_window must not end after validationInstant/, "future measurement windows must be rejected"],
+  [{ ...snapshot, measurement_window: { start: "2026-08-01T00:00:01Z", end: snapshot.measurement_window.end } }, snapshotPath, /measurement_window\.start must be the canonical UTC start/, "measurement windows must start at the exact month boundary"],
+  [{ ...snapshot, measurement_window: { start: snapshot.measurement_window.start, end: "2026-08-31T23:59:59Z" } }, snapshotPath, /measurement_window\.end must be the canonical UTC start/, "measurement windows must end at the exact next-month boundary"],
+  [{ ...snapshot, measurement_window: { start: snapshot.measurement_window.end, end: snapshot.measurement_window.start } }, snapshotPath, /measurement_window\.start must be the canonical UTC start/, "reversed measurement windows must be rejected"],
+]) mustReject(() => validateSnapshot(record, path, validationOptions), message, expected);
+
+mustReject(() => validateSnapshot({ ...snapshot, undeclared: true }, snapshotPath, validationOptions), "undeclared snapshot keys must be rejected", /snapshot must contain exactly/);
+mustReject(() => validateSnapshot({ ...snapshot, measurement_window: { ...snapshot.measurement_window, timezone: "UTC" } }, snapshotPath, validationOptions), "undeclared measurement-window keys must be rejected", /measurement_window must contain exactly: end, start/);
+mustReject(() => validateSnapshot({ ...snapshot, metrics: { ...snapshot.metrics, invented_metric: 1 } }, snapshotPath, validationOptions), "undeclared metrics must be rejected", /metrics must contain exactly/);
+const missingMetricSnapshot = clone(snapshot);
+delete missingMetricSnapshot.metrics.registered_accounts;
+mustReject(() => validateSnapshot(missingMetricSnapshot, snapshotPath, validationOptions), "every declared metric must be present", /metrics must contain exactly/);
+for (const [value, message] of [
+  [-1, "negative count metrics must be rejected"],
+  [0.5, "fractional count metrics must be rejected"],
+  [Number.MAX_SAFE_INTEGER + 1, "unsafe count metrics must be rejected"],
+]) mustReject(() => validateSnapshot({ ...snapshot, metrics: { ...snapshot.metrics, registered_accounts: value } }, snapshotPath, validationOptions), message, /registered_accounts must be a nonnegative safe integer/);
+for (const rate of [-0.01, 1.01, Number.NaN]) {
+  mustReject(() => validateSnapshot({ ...snapshot, metrics: { ...snapshot.metrics, seven_day_return_rate: rate } }, snapshotPath, validationOptions), `invalid seven-day return rate must be rejected: ${String(rate)}`, /seven_day_return_rate must be a finite decimal from 0 to 1/);
+}
+assert.doesNotThrow(
+  () => validateSnapshot({ ...snapshot, metrics: { ...snapshot.metrics, registered_accounts: Number.MAX_SAFE_INTEGER, seven_day_return_rate: 0.5 } }, snapshotPath, validationOptions),
+  "safe integer counts and fractional rates within zero to one must remain valid",
+);
+
+const release = {
+  record_kind: "evidence",
+  release: "v1.2.3",
+  date: "2026-09-02",
+  git_sha: "0123456789abcdef0123456789abcdef01234567",
+  major_capabilities: ["Verified capability"],
+  deployment: { environment: "production", url: "https://engineering-foundry.example" },
+  ci_run: "https://github.com/example/engineering-foundry/actions/runs/1",
+  latest_migration: "no schema change",
+  owner_verification: { verified_by: "release owner", verified_at: "2026-09-02" },
+  notes: "Verified release fixture.",
+};
+const releasePath = "docs/impact-ledger/releases/2026-09-02-v1.2.3.json";
+assert.doesNotThrow(() => validateRelease(release, releasePath, validationOptions), "canonical release evidence must validate at an injected instant");
+mustReject(() => validateRelease(release, releasePath, { validationInstant: "2026-09-02" }), "release validation must reject a non-Date injected clock", /validationInstant must be a valid Date/);
+for (const [record, expected, message] of [
+  [{ ...release, date: "2026-9-2" }, /date must use exact YYYY-MM-DD format/, "malformed release dates must be rejected"],
+  [{ ...release, date: "2026-02-30" }, /date must identify a real UTC calendar date/, "rollover release dates must be rejected"],
+  [{ ...release, date: "2026-09-03" }, /date must not be later than the validation date/, "future release dates must be rejected"],
+  [{ ...release, git_sha: "0123456" }, /git_sha must be a full lowercase 40-hex commit SHA/, "abbreviated release SHAs must be rejected"],
+  [{ ...release, undeclared: true }, /release record must contain exactly/, "undeclared release keys must be rejected"],
+  [{ ...release, deployment: { ...release.deployment, undeclared: true } }, /deployment must contain exactly: environment, url/, "undeclared deployment keys must be rejected"],
+  [{ ...release, owner_verification: { ...release.owner_verification, undeclared: true } }, /owner_verification must contain exactly: verified_at, verified_by/, "undeclared owner-verification keys must be rejected"],
+  [{ ...release, owner_verification: { ...release.owner_verification, verified_at: "2026-09-03" } }, /owner_verification\.verified_at must not be later than the validation date/, "future release verification dates must be rejected"],
+]) mustReject(() => validateRelease(record, releasePath, validationOptions), message, expected);
+
+const evidence = {
+  record_kind: "evidence",
+  date: "2026-09-01",
+  type: "article",
+  title: "Independent review",
+  source: "Independent publication",
+  evidence_reference: "https://example.com/review",
+  verified_by: "evidence reviewer",
+  verified_at: "2026-09-02",
+  notes: "Observed independent publication.",
+};
+const evidencePath = "docs/impact-ledger/records/2026-09-01-independent-review.json";
+assert.doesNotThrow(() => validateEvidence(evidence, evidencePath, validationOptions), "canonical non-testimonial evidence must validate at an injected instant");
+mustReject(() => validateEvidence(evidence, evidencePath, { validationInstant: new Date("invalid") }), "evidence validation must reject an invalid injected clock", /validationInstant must be a valid Date/);
+const testimonial = {
+  ...evidence,
+  type: "testimonial",
+  title: "Consented testimonial",
+  testimonial_permission: { retention_allowed: true, public_attribution_allowed: false, approved_excerpt: null },
+};
+assert.doesNotThrow(() => validateEvidence(testimonial, "docs/impact-ledger/records/2026-09-01-consented-testimonial.json", validationOptions), "testimonial evidence with explicit permission metadata must validate");
+for (const [record, expected, message] of [
+  [{ ...evidence, date: "2026/09/01" }, /date must use exact YYYY-MM-DD format/, "malformed evidence dates must be rejected"],
+  [{ ...evidence, date: "2026-02-29" }, /date must identify a real UTC calendar date/, "rollover evidence dates must be rejected in a non-leap year"],
+  [{ ...evidence, date: "2026-09-03" }, /date must not be later than the validation date/, "future evidence dates must be rejected"],
+  [{ ...evidence, verified_at: "2026-09-03" }, /verified_at must not be later than the validation date/, "future evidence verification dates must be rejected"],
+  [{ ...evidence, undeclared: true }, /evidence record must contain exactly/, "undeclared evidence keys must be rejected"],
+  [{ ...testimonial, testimonial_permission: { ...testimonial.testimonial_permission, undeclared: true } }, /testimonial_permission must contain exactly/, "undeclared testimonial-permission keys must be rejected"],
+]) mustReject(() => validateEvidence(record, evidencePath, validationOptions), message, expected);
+const testimonialWithoutPermission = clone(testimonial);
+delete testimonialWithoutPermission.testimonial_permission;
+mustReject(() => validateEvidence(testimonialWithoutPermission, evidencePath, validationOptions), "testimonials must include explicit permission metadata", /evidence record must contain exactly.*testimonial_permission/);
+mustReject(() => validateEvidence({ ...testimonial, testimonial_permission: { ...testimonial.testimonial_permission, retention_allowed: "yes" } }, evidencePath, validationOptions), "testimonial retention permission must be boolean", /testimonial retention consent must be explicit/);
+mustReject(() => validateEvidence({ ...testimonial, testimonial_permission: { ...testimonial.testimonial_permission, public_attribution_allowed: "yes" } }, evidencePath, validationOptions), "testimonial attribution permission must be boolean", /testimonial attribution consent must be explicit/);
+mustReject(() => validateEvidence({ ...evidence, testimonial_permission: testimonial.testimonial_permission }, evidencePath, validationOptions), "non-testimonial evidence must not carry testimonial-only permission metadata", /evidence record must contain exactly/);
 
 console.log(`P0.9 analytics/evidence regression passed: ${FIRST_USEFUL_ACTION_EVENTS.length} first-useful-action events, explicit property allowlists, post-success activity semantics, dashboard/runbook definitions, and no fabricated evidence.`);
