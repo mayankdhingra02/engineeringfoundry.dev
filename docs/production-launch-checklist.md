@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 27 migrations are recorded, ending at `202608240001_harden_profile_professional_links`
+4. [ ] `supabase migration list --linked` — confirm all 28 migrations are recorded, ending at `202609030001_set_interview_preparation_checklist_item`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -125,6 +125,8 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Anonymous Interview Experience reads return only approved, consented reports and the safe nested round projection; direct requests for author identity, moderation/lifecycle metadata, round identifiers/positions, or round process notes fail
 - [ ] A signed-in non-owner cannot query another contributor's approved base row; the sessionless public directory still shows the same approved projection
 - [ ] Fabricated DSA and System Design canonical IDs are refused
+- [ ] As User A, call `set_interview_preparation_checklist_item` for two distinct canonical items with `target_completed=true`; repeat one request and then clear only the other item. Confirm the calls are idempotent, both additions survive independently, and clearing one preserves the untouched item.
+- [ ] As User B, confirm `set_interview_preparation_checklist_item` cannot change User A's round. As User A, confirm a legacy `save_interview_preparation` call with non-null `completed_ids_value` fails with SQLSTATE `0A000`, while notes-only and reflection-only calls remain compatible.
 
 ### Anonymous browser-progress import boundary
 

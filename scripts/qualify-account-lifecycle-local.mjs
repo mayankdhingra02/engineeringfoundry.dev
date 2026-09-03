@@ -108,7 +108,8 @@ await check("disposable account can populate every major private workspace", asy
   const round = await a.client.from("interview_rounds").insert({ application_id: applicationId, user_id: a.user.id, round_number: 1, round_name: "Technical screen", round_type: "Coding", scheduled_at: "2099-09-01T18:00:00Z", timezone: "America/Chicago", status: "Scheduled", notes: "Private round note" }).select("id").single();
   assert.ifError(round.error);
   roundId = round.data.id;
-  assert.ifError((await a.client.rpc("save_interview_preparation", { target_round_id: roundId, notes_value: "Private preparation note", completed_ids_value: ["dsa-review-queue"] })).error);
+  assert.ifError((await a.client.rpc("save_interview_preparation", { target_round_id: roundId, notes_value: "Private preparation note" })).error);
+  assert.ifError((await a.client.rpc("set_interview_preparation_checklist_item", { target_round_id: roundId, target_item_id: "dsa-review-queue", target_completed: true })).error);
   const story = await a.client.from("behavioral_stories").insert({ user_id: a.user.id, title: "Phase 8 disposable story", situation: "Private behavioral situation", notes: "Private behavioral note" }).select("id").single();
   assert.ifError(story.error);
   assert.ifError((await a.client.from("behavioral_answers").insert({ user_id: a.user.id, curated_question_id: "beh-lead-01", story_id: story.data.id, title: "Phase 8 private answer", opening_framing: "Private opening framing", details_to_emphasize: "Private detail to emphasize", details_to_avoid: "Private detail to avoid", answer_text: "Private prepared answer" })).error);
