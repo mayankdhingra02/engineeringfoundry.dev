@@ -4,6 +4,11 @@ import {
   validateSignInCredentials,
   validateSignUpCredentials,
 } from "../lib/auth/credentials.ts";
+import {
+  PUBLIC_PROFILE_UNAVAILABLE_MESSAGE,
+  PublicProfileUnavailableError,
+  resolvePublicProfileQuery,
+} from "../lib/auth/public-profile-query.ts";
 import { safeInternalPath } from "../lib/auth/redirects.ts";
 
 const failures = [];
@@ -34,8 +39,29 @@ try {
   assert.equal(safeInternalPath("https://attacker.example/steal"), "/dashboard");
   assert.equal(safeInternalPath("//attacker.example/steal"), "/dashboard");
   assert.equal(safeInternalPath("/applications?status=active"), "/applications?status=active");
+
+  const publicProfile = {
+    username: "grace_hopper",
+    display_name: "Grace Hopper",
+    bio: "Compiler pioneer",
+  };
+  assert.equal(resolvePublicProfileQuery({ data: publicProfile, error: null }), publicProfile, "A resolved public profile row must pass through unchanged.");
+  assert.equal(resolvePublicProfileQuery({ data: null, error: null }), null, "A genuine no-row public profile result must remain null.");
+  assert.throws(
+    () => resolvePublicProfileQuery({ data: null, error: { message: "database unavailable" } }),
+    (error) => error instanceof PublicProfileUnavailableError
+      && error.name === "PublicProfileUnavailableError"
+      && error.message === PUBLIC_PROFILE_UNAVAILABLE_MESSAGE
+      && error.message === "This public profile is temporarily unavailable. Please try again.",
+    "A public-profile RPC error must throw the stable unavailable error instead of becoming a false not-found result.",
+  );
+  assert.throws(
+    () => resolvePublicProfileQuery({ data: publicProfile, error: { message: "partial response" } }),
+    PublicProfileUnavailableError,
+    "An RPC error must take precedence over any accompanying row.",
+  );
 } catch (error) {
-  failures.push(`Credential or redirect validation failed: ${error instanceof Error ? error.message : String(error)}`);
+  failures.push(`Credential, redirect, or public-profile query validation failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 const authForm = read("features/auth/auth-form.tsx");
@@ -75,6 +101,19 @@ requireText(read("lib/supabase/client.ts"), "browserClient ??= createBrowserClie
 const migration = read("supabase/migrations/202608130001_create_profiles.sql") + read("supabase/migrations/202608130002_auth_profile_hardening.sql");
 for (const marker of ["enable row level security", 'to authenticated', "(select auth.uid()) = id", "handle_new_user", "on_auth_user_created", "revoke select on table public.profiles from anon"]) requireText(migration, marker, `Profile schema/security lacks ${marker}.`);
 for (const operation of ["insert", "delete"]) requireText(migration, `revoke insert, delete on public.profiles`, `Profiles do not deny client ${operation}.`);
+for (const marker of ["get_public_profile(profile_username text)", "returns table (", "username text", "display_name text", "bio text", "current_company text", '"current_role" text', "years_experience integer", "linkedin_url text", "github_url text", "avatar_url text", "security definer", "profiles.is_public = true", "profiles.onboarding_complete = true", "grant execute on function public.get_public_profile(text) to anon, authenticated"]) requireText(migration, marker, `Public-profile RPC projection or visibility boundary lacks ${marker}.`);
+
+const authQueries = read("lib/auth/queries.ts");
+const publicProfilePage = read("app/u/[username]/page.tsx");
+for (const marker of ['rpc("get_public_profile"', "profile_username: username", ".maybeSingle()", "const result = await", "resolvePublicProfileQuery(result)"]) requireText(authQueries, marker, `Public-profile query must retain data and error for the resolver: ${marker}.`);
+prohibit(authQueries, /const\s*\{\s*data\s*\}\s*=\s*await\s+supabase\.rpc\("get_public_profile"/, "Public-profile query discards its RPC error before resolution.");
+if ((authQueries.match(/\.toLowerCase\(\)/g) ?? []).length !== 1 || publicProfilePage.includes(".toLowerCase()")) failures.push("Public-profile usernames must be normalized exactly once at the shared query boundary for metadata and page rendering.");
+for (const marker of ["const profile = await getPublicProfile(username)", "getPublicProfile((await params).username)", "if (!profile) notFound()", 'title: "Profiles Unavailable"', "robots: { index: false, follow: false }"]) requireText(publicProfilePage, marker, `Public-profile route lacks ${marker}.`);
+prohibit(publicProfilePage, /try\s*\{|catch\s*\(/, "Public-profile route must not catch an unavailable query and convert it to not-found.");
+const pageProfileLookup = publicProfilePage.indexOf("const profile = await getPublicProfile((await params).username)");
+const pageNotFound = publicProfilePage.indexOf("if (!profile) notFound()", pageProfileLookup);
+if (pageProfileLookup < 0 || pageNotFound <= pageProfileLookup) failures.push("Public-profile page must call notFound only after the resolved query returns a genuine null.");
+for (const marker of ["profile.display_name", "profile.username", "profile.bio", "alternates: { canonical:", "openGraph:", "<PublicProfileView", "profile.current_role", "profile.current_company", "profile.years_experience", "profile.github_url", "profile.linkedin_url"]) requireText(publicProfilePage, marker, `Successful public-profile rendering lost ${marker}.`);
 
 const env = read(".env.example");
 for (const marker of ["NEXT_PUBLIC_SUPABASE_URL=", "NEXT_PUBLIC_SUPABASE_ANON_KEY=", "NEXT_PUBLIC_ACCOUNTS_ENABLED=false", "NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=false", "NEXT_PUBLIC_GITHUB_AUTH_ENABLED=false"]) requireText(env, marker, `.env.example lacks ${marker}.`);
