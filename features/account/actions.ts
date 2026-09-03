@@ -5,34 +5,40 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { accountDeletionProofCookie, createAccountDeletionProof } from "@/lib/auth/account-deletion";
-import { safeInternalPath } from "@/lib/auth/redirects";
-import { validIanaTimeZone } from "@/lib/interview-calendar/model";
+import {
+  ONBOARDING_ACTION_INVALID_INPUT_ERROR,
+  ONBOARDING_TIMEZONE_INVALID_ERROR,
+  PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR,
+  parseCompleteOnboardingActionInput,
+  parseSavePreparationPreferencesActionInput,
+} from "@/lib/account/preparation-preference-action-input";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logServerOperationalFailure, logServerOperationalWarning } from "@/lib/observability/log";
 import { supportsPasswordReauthentication, verifyPasswordForSensitiveAction } from "@/lib/auth/reauthentication";
-import {
-  onboardingDestination,
-  parseDsaLevel,
-  parsePreferredRoleLevel,
-  parsePreparationFocus,
-} from "@/lib/account/preferences";
+import { onboardingDestination } from "@/lib/account/preferences";
 import type { AccountActionState } from "./state";
 
 const expired = (): AccountActionState => ({ status: "error", message: "Your session expired. Sign in and try again." });
 
-export async function completeOnboardingAction(_: AccountActionState, form: FormData): Promise<AccountActionState> {
+export async function completeOnboardingAction(_: AccountActionState, form: unknown): Promise<AccountActionState> {
+  const parsed = parseCompleteOnboardingActionInput(form);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: parsed.reason === "invalid-timezone"
+        ? ONBOARDING_TIMEZONE_INVALID_ERROR
+        : ONBOARDING_ACTION_INVALID_INPUT_ERROR,
+    };
+  }
   const actor = await getAuthenticatedActor();
   if (!actor) return expired();
-  const skip = form.get("intent") === "skip";
-  const role = skip ? null : parsePreferredRoleLevel(form.get("preferredRoleLevel"));
-  const focus = skip ? null : parsePreparationFocus(form.get("primaryPreparationFocus"));
-  const rawTimezone = skip ? "" : String(form.get("preferredTimezone") ?? "").trim();
-  const timezone = rawTimezone || null;
-  if (timezone && !validIanaTimeZone(timezone)) {
-    return { status: "error", message: "Choose a valid IANA timezone, such as America/Chicago." };
-  }
-  const requestedPath = safeInternalPath(String(form.get("next") ?? "/dashboard"));
-  const interviewScheduled = !skip && form.get("interviewScheduled") === "yes";
+  const {
+    preferredRoleLevel: role,
+    primaryPreparationFocus: focus,
+    preferredTimezone: timezone,
+    requestedPath,
+    interviewScheduled,
+  } = parsed.value;
 
   const { count, error: upcomingError } = await actor.supabase
     .from("interview_rounds")
@@ -107,12 +113,18 @@ export async function changePasswordAction(_: AccountActionState, form: FormData
   return { status: "success", message: "Password changed." };
 }
 
-export async function savePreparationPreferencesAction(_: AccountActionState, form: FormData): Promise<AccountActionState> {
+export async function savePreparationPreferencesAction(_: AccountActionState, form: unknown): Promise<AccountActionState> {
+  const parsed = parseSavePreparationPreferencesActionInput(form);
+  if (!parsed.ok) {
+    return { status: "error", message: PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR };
+  }
   const actor = await getAuthenticatedActor();
   if (!actor) return expired();
-  const role = parsePreferredRoleLevel(form.get("preferredRoleLevel"));
-  const focus = parsePreparationFocus(form.get("primaryPreparationFocus"));
-  const dsaLevel = parseDsaLevel(form.get("dsaLevel"));
+  const {
+    preferredRoleLevel: role,
+    primaryPreparationFocus: focus,
+    dsaLevel,
+  } = parsed.value;
   const { error } = await actor.supabase.rpc("save_account_preparation_preferences", {
     preferred_role_level_value: role,
     primary_preparation_focus_value: focus,

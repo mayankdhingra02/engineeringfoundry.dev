@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import {
+  ONBOARDING_ACTION_INVALID_INPUT_ERROR,
+  ONBOARDING_TIMEZONE_INVALID_ERROR,
+  PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR,
+  parseCompleteOnboardingActionInput,
+  parseSavePreparationPreferencesActionInput,
+} from "../lib/account/preparation-preference-action-input.ts";
 import { onboardingDestination } from "../lib/account/preferences.ts";
 import {
   PREPARATION_PREFERENCES_PRIVATE_DATA_DOMAIN,
@@ -17,7 +24,7 @@ import { PrivateDataUnavailableError } from "../lib/persistence/errors.ts";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage, preparationSettingsPage, preparationPreferencesQuery, preparationPreferencesForm] = await Promise.all([
+const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage, preparationSettingsPage, preparationPreferencesQuery, preparationPreferencesForm, preferencesSource] = await Promise.all([
   read("supabase/migrations/202608150001_create_account_lifecycle.sql"),
   read("features/account/actions.ts"),
   read("app/api/account/export/route.ts"),
@@ -37,6 +44,7 @@ const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm
   read("app/settings/preparation/page.tsx"),
   read("lib/account/preparation-preferences-query.ts"),
   read("features/account/account-forms.tsx"),
+  read("lib/account/preferences.ts"),
 ]);
 
 for (const marker of ["onboarding_completed_at", "preferred_role_level", "primary_preparation_focus", "complete_account_onboarding", "save_account_preparation_preferences"]) {
@@ -83,6 +91,200 @@ for (const preferred_role_level of validPreferredRoleLevels) {
   }
 }
 assert.equal(validPreferenceCases, 144, "the preparation-preference regression did not exercise the complete enum/null matrix");
+
+assert.equal(ONBOARDING_ACTION_INVALID_INPUT_ERROR, "Those setup choices are not valid. Review the form and try again.", "onboarding malformed-input copy is not stable and curated");
+assert.equal(ONBOARDING_TIMEZONE_INVALID_ERROR, "Choose a valid IANA timezone, such as America/Chicago.", "onboarding timezone-error copy is not stable and curated");
+assert.equal(PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR, "Those preparation preferences are not valid. Review the form and try again.", "preference malformed-input copy is not stable and curated");
+
+const formData = (entries = []) => {
+  const form = new FormData();
+  for (const [name, value] of entries) form.append(name, value);
+  return form;
+};
+const preferenceFormData = ({ preferredRoleLevel = "", primaryPreparationFocus = "", dsaLevel = "" } = {}) => formData([
+  ["preferredRoleLevel", preferredRoleLevel],
+  ["primaryPreparationFocus", primaryPreparationFocus],
+  ["dsaLevel", dsaLevel],
+]);
+const validPreferenceActionValues = [];
+for (const preferredRoleLevel of validPreferredRoleLevels) {
+  for (const primaryPreparationFocus of validPrimaryPreparationFocuses) {
+    for (const dsaLevel of validPreferredDsaLevels) {
+      const parsed = parseSavePreparationPreferencesActionInput(preferenceFormData({
+        preferredRoleLevel: preferredRoleLevel ?? "",
+        primaryPreparationFocus: primaryPreparationFocus ?? "",
+        dsaLevel: dsaLevel ?? "",
+      }));
+      assert.deepEqual(parsed, { ok: true, value: { preferredRoleLevel, primaryPreparationFocus, dsaLevel } }, "a valid preference action enum/null combination was rejected or remapped");
+      validPreferenceActionValues.push(parsed.value);
+    }
+  }
+}
+assert.equal(validPreferenceActionValues.length, 144, "the preference action parser did not execute the complete enum/null matrix");
+
+const expectInvalidPreferenceAction = (input, label) => assert.deepEqual(
+  parseSavePreparationPreferencesActionInput(input),
+  { ok: false, reason: "invalid-input" },
+  label,
+);
+for (const [label, input] of [
+  ["undefined", undefined],
+  ["null", null],
+  ["object", {}],
+  ["array", []],
+  ["string", "invalid"],
+]) expectInvalidPreferenceAction(input, `preference action accepted ${label} instead of FormData`);
+for (const name of ["preferredRoleLevel", "primaryPreparationFocus", "dsaLevel"]) {
+  const missing = preferenceFormData();
+  missing.delete(name);
+  expectInvalidPreferenceAction(missing, `preference action accepted missing ${name}`);
+  const duplicate = preferenceFormData();
+  duplicate.append(name, "");
+  expectInvalidPreferenceAction(duplicate, `preference action accepted duplicate ${name}`);
+  const file = preferenceFormData();
+  file.set(name, new File(["invalid"], "invalid.txt", { type: "text/plain" }));
+  expectInvalidPreferenceAction(file, `preference action accepted a File for ${name}`);
+}
+for (const [field, value] of [
+  ["preferredRoleLevel", "Senior"],
+  ["preferredRoleLevel", " senior "],
+  ["preferredRoleLevel", "principal"],
+  ["primaryPreparationFocus", "DSA"],
+  ["primaryPreparationFocus", " dsa "],
+  ["primaryPreparationFocus", "ml"],
+  ["dsaLevel", "SDE2"],
+  ["dsaLevel", " sde2 "],
+  ["dsaLevel", "advanced"],
+]) expectInvalidPreferenceAction(preferenceFormData({ [field]: value }), `preference action accepted unknown or case-variant ${field}=${value}`);
+const unknownPreferenceField = preferenceFormData();
+unknownPreferenceField.set("user_id", "foreign-user");
+expectInvalidPreferenceAction(unknownPreferenceField, "preference action accepted an unknown identity field");
+const wrongCasePreferenceField = preferenceFormData();
+wrongCasePreferenceField.delete("preferredRoleLevel");
+wrongCasePreferenceField.set("preferredrolelevel", "senior");
+expectInvalidPreferenceAction(wrongCasePreferenceField, "preference action accepted a wrong-case field name");
+const preferenceWithActionMetadata = preferenceFormData({ preferredRoleLevel: "senior", primaryPreparationFocus: "dsa", dsaLevel: "sde2" });
+preferenceWithActionMetadata.set("$ACTION_REF_0", "opaque-next-metadata");
+assert.deepEqual(parseSavePreparationPreferencesActionInput(preferenceWithActionMetadata), { ok: true, value: { preferredRoleLevel: "senior", primaryPreparationFocus: "dsa", dsaLevel: "sde2" } }, "Next Server Action metadata broke a valid preference payload");
+
+const onboardingFormData = ({
+  intent = "complete",
+  next = "/dashboard",
+  preferredRoleLevel,
+  primaryPreparationFocus,
+  preferredTimezone = "",
+  interviewScheduled = "no",
+} = {}) => {
+  const entries = [["intent", intent], ["next", next]];
+  if (preferredRoleLevel !== undefined) entries.push(["preferredRoleLevel", preferredRoleLevel]);
+  if (primaryPreparationFocus !== undefined) entries.push(["primaryPreparationFocus", primaryPreparationFocus]);
+  if (preferredTimezone !== undefined) entries.push(["preferredTimezone", preferredTimezone]);
+  if (interviewScheduled !== undefined) entries.push(["interviewScheduled", interviewScheduled]);
+  return formData(entries);
+};
+let validOnboardingCases = 0;
+for (const preferredRoleLevel of validPreferredRoleLevels) {
+  for (const primaryPreparationFocus of validPrimaryPreparationFocuses) {
+    for (const [preferredTimezone, expectedTimezone] of [["", null], [" America/Chicago ", "America/Chicago"]]) {
+      for (const interviewScheduled of ["yes", "no"]) {
+        const parsed = parseCompleteOnboardingActionInput(onboardingFormData({
+          preferredRoleLevel: preferredRoleLevel ?? undefined,
+          primaryPreparationFocus: primaryPreparationFocus ?? undefined,
+          preferredTimezone,
+          interviewScheduled,
+        }));
+        assert.deepEqual(parsed, {
+          ok: true,
+          value: {
+            intent: "complete",
+            preferredRoleLevel,
+            primaryPreparationFocus,
+            preferredTimezone: expectedTimezone,
+            interviewScheduled: interviewScheduled === "yes",
+            requestedPath: "/dashboard",
+          },
+        }, "a valid onboarding choice/optional-radio/timezone combination was rejected or remapped");
+        validOnboardingCases += 1;
+      }
+    }
+  }
+}
+assert.equal(validOnboardingCases, 144, "the onboarding parser did not execute the full valid choice/absence matrix");
+const minimalSkipOnboarding = onboardingFormData({ intent: "skip", next: "/applications" });
+minimalSkipOnboarding.delete("preferredTimezone");
+minimalSkipOnboarding.delete("interviewScheduled");
+assert.deepEqual(parseCompleteOnboardingActionInput(minimalSkipOnboarding), {
+  ok: true,
+  value: { intent: "skip", preferredRoleLevel: null, primaryPreparationFocus: null, preferredTimezone: null, interviewScheduled: false, requestedPath: "/applications" },
+}, "skip no longer clears setup choices while preserving the requested safe destination");
+assert.deepEqual(parseCompleteOnboardingActionInput(onboardingFormData({ next: "/applications?source=onboarding#next", preferredTimezone: "UTC", interviewScheduled: "yes" })), {
+  ok: true,
+  value: { intent: "complete", preferredRoleLevel: null, primaryPreparationFocus: null, preferredTimezone: "UTC", interviewScheduled: true, requestedPath: "/applications?source=onboarding#next" },
+}, "onboarding did not preserve a safe internal next path or legitimate absent optional radios");
+assert.deepEqual(parseCompleteOnboardingActionInput(onboardingFormData({ preferredRoleLevel: "", primaryPreparationFocus: "", preferredTimezone: "america/chicago" })), {
+  ok: true,
+  value: { intent: "complete", preferredRoleLevel: null, primaryPreparationFocus: null, preferredTimezone: "America/Chicago", interviewScheduled: false, requestedPath: "/dashboard" },
+}, "onboarding did not preserve intentional blank optional choices or canonicalize timezone casing");
+assert.equal(parseCompleteOnboardingActionInput(onboardingFormData({ preferredTimezone: "Etc/UTC" })).value?.preferredTimezone, "UTC", "onboarding did not canonicalize the UTC timezone alias");
+const skipWithIgnoredChoices = onboardingFormData({ intent: "skip", preferredRoleLevel: "Senior", primaryPreparationFocus: "DSA", preferredTimezone: "Mars/Olympus", interviewScheduled: "maybe" });
+skipWithIgnoredChoices.append("preferredRoleLevel", "staff");
+assert.deepEqual(parseCompleteOnboardingActionInput(skipWithIgnoredChoices), {
+  ok: true,
+  value: { intent: "skip", preferredRoleLevel: null, primaryPreparationFocus: null, preferredTimezone: null, interviewScheduled: false, requestedPath: "/dashboard" },
+}, "skip no longer safely ignores optional setup choices while forcing null/false values");
+for (const unsafeNext of ["", "//evil.example/account", "https://evil.example/account", "/dashboard\\evil"]) {
+  const parsed = parseCompleteOnboardingActionInput(onboardingFormData({ next: unsafeNext }));
+  assert.equal(parsed.ok && parsed.value.requestedPath, "/dashboard", `unsafe onboarding next value did not canonicalize to the dashboard: ${unsafeNext}`);
+}
+const expectInvalidOnboarding = (input, reason, label) => assert.deepEqual(
+  parseCompleteOnboardingActionInput(input),
+  { ok: false, reason },
+  label,
+);
+for (const [label, input] of [["undefined", undefined], ["null", null], ["object", {}], ["array", []], ["string", "invalid"]]) {
+  expectInvalidOnboarding(input, "invalid-input", `onboarding action accepted ${label} instead of FormData`);
+}
+for (const name of ["intent", "next"]) {
+  const missing = onboardingFormData();
+  missing.delete(name);
+  expectInvalidOnboarding(missing, "invalid-input", `onboarding action accepted missing ${name}`);
+  const duplicate = onboardingFormData();
+  duplicate.append(name, name === "intent" ? "complete" : "/dashboard");
+  expectInvalidOnboarding(duplicate, "invalid-input", `onboarding action accepted duplicate ${name}`);
+}
+for (const name of ["preferredRoleLevel", "primaryPreparationFocus", "preferredTimezone", "interviewScheduled"]) {
+  const duplicate = onboardingFormData({ preferredRoleLevel: "senior", primaryPreparationFocus: "dsa" });
+  duplicate.append(name, "");
+  expectInvalidOnboarding(duplicate, "invalid-input", `complete onboarding accepted duplicate ${name}`);
+  const file = onboardingFormData({ preferredRoleLevel: "senior", primaryPreparationFocus: "dsa" });
+  file.set(name, new File(["invalid"], "invalid.txt", { type: "text/plain" }));
+  expectInvalidOnboarding(file, "invalid-input", `complete onboarding accepted a File for ${name}`);
+}
+for (const name of ["intent", "next"]) {
+  const file = onboardingFormData();
+  file.set(name, new File(["invalid"], "invalid.txt", { type: "text/plain" }));
+  expectInvalidOnboarding(file, "invalid-input", `onboarding accepted a File for ${name}`);
+}
+for (const [field, value] of [["intent", "Complete"], ["intent", "unknown"], ["preferredRoleLevel", "Senior"], ["preferredRoleLevel", " senior "], ["primaryPreparationFocus", "DSA"], ["primaryPreparationFocus", " dsa "], ["interviewScheduled", "Yes"], ["interviewScheduled", "maybe"]]) {
+  expectInvalidOnboarding(onboardingFormData({ [field]: value }), "invalid-input", `onboarding accepted unknown or case-variant ${field}=${value}`);
+}
+const missingOnboardingTimezone = onboardingFormData();
+missingOnboardingTimezone.delete("preferredTimezone");
+expectInvalidOnboarding(missingOnboardingTimezone, "invalid-input", "complete onboarding accepted a missing timezone field");
+const missingInterviewScheduled = onboardingFormData();
+missingInterviewScheduled.delete("interviewScheduled");
+expectInvalidOnboarding(missingInterviewScheduled, "invalid-input", "complete onboarding accepted a missing interview-scheduled field");
+expectInvalidOnboarding(onboardingFormData({ preferredTimezone: "Mars/Olympus" }), "invalid-timezone", "onboarding accepted an invalid IANA timezone");
+const unknownOnboardingField = onboardingFormData();
+unknownOnboardingField.set("accountId", "foreign-user");
+expectInvalidOnboarding(unknownOnboardingField, "invalid-input", "onboarding accepted an unknown identity field");
+const wrongCaseOnboardingField = onboardingFormData();
+wrongCaseOnboardingField.delete("next");
+wrongCaseOnboardingField.set("Next", "/applications");
+expectInvalidOnboarding(wrongCaseOnboardingField, "invalid-input", "onboarding accepted a wrong-case field name");
+const onboardingWithActionMetadata = onboardingFormData({ preferredRoleLevel: "staff", primaryPreparationFocus: "behavioral", preferredTimezone: "UTC", interviewScheduled: "yes" });
+onboardingWithActionMetadata.set("$ACTION_ID_0", "opaque-next-metadata");
+assert.equal(parseCompleteOnboardingActionInput(onboardingWithActionMetadata).ok, true, "Next Server Action metadata broke a valid onboarding payload");
 
 const representativePreference = { preferred_role_level: "senior", primary_preparation_focus: "system_design", dsa_level: "sde3plus" };
 expectPreferenceUnavailable({ data: representativePreference, error: { message: "database detail" } }, "a preference query error was ignored when row data was also present");
@@ -166,7 +368,37 @@ const preferenceResolver = preparationPreferencesQuery.indexOf("resolvePreparati
 assert.ok(preferenceActor >= 0 && missingPreferenceActorGuard > preferenceActor && missingPreferenceActorError > missingPreferenceActorGuard && preferenceTable > missingPreferenceActorError && preferenceOwnerScope > preferenceTable && preferenceResolver > preferenceOwnerScope, "preparation preferences do not reject a missing post-guard actor before resolving an exact owner-scoped result");
 assert.match(preparationPreferencesQuery, /\.select\("preferred_role_level,primary_preparation_focus,dsa_level"\)/, "preparation preference query no longer uses the exact editable projection");
 assert.ok(preparationPreferencesForm.includes("PreparationPreferences") && preparationPreferencesForm.includes("preference?.preferred_role_level") && preparationPreferencesForm.includes("preference?.primary_preparation_focus") && preparationPreferencesForm.includes("preference?.dsa_level"), "preparation settings form does not consume the validated preference projection");
+const completeOnboardingActionStart = actions.indexOf("export async function completeOnboardingAction");
+const completeOnboardingActionEnd = actions.indexOf("export async function updateDisplayNameAction", completeOnboardingActionStart);
+const completeOnboardingActionSource = actions.slice(completeOnboardingActionStart, completeOnboardingActionEnd);
+const onboardingParse = completeOnboardingActionSource.indexOf("parseCompleteOnboardingActionInput(form)");
+const onboardingInvalidReturn = completeOnboardingActionSource.indexOf("if (!parsed.ok)", onboardingParse);
+const onboardingActor = completeOnboardingActionSource.indexOf("getAuthenticatedActor()", onboardingInvalidReturn);
+const onboardingRoundQuery = completeOnboardingActionSource.indexOf('.from("interview_rounds")', onboardingActor);
+const onboardingRpc = completeOnboardingActionSource.indexOf('rpc("complete_account_onboarding"', onboardingRoundQuery);
+const onboardingRevalidation = completeOnboardingActionSource.indexOf('revalidatePath("/dashboard")', onboardingRpc);
+assert.match(completeOnboardingActionSource, /form: unknown\): Promise<AccountActionState> \{\s*const parsed = parseCompleteOnboardingActionInput\(form\);/, "onboarding action does not treat its direct runtime payload as unknown and parse it first");
+assert.ok(onboardingParse >= 0 && onboardingInvalidReturn > onboardingParse && onboardingActor > onboardingInvalidReturn && onboardingRoundQuery > onboardingActor && onboardingRpc > onboardingRoundQuery && onboardingRevalidation > onboardingRpc, "onboarding action does not return malformed input before actor, query, RPC, and revalidation work");
+assert.ok(completeOnboardingActionSource.slice(onboardingInvalidReturn, onboardingActor).includes("ONBOARDING_ACTION_INVALID_INPUT_ERROR") && completeOnboardingActionSource.slice(onboardingInvalidReturn, onboardingActor).includes("ONBOARDING_TIMEZONE_INVALID_ERROR"), "onboarding parse failures do not return the stable curated error copy");
+assert.ok(!completeOnboardingActionSource.includes("form.get("), "onboarding action bypasses its validated parsed payload");
+
+const savePreferenceActionStart = actions.indexOf("export async function savePreparationPreferencesAction");
+const savePreferenceActionEnd = actions.indexOf("export async function signOutEverywhereAction", savePreferenceActionStart);
+const savePreferenceActionSource = actions.slice(savePreferenceActionStart, savePreferenceActionEnd);
+const preferenceActionParse = savePreferenceActionSource.indexOf("parseSavePreparationPreferencesActionInput(form)");
+const preferenceActionInvalidReturn = savePreferenceActionSource.indexOf("if (!parsed.ok)", preferenceActionParse);
+const preferenceActionActor = savePreferenceActionSource.indexOf("getAuthenticatedActor()", preferenceActionInvalidReturn);
+const preferenceActionRpc = savePreferenceActionSource.indexOf('rpc("save_account_preparation_preferences"', preferenceActionActor);
+const preferenceActionRevalidation = savePreferenceActionSource.indexOf('revalidatePath("/settings/preparation")', preferenceActionRpc);
+assert.match(savePreferenceActionSource, /form: unknown\): Promise<AccountActionState> \{\s*const parsed = parseSavePreparationPreferencesActionInput\(form\);/, "preference action does not treat its direct runtime payload as unknown and parse it first");
+assert.ok(preferenceActionParse >= 0 && preferenceActionInvalidReturn > preferenceActionParse && preferenceActionActor > preferenceActionInvalidReturn && preferenceActionRpc > preferenceActionActor && preferenceActionRevalidation > preferenceActionRpc, "preference action does not return malformed input before actor, RPC, and revalidation work");
+assert.ok(savePreferenceActionSource.slice(preferenceActionInvalidReturn, preferenceActionActor).includes("PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR"), "preference parse failures do not return the stable curated error copy");
+assert.ok(!savePreferenceActionSource.includes("form.get("), "preference action bypasses its validated parsed payload");
+assert.match(completeOnboardingActionSource, /preferredRoleLevel: role[\s\S]*primaryPreparationFocus: focus[\s\S]*preferredTimezone: timezone[\s\S]*requestedPath[\s\S]*interviewScheduled[\s\S]*preferred_role_level_value: role[\s\S]*primary_preparation_focus_value: focus[\s\S]*preferred_timezone_value: timezone/, "validated onboarding values no longer preserve established query/RPC/destination mapping");
 assert.match(actions, /save_account_preparation_preferences[\s\S]*preferred_role_level_value: role[\s\S]*primary_preparation_focus_value: focus[\s\S]*preferred_dsa_level_value: dsaLevel/, "preparation preference saving no longer uses the established authenticated RPC contract");
+for (const obsolete of ["parsePreferredRoleLevel", "parsePreparationFocus", "parseDsaLevel"]) {
+  assert.ok(!actions.includes(obsolete) && !preferencesSource.includes(obsolete), `obsolete fail-open account parser remains reachable: ${obsolete}`);
+}
 assert.ok(dashboard.includes("preparationHasStarted") && dashboard.includes("getDashboardPrivateStartState()") && dashboard.includes("privateStartState.focus"), "dashboard lacks the validated preference-aware first-use transition");
 assert.ok(dashboardPrivateState.includes("resolveDashboardPrivateStartState") && dashboardPrivateState.includes('focus === null) return "unsure"'), "dashboard private-state resolver lost the explicit persisted-focus contract");
 assert.match(dashboardQueries, /getAuthenticatedActor\(\)[\s\S]*\.from\("user_preparation_preferences"\)[\s\S]*\.eq\("user_id", actor\.user\.id\)[\s\S]*resolveDashboardPrivateStartState/, "dashboard first-use preferences no longer flow through the owner-scoped resolver");
