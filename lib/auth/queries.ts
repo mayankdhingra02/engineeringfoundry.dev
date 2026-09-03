@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Profile, PublicProfile } from "@/lib/supabase/database.types";
 import { USERNAME_PATTERN } from "@/lib/auth/validation";
 import { PrivateDataUnavailableError } from "@/lib/persistence/errors";
+import { resolvePublicProfileQuery } from "@/lib/auth/public-profile-query";
 
 export const getCurrentUser = cache(async (): Promise<User | null> => {
   const actor = await getAuthenticatedActor();
@@ -19,11 +20,14 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   return data;
 });
 
-export const getPublicProfile = cache(async (username: string): Promise<PublicProfile | null> => {
-  const normalized = username.toLowerCase();
-  if (!USERNAME_PATTERN.test(normalized)) return null;
+const getNormalizedPublicProfile = cache(async (username: string): Promise<PublicProfile | null> => {
+  if (!USERNAME_PATTERN.test(username)) return null;
   const supabase = await createSupabaseServerClient();
   if (!supabase) return null;
-  const { data } = await supabase.rpc("get_public_profile", { profile_username: normalized }).maybeSingle();
-  return data;
+  const result = await supabase.rpc("get_public_profile", { profile_username: username }).maybeSingle();
+  return resolvePublicProfileQuery(result);
 });
+
+export function getPublicProfile(username: string): Promise<PublicProfile | null> {
+  return getNormalizedPublicProfile(username.toLowerCase());
+}
