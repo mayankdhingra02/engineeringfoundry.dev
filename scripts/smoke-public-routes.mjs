@@ -86,8 +86,8 @@ function requestUrl(origin, route) {
 
 export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {}) {
   const publicBodies = new Map();
-  async function request(route, expectedStatus = 200) {
-    const response = await fetchImpl(requestUrl(origin, route), { redirect: "manual" });
+  async function request(route, expectedStatus = 200, headers = undefined) {
+    const response = await fetchImpl(requestUrl(origin, route), { redirect: "manual", headers });
     const body = await response.text();
     if (response.status !== expectedStatus) throw new Error(`${route} returned ${response.status}; expected ${expectedStatus}.`);
     return { response, body };
@@ -124,6 +124,14 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
   const home = await request("/");
   for (const unavailableCta of [">Sign in<", ">Create account<", ">Get started<", ">Dashboard<"]) {
     if (home.body.includes(unavailableCta)) throw new Error(`Homepage/header exposes disabled account CTA ${unavailableCta}.`);
+  }
+  const unprovenAccountDeletion = await request("/?account=deleted");
+  for (const unsupportedClaim of ["Your account was deleted.", "Your private Engineering Foundry data and authentication identity have been removed."]) {
+    if (unprovenAccountDeletion.body.includes(unsupportedClaim)) throw new Error(`/?account=deleted exposes an unproven account-deletion success claim: ${unsupportedClaim}`);
+  }
+  const forgedAccountDeletionCookie = await request("/", 200, { cookie: "ef-account-deletion-proof=account-deleted" });
+  for (const unsupportedClaim of ["Your account was deleted.", "Your private Engineering Foundry data and authentication identity have been removed."]) {
+    if (forgedAccountDeletionCookie.body.includes(unsupportedClaim)) throw new Error(`/ with a forged fixed account-deletion Cookie exposes an unproven success claim: ${unsupportedClaim}`);
   }
   for (const { route, marker } of DISABLED_ACCOUNT_DSA_EXPECTATIONS) {
     const body = publicBodies.get(route) ?? (await request(route)).body;

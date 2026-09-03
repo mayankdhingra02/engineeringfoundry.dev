@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: a01985628ded5805a0e858a7ec2f9a097e3a43af
-repository_state_sha256: b4fa5a8c673bdeae737634bb4a6f79e515b10080b1d9a43d2c12432c987840cf
+repository_sha: 261fddfbdfefffd8fe896b0a7f41d4f758f4397e
+repository_state_sha256: de2e4aea2e78ca3e36f61b6e0741cf98805f3c3aeea62876e5a62f78222d9ce2
 ---
 
 # Engineering Foundry requirement coverage
@@ -121,7 +121,7 @@ repository_state_sha256: b4fa5a8c673bdeae737634bb4a6f79e515b10080b1d9a43d2c12432
 | EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved-needs-source-import | stale-review | missing | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 0 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | missing | /dsa/languages | /dsa/languages/[slug] | 0 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 3 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
-| EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 9 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
+| EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 11 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
 | EF-LLD | low-level-design | required | partial | needs-research | stale-review | missing | /low-level-design | — | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
 | EF-LLD-REHEARSAL | low-level-design | p1 | partial | needs-research | unpublished | missing | /low-level-design | /low-level-design/practice/[slug] | 0 | 1 | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |

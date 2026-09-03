@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { accountDeletionProofCookie, createAccountDeletionProof } from "@/lib/auth/account-deletion";
 import { safeInternalPath } from "@/lib/auth/redirects";
 import { validIanaTimeZone } from "@/lib/interview-calendar/model";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -153,8 +154,9 @@ export async function deleteAccountAction(_: AccountActionState, form: FormData)
       return { status: "error", message: "That password is incorrect. Your account was not deleted." };
     }
   }
+  const deletionProofSecret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const admin = createSupabaseAdminClient();
-  if (!admin) {
+  if (!admin || !deletionProofSecret) {
     logServerOperationalWarning("account_deletion_unavailable", { reason: "missing_service_role_credential" });
     return { status: "error", message: "Account deletion is unavailable because the trusted server credential is not configured." };
   }
@@ -171,5 +173,9 @@ export async function deleteAccountAction(_: AccountActionState, form: FormData)
       cookieStore.delete(cookie.name);
     }
   }
-  redirect("/?account=deleted");
+  cookieStore.set(accountDeletionProofCookie(
+    createAccountDeletionProof(deletionProofSecret),
+    process.env.NODE_ENV === "production",
+  ));
+  redirect("/");
 }
