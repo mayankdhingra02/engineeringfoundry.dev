@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: adf77be43996b2b3a679ca169d23b047421437e4
-repository_state_sha256: edb9afd1cfddd2ab2276f3aa6fda298acde87c4f25ea56e9e1f941c377eaf70c
+repository_sha: 2c1ea517cef76baa0878b8677f2f8fe5d4e84c59
+repository_state_sha256: c238283f790e7c48954150e29f9c2435f47472758d73098d2595da9bf52601bb
 ---
 
 # Engineering Foundry requirement coverage
@@ -117,7 +117,7 @@ repository_state_sha256: edb9afd1cfddd2ab2276f3aa6fda298acde87c4f25ea56e9e1f941c
 | EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
 | EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
-| EF-DSA | dsa | required | partial | needs-research | stale-review | missing | /dsa | — | 0 | 7 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
+| EF-DSA | dsa | required | partial | needs-research | stale-review | missing | /dsa | — | 0 | 8 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
 | EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved-needs-source-import | stale-review | missing | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 0 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | missing | /dsa/languages | /dsa/languages/[slug] | 0 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 3 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
