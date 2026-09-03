@@ -39,7 +39,7 @@ export const STATIC_STEPS = [
     "test:company-interview-guide", "test:company-guides", "validate:content",
     "validate:design-content", "validate:interview-content", "validate:mock-content",
     "validate:impact-ledger", "validate:referral-content", "validate:community-content",
-    "validate:experience-content", "validate:public-links",
+    "validate:experience-content", "test:public-links", "validate:public-links",
   ].map((script) => npmStep(script)),
 ];
 

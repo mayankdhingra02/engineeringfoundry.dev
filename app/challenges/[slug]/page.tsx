@@ -3,13 +3,14 @@ import { ArrowLeft, CheckCircle2, Clock3 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { PageHero, StatusPill } from "@/components/page-shell";
 import { ChallengeWorkspace } from "@/features/challenges/challenge-workspace";
-import { activeChallenges, getChallenge, getChallengeRubric } from "@/data/challenges";
+import { getChallenge, getChallengeRubric } from "@/data/challenges";
 import { createPageMetadata } from "@/lib/metadata";
+import { buildChallengeStaticParams } from "@/lib/public-route-inventory";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return activeChallenges.map((challenge) => ({ slug: challenge.slug }));
+  return buildChallengeStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {

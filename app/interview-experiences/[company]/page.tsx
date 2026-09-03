@@ -4,15 +4,16 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Binary, BrainCircuit, Building2, MessagesSquare, Network, ShieldCheck } from "lucide-react";
 import { AnalyticsEventOnMount } from "@/components/analytics-event";
 import { PageHero, SectionHeading } from "@/components/page-shell";
-import { companies, getCompany } from "@/data/companies";
+import { getCompany } from "@/data/companies";
 import { ExperienceBuilder } from "@/features/interview-experiences/experience-builder";
 import { ExperienceDirectory, type PublicExperience } from "@/features/interview-experiences/experience-directory";
 import { createPageMetadata } from "@/lib/metadata";
+import { buildInterviewExperienceStaticParams } from "@/lib/public-route-inventory";
 import { listPublicInterviewExperiences } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = false;
-export function generateStaticParams() { return companies.map((company) => ({ company: company.slug })); }
+export function generateStaticParams() { return buildInterviewExperienceStaticParams(); }
 export async function generateMetadata({ params }: { params: Promise<{ company: string }> }): Promise<Metadata> { const { company } = await params; const item = getCompany(company); if (!item) notFound(); return createPageMetadata({ title: `${item.name} Interview Experiences`, description: `Browse reviewed ${item.name} interview reports and create a private browser-only reflection.`, path: `/interview-experiences/${item.slug}` }); }
 
 const generalPreparation = [

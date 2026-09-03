@@ -13,12 +13,12 @@ import { QuestionList } from "@/components/question-list";
 import { DSAOverviewGuide, LanguageComparisonGuide, ProblemSolvingFrameworkGuide } from "@/content/dsa/guides";
 import { PythonDSAGuide } from "@/content/dsa/python";
 import { JavaDSAGuide } from "@/content/dsa/java";
-import { dsaCurriculumPages, getDsaCurriculumPage } from "@/data/dsa/curriculum";
-import { dsaPatterns, dsaTopics, questionsForTopic, roadmapStages, topicBySlug } from "@/data/dsa";
+import { getDsaCurriculumPage } from "@/data/dsa/curriculum";
+import { dsaPatterns, questionsForTopic, roadmapStages, topicBySlug } from "@/data/dsa";
 import { dsaCompanies, getDsaCompany } from "@/data/dsa/interview-prep";
 import { dsaLanguages, getDsaLanguage } from "@/data/dsa/languages";
 import { dsaInterviewQuestionDatabase, questionsForInterviewCompany } from "@/data/dsa/question-database";
-import { canonicalDsaQuestions, getCanonicalDsaQuestion } from "@/lib/dsa/catalog";
+import { getCanonicalDsaQuestion } from "@/lib/dsa/catalog";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getDsaWorkspaceState } from "@/lib/dsa/queries";
 import { filterDsaQuestionsBySearch } from "@/lib/dsa/question-search";
@@ -33,20 +33,14 @@ import { RoadmapExperience } from "@/features/dsa/roadmap/roadmap-experience";
 import { StudyPlanPage } from "@/features/dsa/study-plans/study-plan-page";
 import { CodingInterviewStrategyPage } from "@/features/dsa/strategy/strategy-page";
 import { createPageMetadata } from "@/lib/metadata";
+import { buildDsaStaticParams } from "@/lib/public-route-inventory";
 
 type PageProps = { params: Promise<{ segments: string[] }>; searchParams: Promise<{ application?: string; company?: string }> };
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  const curriculum = dsaCurriculumPages.map((page) => ({ segments: page.slug?.replace("/dsa/", "").split("/") ?? [] }));
-  const topics = dsaTopics.map((topic) => ({ segments: [topic.slug] }));
-  const companies = dsaCompanies.flatMap((company) => [
-    { segments: ["companies", company.slug] },
-    { segments: ["company-questions", company.slug] },
-  ]);
-  const questionDetails = canonicalDsaQuestions.map((question) => ({ segments: ["questions", question.id] }));
-  return [...curriculum, ...topics, ...companies, ...questionDetails, { segments: ["questions"] }, { segments: ["companies"] }, { segments: ["roadmap"] }, { segments: ["roadmap", "topic-map"] }, { segments: ["study-plans"] }, { segments: ["interview-strategy"] }, { segments: ["practice"] }, { segments: ["company-questions"] }, { segments: ["patterns"] }];
+  return buildDsaStaticParams();
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

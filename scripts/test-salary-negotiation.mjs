@@ -5,13 +5,17 @@ import {
   salaryNegotiationLevels,
   salaryNegotiationModules,
 } from "../data/salary-negotiation/index.ts";
+import {
+  buildSalaryNegotiationStaticParams,
+  finitePublicRouteDefinitions,
+  indexableFinitePublicRoutes,
+} from "../lib/public-route-inventory.ts";
 
 const source = fs.readFileSync("data/salary-negotiation/index.ts", "utf8");
 const entryRoute = fs.readFileSync("app/salary-negotiation/page.tsx", "utf8");
 const moduleRoute = fs.readFileSync("app/salary-negotiation/[slug]/page.tsx", "utf8");
 const worksheet = fs.readFileSync("features/salary-negotiation/offer-comparison-worksheet.tsx", "utf8");
 const search = fs.readFileSync("lib/global-search.ts", "utf8");
-const sitemap = fs.readFileSync("app/sitemap.ts", "utf8");
 const applications = fs.readFileSync("app/applications/[id]/page.tsx", "utf8");
 const playbook = fs.readFileSync("app/interview-playbook/page.tsx", "utf8");
 const docs = fs.readFileSync("docs/salary-negotiation-v1.md", "utf8");
@@ -53,8 +57,13 @@ assert.deepEqual(invalid, { firstYearGuaranteedCash: 0, targetBonus: 0, annualiz
 
 assert.match(entryRoute, /I just got an offer[\s\S]*I have multiple offers[\s\S]*I don’t have competing leverage[\s\S]*I’m negotiating a raise/s, "entry page must offer low-overwhelm paths");
 assert.match(moduleRoute, /dynamicParams = false[\s\S]*generateStaticParams/, "unknown module slugs must not resolve");
+assert.match(moduleRoute, /buildSalaryNegotiationStaticParams\(\)/, "module route must use the shared finite-route static-param builder");
+assert.deepEqual(buildSalaryNegotiationStaticParams(), salaryNegotiationModules.map((item) => ({ slug: item.slug })), "static params must exactly match the complete Salary Negotiation module catalog");
+const salaryDefinition = finitePublicRouteDefinitions.find(({ pagePattern }) => pagePattern === "/salary-negotiation/[slug]");
+assert.deepEqual(salaryDefinition?.paths, salaryNegotiationModules.map((item) => `/salary-negotiation/${item.slug}`), "finite-route inventory must contain every Salary Negotiation module exactly once");
+const indexableRoutes = new Set(indexableFinitePublicRoutes);
+for (const item of salaryNegotiationModules) assert.equal(indexableRoutes.has(`/salary-negotiation/${item.slug}`), item.status === "published", `${item.slug} sitemap publication must follow module status`);
 assert.match(search, /salaryNegotiationModules/, "global search must register published modules");
-assert.match(sitemap, /salaryNegotiationModules/, "sitemap must register published module routes");
 assert.match(applications, /application\.status === "Offer"[\s\S]*\/salary-negotiation/, "actual offer-status applications need a bounded handoff");
 assert.match(playbook, /offerStageApplication[\s\S]*\/salary-negotiation/, "Playbook needs an actual-offer handoff without changing diagnostics");
 assert.match(worksheet, /useState[\s\S]*MAX_OFFERS = 4/, "worksheet must be bounded client state");

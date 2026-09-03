@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DesignPracticePage, type PracticeSection } from "@/components/design-practice-page";
-import { activeMlDesignProblems, getMlDesignProblem } from "@/data/ml-design";
+import { getMlDesignProblem } from "@/data/ml-design";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
 import { mlDesignProblemHref } from "@/lib/ml-design-routes";
+import { buildMlDesignStaticParams } from "@/lib/public-route-inventory";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return activeMlDesignProblems.map((problem) => ({ slug: problem.slug }));
+  return buildMlDesignStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

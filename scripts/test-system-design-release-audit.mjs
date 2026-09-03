@@ -21,6 +21,11 @@ import { messagingSources } from "../content/system-design/messaging/sources.ts"
 import { reliabilitySources } from "../content/system-design/reliability/sources.ts";
 import { specializedSources } from "../content/system-design/specialized/sources.ts";
 import { technologySources } from "../content/system-design/technology/sources.ts";
+import {
+  buildSystemDesignStaticParams,
+  finitePublicRouteDefinitions,
+  indexableFinitePublicRoutes,
+} from "../lib/public-route-inventory.ts";
 
 function filesBelow(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -115,10 +120,14 @@ assert.equal(inventory.summary.publishedTopics, publishedTopicIds.size, "Invento
 assert.equal(visuals.mermaidDiagrams, 141, "Visual inventory must include 87 concept diagrams and 54 practice diagrams.");
 assert.ok(visuals.diagrams.every((diagram) => diagram.lessonId && diagram.purpose && diagram.nodes > 0 && diagram.mobileStatus && diagram.darkModeStatus), "Every diagram needs a lesson, purpose, node count, and responsive/theme status.");
 
-const sitemapSource = readFileSync("app/sitemap.ts", "utf8");
-assert.match(sitemapSource, /lesson\.status === "published"/, "The sitemap must exclude coming-soon lessons.");
-assert.doesNotMatch(sitemapSource, /activeSystemDesignProblems/, "Legacy duplicate practice routes must not be indexed.");
 const routeSource = readFileSync("app/system-design/[...segments]/page.tsx", "utf8");
+assert.match(routeSource, /buildSystemDesignStaticParams\(\)/, "The finite System Design page must use the shared static-param builder.");
+const systemDesignDefinition = finitePublicRouteDefinitions.find(({ pagePattern }) => pagePattern === "/system-design/[...segments]");
+const expectedSystemDesignPaths = ["/system-design/problems", ...systemDesignLessons.map((lesson) => lesson.slug)];
+assert.deepEqual(systemDesignDefinition?.paths, expectedSystemDesignPaths, "The finite-route inventory must contain the exact System Design route catalog.");
+assert.deepEqual(buildSystemDesignStaticParams().map(({ segments }) => `/system-design/${segments.join("/")}`), expectedSystemDesignPaths, "System Design static params must exactly reconstruct the finite route catalog.");
+const indexableSystemDesignPaths = indexableFinitePublicRoutes.filter((path) => path.startsWith("/system-design/"));
+assert.deepEqual(indexableSystemDesignPaths, systemDesignLessons.filter((lesson) => lesson.status === "published").map((lesson) => lesson.slug), "The sitemap inventory must include exactly published System Design lessons and exclude coming-soon and legacy duplicate routes.");
 const nextConfigSource = readFileSync("next.config.ts", "utf8");
 assert.match(nextConfigSource, /source: `\/system-design\/\$\{source\}`[\s\S]*destination: `\/system-design\/problems\/\$\{destination\}`[\s\S]*permanent: true/, "Legacy practice routes need HTTP-level canonical redirects.");
 assert.match(routeSource, /robots: lesson\.status === "coming-soon" \? \{ index: false, follow: true \}/, "Coming-soon routes must be noindex/follow.");
