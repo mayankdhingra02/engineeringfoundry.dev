@@ -3,14 +3,17 @@ import { readFile } from "node:fs/promises";
 import { priorityCompanyGuides } from "../data/company-guides/v1.ts";
 import { COMPANY_GUIDE_REVIEW_AFTER_DAYS, companyGuideFreshness } from "../lib/company-guides/freshness.ts";
 import { sanitizedFeedbackPageContext } from "../lib/feedback/model.ts";
+import { isSupabaseConfigured } from "../lib/account-platform.ts";
 import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, feedbackAction, feedbackForm, adminAuth, adminActions, adminLayout, adminHome, feedbackPage, feedbackDetail, experiencePage, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, workflow, packageJson] = await Promise.all([
+const [migration, feedbackAction, feedbackForm, publicFeedbackPage, publicSupabase, adminAuth, adminActions, adminLayout, adminHome, feedbackPage, feedbackDetail, experiencePage, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, workflow, packageJson] = await Promise.all([
   read("supabase/migrations/202608230001_create_feedback_admin_operations.sql"),
   read("features/feedback/actions.ts"),
   read("features/feedback/feedback-form.tsx"),
+  read("app/feedback/page.tsx"),
+  read("lib/supabase/public.ts"),
   read("lib/admin/auth.ts"),
   read("features/admin/actions.ts"),
   read("app/admin/layout.tsx"),
@@ -48,7 +51,42 @@ assert.equal(sanitizedFeedbackPageContext("/companies/openai?utm_source=test"), 
 assert.equal(sanitizedFeedbackPageContext("https://evil.example/steal"), "/feedback", "external feedback context is accepted");
 for (const marker of ["randomUUID", "createHash", "httpOnly: true", "contact_consent", "submit_feedback_submission", "5000", "sanitizedFeedbackPageContext"]) assert.ok(feedbackAction.includes(marker), `feedback action is missing ${marker}`);
 assert.ok(!feedbackAction.includes("SUPABASE_SERVICE_ROLE_KEY") && !feedbackAction.includes("createSupabaseAdminClient"), "feedback action exposes an admin credential boundary");
+assert.ok(!feedbackAction.includes("createSupabaseServerClient"), "actorless feedback still depends on the account-gated session client");
+assert.match(feedbackAction, /const supabase = actor\?\.supabase \?\? createSupabasePublicClient\(\);/, "feedback must preserve the actor-bound client and use the sessionless public client only as the actorless fallback");
+const actorResolutionIndex = feedbackAction.indexOf("const actor = await getAuthenticatedActor();");
+const clientResolutionIndex = feedbackAction.indexOf("const supabase = actor?.supabase ?? createSupabasePublicClient();");
+const unavailableReturnIndex = feedbackAction.indexOf('if (!supabase) return { status: "error", message: "Feedback is unavailable in this environment. Please try again later." };');
+const anonymousSubjectIndex = feedbackAction.indexOf("const anonymousSubjectHash = actor ? null : await anonymousSubject();");
+const rpcIndex = feedbackAction.indexOf('supabase.rpc("submit_feedback_submission"');
+assert.ok(actorResolutionIndex >= 0 && actorResolutionIndex < clientResolutionIndex, "feedback must resolve the authenticated actor before choosing its client");
+assert.ok(clientResolutionIndex < unavailableReturnIndex && unavailableReturnIndex < anonymousSubjectIndex, "unconfigured feedback must return before creating or reading the anonymous subject cookie");
+assert.ok(anonymousSubjectIndex < rpcIndex, "anonymous rate-limit identity must be ready before the controlled feedback RPC");
+for (const marker of ['import "server-only"', "isSupabaseConfigured()", "persistSession: false", "autoRefreshToken: false", "detectSessionInUrl: false"]) assert.ok(publicSupabase.includes(marker), `public feedback fallback is missing its sessionless boundary: ${marker}`);
+const originalSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const originalSupabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const originalAccountsEnabled = process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED;
+try {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://feedback-public.test";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "public-anon-key";
+  process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED = "false";
+  assert.equal(isSupabaseConfigured(), true, "configured anonymous feedback must remain available while accounts are disabled");
+  process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED = "true";
+  assert.equal(isSupabaseConfigured(), true, "configured anonymous feedback must remain available to signed-out visitors while accounts are enabled");
+  delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  assert.equal(isSupabaseConfigured(), false, "anonymous feedback must fail closed when public Supabase configuration is incomplete");
+} finally {
+  if (originalSupabaseUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+  else process.env.NEXT_PUBLIC_SUPABASE_URL = originalSupabaseUrl;
+  if (originalSupabaseKey === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  else process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = originalSupabaseKey;
+  if (originalAccountsEnabled === undefined) delete process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED;
+  else process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED = originalAccountsEnabled;
+}
 for (const marker of ["useActionState", "role=\"alert\"", "role=\"status\"", "contact_consent", "5,000", "referenceId"]) assert.ok(feedbackForm.includes(marker), `feedback form is missing ${marker}`);
+assert.ok(publicFeedbackPage.includes("const feedbackAvailable = isSupabaseConfigured();"), "feedback route does not derive intake availability at the server boundary");
+assert.match(publicFeedbackPage, /feedbackAvailable \? <FeedbackForm \/> : <section/, "feedback route does not keep the live form behind the configured-intake branch");
+assert.ok(contactPage.includes("const feedbackAvailable = isSupabaseConfigured();"), "contact route does not derive private-feedback availability at the server boundary");
+assert.match(contactPage, /feedbackAvailable \? <>\s*<h2>Private website feedback<\/h2>/, "contact route does not keep its private-feedback handoff behind the configured-intake branch");
 
 for (const marker of ["getAuthenticatedActor", "is_current_admin", "notFound"]) assert.ok(adminAuth.includes(marker), `admin guard is missing server-side ${marker}`);
 assert.ok(!adminAuth.includes("process.env.NEXT_PUBLIC") && !adminAuth.includes("email"), "admin authorization relies on a public/browser signal");

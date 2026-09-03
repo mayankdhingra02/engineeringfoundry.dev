@@ -2,6 +2,7 @@ import { Bug, ExternalLink, Mail, MessageSquareWarning, MessagesSquare } from "l
 import { PageHero, SectionHeading } from "@/components/page-shell";
 import { TrackedLink } from "@/components/tracked-action";
 import { siteConfig } from "@/config/site";
+import { isSupabaseConfigured } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
@@ -11,28 +12,30 @@ export const metadata = createPageMetadata({
 });
 
 export default function ContactPage() {
+  const feedbackAvailable = isSupabaseConfigured();
+
   return (
     <>
       <PageHero
         eyebrow="Contact"
         title="Choose a working channel."
-        description="Use the private feedback form for website reports, or choose a working community and support channel for discussion and public collaboration."
+        description={feedbackAvailable ? "Use the private feedback form for website reports, or choose a working community and support channel for discussion and public collaboration." : "Private feedback intake is unavailable in this configuration. Use GitHub Issues for public-safe website reports, or Discord for public discussion."}
       />
       <section className="section">
         <div className="page-width">
           <SectionHeading
             eyebrow="Contact pathways"
             title="Reach the right place directly."
-            description="These links open the actual destination. No message is stored or sent by this website."
+            description={feedbackAvailable ? "These links open the actual destination. No message is stored or sent by this website." : "The working links open their actual destinations. No message is stored or sent by this website."}
           />
           <div className="contact-channel-grid">
             <article className="contact-channel-card">
               <span className="icon-well"><MessageSquareWarning size={21} aria-hidden="true" /></span>
-              <h2>Private website feedback</h2>
-              <p>Send bugs, source corrections, accessibility concerns, privacy or safety reports, and product suggestions without creating a public issue.</p>
-              <TrackedLink href="/feedback" event="contact_channel_clicked" properties={{ channel: "feedback", placement: "contact_page" }}>
-                Send private feedback
-              </TrackedLink>
+              {feedbackAvailable ? <><h2>Private website feedback</h2>
+                <p>Send bugs, source corrections, accessibility concerns, privacy or safety reports, and product suggestions without creating a public issue.</p>
+                <TrackedLink href="/feedback" event="contact_channel_clicked" properties={{ channel: "feedback", placement: "contact_page" }}>
+                  Send private feedback
+                </TrackedLink></> : <><h2>Private website feedback is unavailable</h2><p>This deployment does not have its private feedback intake configured. Use GitHub Issues below only for website or content details that are safe to share publicly.</p></>}
             </article>
             <article className="contact-channel-card">
               <span className="icon-well"><MessagesSquare size={21} aria-hidden="true" /></span>

@@ -6,6 +6,7 @@ import {
   DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS,
   DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS,
   PUBLIC_ROUTES,
+  UNCONFIGURED_FEEDBACK_EXPECTATION,
   normalizeHostedOrigin,
   runPublicRouteAssertions,
   runPublicRouteSmoke,
@@ -28,6 +29,7 @@ assert.throws(() => normalizeHostedOrigin("ftp://engineeringfoundry.dev"), /must
 assert.throws(() => normalizeHostedOrigin("https://user:password@engineeringfoundry.dev"), /must not contain credentials/);
 assert.throws(() => normalizeHostedOrigin("https://engineeringfoundry.dev/?source=test"), /must not contain a query string/);
 assert.throws(() => normalizeHostedOrigin("https://engineeringfoundry.dev/#section"), /must not contain a fragment/);
+await assert.rejects(runPublicRouteAssertions("https://engineeringfoundry.dev", { feedbackExpectation: "unknown" }), /feedbackExpectation must be configured, unconfigured, or either/);
 assert.throws(() => normalizeHostedOrigin("https://engineeringfoundry.dev/preview"), /must be an origin without an application pathname/);
 
 const requestedOrigins = [];
@@ -44,6 +46,11 @@ let omittedPreparationMarkerRoute = null;
 let leakedPreparationHandoffRoute = null;
 let leakUnprovenAccountDeletionClaim = false;
 let leakForgedAccountDeletionCookieClaim = false;
+let omitFeedbackUnavailableMarker = false;
+let leakFeedbackForm = false;
+let leakFeedbackSubmitControl = false;
+let leakFeedbackAccountFreePromise = false;
+let configuredFeedback = false;
 
 const fixture = createServer((request, response) => {
   const url = new URL(request.url, "http://fixture.invalid");
@@ -71,11 +78,20 @@ const fixture = createServer((request, response) => {
     && leakForgedAccountDeletionCookieClaim
     ? " Your account was deleted. Your private Engineering Foundry data and authentication identity have been removed."
     : "";
+  const feedbackUnavailableState = pathname === UNCONFIGURED_FEEDBACK_EXPECTATION.route && !configuredFeedback
+    ? `${omitFeedbackUnavailableMarker ? "" : ` ${UNCONFIGURED_FEEDBACK_EXPECTATION.marker}`} ${UNCONFIGURED_FEEDBACK_EXPECTATION.publicWarning} ${UNCONFIGURED_FEEDBACK_EXPECTATION.recovery}`
+    : "";
+  const configuredFeedbackState = pathname === UNCONFIGURED_FEEDBACK_EXPECTATION.route && configuredFeedback
+    ? ' <form action="feedback"><button type="submit">Send feedback </button></form> You do not need an account, and feedback is never published.'
+    : "";
+  const leakedFeedbackForm = pathname === UNCONFIGURED_FEEDBACK_EXPECTATION.route && leakFeedbackForm ? ' <form action="feedback"></form>' : "";
+  const leakedFeedbackSubmitControl = pathname === UNCONFIGURED_FEEDBACK_EXPECTATION.route && leakFeedbackSubmitControl ? ' <button type="submit">Send feedback </button>' : "";
+  const leakedFeedbackAccountFreePromise = pathname === UNCONFIGURED_FEEDBACK_EXPECTATION.route && leakFeedbackAccountFreePromise ? " You do not need an account, and feedback is never published." : "";
   const body = pathname === "/contact"
-    ? "Open Discord Open GitHub Issues"
+    ? `${configuredFeedback ? '<a href="/feedback">Send private feedback</a> ' : "Private website feedback is unavailable "}Open Discord Open GitHub Issues`
     : accountRoutePattern.test(pathname)
       ? "Account features are not available yet."
-      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}${disabledSystemDesignMarker ? ` ${disabledSystemDesignMarker}` : ""}${disabledPreparationMarker ? ` ${disabledPreparationMarker}` : ""}${leakedSystemDesignHandoff}${leakedPreparationHandoff}${unprovenAccountDeletionClaim}${forgedAccountDeletionCookieClaim}`;
+      : `public content${disabledDsaMarker ? ` ${disabledDsaMarker}` : ""}${disabledSystemDesignMarker ? ` ${disabledSystemDesignMarker}` : ""}${disabledPreparationMarker ? ` ${disabledPreparationMarker}` : ""}${leakedSystemDesignHandoff}${leakedPreparationHandoff}${unprovenAccountDeletionClaim}${forgedAccountDeletionCookieClaim}${feedbackUnavailableState}${configuredFeedbackState}${leakedFeedbackForm}${leakedFeedbackSubmitControl}${leakedFeedbackAccountFreePromise}`;
   response.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "x-content-type-options": "nosniff",
@@ -133,6 +149,8 @@ try {
   assert.ok(DISABLED_ACCOUNT_DSA_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account DSA assertion must exercise a declared public route");
   assert.ok(DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account System Design assertion must exercise a declared public route");
   assert.ok(DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account preparation assertion must exercise a declared public route");
+  assert.ok(PUBLIC_ROUTES.includes(UNCONFIGURED_FEEDBACK_EXPECTATION.route), "the unconfigured feedback assertion must exercise a declared public route");
+  await runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch, feedbackExpectation: "unconfigured" });
   omittedSystemDesignMarkerRoute = "/system-design/practice";
   await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/system-design\/practice lacks the disabled-account System Design state/, "hosted smoke must reject a missing server-rendered System Design disabled marker");
   omittedSystemDesignMarkerRoute = null;
@@ -151,6 +169,22 @@ try {
   leakForgedAccountDeletionCookieClaim = true;
   await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /forged fixed account-deletion Cookie exposes an unproven success claim/, "hosted smoke must reject a deletion-success claim driven by the former fixed proof cookie");
   leakForgedAccountDeletionCookieClaim = false;
+  omitFeedbackUnavailableMarker = true;
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/feedback renders neither a complete configured intake nor the explicit unconfigured state/, "hosted smoke must reject a missing server-rendered feedback unavailable marker");
+  omitFeedbackUnavailableMarker = false;
+  leakFeedbackForm = true;
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/feedback renders a live form while feedback intake is unconfigured/, "hosted smoke must reject a feedback form in the unconfigured state");
+  leakFeedbackForm = false;
+  leakFeedbackSubmitControl = true;
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/feedback renders a live Send feedback control while feedback intake is unconfigured/, "hosted smoke must reject a submit control in the unconfigured state");
+  leakFeedbackSubmitControl = false;
+  leakFeedbackAccountFreePromise = true;
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch, feedbackExpectation: "unconfigured" }), /unsupported account-free intake promise/, "hosted smoke must reject a stale account-free intake promise in the unconfigured state");
+  leakFeedbackAccountFreePromise = false;
+  configuredFeedback = true;
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch, feedbackExpectation: "unconfigured" }), /must render the explicit unconfigured state/, "the local blank-configuration contract must reject a complete-looking feedback form");
+  await runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch, feedbackExpectation: "configured" });
+  configuredFeedback = false;
   const commandOutput = await runHostedCommand(origin);
   assert.match(commandOutput, /Public route smoke passed \(hosted\)/, "the hosted package command must exercise the supplied fixture");
 } finally {

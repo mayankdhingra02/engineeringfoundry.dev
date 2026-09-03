@@ -9,7 +9,7 @@ export type PublicInterviewExperienceAvailability = "available" | "unavailable" 
 const publicExperienceProjection = "id,company_name,role_title,role_level,region,interview_date,summary,preparation_lessons,public_identity,interview_experience_rounds(round_type,topic_labels)";
 
 /**
- * Sessionless client for the explicitly public, RLS-protected projection.
+ * Sessionless client for explicitly public reads and narrowly granted RPCs.
  * It never receives request cookies or upgrades to the authenticated role.
  */
 export function createSupabasePublicClient() {

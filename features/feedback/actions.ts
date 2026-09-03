@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { sanitizedFeedbackPageContext, type FeedbackCategory } from "@/lib/feedback/model";
 import { logServerOperationalFailure } from "@/lib/observability/log";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import type { Json } from "@/lib/supabase/database.types";
 import type { FeedbackActionState } from "./state";
 
@@ -53,9 +53,9 @@ export async function submitFeedbackAction(_: FeedbackActionState, form: FormDat
     contact_email: contactEmail || null,
     contact_consent: contactEmail ? contactConsent : false,
   } satisfies Record<string, Json>;
-  const anonymousSubjectHash = actor ? null : await anonymousSubject();
-  const supabase = actor?.supabase ?? await createSupabaseServerClient();
+  const supabase = actor?.supabase ?? createSupabasePublicClient();
   if (!supabase) return { status: "error", message: "Feedback is unavailable in this environment. Please try again later." };
+  const anonymousSubjectHash = actor ? null : await anonymousSubject();
   const { data, error } = await supabase.rpc("submit_feedback_submission", {
     payload,
     anonymous_subject: anonymousSubjectHash,
