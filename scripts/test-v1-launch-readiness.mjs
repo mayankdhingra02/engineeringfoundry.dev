@@ -14,6 +14,7 @@ const template = JSON.parse(read("docs/impact-ledger/monthly-snapshot.template.j
 const ci = read(".github/workflows/ci.yml");
 const codeql = read(".github/workflows/codeql.yml");
 const packageJson = JSON.parse(read("package.json"));
+const exactCheckoutRef = "ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}";
 
 function assertPrOnlyCancellation(workflow, label, expectedGroup) {
   assert.ok(workflow.includes(`group: ${expectedGroup}`), `${label} must group pull requests by PR number and every non-PR run by its exact SHA`);
@@ -22,6 +23,30 @@ function assertPrOnlyCancellation(workflow, label, expectedGroup) {
   assert.equal(workflow.match(/^\s*cancel-in-progress:/gm)?.length, 1, `${label} must declare exactly one conditional cancellation policy`);
   assert.ok(!workflow.includes("github.event.pull_request.number || github.ref"), `${label} must not collapse every push to the same branch concurrency group`);
   assert.ok(!workflow.includes("cancel-in-progress: true"), `${label} must not cancel push or schedule evidence`);
+}
+
+function assertExactHeadCheckouts(workflow, label, expectedCount) {
+  const lines = workflow.split("\n");
+  const checkoutIndexes = lines.flatMap((line, index) => line.trimStart().startsWith("uses: actions/checkout@") ? [index] : []);
+  assert.equal(checkoutIndexes.length, expectedCount, `${label} must declare exactly ${expectedCount} checkout step${expectedCount === 1 ? "" : "s"}`);
+  for (const checkoutIndex of checkoutIndexes) {
+    const usesIndent = lines[checkoutIndex].length - lines[checkoutIndex].trimStart().length;
+    const stepIndent = Math.max(0, usesIndent - 2);
+    const nextStepOffset = lines.slice(checkoutIndex + 1).findIndex((line) => {
+      const trimmed = line.trimStart();
+      const indent = line.length - trimmed.length;
+      return trimmed.startsWith("- ") && indent <= stepIndent;
+    });
+    const blockEnd = nextStepOffset === -1 ? lines.length : checkoutIndex + 1 + nextStepOffset;
+    const block = lines.slice(checkoutIndex + 1, blockEnd);
+    const withIndex = block.findIndex((line) => line.trim() === "with:" && line.length - line.trimStart().length === usesIndent);
+    assert.notEqual(withIndex, -1, `${label} checkout at line ${checkoutIndex + 1} must declare an explicit with block`);
+    const nextCheckoutSettingOffset = block.slice(withIndex + 1).findIndex((line) => line.trim() && line.length - line.trimStart().length <= usesIndent);
+    const withEnd = nextCheckoutSettingOffset === -1 ? block.length : withIndex + 1 + nextCheckoutSettingOffset;
+    const refs = block.slice(withIndex + 1, withEnd).map((line) => line.trim()).filter((line) => line.startsWith("ref:"));
+    assert.deepEqual(refs, [exactCheckoutRef], `${label} checkout at line ${checkoutIndex + 1} must select the exact pull-request head SHA or non-PR event SHA without an ambiguous/default ref`);
+    assert.deepEqual(block.map((line) => line.trim()).filter((line) => line.startsWith("ref:")), refs, `${label} checkout at line ${checkoutIndex + 1} must not declare ref outside its with block`);
+  }
 }
 
 assert.ok(tracker.includes("REPOSITORY RC READY"), "tracker must distinguish repository readiness from a production launch");
@@ -59,6 +84,8 @@ assert.equal(packageJson.scripts["test:public-routes:hosted"], "node scripts/smo
 for (const command of ["npm run qualify:static", "npm run qualify:database", "npm run qualify:production"]) assert.ok(ci.includes(command), `CI must invoke canonical command: ${command}`);
 assertPrOnlyCancellation(ci, "CI", "ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}");
 assertPrOnlyCancellation(codeql, "CodeQL", "codeql-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}");
+assertExactHeadCheckouts(ci, "CI", 3);
+assertExactHeadCheckouts(codeql, "CodeQL", 1);
 validateReleaseRecord();
 
 console.log("P0.10 launch-readiness regression passed: tracker boundaries, deferred visualization scope, owner gates, and analytics account terminology are explicit and qualified.");
