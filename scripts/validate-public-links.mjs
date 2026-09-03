@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import sitemap from "../app/sitemap.ts";
 import { siteConfig } from "../config/site.ts";
 import { globalSearchItems } from "../lib/global-search.ts";
-import { finitePublicRouteDefinitions } from "../lib/public-route-inventory.ts";
+import { finitePublicRouteDefinitions, publicRedirectSourcePaths } from "../lib/public-route-inventory.ts";
 
 const defaultRepositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourceDirectories = ["app", "components", "config", "data", "features", "content", "lib"];
@@ -55,6 +55,7 @@ export function matchesPagePattern(pagePattern, pathname) {
   if (!pagePattern.startsWith("/") || !pathname.startsWith("/")) return false;
   const patternSegments = routeSegments(pagePattern);
   const pathSegments = routeSegments(pathname);
+  if (pathSegments.some((segment) => segment.length === 0)) return false;
   let pathIndex = 0;
 
   for (let patternIndex = 0; patternIndex < patternSegments.length; patternIndex += 1) {
@@ -126,13 +127,15 @@ function parseRouteHref(value, { allowAbsolute = false, canonicalSiteOrigin } = 
   }
 
   if (!value.startsWith("/") || value.startsWith("//")) return { error: "must be a root-relative internal path" };
+  const rawPath = rawPathFromHref(value);
+  if (rawPath.includes("//")) return { error: "contains an empty path segment" };
   let url;
   try {
     url = new URL(value, "https://engineeringfoundry.dev");
   } catch {
     return { error: "is not a valid root-relative URL" };
   }
-  if (rawPathFromHref(value) !== url.pathname) return { error: "contains a non-canonical path" };
+  if (rawPath !== url.pathname) return { error: "contains a non-canonical path" };
   return { pathname: url.pathname };
 }
 
@@ -149,9 +152,10 @@ function isCanonicalDiscordInvite(value) {
     && !url.username
     && !url.password
     && !url.port
-    && url.pathname !== "/"
+    && /^\/[A-Za-z0-9_-]+$/.test(url.pathname)
     && !url.search
-    && !url.hash;
+    && !url.hash
+    && url.href === value;
 }
 
 function validateFiniteDefinitions(definitions, pages, errors) {
@@ -221,35 +225,22 @@ function extractLiteralInternalLinks(source, file) {
     /\b(?:href|url)\s*=\s*["'](\/[^"']*)["']/g,
     /\b(?:href|url)\s*=\s*\{\s*["'](\/[^"']*)["']\s*\}/g,
     /\b(?:href|url)\s*:\s*["'](\/[^"']*)["']/g,
+    /\b(?:href|url)\s*=\s*\{\s*`(\/[^`]*)`\s*\}/g,
+    /\b(?:href|url)\s*:\s*`(\/[^`]*)`/g,
   ];
   if (file === "app/sitemap.ts") patterns.push(/["'](\/[^"']*)["']/g);
   for (const pattern of patterns) {
-    for (const match of source.matchAll(pattern)) links.push(match[1]);
+    for (const match of source.matchAll(pattern)) {
+      if (!match[1].includes("${")) links.push(match[1]);
+    }
   }
   return links;
 }
 
-function validatesNewTabSecurity(file) {
-  return ["app/", "components/", "config/", "data/"].some((prefix) => file.startsWith(prefix));
-}
-
-function detectRedirectSourcePaths(pages) {
-  const redirectSources = new Set();
-  for (const page of pages) {
-    if (!page.source.match(/\b(?:permanentRedirect|redirect)\s*\(/)) continue;
-    if (!isDynamicPagePattern(page.pagePattern) && !page.source.includes("return <")) redirectSources.add(page.pagePattern);
-    for (const line of page.source.split("\n")) {
-      if (!line.match(/\b(?:permanentRedirect|redirect)\s*\(/)) continue;
-      const length = Number(line.match(/segments\.length\s*===\s*(\d+)/)?.[1]);
-      const values = [...line.matchAll(/segments\[(\d+)\]\s*===\s*["']([^"']+)["']/g)]
-        .map((match) => [Number(match[1]), match[2]])
-        .sort(([left], [right]) => left - right);
-      if (!Number.isSafeInteger(length) || length < 1 || values.length !== length || values.some(([index], expectedIndex) => index !== expectedIndex)) continue;
-      const staticPrefix = routeSegments(page.pagePattern).filter((segment) => !segment.includes("[")).join("/");
-      redirectSources.add(`/${[staticPrefix, ...values.map(([, value]) => value)].filter(Boolean).join("/")}`);
-    }
-  }
-  return redirectSources;
+function hasNavigationRouteMethod(source) {
+  return /\bexport\s+(?:async\s+)?function\s+(?:GET|HEAD)\b/.test(source)
+    || /\bexport\s+const\s+(?:GET|HEAD)\b/.test(source)
+    || /\bexport\s*\{[^}]*\b(?:GET|HEAD)\b[^}]*\}/s.test(source);
 }
 
 function resolveInternalPath(pathname, context) {
@@ -319,7 +310,7 @@ export function validatePublicLinkModel({
   searchItems = [],
   resourceSource = "",
   discordUrl = "https://discord.gg/example",
-  redirectSourcePaths,
+  redirectSourcePaths = [],
   canonicalSiteOrigin = "https://engineeringfoundry.dev",
 }) {
   const errors = [];
@@ -331,6 +322,7 @@ export function validatePublicLinkModel({
   const routes = routeEntries.map((entry) => ({
     ...entry,
     pagePattern: entry.pagePattern ?? pagePatternFromFile(entry.file),
+    navigationReachable: entry.navigationReachable ?? hasNavigationRouteMethod(entry.source),
   }));
   for (const page of pages) {
     if (!page.pagePattern || !isValidPagePattern(page.pagePattern)) errors.push(`${page.file} does not map to a valid App Router page pattern.`);
@@ -341,9 +333,9 @@ export function validatePublicLinkModel({
     finiteByPattern,
     finitePaths,
     publicAssets: new Set(publicAssetPaths),
-    redirectSources: new Set(redirectSourcePaths ?? detectRedirectSourcePaths(pages)),
-    staticPages: new Set([...pages, ...routes].filter((entry) => !isDynamicPagePattern(entry.pagePattern ?? "")).map((entry) => entry.pagePattern)),
-    runtimeDynamicPages: [...pages.filter((page) => !page.dynamicParamsFalse), ...routes]
+    redirectSources: new Set(redirectSourcePaths),
+    staticPages: new Set([...pages, ...routes.filter((route) => route.navigationReachable)].filter((entry) => !isDynamicPagePattern(entry.pagePattern ?? "")).map((entry) => entry.pagePattern)),
+    runtimeDynamicPages: [...pages.filter((page) => !page.dynamicParamsFalse), ...routes.filter((route) => route.navigationReachable)]
       .filter((entry) => isDynamicPagePattern(entry.pagePattern ?? ""))
       .map((entry) => entry.pagePattern),
   };
@@ -351,7 +343,6 @@ export function validatePublicLinkModel({
 
   for (const { file, source } of sourceEntries) {
     for (const link of extractLiteralInternalLinks(source, file)) addLink(errors, internalLinks, link, file, context);
-    if (!validatesNewTabSecurity(file)) continue;
     for (const tag of source.matchAll(/<a\b[^>]*target=["']_blank["'][^>]*>/g)) {
       const rel = tag[0].match(/rel=["']([^"']+)["']/)?.[1] ?? "";
       const relTokens = rel.split(/\s+/);
@@ -389,6 +380,7 @@ export async function validatePublicLinks({
   searchItems = globalSearchItems,
   canonicalSiteOrigin = new URL(siteConfig.url).origin,
   discordUrl = siteConfig.discordUrl,
+  redirectSourcePaths = publicRedirectSourcePaths,
 } = {}) {
   const pageFiles = await walkFiles(repositoryRoot, "app", ["page.tsx"]);
   const routeFiles = await walkFiles(repositoryRoot, "app", ["route.ts"]);
@@ -411,6 +403,7 @@ export async function validatePublicLinks({
     canonicalSiteOrigin,
     resourceSource,
     discordUrl,
+    redirectSourcePaths,
   });
 }
 

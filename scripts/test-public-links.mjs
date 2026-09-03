@@ -18,6 +18,7 @@ import {
   buildSalaryNegotiationStaticParams,
   buildSystemDesignStaticParams,
   finitePublicRouteDefinitions,
+  publicRedirectSourcePaths,
 } from "../lib/public-route-inventory.ts";
 
 const expectedFiniteFamilies = [
@@ -77,6 +78,7 @@ function validateSynthetic(overrides = {}) {
     sourceEntries: [],
     publicAssetPaths: ["/asset.svg"],
     finiteDefinitions: syntheticDefinitions,
+    redirectSourcePaths: ["/catalog/legacy"],
     canonicalSiteOrigin: "https://engineeringfoundry.dev",
     ...overrides,
   });
@@ -126,6 +128,8 @@ assert.equal(matchesPagePattern("/catalog/[...segments]", "/catalog/one/two"), t
 assert.equal(matchesPagePattern("/catalog/[...segments]", "/catalog"), false);
 assert.equal(matchesPagePattern("/u/[username]", "/u/person"), true);
 assert.equal(matchesPagePattern("/u/[username]", "/u/person/extra"), false);
+assert.equal(matchesPagePattern("/catalog/items/[id]/attempt/[attemptId]", "/catalog/items//attempt/attempt"), false);
+assert.deepEqual(publicRedirectSourcePaths, ["/sign-in", "/sign-up", "/dsa/interview-strategy"]);
 
 expectValid(validateSynthetic({
   sourceEntries: [{
@@ -139,6 +143,12 @@ expectValid(validateSynthetic({
 expectError(validateSynthetic({
   sourceEntries: [{ file: "components/fake.tsx", source: '<a href="/products/fake">Fake</a>' }],
 }), /not a registered member of finite route family \/products\/\[slug\]/);
+expectError(validateSynthetic({
+  sourceEntries: [{ file: "components/fake-template.tsx", source: '<a href={`/products/fake`}>Fake</a>' }],
+}), /not a registered member of finite route family \/products\/\[slug\]/);
+expectValid(validateSynthetic({
+  sourceEntries: [{ file: "components/valid-template.tsx", source: '<a href={`/products/valid`}>Valid</a>' }],
+}));
 expectError(validateSynthetic({
   sourceEntries: [{ file: "components/case.tsx", source: '<a href="/products/Valid">Case mismatch</a>' }],
 }), /\/products\/Valid is not a registered member/);
@@ -157,6 +167,9 @@ expectError(validateSynthetic({
 expectError(validateSynthetic({
   sourceEntries: [{ file: "components/whitespace.tsx", source: '<a href="/products/valid bad">Malformed</a>' }],
 }), /contains whitespace/);
+expectError(validateSynthetic({
+  sourceEntries: [{ file: "components/empty-segment.tsx", source: '<a href="/catalog/items//attempt/attempt">Malformed</a>' }],
+}), /empty path segment/);
 
 expectError(validateSynthetic({
   pageEntries: [...syntheticPages, { file: "app/unregistered/[slug]/page.tsx", source: "export const dynamicParams = false;" }],
@@ -200,6 +213,13 @@ expectValid(validateSynthetic({
 expectError(validateSynthetic({
   sourceEntries: [{ file: "components/external.tsx", source: '<a href="https://example.com" target="_blank">External</a>' }],
 }), /new-tab link without rel="noopener noreferrer"/);
+expectError(validateSynthetic({
+  sourceEntries: [{ file: "features/external.tsx", source: '<a href="https://example.com" target="_blank">External</a>' }],
+}), /new-tab link without rel="noopener noreferrer"/);
+expectError(validateSynthetic({
+  routeEntries: [{ file: "app/api/write-only/route.ts", source: "export async function POST() {}" }],
+  sourceEntries: [{ file: "components/post-route.tsx", source: '<a href="/api/write-only">Write only</a>' }],
+}), /does not resolve to an application page or public asset/);
 expectError(validateSynthetic({ resourceSource: '[{"url":"http://example.com"}]' }), /prohibited external-link pattern/);
 expectValid(validateSynthetic({ discordUrl: "https://discord.gg/invite" }));
 for (const discordUrl of [
@@ -210,6 +230,9 @@ for (const discordUrl of [
   "https://discord.gg/",
   "https://discord.gg/invite?campaign=unsafe",
   "https://discord.gg/invite#fragment",
+  "https://discord.gg:443/invite",
+  "https://discord.gg/invite/../other",
+  "https://discord.gg//invite",
 ]) {
   expectError(validateSynthetic({ discordUrl }), /Discord fallback/);
 }

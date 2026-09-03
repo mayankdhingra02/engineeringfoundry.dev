@@ -137,6 +137,11 @@ export const finitePublicRouteDefinitions: readonly FinitePublicRouteDefinition[
   { pagePattern: "/dsa/[...segments]", paths: dsaPaths },
 ];
 
+export const publicRedirectSourcePaths: readonly PublicRoutePath[] = uniquePaths(
+  ["/sign-in", "/sign-up", "/dsa/interview-strategy"],
+  "public redirect sources",
+);
+
 export const indexableFinitePublicRoutes = uniquePaths(
   [
     ...companyPaths,
