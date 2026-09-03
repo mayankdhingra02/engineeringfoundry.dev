@@ -1,3 +1,5 @@
+import { parseOptionalProfileLink } from "@/lib/auth/profile-links";
+
 export interface ProfileInput {
   username: string;
   displayName: string;
@@ -53,18 +55,6 @@ function cleanOptional(value: FormDataEntryValue | null, max: number) {
   return normalized ? normalized.slice(0, max) : null;
 }
 
-function safeWebUrl(value: FormDataEntryValue | null, label: string) {
-  const normalized = cleanOptional(value, 500);
-  if (!normalized) return { value: null };
-  try {
-    const parsed = new URL(normalized);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error();
-    return { value: parsed.toString() };
-  } catch {
-    return { value: null, error: `${label} must be a valid http:// or https:// URL.` };
-  }
-}
-
 export function parseProfileForm(formData: FormData): { data?: ProfileInput; error?: string } {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const displayName = String(formData.get("display_name") ?? "").trim();
@@ -79,8 +69,8 @@ export function parseProfileForm(formData: FormData): { data?: ProfileInput; err
   const yearsExperience = rawYears === "" ? null : Number(rawYears);
   if (yearsExperience !== null && (!Number.isInteger(yearsExperience) || yearsExperience < 0 || yearsExperience > 80)) return { error: "Years of experience must be a whole number between 0 and 80." };
 
-  const linkedin = safeWebUrl(formData.get("linkedin_url"), "LinkedIn URL");
-  const github = safeWebUrl(formData.get("github_url"), "GitHub URL");
+  const linkedin = parseOptionalProfileLink("linkedin", formData.get("linkedin_url"));
+  const github = parseOptionalProfileLink("github", formData.get("github_url"));
   if (linkedin.error || github.error) return { error: linkedin.error ?? github.error };
 
   return { data: { username, displayName, bio, currentCompany, currentRole, yearsExperience, linkedinUrl: linkedin.value, githubUrl: github.value, isPublic: formData.get("is_public") === "public" } };
