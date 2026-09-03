@@ -1016,6 +1016,14 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["dsa_question_progress"]["Row"][];
       };
+      set_dsa_question_quick_progress: {
+        Args: {
+          target_question_id: string;
+          target_status: "not_started" | "attempted" | "solved" | "review" | null;
+          target_bookmarked: boolean | null;
+        };
+        Returns: string;
+      };
       save_system_design_item_progress: {
         Args: {
           target_item_id: string;

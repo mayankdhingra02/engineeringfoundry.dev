@@ -125,7 +125,7 @@ async function cleanOwnedFixtures(account) {
     owned.from("behavioral_custom_questions").delete().like("question_text", "Phase 5A qualification%"),
     owned.from("applications").delete().like("company_name", `${fixtureCompany}%`),
     owned.from("dsa_progress").delete().like("item_id", `${fixturePrefix}:%`),
-    owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters"]),
+    owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters", "course-schedule", "group-anagrams", "binary-search"]),
     owned.from("system_design_item_progress").delete().in("item_id", ["estimation", "url-shortener", "vector-search"]),
     owned.from("system_design_progress").delete().like("item_id", `${fixturePrefix}:%`),
     owned.from("user_preparation_preferences").delete().eq("user_id", account.user.id),
@@ -1153,6 +1153,114 @@ await check("User B keeps an independent canonical DSA record", async () => {
   expect(rows.length === 1 && rows[0].question_id === "longest-substring-without-repeating-characters", "User B progress did not stay independent");
 });
 
+await check("concurrent atomic DSA status and bookmark updates commute on an absent row", async () => {
+  const [statusResult, bookmarkResult] = await Promise.all([
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: "course-schedule",
+      target_status: "solved",
+      target_bookmarked: null,
+    }),
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: "course-schedule",
+      target_status: null,
+      target_bookmarked: true,
+    }),
+  ]);
+  expect(expectSuccess(statusResult, "atomic DSA status update failed") === "course-schedule", "atomic DSA status update returned the wrong question");
+  expect(expectSuccess(bookmarkResult, "atomic DSA bookmark update failed") === "course-schedule", "atomic DSA bookmark update returned the wrong question");
+  const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,confidence,bookmarked,notes,first_attempted_at,last_practiced_at,solved_at").eq("question_id", "course-schedule").single(), "concurrent absent-row DSA read failed");
+  expect(row.status === "solved" && row.bookmarked === true, "concurrent absent-row updates did not preserve both desired states");
+  expect(row.confidence === null && row.notes === null, "quick updates populated unrelated progress fields");
+  expect(row.first_attempted_at && row.last_practiced_at && row.solved_at, "solved quick progress has inconsistent timestamps");
+  return "solved and bookmarked; unrelated fields untouched";
+});
+
+await check("concurrent atomic DSA updates preserve an existing full-editor snapshot", async () => {
+  expectSuccess(await a.authClient.rpc("save_dsa_question_progress", {
+    target_question_id: "group-anagrams",
+    target_status: "attempted",
+    target_confidence: "high",
+    target_bookmarked: false,
+    target_notes: "Fresh private note from the full editor.",
+  }), "existing DSA snapshot setup failed");
+  const [statusResult, bookmarkResult] = await Promise.all([
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: "group-anagrams",
+      target_status: "review",
+      target_bookmarked: null,
+    }),
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: "group-anagrams",
+      target_status: null,
+      target_bookmarked: true,
+    }),
+  ]);
+  expect(expectSuccess(statusResult, "existing-row atomic status update failed") === "group-anagrams", "existing-row status update returned the wrong question");
+  expect(expectSuccess(bookmarkResult, "existing-row atomic bookmark update failed") === "group-anagrams", "existing-row bookmark update returned the wrong question");
+  const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,confidence,bookmarked,notes").eq("question_id", "group-anagrams").single(), "existing-row atomic DSA read failed");
+  expect(row.status === "review" && row.bookmarked === true, "concurrent existing-row updates lost a desired state");
+  expect(row.confidence === "high" && row.notes === "Fresh private note from the full editor.", "a quick update overwrote the full-editor confidence or private note");
+  return "review and bookmarked; confidence and private note preserved";
+});
+
+await check("atomic DSA desired states are idempotent and bookmark false avoids an empty row", async () => {
+  const before = expectSuccess(await a.authClient.from("dsa_question_progress").select("updated_at").eq("question_id", "group-anagrams").single(), "atomic idempotence setup read failed");
+  const repeated = await Promise.all([
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: "group-anagrams",
+      target_status: "review",
+      target_bookmarked: null,
+    }),
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: "group-anagrams",
+      target_status: null,
+      target_bookmarked: true,
+    }),
+  ]);
+  for (const result of repeated) expectSuccess(result, "repeated atomic DSA update failed");
+  const after = expectSuccess(await a.authClient.from("dsa_question_progress").select("updated_at").eq("question_id", "group-anagrams").single(), "atomic idempotence result read failed");
+  expect(after.updated_at === before.updated_at, "repeated desired states churned the progress row");
+  const removal = await a.authClient.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "binary-search",
+    target_status: null,
+    target_bookmarked: false,
+  });
+  expect(expectSuccess(removal, "absent bookmark removal failed") === "binary-search", "absent bookmark removal returned the wrong question");
+  const absent = expectSuccess(await a.authClient.from("dsa_question_progress").select("question_id").eq("question_id", "binary-search"), "absent bookmark read failed");
+  expect(absent.length === 0, "bookmark false created an empty progress row");
+  return "no timestamp churn; no empty row";
+});
+
+await check("atomic DSA quick progress rejects incomplete, ambiguous, invalid, and fabricated inputs", async () => {
+  expectSqlError(await a.authClient.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "two-sum", target_status: null, target_bookmarked: null,
+  }), "23514");
+  expectSqlError(await a.authClient.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "two-sum", target_status: "solved", target_bookmarked: true,
+  }), "23514");
+  expectSqlError(await a.authClient.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "two-sum", target_status: "comfortable", target_bookmarked: null,
+  }), "23514");
+  expectSqlError(await a.authClient.rpc("set_dsa_question_quick_progress", {
+    target_question_id: `${fixturePrefix}-fake`, target_status: "solved", target_bookmarked: null,
+  }), "23503");
+  return "exact-one-field and canonical constraints enforced";
+});
+
+await check("atomic DSA quick progress remains owner-scoped", async () => {
+  const result = await b.authClient.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "group-anagrams",
+    target_status: null,
+    target_bookmarked: false,
+  });
+  expect(expectSuccess(result, "User B idempotent quick update failed") === "group-anagrams", "User B quick update returned the wrong question");
+  const bRows = expectSuccess(await b.authClient.from("dsa_question_progress").select("question_id").eq("question_id", "group-anagrams"), "User B quick-progress isolation read failed");
+  expect(bRows.length === 0, "User B created or observed an owner A row");
+  const aRow = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,bookmarked,notes").eq("question_id", "group-anagrams").single(), "User A quick-progress isolation read failed");
+  expect(aRow.status === "review" && aRow.bookmarked === true && aRow.notes === "Fresh private note from the full editor.", "User B changed User A quick progress");
+  return "User B 0 rows; User A state unchanged";
+});
+
 await check("User A creates System Design progress states", async () => {
   const completedAt = new Date().toISOString();
   const insertion = await a.authClient
@@ -1491,6 +1599,15 @@ await check("anonymous client cannot invoke canonical DSA progress RPC", async (
     target_confidence: "low",
     target_bookmarked: false,
     target_notes: null,
+  });
+  return expectSqlError(saved, "42501");
+});
+
+await check("anonymous client cannot invoke atomic DSA quick-progress RPC", async () => {
+  const saved = await anonymous.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "two-sum",
+    target_status: "solved",
+    target_bookmarked: null,
   });
   return expectSqlError(saved, "42501");
 });
