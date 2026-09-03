@@ -138,6 +138,62 @@ await check("a fabricated DSA question cannot be persisted", async () => {
   assert.ok(error, "an unknown canonical DSA id must be refused");
 });
 
+await check("atomic DSA quick progress rejects fabricated and ambiguous mutations", async () => {
+  const fabricated = await a.client.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "totally-invented-question",
+    target_status: "solved",
+    target_bookmarked: null,
+  });
+  assert.equal(fabricated.error?.code, "23503", "an unknown canonical DSA id must fail with 23503");
+  const ambiguous = await a.client.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "two-sum",
+    target_status: "solved",
+    target_bookmarked: true,
+  });
+  assert.equal(ambiguous.error?.code, "23514", "a multi-field quick mutation must fail with 23514");
+  return "23503 fabricated; 23514 ambiguous";
+});
+
+await check("anonymous callers cannot invoke atomic DSA quick progress", async () => {
+  const attempted = await anon.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "two-sum",
+    target_status: "solved",
+    target_bookmarked: null,
+  });
+  assert.equal(attempted.error?.code, "42501", "anonymous quick progress must fail with 42501");
+  return "SQLSTATE 42501";
+});
+
+await check("atomic DSA quick progress derives the owner without exposing a foreign row", async () => {
+  const ownerSeed = await a.client.rpc("save_dsa_question_progress", {
+    target_question_id: "two-sum",
+    target_status: "attempted",
+    target_confidence: "high",
+    target_bookmarked: true,
+    target_notes: "Owner A private quick-progress fixture.",
+  });
+  assert.ifError(ownerSeed.error);
+  const foreignAttempt = await b.client.rpc("set_dsa_question_quick_progress", {
+    target_question_id: "two-sum",
+    target_status: "solved",
+    target_bookmarked: null,
+  });
+  assert.ifError(foreignAttempt.error);
+  assert.equal(foreignAttempt.data, "two-sum");
+  const ownerRead = await a.client.from("dsa_question_progress").select("status,confidence,bookmarked,notes").eq("question_id", "two-sum").single();
+  assert.ifError(ownerRead.error);
+  assert.deepEqual(ownerRead.data, {
+    status: "attempted",
+    confidence: "high",
+    bookmarked: true,
+    notes: "Owner A private quick-progress fixture.",
+  });
+  const callerRead = await b.client.from("dsa_question_progress").select("status,confidence,bookmarked,notes").eq("question_id", "two-sum").single();
+  assert.ifError(callerRead.error);
+  assert.deepEqual(callerRead.data, { status: "solved", confidence: null, bookmarked: false, notes: null });
+  return "separate owner rows; private fields preserved";
+});
+
 await check("a fabricated System Design concept cannot be persisted", async () => {
   const { error } = await a.client.rpc("save_system_design_item_progress", {
     target_item_id: "invented-concept",

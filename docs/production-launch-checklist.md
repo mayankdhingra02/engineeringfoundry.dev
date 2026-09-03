@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 28 migrations are recorded, ending at `202609030001_set_interview_preparation_checklist_item`
+4. [ ] `supabase migration list --linked` — confirm all 29 migrations are recorded, ending at `202609030002_set_dsa_question_quick_progress`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -127,6 +127,8 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Fabricated DSA and System Design canonical IDs are refused
 - [ ] As User A, call `set_interview_preparation_checklist_item` for two distinct canonical items with `target_completed=true`; repeat one request and then clear only the other item. Confirm the calls are idempotent, both additions survive independently, and clearing one preserves the untouched item.
 - [ ] As User B, confirm `set_interview_preparation_checklist_item` cannot change User A's round. As User A, confirm a legacy `save_interview_preparation` call with non-null `completed_ids_value` fails with SQLSTATE `0A000`, while notes-only and reflection-only calls remain compatible.
+- [ ] Confirm `anon` cannot execute `set_dsa_question_quick_progress` and an authenticated disposable User A can. For one canonical question with existing confidence and notes, issue overlapping desired-status and desired-bookmark calls; confirm both requested values persist while confidence and notes remain unchanged, then repeat both desired values to confirm idempotence.
+- [ ] As User A, send a `target_bookmarked=false` quick-progress request for an untouched canonical question and confirm the RPC returns its question ID without creating a progress row. Confirm User B cannot read or mutate User A's state, and confirm calls with both quick values null or both non-null fail with SQLSTATE `23514` and `Exactly one quick progress value is required`.
 
 ### Anonymous browser-progress import boundary
 

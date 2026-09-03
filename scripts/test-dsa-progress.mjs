@@ -4,6 +4,11 @@ import { dsaInterviewQuestionDatabase } from "../data/dsa/question-database.ts";
 import { roadmapProblems } from "../data/dsa/roadmap-problem-registry.ts";
 import { chooseContinueQuestion, getNeedsReview, getRoadmapProgress, getTopicProgress, progressByQuestionId } from "../lib/dsa/progress.ts";
 import {
+  QUICK_DSA_PROGRESS_INVALID_INPUT_ERROR,
+  parseQuickDsaBookmarkActionInput,
+  parseQuickDsaStatusActionInput,
+} from "../lib/dsa/quick-progress-action-input.ts";
+import {
   DSA_WORKSPACE_PRIVATE_DATA_DOMAIN,
   resolveDsaWorkspacePrivateState,
 } from "../lib/dsa/workspace-state.ts";
@@ -13,6 +18,11 @@ const checks = [];
 const check = (name, value) => checks.push({ name, ok: Boolean(value) });
 const read = (path) => readFileSync(path, "utf8");
 const row = (question_id, status, confidence = null, offset = 0) => ({ user_id: "fixture", question_id, status, confidence, bookmarked: false, notes: null, first_attempted_at: status === "not_started" ? null : `2026-08-${String(10 + offset).padStart(2, "0")}T12:00:00Z`, last_practiced_at: status === "not_started" ? null : `2026-08-${String(10 + offset).padStart(2, "0")}T12:00:00Z`, solved_at: ["solved", "review"].includes(status) ? `2026-08-${String(10 + offset).padStart(2, "0")}T12:00:00Z` : null, created_at: "2026-08-10T12:00:00Z", updated_at: "2026-08-10T12:00:00Z" });
+const form = (entries) => {
+  const value = new FormData();
+  for (const [name, entry] of entries) value.append(name, entry);
+  return value;
+};
 
 const ids = canonicalDsaQuestions.map((question) => question.id);
 const browserIds = dsaInterviewQuestionDatabase.map((question) => question.id);
@@ -38,6 +48,63 @@ check("Needs review includes attempted", getNeedsReview(progress).some((entry) =
 check("Needs review includes low-confidence solved", getNeedsReview(progress).some((entry) => entry.question.id === "longest-substring-without-repeating-characters"));
 check("Needs review includes explicit review", getNeedsReview(progress).some((entry) => entry.question.id === "course-schedule"));
 check("topic summaries derive from question activity", getTopicProgress(progress).some((topic) => topic.practiced > 0));
+
+const canonicalQuestionIds = new Set(ids);
+for (const status of ["not_started", "attempted", "solved", "review"]) {
+  check(`quick status parser accepts exact ${status}`, JSON.stringify(parseQuickDsaStatusActionInput(
+    form([["question_id", "two-sum"], ["status", status]]),
+    canonicalQuestionIds,
+  )) === JSON.stringify({ ok: true, value: { questionId: "two-sum", status } }));
+}
+for (const bookmarked of [true, false]) {
+  check(`quick bookmark parser accepts explicit desired ${bookmarked} state`, JSON.stringify(parseQuickDsaBookmarkActionInput(
+    form([["question_id", "two-sum"], ["bookmarked", String(bookmarked)]]),
+    canonicalQuestionIds,
+  )) === JSON.stringify({ ok: true, value: { questionId: "two-sum", bookmarked } }));
+}
+check("quick parsers expose one stable curated invalid-input error", QUICK_DSA_PROGRESS_INVALID_INPUT_ERROR === "That practice update is not valid.");
+
+const invalidQuickInputs = [null, undefined, {}, [], "two-sum", 1, true];
+for (const [index, input] of invalidQuickInputs.entries()) {
+  check(`quick status parser rejects non-FormData input ${index + 1}`, parseQuickDsaStatusActionInput(input, canonicalQuestionIds).ok === false);
+  check(`quick bookmark parser rejects non-FormData input ${index + 1}`, parseQuickDsaBookmarkActionInput(input, canonicalQuestionIds).ok === false);
+}
+const invalidStatusForms = [
+  form([["status", "solved"]]),
+  form([["question_id", "two-sum"]]),
+  form([["question_id", "two-sum"], ["question_id", "course-schedule"], ["status", "solved"]]),
+  form([["question_id", "two-sum"], ["status", "solved"], ["status", "review"]]),
+  form([["question_id", "fabricated-question"], ["status", "solved"]]),
+  form([["question_id", "Two-Sum"], ["status", "solved"]]),
+  form([["question_id", "two-sum "], ["status", "solved"]]),
+  form([["question_id", "two-sum"], ["status", "Solved"]]),
+  form([["question_id", "two-sum"], ["status", "comfortable"]]),
+  form([["question_id", "two-sum"], ["status", "solved"], ["unexpected", "value"]]),
+  form([["question_id", new Blob(["two-sum"])], ["status", "solved"]]),
+  form([["question_id", "two-sum"], ["status", new Blob(["solved"])]]),
+];
+for (const [index, input] of invalidStatusForms.entries()) {
+  check(`quick status parser rejects adversarial form ${index + 1}`, parseQuickDsaStatusActionInput(input, canonicalQuestionIds).ok === false);
+}
+const invalidBookmarkForms = [
+  form([["bookmarked", "true"]]),
+  form([["question_id", "two-sum"]]),
+  form([["question_id", "two-sum"], ["question_id", "course-schedule"], ["bookmarked", "true"]]),
+  form([["question_id", "two-sum"], ["bookmarked", "true"], ["bookmarked", "false"]]),
+  form([["question_id", "fabricated-question"], ["bookmarked", "true"]]),
+  form([["question_id", "two-sum"], ["bookmarked", "True"]]),
+  form([["question_id", "two-sum"], ["bookmarked", "on"]]),
+  form([["question_id", "two-sum"], ["bookmarked", "1"]]),
+  form([["question_id", "two-sum"], ["bookmarked", "true"], ["unexpected", "value"]]),
+  form([["question_id", new Blob(["two-sum"])], ["bookmarked", "true"]]),
+  form([["question_id", "two-sum"], ["bookmarked", new Blob(["true"])]]),
+];
+for (const [index, input] of invalidBookmarkForms.entries()) {
+  check(`quick bookmark parser rejects adversarial form ${index + 1}`, parseQuickDsaBookmarkActionInput(input, canonicalQuestionIds).ok === false);
+}
+check("quick parsers allow only inert Next action metadata beyond their exact fields",
+  parseQuickDsaStatusActionInput(form([["question_id", "two-sum"], ["status", "solved"], ["$ACTION_ID", "fixture"]]), canonicalQuestionIds).ok
+  && parseQuickDsaBookmarkActionInput(form([["question_id", "two-sum"], ["bookmarked", "true"], ["$ACTION_ID", "fixture"]]), canonicalQuestionIds).ok);
 
 const workspaceOwnerId = "11111111-1111-4111-8111-111111111111";
 const workspaceApplicationId = "22222222-2222-4222-8222-222222222222";
@@ -159,6 +226,10 @@ for (const [input, context, label] of [
 }
 
 const migration = read("supabase/migrations/202608140007_create_dsa_question_progress.sql");
+const quickMigration = read("supabase/migrations/202609030002_set_dsa_question_quick_progress.sql");
+const dsaDatabaseTest = read("supabase/tests/database/dsa_question_progress.test.sql");
+const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
+const securityQualifier = read("scripts/qualify-security-local.mjs");
 const seedBlock = migration.match(/select unnest\(array\[([\s\S]*?)\]\);/)?.[1] ?? "";
 const seeded = new Set([...seedBlock.matchAll(/'([^']+)'/g)].map((match) => match[1]));
 check("database catalog seed matches the application catalog", ids.every((id) => seeded.has(id)) && seeded.size === ids.length);
@@ -167,6 +238,54 @@ check("database status vocabulary is exact", migration.includes("'not_started','
 check("private notes have a bounded constraint", migration.includes("char_length(notes) <= 5000"));
 check("views do not update last practiced", migration.includes("last_practiced_at = case") && migration.includes("status is distinct from excluded.status"));
 check("RLS and server-authoritative RPC are present", migration.includes("enable row level security") && migration.includes("security definer") && migration.includes("auth.uid()"));
+const quickStatusBranch = quickMigration.match(/if target_status is not null then([\s\S]*?)elsif target_bookmarked then/)?.[1] ?? "";
+const quickBookmarkBranch = quickMigration.match(/elsif target_bookmarked then([\s\S]*?)else/)?.[1] ?? "";
+const quickAbsentBookmarkBranch = quickMigration.match(/else\s+-- Removing a bookmark([\s\S]*?)end if;/)?.[1] ?? "";
+check("atomic quick-progress RPC accepts exactly one desired field for an authenticated canonical question", quickMigration.includes("create or replace function public.set_dsa_question_quick_progress(")
+  && /target_question_id text,\s*target_status text,\s*target_bookmarked boolean\s*\)\s*returns text/.test(quickMigration)
+  && quickMigration.includes("if current_user_id is null then")
+  && quickMigration.includes("public.dsa_question_catalog")
+  && quickMigration.includes("if (target_status is null) = (target_bookmarked is null) then")
+  && quickMigration.includes("Exactly one quick progress value is required"));
+check("atomic quick-progress RPC serializes first-use owner/question writes", quickMigration.includes("pg_catalog.pg_advisory_xact_lock(")
+  && quickMigration.includes("pg_catalog.hashtext(current_user_id::text)")
+  && quickMigration.includes("pg_catalog.hashtext(target_question_id)"));
+check("atomic status changes preserve unrelated bookmark, confidence, and note fields", quickStatusBranch.includes("status = excluded.status")
+  && quickStatusBranch.includes("first_attempted_at = coalesce(")
+  && quickStatusBranch.includes("last_practiced_at = practice_time")
+  && quickStatusBranch.includes("solved_at = coalesce(")
+  && !quickStatusBranch.includes("bookmarked =")
+  && !quickStatusBranch.includes("confidence")
+  && !quickStatusBranch.includes("notes"));
+check("atomic bookmark changes touch only the explicit desired bookmark state", quickBookmarkBranch.includes("bookmarked = true")
+  && !quickBookmarkBranch.includes("status =")
+  && !quickBookmarkBranch.includes("confidence")
+  && !quickBookmarkBranch.includes("notes")
+  && !quickBookmarkBranch.includes("last_practiced_at"));
+check("removing an absent bookmark is an idempotent no-row update", quickAbsentBookmarkBranch.includes("update public.dsa_question_progress")
+  && quickAbsentBookmarkBranch.includes("set bookmarked = false")
+  && !quickAbsentBookmarkBranch.includes("insert into"));
+check("atomic quick-progress RPC has an explicit restricted grant boundary", quickMigration.includes("security definer")
+  && quickMigration.includes("set search_path = ''")
+  && quickMigration.includes("revoke all on function public.set_dsa_question_quick_progress(text,text,boolean) from public, anon, authenticated")
+  && quickMigration.includes("grant execute on function public.set_dsa_question_quick_progress(text,text,boolean) to authenticated"));
+check("pgTAP covers the atomic RPC's grants, preservation, idempotence, no-row clear, input rejection, and owner isolation", dsaDatabaseTest.includes("select plan(71)")
+  && dsaDatabaseTest.includes("anonymous users cannot invoke the atomic quick-progress RPC")
+  && dsaDatabaseTest.includes("the atomic bookmark update preserves private notes")
+  && dsaDatabaseTest.includes("repeating an atomic bookmark state does not churn updated_at")
+  && dsaDatabaseTest.includes("removing an absent bookmark does not create an empty progress row")
+  && dsaDatabaseTest.includes("an empty quick update is rejected")
+  && dsaDatabaseTest.includes("User A bookmark survives User B atomic quick progress"));
+check("persistence qualification exercises concurrent absent and existing atomic writes plus idempotence and privacy", persistenceQualifier.includes('check("concurrent atomic DSA status and bookmark updates commute on an absent row"')
+  && persistenceQualifier.includes('check("concurrent atomic DSA updates preserve an existing full-editor snapshot"')
+  && persistenceQualifier.includes("const [statusResult, bookmarkResult] = await Promise.all([")
+  && persistenceQualifier.includes('row.confidence === "high" && row.notes === "Fresh private note from the full editor."')
+  && persistenceQualifier.includes('check("atomic DSA desired states are idempotent and bookmark false avoids an empty row"')
+  && persistenceQualifier.includes('check("atomic DSA quick progress remains owner-scoped"'));
+check("security qualification uses the exact atomic signature and rejects anonymous, ambiguous, fabricated, and foreign access", securityQualifier.includes('check("atomic DSA quick progress rejects fabricated and ambiguous mutations"')
+  && securityQualifier.includes('check("anonymous callers cannot invoke atomic DSA quick progress"')
+  && securityQualifier.includes('attempted.error?.code, "42501"')
+  && securityQualifier.includes('check("atomic DSA quick progress derives the owner without exposing a foreign row"'));
 
 const routes = read("app/dsa/[...segments]/page.tsx");
 const browser = read("features/dsa/questions/question-browser.tsx");
@@ -180,6 +299,8 @@ const roadmapModule = read("features/dsa/roadmap/level-roadmap-module.tsx");
 const activityControl = read("components/preparation-activity-control.tsx");
 const progressActions = read("features/dsa/progress/actions.ts");
 const preparationActions = read("features/preparation-progress/actions.ts");
+const quickActionInput = read("lib/dsa/quick-progress-action-input.ts");
+const quickProgressControls = read("features/dsa/progress/quick-progress-actions.tsx");
 check("public questions and private My Practice share the existing route", routes.includes("libraryOnly={segments[0] === \"questions\"}") && routes.includes("PracticeWorkspace"));
 check("application context survives library filters and review navigation", browser.includes("createDsaQuestionBrowserUrlContext({ questions, companies, fixedCompanySlug, signedIn, applicationId })") && browserUrlState.includes('params.set("application", applicationId)') && practice.includes('params.set("application", application.id)') && practice.includes('params.set("company", application.company_slug)'));
 check("question detail preserves application and company context", read("features/dsa/progress/question-detail.tsx").includes('params.set("application", applicationId)') && read("features/dsa/progress/question-detail.tsx").includes('params.set("company", companySlug)'));
@@ -224,9 +345,41 @@ check("enabled signed-out DSA surfaces retain intentional sign-in handoffs witho
 check("disabled DSA surfaces render honest public and local states", practice.includes("Public practice remains available") && routes.includes("Account progress unavailable · demo associations") && routes.includes("Account progress unavailable · public roadmap") && questionTable.includes("Account progress unavailable") && !questionTable.includes('<span className="dsa-signin-progress">Account progress unavailable</span>') && questionDetail.includes("Browser-local practice") && questionDetail.includes("Private notes are unavailable in this configuration") && roadmapExperience.includes("accountPlatformAvailable={accountPlatformAvailable}") && roadmapModule.includes("Account-backed problem progress is unavailable in this configuration"));
 check("disabled DSA local activity skips its Server Action and reports persistence honestly", activityControl.includes("accountPlatformAvailable: boolean;") && !activityControl.includes("accountPlatformAvailable = true") && activityControl.indexOf("if (accountPlatformAvailable)") > -1 && activityControl.indexOf("if (accountPlatformAvailable)") < activityControl.indexOf("recordPreparationActivityAction({ track, itemId, status: next })") && activityControl.includes("resolvePreparationActivitySaveOutcome") && activityControl.includes("next === \"completed\" && outcome.persisted") && activityControl.includes("Account saving is unavailable"));
 check("direct progress actions report disabled account persistence before actor resolution", progressActions.includes("if (!isAccountPlatformAvailable()) return accountUnavailable()") && progressActions.indexOf("if (!isAccountPlatformAvailable()) return accountUnavailable()") < progressActions.indexOf("await getAuthenticatedActor()") && preparationActions.indexOf("if (!isAccountPlatformAvailable()) return") < preparationActions.indexOf("await getAuthenticatedActor()"));
+const quickStatusActionSource = progressActions.slice(
+  progressActions.indexOf("export async function quickDsaStatusAction"),
+  progressActions.indexOf("export async function toggleDsaBookmarkAction"),
+);
+const quickBookmarkActionSource = progressActions.slice(
+  progressActions.indexOf("export async function toggleDsaBookmarkAction"),
+  progressActions.indexOf("export async function savePreferredDsaRoadmapAction"),
+);
+check("quick status action parses before availability, actor, or RPC work", quickStatusActionSource.slice(quickStatusActionSource.indexOf("{") + 1).trimStart().startsWith("const parsed = parseQuickDsaStatusActionInput(formData, canonicalQuestionIds);")
+  && quickStatusActionSource.indexOf("const parsed = parseQuickDsaStatusActionInput(formData, canonicalQuestionIds)") < quickStatusActionSource.indexOf("isAccountPlatformAvailable()")
+  && quickStatusActionSource.indexOf("if (!parsed.ok) return") < quickStatusActionSource.indexOf("await getAuthenticatedActor()")
+  && quickStatusActionSource.indexOf("await getAuthenticatedActor()") < quickStatusActionSource.indexOf('.rpc("set_dsa_question_quick_progress"'));
+check("quick bookmark action parses before availability, actor, or RPC work", quickBookmarkActionSource.slice(quickBookmarkActionSource.indexOf("{") + 1).trimStart().startsWith("const parsed = parseQuickDsaBookmarkActionInput(formData, canonicalQuestionIds);")
+  && quickBookmarkActionSource.indexOf("const parsed = parseQuickDsaBookmarkActionInput(formData, canonicalQuestionIds)") < quickBookmarkActionSource.indexOf("isAccountPlatformAvailable()")
+  && quickBookmarkActionSource.indexOf("if (!parsed.ok) return") < quickBookmarkActionSource.indexOf("await getAuthenticatedActor()")
+  && quickBookmarkActionSource.indexOf("await getAuthenticatedActor()") < quickBookmarkActionSource.indexOf('.rpc("set_dsa_question_quick_progress"'));
+check("quick status action sends only desired status and validates the returned canonical ID", /\.rpc\("set_dsa_question_quick_progress", \{\s*target_question_id: questionId,\s*target_status: status,\s*target_bookmarked: null,\s*\}\)/.test(quickStatusActionSource)
+  && quickStatusActionSource.includes("data !== questionId")
+  && quickStatusActionSource.includes("!canonicalQuestionIds.has(data)"));
+check("quick bookmark action sends explicit desired state and validates the returned canonical ID", /\.rpc\("set_dsa_question_quick_progress", \{\s*target_question_id: questionId,\s*target_status: null,\s*target_bookmarked: bookmarked,\s*\}\)/.test(quickBookmarkActionSource)
+  && quickBookmarkActionSource.includes("data !== questionId")
+  && quickBookmarkActionSource.includes("!canonicalQuestionIds.has(data)"));
+check("quick actions avoid stale reads and whole-row save dispatch", !quickStatusActionSource.includes('.from("dsa_question_progress")')
+  && !quickBookmarkActionSource.includes('.from("dsa_question_progress")')
+  && !quickStatusActionSource.includes('rpc("save_dsa_question_progress"')
+  && !quickBookmarkActionSource.includes('rpc("save_dsa_question_progress"'));
+check("bookmark control submits the next explicit desired state and exposes current pressed state", quickProgressControls.includes('name="bookmarked" value={bookmarked ? "false" : "true"}')
+  && quickProgressControls.includes("aria-pressed={bookmarked}"));
+check("parser source is catalog-bound and rejects duplicate, file-valued, unknown, and inexact fields", quickActionInput.includes("form.getAll(name)")
+  && quickActionInput.includes('typeof values[0] !== "string"')
+  && quickActionInput.includes("!knownFields.has(key)")
+  && quickActionInput.includes("canonicalQuestionIds.has(field.value)"));
 
 const failed = checks.filter((entry) => !entry.ok);
-if (checks.length !== 76) throw new Error(`Expected 76 regression checks, found ${checks.length}.`);
+if (checks.length !== 137) throw new Error(`Expected 137 regression checks, found ${checks.length}.`);
 if (failed.length) {
   console.error(`DSA progress regression failed:\n- ${failed.map((entry) => entry.name).join("\n- ")}`);
   process.exit(1);

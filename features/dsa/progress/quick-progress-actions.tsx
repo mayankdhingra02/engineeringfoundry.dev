@@ -30,7 +30,8 @@ export function QuickDsaBookmarkControl({ questionId, questionTitle, bookmarked 
   const label = `${bookmarked ? "Remove" : "Add"} ${questionTitle} bookmark`;
   return <form action={(formData) => startTransition(async () => setState(await toggleDsaBookmarkAction(formData)))}>
     <input type="hidden" name="question_id" value={questionId} />
-    <button type="submit" disabled={pending} className={bookmarked ? "active" : undefined} aria-label={pending ? `Saving ${questionTitle} bookmark` : label}><Bookmark size={13} fill={bookmarked ? "currentColor" : "none"} /></button>
+    <input type="hidden" name="bookmarked" value={bookmarked ? "false" : "true"} />
+    <button type="submit" disabled={pending} className={bookmarked ? "active" : undefined} aria-label={pending ? `Saving ${questionTitle} bookmark` : label} aria-pressed={bookmarked}><Bookmark size={13} fill={bookmarked ? "currentColor" : "none"} /></button>
     <InlineActionMessage state={state} />
   </form>;
 }

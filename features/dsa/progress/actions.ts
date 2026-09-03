@@ -4,12 +4,18 @@ import { revalidatePath } from "next/cache";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { canonicalDsaQuestionById } from "@/lib/dsa/catalog";
+import {
+  QUICK_DSA_PROGRESS_INVALID_INPUT_ERROR,
+  parseQuickDsaBookmarkActionInput,
+  parseQuickDsaStatusActionInput,
+} from "@/lib/dsa/quick-progress-action-input";
 import type { DsaConfidence, DsaQuestionStatus } from "@/lib/dsa/progress";
 import type { RoadmapLevel } from "@/data/dsa/level-roadmaps";
 
 export type DsaProgressActionState = { status: "idle" | "success" | "error"; message: string; analytics?: { questionId: string; recordedStatus: DsaQuestionStatus } };
 const statuses = new Set<DsaQuestionStatus>(["not_started", "attempted", "solved", "review"]);
 const confidences = new Set<DsaConfidence>(["low", "medium", "high"]);
+const canonicalQuestionIds = new Set(canonicalDsaQuestionById.keys());
 
 const accountUnavailable = () => ({ status: "error", message: "Account persistence is not available in this configuration." } satisfies DsaProgressActionState);
 
@@ -54,27 +60,46 @@ export async function updateDsaQuestionProgressAction(_: DsaProgressActionState,
   });
 }
 
-export async function quickDsaStatusAction(formData: FormData): Promise<DsaProgressActionState> {
-  const questionId = String(formData.get("question_id") ?? "");
-  const status = String(formData.get("status") ?? "attempted") as DsaQuestionStatus;
+export async function quickDsaStatusAction(formData: unknown): Promise<DsaProgressActionState> {
+  const parsed = parseQuickDsaStatusActionInput(formData, canonicalQuestionIds);
+  if (!parsed.ok) return { status: "error", message: QUICK_DSA_PROGRESS_INVALID_INPUT_ERROR };
+  const { questionId, status } = parsed.value;
   if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Sign in to update practice progress." };
-  if (!canonicalDsaQuestionById.has(questionId) || !statuses.has(status)) return { status: "error", message: "That practice update is not valid." };
-  const { data, error } = await actor.supabase.from("dsa_question_progress").select("confidence,bookmarked,notes").eq("user_id", actor.user.id).eq("question_id", questionId).maybeSingle();
-  if (error) return { status: "error", message: "We couldn't load the current practice record." };
-  return save(questionId, { status, confidence: data?.confidence ?? null, bookmarked: data?.bookmarked ?? false, notes: data?.notes ?? null });
+  const { data, error } = await actor.supabase.rpc("set_dsa_question_quick_progress", {
+    target_question_id: questionId,
+    target_status: status,
+    target_bookmarked: null,
+  });
+  if (error || data !== questionId || !canonicalQuestionIds.has(data)) {
+    return { status: "error", message: "We couldn't save this practice update." };
+  }
+  refreshDsa(questionId);
+  return {
+    status: "success",
+    message: "Practice progress saved.",
+    analytics: { questionId, recordedStatus: status },
+  };
 }
 
-export async function toggleDsaBookmarkAction(formData: FormData): Promise<DsaProgressActionState> {
-  const questionId = String(formData.get("question_id") ?? "");
+export async function toggleDsaBookmarkAction(formData: unknown): Promise<DsaProgressActionState> {
+  const parsed = parseQuickDsaBookmarkActionInput(formData, canonicalQuestionIds);
+  if (!parsed.ok) return { status: "error", message: QUICK_DSA_PROGRESS_INVALID_INPUT_ERROR };
+  const { questionId, bookmarked } = parsed.value;
   if (!isAccountPlatformAvailable()) return accountUnavailable();
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Sign in to update bookmarks." };
-  if (!canonicalDsaQuestionById.has(questionId)) return { status: "error", message: "That question is not in the practice catalog." };
-  const { data, error } = await actor.supabase.from("dsa_question_progress").select("status,confidence,bookmarked,notes").eq("user_id", actor.user.id).eq("question_id", questionId).maybeSingle();
-  if (error) return { status: "error", message: "We couldn't load the current bookmark state." };
-  return save(questionId, { status: data?.status ?? "not_started", confidence: data?.confidence ?? null, bookmarked: !(data?.bookmarked ?? false), notes: data?.notes ?? null });
+  const { data, error } = await actor.supabase.rpc("set_dsa_question_quick_progress", {
+    target_question_id: questionId,
+    target_status: null,
+    target_bookmarked: bookmarked,
+  });
+  if (error || data !== questionId || !canonicalQuestionIds.has(data)) {
+    return { status: "error", message: "We couldn't save this practice update." };
+  }
+  refreshDsa(questionId);
+  return { status: "success", message: "Practice progress saved." };
 }
 
 export async function savePreferredDsaRoadmapAction(level: RoadmapLevel): Promise<DsaProgressActionState> {
