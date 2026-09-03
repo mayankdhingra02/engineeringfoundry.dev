@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
-import { ALL_CHECKLIST_IDS } from "@/lib/interview-preparation/model";
+import {
+  normalizePreparationChecklistUuid,
+  parsePreparationChecklistActionInput,
+  PREPARATION_CHECKLIST_INVALID_INPUT_ERROR,
+} from "@/lib/interview-preparation/checklist-action-input";
 
 export type PreparationActionState = { status: "idle" | "success" | "error"; message: string };
 
@@ -22,16 +26,21 @@ export async function savePreparationNotesAction(roundId: string, applicationId:
   return { status: "success", message: "Private notes saved." };
 }
 
-export async function togglePreparationChecklistAction(roundId: string, applicationId: string, completedIds: string[], itemId: string, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+export async function togglePreparationChecklistAction(roundId: unknown, itemId: unknown, targetCompleted: unknown, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+  const parsed = parsePreparationChecklistActionInput(roundId, itemId, targetCompleted);
   void previousState;
   void formData;
+  if (!parsed.ok) return { status: "error", message: PREPARATION_CHECKLIST_INVALID_INPUT_ERROR };
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Your session expired. Sign in and try again." };
-  if (!ALL_CHECKLIST_IDS.includes(itemId)) return { status: "error", message: "This checklist item is no longer available. Refresh and try again." };
-  const next = completedIds.includes(itemId) ? completedIds.filter((id) => id !== itemId) : [...completedIds, itemId];
-  const { error } = await actor.supabase.rpc("save_interview_preparation", { target_round_id: roundId, completed_ids_value: next.filter((id) => ALL_CHECKLIST_IDS.includes(id)) });
-  if (error) return { status: "error", message: "Checklist change was not saved. Try again." };
-  refresh(roundId, applicationId);
+  const { data, error } = await actor.supabase.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: parsed.value.roundId,
+    target_item_id: parsed.value.itemId,
+    target_completed: parsed.value.targetCompleted,
+  });
+  const applicationId = normalizePreparationChecklistUuid(data);
+  if (error || applicationId === null) return { status: "error", message: "Checklist change was not saved. Try again." };
+  refresh(parsed.value.roundId, applicationId);
   return { status: "success", message: "Checklist saved." };
 }
 

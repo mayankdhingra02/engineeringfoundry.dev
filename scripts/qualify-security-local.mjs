@@ -176,17 +176,34 @@ await check("User B cannot read User A interview round", async () => {
   assert.equal(data.length, 0);
 });
 
-await check("User B cannot open preparation for User A round", async () => {
-  const { error } = await b.client.rpc("save_interview_preparation", {
+await check("User A creates note-only preparation before checklist isolation checks", async () => {
+  const { error } = await a.client.rpc("save_interview_preparation", {
     target_round_id: roundId,
-    private_notes_value: "not mine",
-    completed_template_item_ids_value: [],
-    topics_asked_value: null,
-    went_well_value: null,
-    needs_improvement_value: null,
-    follow_up_notes_value: null,
+    notes_value: "Owner-only preparation note",
   });
-  assert.ok(error, "preparation for an unowned round must be refused");
+  assert.ifError(error);
+});
+
+await check("foreign and nonexistent checklist targets are indistinguishable and do not mutate", async () => {
+  const foreign = await b.client.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: roundId,
+    target_item_id: "dsa-review-queue",
+    target_completed: true,
+  });
+  const missing = await b.client.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: "93939393-9393-4939-8939-939393939393",
+    target_item_id: "dsa-review-queue",
+    target_completed: true,
+  });
+  assert.ok(foreign.error && missing.error, "foreign and nonexistent checklist targets must both fail");
+  assert.equal(foreign.error.code, "P0002");
+  assert.equal(missing.error.code, foreign.error.code);
+  assert.equal(missing.error.message, foreign.error.message);
+  const ownerState = await a.client.from("interview_preparations").select("private_notes,completed_template_item_ids").eq("round_id", roundId).single();
+  assert.ifError(ownerState.error);
+  assert.equal(ownerState.data.private_notes, "Owner-only preparation note");
+  assert.deepEqual(ownerState.data.completed_template_item_ids, []);
+  return "matching P0002 response; owner notes and checklist unchanged";
 });
 
 await check("User B cannot record a calendar export for User A round", async () => {

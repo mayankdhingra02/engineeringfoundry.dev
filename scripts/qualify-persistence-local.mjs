@@ -330,15 +330,125 @@ await check("User B cannot update or delete User A interview round", async () =>
   return "both mutations affected 0 rows";
 });
 
-await check("User A creates round-specific notes and stable checklist state through the preparation RPC", async () => {
+await check("clearing a missing checklist item is idempotent without creating preparation", async () => {
+  const roundId = requireFixture(fixture.firstRoundId, "first round");
+  const cleared = expectSuccess(await a.authClient.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: roundId,
+    target_item_id: "dsa-review-queue",
+    target_completed: false,
+  }), "missing checklist clear failed");
+  expect(cleared === fixture.applicationId, "missing checklist clear returned the wrong application");
+  const rows = expectSuccess(await a.authClient.from("interview_preparations").select("id").eq("round_id", roundId), "missing preparation lookup failed");
+  expect(rows.length === 0, "clearing a missing item created an empty preparation row");
+  return "application returned; 0 preparation rows";
+});
+
+await check("User A creates notes and concurrent desired-state checklist updates retain both items", async () => {
   const saved = await a.authClient.rpc("save_interview_preparation", {
     target_round_id: requireFixture(fixture.secondRoundId, "second round"),
     notes_value: "Review the interviewer context and narrate trade-offs.",
-    completed_ids_value: ["logistics-confirm", "dsa-review-queue"],
   });
   fixture.preparationId = expectSuccess(saved, "preparation save failed");
+  const checklistResults = await Promise.all([
+    a.authClient.rpc("set_interview_preparation_checklist_item", {
+      target_round_id: fixture.secondRoundId,
+      target_item_id: "logistics-confirm",
+      target_completed: true,
+    }),
+    a.authClient.rpc("set_interview_preparation_checklist_item", {
+      target_round_id: fixture.secondRoundId,
+      target_item_id: "dsa-review-queue",
+      target_completed: true,
+    }),
+  ]);
+  for (const result of checklistResults) {
+    expect(expectSuccess(result, "concurrent checklist update failed") === fixture.applicationId, "checklist update returned the wrong application");
+  }
   const row = expectSuccess(await a.authClient.from("interview_preparations").select("round_id,private_notes,completed_template_item_ids").eq("id", fixture.preparationId).single(), "preparation read failed");
-  expect(row.round_id === fixture.secondRoundId && row.completed_template_item_ids.length === 2, "preparation state did not round-trip");
+  expect(row.round_id === fixture.secondRoundId, "preparation state attached to the wrong round");
+  expect(row.private_notes.includes("trade-offs"), "concurrent checklist updates replaced private notes");
+  expect(row.completed_template_item_ids.length === 2 && row.completed_template_item_ids.includes("logistics-confirm") && row.completed_template_item_ids.includes("dsa-review-queue"), "concurrent checklist updates did not retain both items");
+  return "both items and private notes retained";
+});
+
+await check("desired-state checklist updates are idempotent and legacy array replacement fails closed", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const repeated = await Promise.all([
+    a.authClient.rpc("set_interview_preparation_checklist_item", { target_round_id: roundId, target_item_id: "dsa-review-queue", target_completed: true }),
+    a.authClient.rpc("set_interview_preparation_checklist_item", { target_round_id: roundId, target_item_id: "dsa-review-queue", target_completed: true }),
+  ]);
+  for (const result of repeated) expectSuccess(result, "repeated desired-state update failed");
+  const rejected = await a.authClient.rpc("save_interview_preparation", {
+    target_round_id: roundId,
+    completed_ids_value: ["company-research"],
+  });
+  expectSqlError(rejected, "0A000");
+  const row = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes,completed_template_item_ids").eq("id", fixture.preparationId).single(), "idempotence read failed");
+  expect(row.completed_template_item_ids.filter((item) => item === "dsa-review-queue").length === 1, "repeated true created a duplicate checklist item");
+  expect(row.completed_template_item_ids.includes("logistics-confirm") && !row.completed_template_item_ids.includes("company-research"), "legacy array replacement changed checklist membership");
+  expect(row.private_notes.includes("trade-offs"), "checklist updates replaced private notes");
+  return "one canonical item; legacy SQLSTATE 0A000";
+});
+
+await check("clearing an item removes every legacy duplicate while preserving sibling state", async () => {
+  const preparationId = requireFixture(fixture.preparationId, "preparation");
+  queryLocalDatabase(
+    "update public.interview_preparations set completed_template_item_ids = array['dsa-review-queue', 'dsa-review-queue', 'logistics-confirm'] where id = :'preparation_id'::uuid",
+    { preparation_id: preparationId },
+  );
+  expectSuccess(await a.authClient.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: requireFixture(fixture.secondRoundId, "second round"),
+    target_item_id: "dsa-review-queue",
+    target_completed: false,
+  }), "duplicate checklist clear failed");
+  const row = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes,completed_template_item_ids").eq("id", preparationId).single(), "duplicate removal read failed");
+  expect(!row.completed_template_item_ids.includes("dsa-review-queue"), "clearing retained a legacy duplicate");
+  expect(row.completed_template_item_ids.length === 1 && row.completed_template_item_ids[0] === "logistics-confirm", "clearing one item changed sibling membership");
+  expect(row.private_notes.includes("trade-offs"), "clearing a checklist item replaced private notes");
+  return "all duplicates removed; sibling and notes retained";
+});
+
+await check("invalid checklist inputs fail before mutation", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  expectSqlError(await a.authClient.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: roundId,
+    target_item_id: "unknown-item",
+    target_completed: true,
+  }), "23514");
+  expectSqlError(await a.authClient.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: roundId,
+    target_item_id: null,
+    target_completed: true,
+  }), "23514");
+  expectSqlError(await a.authClient.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: roundId,
+    target_item_id: "dsa-review-queue",
+    target_completed: null,
+  }), "23502");
+  const row = expectSuccess(await a.authClient.from("interview_preparations").select("completed_template_item_ids").eq("id", fixture.preparationId).single(), "invalid-input mutation read failed");
+  expect(row.completed_template_item_ids.length === 1 && row.completed_template_item_ids[0] === "logistics-confirm", "invalid checklist input mutated state");
+  return "SQLSTATE 23514/23502; state unchanged";
+});
+
+await check("concurrent note and checklist writes preserve both fields", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const [notesResult, checklistResult] = await Promise.all([
+    a.authClient.rpc("save_interview_preparation", {
+      target_round_id: roundId,
+      notes_value: "Concurrent note and checklist preservation; narrate trade-offs.",
+    }),
+    a.authClient.rpc("set_interview_preparation_checklist_item", {
+      target_round_id: roundId,
+      target_item_id: "company-research",
+      target_completed: true,
+    }),
+  ]);
+  expectSuccess(notesResult, "concurrent note save failed");
+  expect(expectSuccess(checklistResult, "concurrent checklist save failed") === fixture.applicationId, "concurrent checklist save returned the wrong application");
+  const row = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes,completed_template_item_ids").eq("id", fixture.preparationId).single(), "concurrent field read failed");
+  expect(row.private_notes === "Concurrent note and checklist preservation; narrate trade-offs.", "concurrent checklist save lost the note update");
+  expect(row.completed_template_item_ids.includes("logistics-confirm") && row.completed_template_item_ids.includes("company-research"), "concurrent note save lost checklist membership");
+  return "note and two checklist memberships retained";
 });
 
 await check("direct client writes cannot spoof preparation ownership", async () => {
@@ -1397,7 +1507,14 @@ await check("anonymous client cannot invoke interview preparation RPCs", async (
   const saved = await anonymous.rpc("save_interview_preparation", {
     target_round_id: requireFixture(fixture.secondRoundId, "second round"), notes_value: "anonymous",
   });
-  return expectSqlError(saved, "42501");
+  expectSqlError(saved, "42501");
+  const checklist = await anonymous.rpc("set_interview_preparation_checklist_item", {
+    target_round_id: requireFixture(fixture.secondRoundId, "second round"),
+    target_item_id: "dsa-review-queue",
+    target_completed: true,
+  });
+  expectSqlError(checklist, "42501");
+  return "both RPCs returned SQLSTATE 42501";
 });
 
 await check("deleting a custom question cascades its saved-question reference", async () => {

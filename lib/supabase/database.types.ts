@@ -1048,6 +1048,10 @@ export type Database = {
         Args: { target_round_id: string; notes_value?: string | null; completed_ids_value?: string[] | null; topics_asked_value?: string | null; went_well_value?: string | null; needs_improvement_value?: string | null; follow_up_notes_value?: string | null };
         Returns: string;
       };
+      set_interview_preparation_checklist_item: {
+        Args: { target_round_id: string; target_item_id: string; target_completed: boolean };
+        Returns: string;
+      };
       add_interview_preparation_task: { Args: { target_round_id: string; title_value: string }; Returns: string };
       toggle_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };
       delete_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };

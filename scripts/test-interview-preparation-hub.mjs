@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { chooseRoundPreparationNextAction } from "../lib/interview-preparation/next-action.ts";
-import { checklistForRound, modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
+import { parsePreparationChecklistActionInput, PREPARATION_CHECKLIST_INVALID_INPUT_ERROR } from "../lib/interview-preparation/checklist-action-input.ts";
+import { ALL_CHECKLIST_IDS, checklistForRound, modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
 import { resolvePreparationCounts } from "../lib/interview-preparation/preparation-counts.ts";
 import { buildInterviewPlaybookOverview } from "../lib/interview-playbook/overview.ts";
 import { resolveInterviewPlaybookTiming } from "../lib/interview-playbook/timing.ts";
@@ -15,9 +16,42 @@ const model = read("lib/interview-preparation/model.ts");
 const query = read("lib/interview-preparation/queries.ts");
 const preparationCountsCore = read("lib/interview-preparation/preparation-counts.ts");
 const actions = read("features/interview-preparation/actions.ts");
+const checklistAction = actions.slice(
+  actions.indexOf("export async function togglePreparationChecklistAction"),
+  actions.indexOf("export async function addPreparationTaskAction"),
+);
 const mutationControls = read("features/interview-preparation/mutation-controls.tsx");
 const page = read("app/interviews/[roundId]/prepare/page.tsx");
 const migration = read("supabase/migrations/202608140011_create_interview_preparation_hub.sql");
+const atomicChecklistMigration = read("supabase/migrations/202609030001_set_interview_preparation_checklist_item.sql");
+const legacySaveMigration = atomicChecklistMigration.slice(
+  atomicChecklistMigration.indexOf("create or replace function public.save_interview_preparation"),
+  atomicChecklistMigration.indexOf("create or replace function public.set_interview_preparation_checklist_item"),
+);
+const atomicChecklistFunction = atomicChecklistMigration.slice(
+  atomicChecklistMigration.indexOf("create or replace function public.set_interview_preparation_checklist_item"),
+  atomicChecklistMigration.indexOf("revoke all on function public.save_interview_preparation"),
+);
+const atomicChecklistClearBranch = atomicChecklistFunction.slice(
+  atomicChecklistFunction.indexOf("  else\n"),
+  atomicChecklistFunction.indexOf("  end if;", atomicChecklistFunction.indexOf("  else\n")),
+);
+const atomicChecklistAllowlistMatch = atomicChecklistFunction.match(
+  /target_item_id\s*=\s*any\s*\(\s*array\s*\[([\s\S]*?)\]\s*::\s*text\[\]\s*\)/,
+);
+assert.ok(atomicChecklistAllowlistMatch, "the atomic checklist RPC must expose one parseable target-item SQL allowlist");
+const atomicChecklistSqlIds = [...atomicChecklistAllowlistMatch[1].matchAll(/'((?:''|[^'])+)'/g)]
+  .map((match) => match[1].replaceAll("''", "'"));
+assert.equal(atomicChecklistSqlIds.length, 12, "the atomic checklist SQL allowlist must contain all 12 canonical item entries");
+assert.equal(new Set(atomicChecklistSqlIds).size, 12, "the atomic checklist SQL allowlist must not contain duplicates");
+assert.equal(ALL_CHECKLIST_IDS.length, 12, "the TypeScript checklist catalog must retain its 12 canonical item IDs");
+assert.deepEqual(
+  [...atomicChecklistSqlIds].sort(),
+  [...ALL_CHECKLIST_IDS].sort(),
+  "the atomic checklist SQL allowlist must have no missing or extra IDs relative to the TypeScript catalog",
+);
+const interviewPreparationDatabaseTest = read("supabase/tests/database/interview_preparation.test.sql");
+const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
 const dashboard = read("app/dashboard/page.tsx");
 const application = read("app/applications/[id]/page.tsx");
 const behavioralLibrary = read("app/behavioral/questions/page.tsx");
@@ -37,6 +71,47 @@ const preparationCountsQuery = (() => {
   const start = query.indexOf("export async function getPreparationCounts");
   return start === -1 ? "" : query.slice(start);
 })();
+
+const checklistRoundId = "abcdef12-3456-4abc-8def-1234567890ab";
+const uppercaseChecklistRoundId = checklistRoundId.toUpperCase();
+const checklistItemId = ALL_CHECKLIST_IDS[0];
+assert.equal(
+  PREPARATION_CHECKLIST_INVALID_INPUT_ERROR,
+  "This checklist change is no longer valid. Refresh and try again.",
+  "invalid atomic checklist input must return the stable curated error",
+);
+assert.deepEqual(
+  parsePreparationChecklistActionInput(checklistRoundId, checklistItemId, true),
+  { ok: true, value: { roundId: checklistRoundId, itemId: checklistItemId, targetCompleted: true } },
+  "a canonical checklist item completion must preserve the exact atomic target",
+);
+assert.deepEqual(
+  parsePreparationChecklistActionInput(uppercaseChecklistRoundId, checklistItemId, false),
+  { ok: true, value: { roundId: checklistRoundId, itemId: checklistItemId, targetCompleted: false } },
+  "a valid case-insensitive UUID must normalize while an explicit incomplete target remains false",
+);
+for (const [roundId, itemId, targetCompleted] of [
+  [undefined, checklistItemId, true],
+  ["", checklistItemId, true],
+  ["83838383-8383-6838-8838-838383838302", checklistItemId, true],
+  [checklistRoundId, undefined, true],
+  [checklistRoundId, "", true],
+  [checklistRoundId, "unknown-checklist-item", true],
+  [checklistRoundId, checklistItemId.toUpperCase(), true],
+  [checklistRoundId, [checklistItemId], true],
+  [checklistRoundId, { id: checklistItemId }, true],
+  [checklistRoundId, checklistItemId, undefined],
+  [checklistRoundId, checklistItemId, "true"],
+  [checklistRoundId, checklistItemId, 1],
+  [[checklistRoundId], checklistItemId, true],
+  [{ id: checklistRoundId }, checklistItemId, true],
+]) {
+  assert.deepEqual(
+    parsePreparationChecklistActionInput(roundId, itemId, targetCompleted),
+    { ok: false },
+    "malformed, missing, case-changed, or non-scalar atomic checklist input must fail closed",
+  );
+}
 
 const nextActionApplicationId = "app-fixture-1";
 const nextActionDsaQuestion = { id: "two-sum", title: "Two Sum" };
@@ -458,6 +533,22 @@ const cases = [
   ["notes bounded", migration.includes("12000")],
   ["tasks bounded", migration.includes("Custom task limit reached")],
   ["known checklist values", migration.includes("interview_preparations_checklist_known")],
+  ["atomic checklist action parses before account or persistence work", checklistAction.indexOf("parsePreparationChecklistActionInput") >= 0 && checklistAction.indexOf("parsePreparationChecklistActionInput") < checklistAction.indexOf("getAuthenticatedActor") && checklistAction.indexOf("getAuthenticatedActor") < checklistAction.indexOf('rpc("set_interview_preparation_checklist_item"')],
+  ["atomic checklist action sends one exact desired membership", checklistAction.includes("target_round_id: parsed.value.roundId") && checklistAction.includes("target_item_id: parsed.value.itemId") && checklistAction.includes("target_completed: parsed.value.targetCompleted")],
+  ["atomic checklist action rejects malformed input before actor resolution", checklistAction.indexOf("if (!parsed.ok)") >= 0 && checklistAction.indexOf("if (!parsed.ok)") < checklistAction.indexOf("getAuthenticatedActor") && checklistAction.includes("PREPARATION_CHECKLIST_INVALID_INPUT_ERROR")],
+  ["atomic checklist action validates the returned application before refreshing", checklistAction.includes("normalizePreparationChecklistUuid(data)") && checklistAction.includes("if (error || applicationId === null)") && checklistAction.includes("refresh(parsed.value.roundId, applicationId)")],
+  ["checklist controls bind only round, item, and desired membership", page.includes("togglePreparationChecklistAction.bind(null, round.id, item.id, !complete)") && !page.includes("completedIds, item.id")],
+  ["checklist action has no legacy whole-array persistence path", !checklistAction.includes("completedIds") && !checklistAction.includes("completed_ids_value") && !checklistAction.includes('rpc("save_interview_preparation"')],
+  ["atomic checklist migration rejects legacy whole-array calls", legacySaveMigration.includes("if completed_ids_value is not null then") && legacySaveMigration.includes("Checklist items must be updated individually") && legacySaveMigration.includes("errcode = '0A000'")],
+  ["atomic checklist migration validates known items and required desired state", atomicChecklistFunction.includes("interview_preparations_checklist_known") && atomicChecklistFunction.includes("interview_preparations_checklist_completion_required")],
+  ["atomic checklist migration preserves the exact UUID return contract", atomicChecklistFunction.includes(") returns uuid language plpgsql")],
+  ["atomic checklist migration locks an owner-scoped round and returns its application", atomicChecklistFunction.includes("where id = target_round_id and user_id = current_user_id") && atomicChecklistFunction.includes("for update;") && atomicChecklistFunction.includes("return owned_application_id;")],
+  ["atomic checklist completion is idempotent membership addition", atomicChecklistFunction.includes("array_append(public.interview_preparations.completed_template_item_ids, target_item_id)") && atomicChecklistFunction.includes("where not (target_item_id = any(public.interview_preparations.completed_template_item_ids))")],
+  ["atomic checklist clearing removes only the requested membership without creating a row", atomicChecklistClearBranch.includes("update public.interview_preparations") && atomicChecklistClearBranch.includes("array_remove(completed_template_item_ids, target_item_id)") && atomicChecklistClearBranch.includes("target_item_id = any(completed_template_item_ids)") && !atomicChecklistClearBranch.includes("insert into")],
+  ["atomic checklist errors keep invalid, foreign, and missing inputs indistinguishable where required", atomicChecklistFunction.includes("errcode = '23514'") && atomicChecklistFunction.includes("errcode = '23502'") && atomicChecklistFunction.includes("errcode = 'P0002'") && atomicChecklistFunction.includes("Interview round not found")],
+  ["atomic checklist RPC is authenticated-only", atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from public") && atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from anon") && atomicChecklistMigration.includes("grant execute on function public.set_interview_preparation_checklist_item(uuid,text,boolean) to authenticated")],
+  ["pgTAP covers desired-state membership, idempotence, preservation, legacy rejection, and owner privacy", ["distinct desired-state updates retain both checklist items", "repeated true never creates a duplicate", "clearing one item preserves other checklist items", "rejected legacy checklist writes leave preparation unchanged", "missing and foreign rounds are indistinguishable"].every((marker) => interviewPreparationDatabaseTest.includes(marker))],
+  ["local persistence qualification exercises concurrent atomic updates and the legacy rejection", persistenceQualifier.includes('check("User A creates notes and concurrent desired-state checklist updates retain both items"') && persistenceQualifier.includes('rpc("set_interview_preparation_checklist_item"') && persistenceQualifier.includes("Promise.all") && persistenceQualifier.includes('expectSqlError(rejected, "0A000")')],
   ["mutation errors returned", actions.includes("Checklist change was not saved") && actions.includes("Task change was not saved") && actions.includes("Task was not removed")],
   ["mutation pending states announced", mutationControls.includes('aria-live="polite"') && mutationControls.includes("Saving checklist…") && mutationControls.includes("Adding task…")],
   ["dashboard Prepare", dashboard.includes(">Prepare<")],

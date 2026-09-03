@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "71b343b1e2ab356a181a777747ca2514aa0b82f3",
-  "repository_state_sha256": "4df815f0c9b93d34e2bf7f37f1c956e37ee87c391fb2c761ccec321405e6d224",
+  "repository_sha": "fd004de6b1f41085d66dd46c3e639874237fdc6d",
+  "repository_state_sha256": "e0f96f5d9eadea5c619773afe8e08f137ff3c048dd20aaea53192e24ec1f204e",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1183,7 +1183,8 @@
     {
       "acceptance_criteria": [
         "Planning and round guidance preserve existing evidence boundaries and public handoffs.",
-        "Owner-scoped round preparation counts preserve distinct ready, genuinely untouched, and unavailable states across Dashboard, Application Detail, and Interview Playbook; empty input resolves before actor work, a nonempty request without an actor or any failed count query cannot render zero, start-plan, or not-started claims, and the shared retry exposes guarded pending, live-status, and responsive source contracts. Only an explicit successful retry announces that preparation progress loaded, and its source-regressed focus recovery targets the connected success status after a frame only when the retry trigger owned focus and no newer focus claim exists; rendered focus behavior remains browser/manual validation."
+        "Owner-scoped round preparation counts preserve distinct ready, genuinely untouched, and unavailable states across Dashboard, Application Detail, and Interview Playbook; empty input resolves before actor work, a nonempty request without an actor or any failed count query cannot render zero, start-plan, or not-started claims, and the shared retry exposes guarded pending, live-status, and responsive source contracts. Only an explicit successful retry announces that preparation progress loaded, and its source-regressed focus recovery targets the connected success status after a frame only when the retry trigger owned focus and no newer focus claim exists; rendered focus behavior remains browser/manual validation.",
+        "Checklist mutations parse one exact round identifier, canonical item identifier, and boolean desired membership before actor or persistence work; the route submits no whole-array snapshot, and the owner-scoped database function serializes and idempotently changes only that item while preserving independent checklist progress and returning the owning application for revalidation. The legacy save RPC rejects non-null whole-array checklist writes, cross-owner changes remain forbidden, executable and source contracts run in npm run test:interview-preparation-hub, database behavior remains assigned to npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step."
       ],
       "code_paths": [
         "app/applications/[id]/page.tsx",
@@ -1191,13 +1192,22 @@
         "app/globals.css",
         "app/interview-playbook",
         "app/interview-tips",
+        "app/interviews/[roundId]/prepare/page.tsx",
         "components/interview-playbook",
         "components/preparation-counts-status.tsx",
+        "features/interview-preparation/actions.ts",
         "lib/interview-playbook",
+        "lib/interview-preparation/checklist-action-input.ts",
         "lib/interview-preparation/preparation-counts.ts",
         "lib/interview-preparation/queries.ts",
+        "scripts/qualify-account-lifecycle-local.mjs",
+        "scripts/qualify-persistence-local.mjs",
+        "scripts/qualify-security-local.mjs",
         "scripts/test-application-tracker.mjs",
-        "scripts/test-interview-preparation-hub.mjs"
+        "scripts/test-interview-preparation-hub.mjs",
+        "supabase/migrations/202609030001_set_interview_preparation_checklist_item.sql",
+        "supabase/tests/database/account_lifecycle.test.sql",
+        "supabase/tests/database/interview_preparation.test.sql"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
@@ -1235,6 +1245,7 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run qualify:database",
         "npm run test:application-tracker",
         "npm run test:interview-execution-taxonomy",
         "npm run test:interview-playbook-diagnostic",
