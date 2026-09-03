@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { chooseRoundPreparationNextAction } from "../lib/interview-preparation/next-action.ts";
-import { modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
+import { checklistForRound, modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
+import { resolvePreparationCounts } from "../lib/interview-preparation/preparation-counts.ts";
 import { buildInterviewPlaybookOverview } from "../lib/interview-playbook/overview.ts";
 import { resolveInterviewPlaybookTiming } from "../lib/interview-playbook/timing.ts";
 import { isActiveInterviewProcess } from "../lib/applications/insights.ts";
@@ -12,6 +13,7 @@ const root = process.cwd();
 const read = (file) => readFileSync(join(root, file), "utf8");
 const model = read("lib/interview-preparation/model.ts");
 const query = read("lib/interview-preparation/queries.ts");
+const preparationCountsCore = read("lib/interview-preparation/preparation-counts.ts");
 const actions = read("features/interview-preparation/actions.ts");
 const mutationControls = read("features/interview-preparation/mutation-controls.tsx");
 const page = read("app/interviews/[roundId]/prepare/page.tsx");
@@ -22,6 +24,7 @@ const behavioralLibrary = read("app/behavioral/questions/page.tsx");
 const behavioralDetail = read("app/behavioral/questions/[questionId]/page.tsx");
 const playbookQueries = read("lib/interview-playbook/queries.ts");
 const playbookPage = read("app/interview-playbook/page.tsx");
+const preparationCountsStatus = read("components/preparation-counts-status.tsx");
 const playbookTiming = read("lib/interview-playbook/timing.ts");
 const finalPreparationComponent = read("components/interview-playbook/final-preparation-mode.tsx");
 const design = read("DESIGN.md");
@@ -30,6 +33,10 @@ const globals = read("app/globals.css");
 // surfaces may appear before the legacy `.page-hero` marker without becoming
 // part of the private preparation hub's typography contract.
 const prepCss = globals.split("/* Phase 6 — focused preparation flight plan */")[1].split("/* Salary Negotiation v1")[0].split(".page-hero")[0];
+const preparationCountsQuery = (() => {
+  const start = query.indexOf("export async function getPreparationCounts");
+  return start === -1 ? "" : query.slice(start);
+})();
 
 const nextActionApplicationId = "app-fixture-1";
 const nextActionDsaQuestion = { id: "two-sum", title: "Two Sum" };
@@ -113,6 +120,57 @@ function makeApplication(overrides) {
 
 function overviewOf(applications, preparationCounts = new Map()) {
   return buildInterviewPlaybookOverview({ applications, preparationCounts, now: overviewNow });
+}
+
+const readyEmptyPreparationCounts = resolvePreparationCounts({
+  queryFailed: false,
+  rounds: [],
+  preparations: [],
+  tasks: [],
+});
+assert.equal(readyEmptyPreparationCounts.status, "ready", "a successful zero-row preparation query must remain distinguishable from unavailability");
+assert.equal(readyEmptyPreparationCounts.status === "ready" ? readyEmptyPreparationCounts.counts.size : -1, 0, "a successful zero-row preparation query must produce a genuine ready-empty map");
+
+const countFixtureRound = { id: "round-count-fixture", round_type: "Coding / DSA" };
+const countFixtureChecklist = checklistForRound(countFixtureRound.round_type);
+const untouchedPreparationCounts = resolvePreparationCounts({
+  queryFailed: false,
+  rounds: [countFixtureRound],
+  preparations: [],
+  tasks: [],
+});
+assert.deepEqual(
+  untouchedPreparationCounts.status === "ready" ? untouchedPreparationCounts.counts.get(countFixtureRound.id) : null,
+  { completed: 0, total: countFixtureChecklist.length },
+  "an untouched round must retain its full canonical checklist total rather than look unavailable",
+);
+
+const completedPreparationCounts = resolvePreparationCounts({
+  queryFailed: false,
+  rounds: [countFixtureRound],
+  preparations: [{ round_id: countFixtureRound.id, completed_template_item_ids: [countFixtureChecklist[0].id] }],
+  tasks: [
+    { round_id: countFixtureRound.id, completed: true },
+    { round_id: countFixtureRound.id, completed: false },
+  ],
+});
+assert.deepEqual(
+  completedPreparationCounts.status === "ready" ? completedPreparationCounts.counts.get(countFixtureRound.id) : null,
+  { completed: 2, total: countFixtureChecklist.length + 2 },
+  "completed template and custom tasks must contribute to the exact ready count without treating an incomplete task as complete",
+);
+
+for (const failedQuery of ["rounds", "preparations", "tasks"]) {
+  assert.deepEqual(
+    resolvePreparationCounts({
+      queryFailed: true,
+      rounds: failedQuery === "rounds" ? [] : [countFixtureRound],
+      preparations: failedQuery === "preparations" ? [] : [{ round_id: countFixtureRound.id, completed_template_item_ids: [countFixtureChecklist[0].id] }],
+      tasks: failedQuery === "tasks" ? [] : [{ round_id: countFixtureRound.id, completed: true }],
+    }),
+    { status: "unavailable" },
+    `${failedQuery} query failure must win over every partial row and never produce a false count`,
+  );
 }
 
 // Case 1: earliest scheduled round wins across companies.
@@ -468,6 +526,11 @@ const cases = [
   ["playbook queries: exports getInterviewPlaybookOverview", playbookQueries.includes("export async function getInterviewPlaybookOverview")],
   ["playbook queries: calls getApplications", playbookQueries.includes("getApplications()")],
   ["playbook queries: calls getPreparationCounts", playbookQueries.includes("getPreparationCounts(roundIds)")],
+  ["preparation counts: empty input resolves ready before actor lookup", preparationCountsQuery.indexOf("if (!roundIds.length)") >= 0 && preparationCountsQuery.indexOf("if (!roundIds.length)") < preparationCountsQuery.indexOf("getAuthenticatedActor()") && preparationCountsQuery.includes("queryFailed: false, rounds: [], preparations: [], tasks: []")],
+  ["preparation counts: a missing actor is unavailable rather than empty", /if \(!actor\) \{[\s\S]*queryFailed: true, rounds: \[\], preparations: \[\], tasks: \[\]/.test(preparationCountsQuery)],
+  ["preparation counts: all three reads remain owner-scoped", (preparationCountsQuery.match(/\.eq\("user_id", actor\.user\.id\)/g) ?? []).length === 3],
+  ["preparation counts: every query error becomes one explicit failed resolution", preparationCountsQuery.includes("Boolean(rounds.error || preparations.error || tasks.error)") && preparationCountsQuery.includes("return resolvePreparationCounts({")],
+  ["preparation counts: failure wins before partial rows are counted", preparationCountsCore.indexOf("if (input.queryFailed)") < preparationCountsCore.indexOf("for (const round of input.rounds)")],
   ["playbook queries: calls getInterviewPreparationHub", playbookQueries.includes("getInterviewPreparationHub(")],
   ["playbook queries: calls chooseRoundPreparationNextAction", playbookQueries.includes("chooseRoundPreparationNextAction(")],
   ["playbook queries: uses isActiveApplication", playbookQueries.includes("isActiveApplication(")],
@@ -492,7 +555,21 @@ const cases = [
   ["playbook page: calls isAccountPlatformAvailable", playbookPage.includes("isAccountPlatformAvailable()")],
   ["playbook page: calls requireMemberProfile with its own path", playbookPage.includes('requireMemberProfile("/interview-playbook")')],
   ["playbook page: calls getInterviewPlaybookOverview", playbookPage.includes("getInterviewPlaybookOverview(")],
+  ["playbook overview: carries the count availability state without converting unavailable to zero", playbookQueries.includes("preparationCountsStatus: preparationCountsResult.status") && playbookQueries.includes('preparationCountsResult.status === "ready"')],
+  ["playbook page: suppresses not-started count copy while unavailable", playbookPage.includes('if (status === "unavailable") return "Task count unavailable."') && playbookPage.includes("preparationCountText(primaryRound.preparation, overview.preparationCountsStatus)") && playbookPage.includes("preparationCountText(round.preparation, overview.preparationCountsStatus)")],
+  ["playbook page: renders the shared count recovery state", playbookPage.includes("<PreparationCountsStatus status={overview.preparationCountsStatus} />")],
   ["playbook page: is a Server Component", !playbookPage.includes("use client")],
+  ["count recovery: copy distinguishes unavailable data from application loss", ["Preparation progress couldn’t load.", "Your application and interview details remain available. Retry before relying on round task counts.", "Retry preparation progress", "Retrying preparation progress…"].every((copy) => preparationCountsStatus.includes(copy))],
+  ["count recovery: passive ready data stays silent and only an explicitly completed retry can produce success", preparationCountsStatus.includes("const [retrySucceeded, setRetrySucceeded] = useState(false)") && preparationCountsStatus.includes("const explicitRetryCompleted = retryAttemptedRef.current") && preparationCountsStatus.includes('const succeeded = explicitRetryCompleted && status === "ready"') && preparationCountsStatus.includes("setRetrySucceeded(succeeded)") && preparationCountsStatus.includes('if (status === "ready") {\n    return retrySucceeded ?') && preparationCountsStatus.includes(") : null;")],
+  ["count recovery: duplicate retry is guarded, records the explicit attempt, settles, and can retry through a transition refresh", preparationCountsStatus.includes("retryPendingRef") && preparationCountsStatus.includes("if (retryPendingRef.current) return") && preparationCountsStatus.includes("retryAttemptedRef.current = true") && preparationCountsStatus.includes("if (pending) return") && preparationCountsStatus.includes("retryPendingRef.current = false") && preparationCountsStatus.includes("startTransition(() => router.refresh())")],
+  ["count recovery: pending state remains a focusable polite atomic busy status", preparationCountsStatus.includes('role="status"') && preparationCountsStatus.includes('aria-live="polite"') && preparationCountsStatus.includes('aria-atomic="true"') && preparationCountsStatus.includes("aria-busy={pending}") && preparationCountsStatus.includes("aria-disabled={pending}") && preparationCountsStatus.includes('aria-describedby={descriptionId}') && !/[\s\n]disabled=\{pending\}/.test(preparationCountsStatus)],
+  ["count recovery: explicit retry success is a focusable polite atomic announcement with exact truthful copy", preparationCountsStatus.includes('const successStatusId = "preparation-counts-success-status"') && /id=\{successStatusId\}[\s\S]*?ref=\{successStatusRef\}[\s\S]*?role="status"[\s\S]*?aria-live="polite"[\s\S]*?aria-atomic="true"[\s\S]*?tabIndex=\{-1\}[\s\S]*?<strong>Preparation progress loaded\.<\/strong>[\s\S]*?<p>Task counts are up to date\.<\/p>/.test(preparationCountsStatus)],
+  ["count recovery: retry-trigger focus ownership is captured before refresh", preparationCountsStatus.includes('ref={retryTriggerRef}') && preparationCountsStatus.includes("retryTriggerOwnedFocusRef.current = document.activeElement === retryTriggerRef.current")],
+  ["count recovery: post-success focus waits for a frame, yields to newer focus, and targets only the connected status", preparationCountsStatus.includes("if (!retrySucceeded) return") && preparationCountsStatus.includes("window.requestAnimationFrame") && preparationCountsStatus.includes("!activeElement || activeElement === document.body") && preparationCountsStatus.includes("successStatusRef.current?.isConnected") && preparationCountsStatus.includes("successStatusRef.current.focus()")],
+  ["count recovery: completion and focus frames are cleaned up instead of surviving settlement changes or unmount", preparationCountsStatus.includes("window.cancelAnimationFrame(completionFrameRef.current)") && preparationCountsStatus.includes("completionFrameRef.current = null") && preparationCountsStatus.includes("window.cancelAnimationFrame(focusFrameRef.current)") && preparationCountsStatus.includes("focusFrameRef.current = null") && preparationCountsStatus.includes("}, [retrySucceeded])")],
+  ["count recovery: rendered retry focus remains a browser/manual check rather than an executed DOM claim", !preparationCountsStatus.includes("autoFocus")],
+  ["count recovery: pending and hover-neutral styles are scoped", /\.preparation-counts-status \.button\[aria-disabled="true"\]\s*\{[^}]*cursor:\s*wait;[^}]*opacity:\s*\.7;[^}]*transform:\s*none;/.test(globals) && /\.preparation-counts-status \.button-secondary\[aria-disabled="true"\]:hover\s*\{[^}]*background:\s*var\(--surface\);[^}]*border-color:\s*var\(--control-border,\s*var\(--line-strong\)\);/.test(globals)],
+  ["count recovery: narrow screens stack the status and retain a full-width retry", /@media \(max-width: 800px\)[\s\S]*\.preparation-counts-status \{[^}]*flex-direction:\s*column;[\s\S]*\.preparation-counts-status \.button \{[^}]*width:\s*100%;/.test(globals)],
   ["playbook page: imports no Supabase client", !playbookPage.includes("createSupabaseServerClient") && !playbookPage.includes("createSupabaseAdminClient") && !playbookPage.includes("@supabase/")],
   ["playbook page: contains no direct table access", !playbookPage.includes(".from(")],
   ["playbook page: does not import getDashboardPipeline", !playbookPage.includes("getDashboardPipeline")],

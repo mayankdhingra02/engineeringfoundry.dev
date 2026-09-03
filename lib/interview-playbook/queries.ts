@@ -5,6 +5,7 @@ import { UPCOMING_ROUND_STATUSES } from "@/lib/applications/options";
 import { getApplications, type ApplicationWithRounds } from "@/lib/applications/queries";
 import { resolveRoundPreparationContext } from "@/lib/interview-preparation/model";
 import { chooseRoundPreparationNextAction } from "@/lib/interview-preparation/next-action";
+import type { PreparationCount, PreparationCountsStatus } from "@/lib/interview-preparation/preparation-counts";
 import { getInterviewPreparationHub, getPreparationCounts } from "@/lib/interview-preparation/queries";
 import {
   buildInterviewPlaybookOverview,
@@ -27,6 +28,7 @@ export type InterviewPlaybookPrimaryAction = Readonly<{
 export type InterviewPlaybookOverview = InterviewPlaybookOverviewBase &
   Readonly<{
     primaryAction: InterviewPlaybookPrimaryAction | null;
+    preparationCountsStatus: PreparationCountsStatus;
   }>;
 
 type ApplicationRoundRow = ApplicationWithRounds["interview_rounds"][number];
@@ -80,9 +82,9 @@ function toApplicationInput(application: ApplicationWithRounds): InterviewPlaybo
   };
 }
 
-/** Normalizes getPreparationCounts' Map into the overview's checklist-progress-only shape. */
+/** Normalizes ready preparation counts into the overview's checklist-progress-only shape. */
 function toPreparationCounts(
-  counts: Map<string, { completed: number; total: number }>,
+  counts: ReadonlyMap<string, PreparationCount>,
 ): ReadonlyMap<string, InterviewPlaybookPreparationCount> {
   return counts;
 }
@@ -107,25 +109,27 @@ export async function getInterviewPlaybookOverview(now = new Date()): Promise<In
   // getInterviewPreparationHub call (for the single primary round only).
   const roundIds = applications.flatMap((application) => application.rounds.map((round) => round.id));
   const [preparationCountsResult, primaryHub] = await Promise.all([
-    roundIds.length ? getPreparationCounts(roundIds) : Promise.resolve(new Map<string, { completed: number; total: number }>()),
+    getPreparationCounts(roundIds),
     primaryRound ? getInterviewPreparationHub(primaryRound.id) : Promise.resolve(null),
   ]);
 
-  // Step 4/5: rebuild with real checklist-progress counts. Selection is
-  // deterministic given the same applications/now, so the primary round
-  // chosen here matches the shell build.
-  const finalOverview = buildInterviewPlaybookOverview({
-    applications,
-    preparationCounts: toPreparationCounts(preparationCountsResult),
-    now,
-  });
+  // Step 4/5: only ready persistence data is fed into the overview. When the
+  // protected read is unavailable, retain the shell selected solely from the
+  // application/round data rather than converting the failure into zeros.
+  const finalOverview = preparationCountsResult.status === "ready"
+    ? buildInterviewPlaybookOverview({
+      applications,
+      preparationCounts: toPreparationCounts(preparationCountsResult.counts),
+      now,
+    })
+    : shellOverview;
 
   // Step 6: the detailed action always comes from the existing selector, never
   // recomputed here. If the primary round was deleted concurrently, the hub
   // lookup returns null and no primary action is fabricated.
-  const primaryAction = buildPrimaryAction(finalOverview.primaryRound, finalOverview.primaryRoundReason, primaryHub);
+  const primaryAction = buildPrimaryAction(shellOverview.primaryRound, shellOverview.primaryRoundReason, primaryHub);
 
-  return { ...finalOverview, primaryAction };
+  return { ...finalOverview, primaryAction, preparationCountsStatus: preparationCountsResult.status };
 }
 
 function buildPrimaryAction(

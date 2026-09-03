@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { AccountUnavailable } from "@/components/account-unavailable";
 import { StatusPill } from "@/components/page-shell";
+import { PreparationCountsStatus } from "@/components/preparation-counts-status";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { formatInterviewDate } from "@/lib/applications/format";
 import { requireMemberProfile } from "@/lib/auth/guards";
@@ -44,7 +45,8 @@ function scheduleText(round: Pick<InterviewPlaybookRoundSummary, "scheduledAt" |
 }
 
 /** Checklist-completion progress only — never described as readiness, mastery, or a probability. */
-function preparationCountText(preparation: InterviewPlaybookPreparationCount) {
+function preparationCountText(preparation: InterviewPlaybookPreparationCount, status: "ready" | "unavailable") {
+  if (status === "unavailable") return "Task count unavailable.";
   return preparation.total > 0
     ? `${preparation.completed} of ${preparation.total} round-preparation tasks complete`
     : "Round checklist not started";
@@ -131,7 +133,7 @@ export default async function InterviewPlaybookPage() {
           {primaryRound.needsSignalClarification ? <StatusPill tone="warning">Focus unconfirmed</StatusPill> : <StatusPill tone="accent">{selectionLabel}</StatusPill>}
           <h2 id="playbook-primary-heading">{primaryRound.companyName} — {primaryRound.roleTitle}</h2>
           <p>{primaryRound.roundName} · {primaryRound.roundType} · {scheduleText(primaryRound)}</p>
-          <p>{preparationCountText(primaryRound.preparation)}</p>
+          <p>{preparationCountText(primaryRound.preparation, overview.preparationCountsStatus)}</p>
           {primaryRound.needsSignalClarification && <p>{primaryRound.clarificationPrompt} <Link className="text-link" href={`/applications/${primaryRound.applicationId}/rounds/${primaryRound.id}/edit`}>Update round details</Link></p>}
         </div>
         <div>
@@ -246,6 +248,8 @@ export default async function InterviewPlaybookPage() {
       <article><span><CircleAlert size={17} aria-hidden="true" /></span><div><strong>{overview.overdueRounds.length}</strong><p>Need an update</p></div></article>
     </section>}
 
+    <PreparationCountsStatus status={overview.preparationCountsStatus} />
+
     {renderDominantAction()}
 
     {offerStageApplication && <section className="prep-next-action prep-offer-handoff" aria-labelledby="playbook-offer-heading"><div><h2 id="playbook-offer-heading">An offer is recorded for {offerStageApplication.companyName}</h2><p>Move from interview preparation to a careful offer review. The worksheet is private browser-session state and does not alter your application record.</p></div><div><Link className="button button-secondary" href="/salary-negotiation">Prepare to evaluate and negotiate this offer<ArrowRight size={15} /></Link><Link className="text-link" href={offerStageApplication.applicationHref}>Review application details</Link></div></section>}
@@ -321,7 +325,7 @@ export default async function InterviewPlaybookPage() {
             <span>
               <strong>{round.companyName} — {round.roleTitle}</strong>
               <small>{round.roundName} · {round.roundType} · {scheduleText(round)}</small>
-              <small>{preparationCountText(round.preparation)}</small>
+              <small>{preparationCountText(round.preparation, overview.preparationCountsStatus)}</small>
             </span>
             <span className="prep-item-state">{queueStateLabel(round)}</span>
           </Link>
