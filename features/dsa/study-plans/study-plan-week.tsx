@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, ChevronDown, CircleCheck, ListChecks, MessageSquareText } from "lucide-react";
 import { useState } from "react";
+import { getCoreRoadmapTopicHref } from "@/data/dsa/core-roadmap";
 import type { StudyPlan, StudyPlanPriority, StudyPlanWeek as StudyPlanWeekType } from "@/data/dsa/study-plans";
 import { getStudyPlanPracticeHref, getStudyPlanTopic } from "@/data/dsa/study-plans";
 
@@ -16,7 +17,7 @@ function StudyPlanWeek({ week, open, onToggle }: { week: StudyPlanWeekType; open
     {open && <div id={panelId} className="dsa-plan-week-detail">
       <p className="dsa-plan-week-focus"><strong>Focus</strong>{week.focus}</p>
       <div className="dsa-plan-week-grid">
-        <section><h5><BookOpen size={14} />Topics</h5><ul className="dsa-plan-topic-list">{week.topics.map(({ topicId, priority }) => { const topic = getStudyPlanTopic(topicId); if (!topic) return null; const practiceHref = getStudyPlanPracticeHref(topicId, week.difficulty); return <li key={topicId}><div><Link href={`/dsa/roadmap?topic=${topic.id}`}>{topic.title}<ArrowRight size={11} /></Link><span className={`priority ${priority}`}>{priorityLabels[priority]}</span></div>{practiceHref && <Link className="practice" href={practiceHref}><ListChecks size={11} />Practice this topic</Link>}</li>; })}</ul></section>
+        <section><h5><BookOpen size={14} />Topics</h5><ul className="dsa-plan-topic-list">{week.topics.map(({ topicId, priority }) => { const topic = getStudyPlanTopic(topicId); if (!topic) return null; const topicHref = getCoreRoadmapTopicHref(topic.id); const practiceHref = getStudyPlanPracticeHref(topicId, week.difficulty); return <li key={topicId}><div>{topicHref && <Link href={topicHref}>{topic.title}<ArrowRight size={11} /></Link>}<span className={`priority ${priority}`}>{priorityLabels[priority]}</span></div>{practiceHref && <Link className="practice" href={practiceHref}><ListChecks size={11} />Practice this topic</Link>}</li>; })}</ul></section>
         <section><h5><MessageSquareText size={14} />Interview focus</h5><ul className="dsa-plan-focus-list">{week.interviewFocus.map((focus) => <li key={focus}>{focus}</li>)}</ul><div className="dsa-plan-checkpoint"><CircleCheck size={14} /><p><strong>Checkpoint</strong>{week.checkpoint}</p></div></section>
       </div>
       <section className="dsa-plan-days"><h5>Suggested daily rhythm</h5><ol>{week.days.map((day) => <li key={day.day}><span>Day {day.day}</span><p>{day.guidance}</p></li>)}</ol></section>

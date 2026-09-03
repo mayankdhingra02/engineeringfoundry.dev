@@ -69,6 +69,13 @@ export function getCoreRoadmapTopic(id: string) {
   return coreInterviewRoadmap.topics.find((topic) => topic.id === id);
 }
 
+export function getCoreRoadmapTopicHref(topicId: string) {
+  if (!getCoreRoadmapTopic(topicId)) return undefined;
+  const params = new URLSearchParams();
+  params.set("topic", topicId);
+  return `/dsa/roadmap/topic-map?${params.toString()}`;
+}
+
 export function getRoadmapPracticeHref(topic: CoreRoadmapTopic) {
   if (!topic.questionFilter) return undefined;
   const params = new URLSearchParams();

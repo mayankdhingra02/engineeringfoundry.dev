@@ -2,11 +2,14 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { getCoreRoadmapTopicHref } from "../data/dsa/core-roadmap.ts";
 
 const failures = [];
 const read = (file) => readFileSync(file, "utf8");
 const requireText = (source, text, message) => { if (!source.includes(text)) failures.push(message); };
 const prohibit = (source, pattern, message) => { if (pattern.test(source)) failures.push(message); };
+
+if (getCoreRoadmapTopicHref("binary-search") !== "/dsa/roadmap/topic-map?topic=binary-search") failures.push("Canonical Binary Search roadmap handoff does not open its topic-map panel.");
 
 const python = read("content/dsa/languages/python-content.ts");
 const java = read("content/dsa/languages/java-content.ts");
@@ -25,7 +28,8 @@ prohibit(combined, /leetcode\.com|class Solution|acceptance rate|frequency claim
 const codeComponent = read("features/dsa/languages/code-example.tsx");
 for (const marker of ["navigator.clipboard.writeText(code)", "Copy", "Copied", "aria-live", "aria-label", 'role="region"']) requireText(codeComponent, marker, `Code example component lacks ${marker}.`);
 const templateComponent = read("features/dsa/languages/interview-template.tsx");
-for (const marker of ["getCoreRoadmapTopic", "getRoadmapPracticeHref", "/dsa/roadmap?topic="]) requireText(templateComponent, marker, `Interview template integration lacks ${marker}.`);
+for (const marker of ["getCoreRoadmapTopic", "getCoreRoadmapTopicHref", "getRoadmapPracticeHref"]) requireText(templateComponent, marker, `Interview template integration lacks ${marker}.`);
+prohibit(templateComponent, /\/dsa\/roadmap\?topic=/, "Language templates still hand off to the level planner instead of the topic map.");
 
 const pythonBlocks = [...python.matchAll(/code: `([\s\S]*?)`/g)].map((match) => match[1]);
 if (pythonBlocks.length < 25) failures.push(`Expected at least 25 Python examples; found ${pythonBlocks.length}.`);

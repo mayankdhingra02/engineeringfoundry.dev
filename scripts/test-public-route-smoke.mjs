@@ -146,6 +146,8 @@ try {
   assert.equal(spawnCalled, false, "hosted mode must not spawn the local application server");
   assert.ok(requestedOrigins.length > PUBLIC_ROUTES.length, "hosted fixture must exercise the complete smoke assertion set");
   assert.ok(requestedOrigins.every((requestedOrigin) => requestedOrigin === origin), "hosted mode must request only the supplied origin");
+  assert.ok(PUBLIC_ROUTES.includes("/dsa/roadmap/topic-map?topic=trees"), "public smoke must exercise the canonical DSA topic-map query route");
+  assert.ok(!PUBLIC_ROUTES.includes("/dsa/roadmap?topic=trees"), "the obsolete DSA roadmap query must not return to the public smoke inventory");
   assert.ok(DISABLED_ACCOUNT_DSA_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account DSA assertion must exercise a declared public route");
   assert.ok(DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account System Design assertion must exercise a declared public route");
   assert.ok(DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS.every(({ route }) => PUBLIC_ROUTES.includes(route)), "every disabled-account preparation assertion must exercise a declared public route");
