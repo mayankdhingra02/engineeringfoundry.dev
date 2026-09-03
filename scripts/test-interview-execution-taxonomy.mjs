@@ -23,6 +23,11 @@ import {
   PUBLISHED_ROUND_EXECUTION_DOSSIERS,
   getRoundExecutionDossier,
 } from "../lib/interview-playbook/round-execution-dossiers.ts";
+import {
+  buildInterviewRoundStaticParams,
+  finitePublicRouteDefinitions,
+  indexableFinitePublicRoutes,
+} from "../lib/public-route-inventory.ts";
 
 const root = process.cwd();
 const exists = (file) => { try { readFileSync(join(root, file), "utf8"); return true; } catch { return false; } };
@@ -54,6 +59,9 @@ const roundsDetailPageSourceAfterDossier = readFileSync(join(root, "app/intervie
 const cases = [];
 const check = (name, ok) => cases.push([name, Boolean(ok)]);
 const arraysEqual = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v, i) => v === b[i]);
+const roundStaticParamSlugs = buildInterviewRoundStaticParams().map(({ slug }) => slug);
+const roundDefinition = finitePublicRouteDefinitions.find(({ pagePattern }) => pagePattern === "/interview-tips/rounds/[slug]");
+const indexableRoutes = new Set(indexableFinitePublicRoutes);
 
 /**
  * True when `text` contains a "pattern library/catalog/list/cheat sheet"
@@ -362,7 +370,7 @@ check("index page contains no universal minute allocation", !/\b\d+\s*minutes?\b
 
 // --- Dynamic detail page assertions ---------------------------------------
 check("detail page exports generateStaticParams", roundsDetailPageSource.includes("export function generateStaticParams"));
-check("detail page uses V1_ROUND_EXECUTION_GUIDES", roundsDetailPageSource.includes("V1_ROUND_EXECUTION_GUIDES"));
+check("detail page uses the shared finite-route static-param builder", roundsDetailPageSource.includes("buildInterviewRoundStaticParams"));
 check("detail page exports dynamicParams = false", roundsDetailPageSource.includes("export const dynamicParams = false"));
 check("detail page uses Promise-based params", roundsDetailPageSource.includes("params: Promise<{ slug: string }>"));
 check("detail page exports generateMetadata", roundsDetailPageSource.includes("export async function generateMetadata"));
@@ -378,7 +386,9 @@ check("detail page contains no direct table access", !roundsDetailPageSource.inc
 check("detail page does not query applications or rounds", !roundsDetailPageSource.includes("getApplications") && !roundsDetailPageSource.includes("getDashboardPipeline") && !roundsDetailPageSource.includes("interview_rounds"));
 check("detail page does not accept a company, application, round, level, or user ID", !/applicationId|roundId|companySlug|level:|userId/.test(roundsDetailPageSource));
 {
-  const paramSlugs = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
+  const paramSlugs = roundStaticParamSlugs;
+  check("finite-route definition exactly follows the v1 guide catalog", arraysEqual(roundDefinition?.paths, V1_ROUND_EXECUTION_GUIDES.map((guide) => roundExecutionGuideHref(guide.slug))));
+  check("static params exactly follow the v1 guide catalog", arraysEqual(paramSlugs, V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug)));
   check("detail page's generated params exclude technical-presentation", !paramSlugs.includes("technical-presentation"));
   check("detail page's generated params exclude final/onsite/bar-raiser/mixed-signal", !paramSlugs.some((slug) => /final|onsite|bar-raiser|mixed-signal/.test(slug)));
 }
@@ -437,11 +447,11 @@ check("interview-playbook.tsx adds no persistence behavior", !interviewPlaybookC
 // --- Sitemap assertions (only when app/sitemap.ts exists) ------------------
 if (sitemapExists) {
   check("sitemap contains /interview-tips/rounds", sitemapSource.includes('"/interview-tips/rounds"'));
-  check("sitemap derives detail routes from V1_ROUND_EXECUTION_GUIDES", sitemapSource.includes("V1_ROUND_EXECUTION_GUIDES"));
+  check("indexable inventory contains every v1 detail route", V1_ROUND_EXECUTION_GUIDES.every((guide) => indexableRoutes.has(roundExecutionGuideHref(guide.slug))));
   check("sitemap does not manually repeat all 15 slugs", !ROUND_EXECUTION_GUIDES.filter((g) => g.v1).every((g) => sitemapSource.includes(`"/interview-tips/rounds/${g.slug}"`)));
-  check("sitemap excludes technical-presentation", !sitemapSource.includes('"/interview-tips/rounds/technical-presentation"'));
+  check("indexable inventory excludes technical-presentation", !indexableRoutes.has("/interview-tips/rounds/technical-presentation"));
   check("sitemap does not add /interview-playbook", !sitemapSource.includes('"/interview-playbook"'));
-  check("sitemap does not add final/onsite/bar-raiser/mixed-signal routes", !/\/interview-tips\/rounds\/(final|onsite|bar-raiser|mixed-signal)/.test(sitemapSource));
+  check("indexable inventory excludes final/onsite/bar-raiser/mixed-signal routes", ["final", "onsite", "bar-raiser", "mixed-signal"].every((slug) => !indexableRoutes.has(`/interview-tips/rounds/${slug}`)));
 }
 
 // --- Dossier catalog state ------------------------------------------------
@@ -1253,7 +1263,7 @@ check("component does not add a fixed countdown timer", !/setInterval|setTimeout
 
 // --- Detail-route integration assertions ----------------------------------
 check("detail page still exports generateStaticParams", roundsDetailPageSourceAfterDossier.includes("export function generateStaticParams"));
-check("detail page still uses V1_ROUND_EXECUTION_GUIDES for static params", roundsDetailPageSourceAfterDossier.includes("V1_ROUND_EXECUTION_GUIDES.map((guide) => ({ slug: guide.slug }))"));
+check("detail page still uses the shared finite-route static-param builder", roundsDetailPageSourceAfterDossier.includes("buildInterviewRoundStaticParams"));
 check("detail page still exports dynamicParams = false", roundsDetailPageSourceAfterDossier.includes("export const dynamicParams = false"));
 check("detail page still uses Promise-based params", roundsDetailPageSourceAfterDossier.includes("params: Promise<{ slug: string }>"));
 check("detail page still calls notFound() for invalid or post-v1 guides", roundsDetailPageSourceAfterDossier.includes("notFound()") && /!guide\s*\|\|\s*!guide\.v1/.test(roundsDetailPageSourceAfterDossier));
@@ -1264,7 +1274,7 @@ check("detail page uses getRoundExecutionDossier", roundsDetailPageSourceAfterDo
 check("detail page still requires no authentication", !roundsDetailPageSourceAfterDossier.includes("requireMemberProfile") && !roundsDetailPageSourceAfterDossier.includes("isAccountPlatformAvailable"));
 check("detail page still performs no direct Supabase query", !/^import.*supabase/im.test(roundsDetailPageSourceAfterDossier) && !roundsDetailPageSourceAfterDossier.includes(".from("));
 {
-  const paramSlugs = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
+  const paramSlugs = roundStaticParamSlugs;
   check("static params still generate exactly 15 v1 pages", paramSlugs.length === 15);
   check("technical-presentation still excluded from static params", !paramSlugs.includes("technical-presentation"));
   check("exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design, system-design, ml-system-design, behavioral, and project-deep-dive currently resolve a dossier among all v1 slugs", arraysEqual(

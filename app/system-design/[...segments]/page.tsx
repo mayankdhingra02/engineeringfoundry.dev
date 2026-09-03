@@ -16,16 +16,16 @@ import { ReliabilityLessonContent, reliabilityLessonIds } from "@/content/system
 import { SpecializedLessonContent, specializedLessonIds } from "@/content/system-design/specialized";
 import { TechnologyLessonContent, technologyLessonIds } from "@/content/system-design/technology";
 import { getSystemDesignPracticeContent, SystemDesignPracticeProblemContent } from "@/content/system-design/problems";
-import { getSystemDesignLesson, systemDesignLessons, type SystemDesignCurriculumNode } from "@/data/system-design/curriculum";
+import { getSystemDesignLesson, type SystemDesignCurriculumNode } from "@/data/system-design/curriculum";
 import { createPageMetadata } from "@/lib/metadata";
 import { getSystemDesignWorkspaceState } from "@/lib/system-design/queries";
 import { SystemDesignProblemPracticePanel } from "@/features/system-design/problem-practice-panel";
+import { buildSystemDesignStaticParams } from "@/lib/public-route-inventory";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  const lessons = systemDesignLessons.map((lesson) => ({ segments: lesson.slug!.replace("/system-design/", "").split("/") }));
-  return [{ segments: ["problems"] }, ...lessons];
+  return buildSystemDesignStaticParams();
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ segments: string[] }> }): Promise<Metadata> {

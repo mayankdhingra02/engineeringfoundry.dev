@@ -34,7 +34,7 @@
     "test:product-blueprint-governance": "node scripts/test-product-blueprint-governance.mjs",
     "test:feedback-admin-operations": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-feedback-admin-operations.mjs",
     "test:interview-preparation-hub": "node --experimental-strip-types --no-warnings scripts/test-interview-preparation-hub.mjs",
-    "test:interview-execution-taxonomy": "node --experimental-strip-types --no-warnings scripts/test-interview-execution-taxonomy.mjs",
+    "test:interview-execution-taxonomy": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-interview-execution-taxonomy.mjs",
     "test:interview-playbook-diagnostic": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-diagnostic.mjs",
     "test:interview-playbook-mock-evidence": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-mock-evidence.mjs",
     "test:interview-playbook-planning": "node --experimental-strip-types --no-warnings scripts/test-interview-playbook-planning.mjs",
@@ -86,10 +86,10 @@
     "test:system-design-technology": "node --experimental-strip-types --no-warnings scripts/test-system-design-technology.mjs",
     "test:system-design-practice": "node --experimental-strip-types --no-warnings scripts/test-system-design-practice.mjs",
     "test:system-design-workspace": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-system-design-workspace.mjs",
-    "test:system-design-release-audit": "node --experimental-strip-types --no-warnings scripts/test-system-design-release-audit.mjs",
+    "test:system-design-release-audit": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-system-design-release-audit.mjs",
     "test:ml-design": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-ml-design.mjs",
-    "test:low-level-design": "node --experimental-strip-types --no-warnings scripts/test-low-level-design.mjs",
-    "test:salary-negotiation": "node --experimental-strip-types --no-warnings scripts/test-salary-negotiation.mjs",
+    "test:low-level-design": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-low-level-design.mjs",
+    "test:salary-negotiation": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-salary-negotiation.mjs",
     "audit:system-design-external-links": "node scripts/audit-system-design-external-links.mjs",
     "audit:system-design-routes": "node --experimental-strip-types --no-warnings scripts/audit-system-design-routes.mjs",
     "report:system-design-manifest": "node --experimental-strip-types --no-warnings scripts/generate-system-design-manifest-report.mjs",
@@ -115,7 +115,8 @@
     "validate:referral-content": "node scripts/validate-referral-content.mjs",
     "validate:community-content": "node scripts/validate-community-content.mjs",
     "validate:experience-content": "node scripts/validate-experience-content.mjs",
-    "validate:public-links": "node scripts/validate-public-links.mjs"
+    "validate:public-links": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/validate-public-links.mjs",
+    "test:public-links": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-public-links.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

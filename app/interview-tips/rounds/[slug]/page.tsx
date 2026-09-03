@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "@/lib/metadata";
-import {
-  V1_ROUND_EXECUTION_GUIDES,
-  getRoundExecutionGuide,
-  roundExecutionGuideHref,
-} from "@/lib/interview-playbook/round-execution-presentation";
+import { getRoundExecutionGuide, roundExecutionGuideHref } from "@/lib/interview-playbook/round-execution-presentation";
+import { buildInterviewRoundStaticParams } from "@/lib/public-route-inventory";
 import { RoundExecutionQuickReference } from "@/components/interview-playbook/round-execution-quick-reference";
 import { getRoundExecutionDossier } from "@/lib/interview-playbook/round-execution-dossiers";
 import { RoundExecutionDossierView } from "@/components/interview-playbook/round-execution-dossier";
@@ -13,7 +10,7 @@ import { RoundExecutionDossierView } from "@/components/interview-playbook/round
 type PageProps = { params: Promise<{ slug: string }> };
 
 export function generateStaticParams() {
-  return V1_ROUND_EXECUTION_GUIDES.map((guide) => ({ slug: guide.slug }));
+  return buildInterviewRoundStaticParams();
 }
 
 export const dynamicParams = false;

@@ -6,17 +6,18 @@ import { AnalyticsEventOnMount } from "@/components/analytics-event";
 import { PageHero, SectionHeading, StatusPill } from "@/components/page-shell";
 import { QuestionList } from "@/components/question-list";
 import { CompanyGuideV1Workspace, type CompanyGuidePublicExperience } from "@/features/company-guides/company-guide-v1";
-import { companies, getCompany } from "@/data/companies";
+import { getCompany } from "@/data/companies";
 import { priorityCompanyGuideBySlug } from "@/data/company-guides/v1";
 import { amazonGuide, googleGuide, metaGuide, walmartGuide } from "@/data/company-guides";
 import type { CompanyInterviewGuide } from "@/data/company-guides";
 import { questionsForCompany } from "@/data/dsa";
 import { createPageMetadata } from "@/lib/metadata";
+import { buildCompanyStaticParams } from "@/lib/public-route-inventory";
 import { listPublicInterviewExperiences } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = false;
-export function generateStaticParams() { return companies.map((company) => ({ slug: company.slug })); }
+export function generateStaticParams() { return buildCompanyStaticParams(); }
 const matureGuides: Partial<Record<string, CompanyInterviewGuide>> = { amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

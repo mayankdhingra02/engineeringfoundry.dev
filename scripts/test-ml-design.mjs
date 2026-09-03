@@ -11,6 +11,11 @@ import {
 } from "../data/ml-design/index.ts";
 import { globalSearchItems } from "../lib/global-search.ts";
 import { mlDesignProblemHref } from "../lib/ml-design-routes.ts";
+import {
+  buildMlDesignStaticParams,
+  finitePublicRouteDefinitions,
+  indexableFinitePublicRoutes,
+} from "../lib/public-route-inventory.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const load = (path) => JSON.parse(read(path));
@@ -46,7 +51,12 @@ assert.equal(getMlDesignProblem("not-a-real-problem"), undefined, "the productio
 
 const dynamicRoute = read("app/ml-design/[slug]/page.tsx");
 assert.match(dynamicRoute, /export const dynamicParams = false;/, "ML Design practice routes must remain a finite catalog");
-assert.match(dynamicRoute, /activeMlDesignProblems\.map\(\(problem\) => \(\{ slug: problem\.slug \}\)\)/, "static params must derive only from active ML Design problems");
+assert.match(dynamicRoute, /buildMlDesignStaticParams\(\)/, "ML Design route must use the shared finite-route static-param builder");
+assert.deepEqual(buildMlDesignStaticParams(), activeProblems.map((problem) => ({ slug: problem.slug })), "static params must derive only from active ML Design problems");
+const mlDefinition = finitePublicRouteDefinitions.find(({ pagePattern }) => pagePattern === "/ml-design/[slug]");
+assert.deepEqual(mlDefinition?.paths, activeHrefs, "finite-route inventory must exactly match the active ML Design catalog");
+const indexableRoutes = new Set(indexableFinitePublicRoutes);
+for (const problem of problems) assert.equal(indexableRoutes.has(mlDesignProblemHref(problem.slug)), problem.status === "active", `${problem.slug} sitemap publication must follow active status`);
 assert.match(dynamicRoute, /getMlDesignProblem\(slug\)/, "the route must use the active-only lookup");
 assert.equal((dynamicRoute.match(/if \(!problem\) notFound\(\);/g) ?? []).length, 2, "metadata and page rendering must both fail closed for unknown practices");
 assert.match(dynamicRoute, /path: mlDesignProblemHref\(problem\.slug\)/, "practice metadata must use the canonical ML Design route helper");
@@ -58,8 +68,6 @@ assert.match(practicePage, /track="ml-design"[^>]+accountPlatformAvailable=\{acc
 const activityControl = read("components/preparation-activity-control.tsx");
 assert.match(activityControl, /Account saving is unavailable\. This control uses browser storage when available;/, "disabled ML Design practice must render an honest account-saving marker through its activity control");
 
-const sitemapSource = read("app/sitemap.ts");
-assert.match(sitemapSource, /activeMlDesignProblems\.map\(\(problem\) => mlDesignProblemHref\(problem\.slug\)\)/, "sitemap routes must exactly follow the active ML Design catalog");
 const search = read("lib/global-search.ts");
 assert.match(search, /activeMlDesignProblems\.map\(\(problem\) => \(\{ title: problem\.title, type: "ML Design problem", href: mlDesignProblemHref\(problem\.slug\) \}\)\)/, "Global Search must exactly follow the active ML Design catalog");
 const sitemapPaths = new Set(buildSitemap().map((entry) => new URL(entry.url).pathname));
