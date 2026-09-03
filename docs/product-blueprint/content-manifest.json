@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "fd004de6b1f41085d66dd46c3e639874237fdc6d",
-  "repository_state_sha256": "e0f96f5d9eadea5c619773afe8e08f137ff3c048dd20aaea53192e24ec1f204e",
+  "repository_sha": "adf77be43996b2b3a679ca169d23b047421437e4",
+  "repository_state_sha256": "edb9afd1cfddd2ab2276f3aa6fda298acde87c4f25ea56e9e1f941c377eaf70c",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -335,6 +335,7 @@
         "Canonical questions, patterns, topics, routes, filters, and published language guides remain internally consistent.",
         "Every DSA topic handoff uses the canonical topic-map route with the selected canonical topic ID; unknown topic IDs fail closed without producing a misleading link.",
         "The production Question Browser URL helper derives its allowlists from injected question and company catalogs, rejects malformed and duplicate scalar state, removes hidden progress filters while signed out, keeps fixed-company scope authoritative, serializes only an owner-resolved canonical application ID, and bounds search and pagination; lib/dsa/queries.ts validates application input before its owner-scoped query. The component source uses replacement history for active search and guarded canonicalization, push history for discrete changes, no-op protection, page clamping only after deferred search results match the URL-derived search, and focus recovery only after history disconnects its prior target and no newer connected target claimed focus. Executable helper and source-integration coverage is attributed to npm run test:dsa-pattern-index; rendered Back/Forward and focus behavior remains unautomated.",
+        "Account-disabled and signed-out DSA workspaces resolve before private queries; signed-in progress, roadmap preference, and optional application context render only from one complete owner-scoped resolved snapshot, while query errors, error-with-data results, malformed wrappers, foreign progress, invalid persisted levels, or mismatched application data raise one sanitized private-data error instead of becoming empty progress, a default roadmap, or a missing application.",
         "Account-disabled DSA routes remain public and useful without inoperable sign-in or persistence handoffs, while browser-local activity is labeled honestly and enabled account modes retain their existing behavior.",
         "The shared activity control requires explicit account availability, retains the bounded 160-item fallback, and never applies a stale item result to a different DSA item."
       ],
@@ -352,6 +353,7 @@
         "features/preparation-progress/actions.ts",
         "lib/dsa/queries.ts",
         "lib/dsa/question-browser-url-state.ts",
+        "lib/dsa/workspace-state.ts",
         "lib/preparation-progress/activity-save.ts",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-dsa-languages.mjs",
