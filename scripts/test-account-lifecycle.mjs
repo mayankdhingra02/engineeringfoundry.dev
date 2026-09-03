@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { onboardingDestination } from "../lib/account/preferences.ts";
 import {
+  PREPARATION_PREFERENCES_PRIVATE_DATA_DOMAIN,
+  resolvePreparationPreferencesQuery,
+} from "../lib/account/preparation-preferences.ts";
+import {
   accountDeletionProofCookie,
   accountDeletionProofCookieName,
   createAccountDeletionProof,
@@ -9,10 +13,11 @@ import {
 } from "../lib/auth/account-deletion.ts";
 import { safeInternalPath } from "../lib/auth/redirects.ts";
 import { collectAccountExportRows, EXPORT_PAGE_SIZE } from "../lib/account/export-pagination.ts";
+import { PrivateDataUnavailableError } from "../lib/persistence/errors.ts";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage] = await Promise.all([
+const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage, preparationSettingsPage, preparationPreferencesQuery, preparationPreferencesForm] = await Promise.all([
   read("supabase/migrations/202608150001_create_account_lifecycle.sql"),
   read("features/account/actions.ts"),
   read("app/api/account/export/route.ts"),
@@ -29,6 +34,9 @@ const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm
   read("package.json"),
   read("app/page.tsx"),
   read("app/privacy/page.tsx"),
+  read("app/settings/preparation/page.tsx"),
+  read("lib/account/preparation-preferences-query.ts"),
+  read("features/account/account-forms.tsx"),
 ]);
 
 for (const marker of ["onboarding_completed_at", "preferred_role_level", "primary_preparation_focus", "complete_account_onboarding", "save_account_preparation_preferences"]) {
@@ -47,6 +55,58 @@ assert.equal(onboardingDestination({ hasUpcomingInterview: false, interviewSched
 assert.equal(onboardingDestination({ hasUpcomingInterview: false, interviewScheduled: false, focus: null, requestedPath: "/applications" }), "/applications");
 assert.equal(safeInternalPath("//evil.example/account"), "/dashboard");
 assert.equal(safeInternalPath("https://evil.example/account"), "/dashboard");
+
+const validPreferredRoleLevels = [null, "sde1", "sde2", "senior", "staff", "unsure"];
+const validPrimaryPreparationFocuses = [null, "dsa", "system_design", "behavioral", "applications", "unsure"];
+const validPreferredDsaLevels = [null, "sde1", "sde2", "sde3plus"];
+const expectedPreferenceError = `Your private ${PREPARATION_PREFERENCES_PRIVATE_DATA_DOMAIN} data is temporarily unavailable. Please try again.`;
+const expectPreferenceUnavailable = (input, label) => {
+  assert.throws(
+    () => resolvePreparationPreferencesQuery(input),
+    (error) => error instanceof PrivateDataUnavailableError
+      && error.name === "PrivateDataUnavailableError"
+      && error.message === expectedPreferenceError
+      && !error.message.includes("database detail"),
+    label,
+  );
+};
+
+assert.equal(resolvePreparationPreferencesQuery({ data: null, error: null }), null, "a successful zero-row preference response is not preserved as a genuine blank state");
+let validPreferenceCases = 0;
+for (const preferred_role_level of validPreferredRoleLevels) {
+  for (const primary_preparation_focus of validPrimaryPreparationFocuses) {
+    for (const dsa_level of validPreferredDsaLevels) {
+      const row = { preferred_role_level, primary_preparation_focus, dsa_level };
+      assert.deepEqual(resolvePreparationPreferencesQuery({ data: row, error: null }), row, "a valid preparation-preference enum/null combination was rejected");
+      validPreferenceCases += 1;
+    }
+  }
+}
+assert.equal(validPreferenceCases, 144, "the preparation-preference regression did not exercise the complete enum/null matrix");
+
+const representativePreference = { preferred_role_level: "senior", primary_preparation_focus: "system_design", dsa_level: "sde3plus" };
+expectPreferenceUnavailable({ data: representativePreference, error: { message: "database detail" } }, "a preference query error was ignored when row data was also present");
+for (const [label, input] of [
+  ["undefined root", undefined],
+  ["null root", null],
+  ["array root", []],
+  ["scalar root", "invalid"],
+  ["missing data member", { error: null }],
+  ["missing error member", { data: null }],
+  ["undefined data", { data: undefined, error: null }],
+  ["array data", { data: [], error: null }],
+  ["missing preferred role", { data: { primary_preparation_focus: null, dsa_level: null }, error: null }],
+  ["missing preparation focus", { data: { preferred_role_level: null, dsa_level: null }, error: null }],
+  ["missing DSA level", { data: { preferred_role_level: null, primary_preparation_focus: null }, error: null }],
+  ["unexpected persisted field", { data: { ...representativePreference, user_id: "private-user" }, error: null }],
+  ["invalid preferred role", { data: { ...representativePreference, preferred_role_level: "principal" }, error: null }],
+  ["wrong-case preferred role", { data: { ...representativePreference, preferred_role_level: "Senior" }, error: null }],
+  ["invalid preparation focus", { data: { ...representativePreference, primary_preparation_focus: "ml" }, error: null }],
+  ["invalid DSA level", { data: { ...representativePreference, dsa_level: "advanced" }, error: null }],
+  ["non-string enum", { data: { ...representativePreference, dsa_level: 2 }, error: null }],
+]) {
+  expectPreferenceUnavailable(input, `preference resolver accepted ${label}`);
+}
 
 const deletionProofSecret = "test-only-account-deletion-secret";
 const deletionProofIssuedAt = new Date("2026-09-02T12:00:00.000Z");
@@ -89,6 +149,24 @@ for (const marker of ["preferredRoleLevel", "interviewScheduled", "primaryPrepar
   assert.ok(onboardingForm.includes(marker), `onboarding form is missing ${marker}`);
 }
 assert.ok(onboardingPage.includes("profile.onboarding_complete"), "established users are not redirected away from onboarding");
+const availabilityCheck = preparationSettingsPage.indexOf("isAccountPlatformAvailable()");
+const memberGuard = preparationSettingsPage.indexOf('requireMemberProfile("/settings/preparation")');
+const preferenceRead = preparationSettingsPage.indexOf("getPreparationPreferences()");
+const preferenceForm = preparationSettingsPage.indexOf("<PreparationPreferencesForm preference={preference}");
+assert.ok(availabilityCheck >= 0 && memberGuard > availabilityCheck && preferenceRead > memberGuard && preferenceForm > preferenceRead, "preparation settings do not preserve availability -> member guard -> validated preference query -> form ordering");
+for (const forbidden of ["createSupabaseServerClient", '.from("user_preparation_preferences")', '.select("*")', "{ data: null }"]) {
+  assert.ok(!preparationSettingsPage.includes(forbidden), `preparation settings retained fail-open raw query/fallback: ${forbidden}`);
+}
+const preferenceActor = preparationPreferencesQuery.indexOf("getAuthenticatedActor()");
+const missingPreferenceActorGuard = preparationPreferencesQuery.indexOf("if (!actor)", preferenceActor);
+const missingPreferenceActorError = preparationPreferencesQuery.indexOf("throw new PrivateDataUnavailableError(PREPARATION_PREFERENCES_PRIVATE_DATA_DOMAIN)", missingPreferenceActorGuard);
+const preferenceTable = preparationPreferencesQuery.indexOf('.from("user_preparation_preferences")');
+const preferenceOwnerScope = preparationPreferencesQuery.indexOf('.eq("user_id", actor.user.id)');
+const preferenceResolver = preparationPreferencesQuery.indexOf("resolvePreparationPreferencesQuery(result)");
+assert.ok(preferenceActor >= 0 && missingPreferenceActorGuard > preferenceActor && missingPreferenceActorError > missingPreferenceActorGuard && preferenceTable > missingPreferenceActorError && preferenceOwnerScope > preferenceTable && preferenceResolver > preferenceOwnerScope, "preparation preferences do not reject a missing post-guard actor before resolving an exact owner-scoped result");
+assert.match(preparationPreferencesQuery, /\.select\("preferred_role_level,primary_preparation_focus,dsa_level"\)/, "preparation preference query no longer uses the exact editable projection");
+assert.ok(preparationPreferencesForm.includes("PreparationPreferences") && preparationPreferencesForm.includes("preference?.preferred_role_level") && preparationPreferencesForm.includes("preference?.primary_preparation_focus") && preparationPreferencesForm.includes("preference?.dsa_level"), "preparation settings form does not consume the validated preference projection");
+assert.match(actions, /save_account_preparation_preferences[\s\S]*preferred_role_level_value: role[\s\S]*primary_preparation_focus_value: focus[\s\S]*preferred_dsa_level_value: dsaLevel/, "preparation preference saving no longer uses the established authenticated RPC contract");
 assert.ok(dashboard.includes("preparationHasStarted") && dashboard.includes("getDashboardPrivateStartState()") && dashboard.includes("privateStartState.focus"), "dashboard lacks the validated preference-aware first-use transition");
 assert.ok(dashboardPrivateState.includes("resolveDashboardPrivateStartState") && dashboardPrivateState.includes('focus === null) return "unsure"'), "dashboard private-state resolver lost the explicit persisted-focus contract");
 assert.match(dashboardQueries, /getAuthenticatedActor\(\)[\s\S]*\.from\("user_preparation_preferences"\)[\s\S]*\.eq\("user_id", actor\.user\.id\)[\s\S]*resolveDashboardPrivateStartState/, "dashboard first-use preferences no longer flow through the owner-scoped resolver");

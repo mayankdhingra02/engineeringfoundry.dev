@@ -13,7 +13,7 @@ import {
   updateDisplayNameAction,
 } from "./actions";
 import { dsaLevelOptions, focusOptions, roleLevelOptions } from "@/lib/account/preferences";
-import type { UserPreparationPreferenceRow } from "@/lib/supabase/database.types";
+import type { PreparationPreferences } from "@/lib/account/preparation-preferences";
 import { initialAccountActionState } from "./state";
 
 function FormStatus({ state }: { state: typeof initialAccountActionState }) {
@@ -68,7 +68,7 @@ export function GlobalSignOutForm() {
   </form>;
 }
 
-export function PreparationPreferencesForm({ preference }: { preference: UserPreparationPreferenceRow | null }) {
+export function PreparationPreferencesForm({ preference }: { preference: PreparationPreferences | null }) {
   const [state, action, pending] = useActionState(savePreparationPreferencesAction, initialAccountActionState);
   return <form className="preparation-preferences-form" action={action}>
     <label className="account-field"><span>Preferred role level</span><select name="preferredRoleLevel" defaultValue={preference?.preferred_role_level ?? ""}><option value="">No preference</option>{roleLevelOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><small>Used outside application-specific preparation.</small></label>
