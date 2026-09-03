@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "fb6f61f3dc7335763a68ffeb5e78a86a09e753a2",
-  "repository_state_sha256": "84bcff18ec0c9eb6c1a9feaf9610028acdff75fbc40103ed54c274699bde6a7e",
+  "repository_sha": "a8b60c24c9cf5f1b8094b2ad5d91907979ce1660",
+  "repository_state_sha256": "c587b83879dfcccea7538d0351c85f681785982c6b5ec0666a2d7d1d2d9b3836",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1492,6 +1492,7 @@
       "acceptance_criteria": [
         "Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior.",
         "When public Supabase intake is configured, anonymous feedback remains available through the controlled submission boundary even while accounts are disabled; when it is unconfigured, Feedback renders a server-rendered unavailable state and public-channel warning without a form, submit control, or account-free intake promise, and Contact removes its private-feedback handoff.",
+        "Referral mode is derived from a validated URL value; explicit mode switches create traversable history, Back and Forward restore mode without persisting or exposing draft fields or emitting navigation-only analytics, invalid mode URLs canonicalize to the default, and focus recovery runs only when previously focused mode content becomes hidden and focus remains unclaimed, targeting a connected persistent mode selector.",
         "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes."
       ],
       "code_paths": [
@@ -1504,9 +1505,11 @@
         "app/sitemap.ts",
         "features/feedback/actions.ts",
         "features/feedback/feedback-form.tsx",
+        "features/referrals/referral-workspace.tsx",
         "features/resources/resource-directory.tsx",
         "lib/account-platform.ts",
         "lib/global-search.ts",
+        "lib/referrals/url-state.ts",
         "lib/resources/resource-directory-url-state.ts",
         "lib/supabase/public.ts",
         "scripts/smoke-public-routes.mjs",
@@ -1514,6 +1517,7 @@
         "scripts/test-global-search.mjs",
         "scripts/test-public-launch-integrity.mjs",
         "scripts/test-public-route-smoke.mjs",
+        "scripts/test-referral-privacy.mjs",
         "scripts/test-resource-directory.mjs"
       ],
       "content_paths": [],
@@ -1521,7 +1525,8 @@
       "id": "EF-SUP",
       "kind": "requirement-family",
       "known_gaps": [
-        "Employer-specific referral policy remains intentionally absent."
+        "Employer-specific referral policy remains intentionally absent.",
+        "Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated."
       ],
       "last_verified_at": "2026-09-02",
       "notes": null,

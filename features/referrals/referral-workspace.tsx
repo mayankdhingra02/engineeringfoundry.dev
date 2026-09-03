@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -17,9 +17,9 @@ import {
 import { referralGuidance, referralTemplates } from "@/data/referrals";
 import { siteConfig } from "@/config/site";
 import { track } from "@/lib/analytics";
+import { parseReferralMode, referralModeHref, type ReferralMode } from "@/lib/referrals/url-state";
 import type { ReferrerAvailability } from "@/types";
 
-type Mode = "request" | "referrer";
 type RequestDraft = {
   company: string;
   jobTitle: string;
@@ -145,29 +145,99 @@ function CopyButton({ text, label, onCopied }: { text: string; label: string; on
 }
 
 export function ReferralWorkspace() {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const initialMode: Mode = searchParams.get("mode") === "referrer" ? "referrer" : "request";
-  const [mode, setMode] = useState<Mode>(initialMode);
+  const queryString = searchParams.toString();
+  const mode = useMemo(() => parseReferralMode(queryString), [queryString]);
   const [requestDraft, setRequestDraft] = useState<RequestDraft>(emptyRequest);
   const [referrerDraft, setReferrerDraft] = useState<ReferrerDraft>(emptyReferrer);
   const [requestGenerated, setRequestGenerated] = useState(false);
   const [cardGenerated, setCardGenerated] = useState(false);
   const [requestChecks, setRequestChecks] = useState<Record<string, boolean>>({});
   const [reviewChecks, setReviewChecks] = useState<Record<string, boolean>>({});
+  const requestModeButtonRef = useRef<HTMLButtonElement>(null);
+  const referrerModeButtonRef = useRef<HTMLButtonElement>(null);
+  const requestPanelRef = useRef<HTMLDivElement>(null);
+  const referrerPanelRef = useRef<HTMLDivElement>(null);
+  const renderedModeRef = useRef<ReferralMode>(mode);
+  const renderedPathnameRef = useRef(pathname);
+  const pendingHistoryFocusFrame = useRef<number | null>(null);
   const opened = useRef(false);
+
+  useEffect(() => {
+    if (window.location.pathname !== pathname) return;
+    const canonicalHref = referralModeHref(pathname, mode, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (canonicalHref !== currentHref) {
+      window.history.replaceState(null, "", canonicalHref);
+    }
+  }, [mode, pathname, queryString]);
 
   useEffect(() => {
     if (opened.current) return;
     opened.current = true;
-    window.history.replaceState(null, "", `/referrals?mode=${initialMode}`);
-    if (initialMode === "request") track("referral_builder_opened", { mode: "request" });
+    if (mode === "request") track("referral_builder_opened", { mode: "request" });
     else track("referrer_toolkit_opened", { mode: "referrer" });
-  }, [initialMode]);
+  }, [mode]);
 
-  function changeMode(nextMode: Mode) {
+  useEffect(() => {
+    renderedModeRef.current = mode;
+    renderedPathnameRef.current = pathname;
+  }, [mode, pathname]);
+
+  useEffect(() => {
+    function recoverModeFocusAfterHistory() {
+      const previousMode = renderedModeRef.current;
+      const previousPathname = renderedPathnameRef.current;
+      const nextMode = parseReferralMode(window.location.search);
+
+      if (window.location.pathname !== previousPathname || nextMode === previousMode) return;
+
+      const previousPanel = previousMode === "request" ? requestPanelRef.current : referrerPanelRef.current;
+      const previousFocus = document.activeElement;
+      if (!(previousFocus instanceof HTMLElement) || !previousPanel?.contains(previousFocus)) return;
+
+      if (pendingHistoryFocusFrame.current !== null) {
+        window.cancelAnimationFrame(pendingHistoryFocusFrame.current);
+      }
+
+      pendingHistoryFocusFrame.current = window.requestAnimationFrame(() => {
+        pendingHistoryFocusFrame.current = null;
+        const settledMode = parseReferralMode(window.location.search);
+        if (window.location.pathname !== previousPathname || settledMode === previousMode) return;
+
+        const activeElement = document.activeElement;
+        const focusIsUnclaimed = !(activeElement instanceof HTMLElement)
+          || activeElement === document.body
+          || activeElement === document.documentElement
+          || !activeElement.isConnected
+          || activeElement === previousFocus
+          || previousPanel.contains(activeElement);
+        if (!focusIsUnclaimed) return;
+
+        const selectedModeButton = settledMode === "request" ? requestModeButtonRef.current : referrerModeButtonRef.current;
+        if (!selectedModeButton?.isConnected) return;
+        selectedModeButton.focus();
+      });
+    }
+
+    window.addEventListener("popstate", recoverModeFocusAfterHistory);
+    // Guarded focus recovery only runs for an actual same-route mode change.
+    return () => {
+      window.removeEventListener("popstate", recoverModeFocusAfterHistory);
+      if (pendingHistoryFocusFrame.current !== null) {
+        window.cancelAnimationFrame(pendingHistoryFocusFrame.current);
+        pendingHistoryFocusFrame.current = null;
+      }
+    };
+  }, []);
+
+  function changeMode(nextMode: ReferralMode) {
     if (nextMode === mode) return;
-    setMode(nextMode);
-    window.history.replaceState(null, "", `/referrals?mode=${nextMode}`);
+    const nextHref = referralModeHref(window.location.pathname, nextMode, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextHref === currentHref) return;
+    window.history.pushState(null, "", nextHref);
     if (nextMode === "request") track("referral_builder_opened", { mode: "request" });
     else track("referrer_toolkit_opened", { mode: "referrer" });
   }
@@ -196,10 +266,10 @@ export function ReferralWorkspace() {
 
   return <div className="referral-workspace">
     <div className="referral-mode-picker" role="group" aria-label="Referral tool">
-      <button type="button" aria-pressed={mode === "request"} className={mode === "request" ? "selected" : ""} onClick={() => changeMode("request")}>
+      <button ref={requestModeButtonRef} id="referral-mode-request" type="button" aria-controls="referral-request-panel" aria-pressed={mode === "request"} className={mode === "request" ? "selected" : ""} onClick={() => changeMode("request")}>
         <FileText size={20} aria-hidden="true" /><span><strong>Request builder</strong><small>Draft a request to share yourself</small></span>
       </button>
-      <button type="button" aria-pressed={mode === "referrer"} className={mode === "referrer" ? "selected" : ""} onClick={() => changeMode("referrer")}>
+      <button ref={referrerModeButtonRef} id="referral-mode-referrer" type="button" aria-controls="referral-referrer-panel" aria-pressed={mode === "referrer"} className={mode === "referrer" ? "selected" : ""} onClick={() => changeMode("referrer")}>
         <HandHeart size={20} aria-hidden="true" /><span><strong>Referrer toolkit</strong><small>Set boundaries and review consistently</small></span>
       </button>
     </div>
@@ -209,7 +279,7 @@ export function ReferralWorkspace() {
       <div><strong>Nothing you enter here is sent to Engineering Foundry or saved.</strong><p>Refreshing the page clears the draft. Leaving the page does too. Copy only what you choose to share.</p></div>
     </div>
 
-    {mode === "request" ? <>
+    <div ref={requestPanelRef} id="referral-request-panel" className="referral-mode-panel" role="region" aria-labelledby="referral-mode-request" hidden={mode !== "request"}>
       <section className="referral-tool-shell" aria-labelledby="request-builder-title">
         <div className="referral-tool-header"><div><span className="section-kicker">Request builder</span><h2 id="request-builder-title">Build a clear, specific request.</h2><p>Use any company and the exact role details. The generated packets stay in this browser until you leave or refresh.</p></div><button className="button button-ghost button-sm" type="button" onClick={clearDraft}><RotateCcw size={14} />Clear draft</button></div>
         <form className="referral-form" onSubmit={(event) => { event.preventDefault(); setRequestGenerated(true); }}>
@@ -245,7 +315,9 @@ export function ReferralWorkspace() {
         <article><span className="guidance-icon good"><CheckCircle2 size={19} /></span><h2>Good request etiquette</h2><GuidanceList items={referralGuidance.goodRequestBehavior} /></article>
         <article><span className="guidance-icon caution"><AlertTriangle size={19} /></span><h2>Patterns to avoid</h2><GuidanceList items={referralGuidance.poorRequestBehavior} /></article>
       </section>
-    </> : <>
+    </div>
+
+    <div ref={referrerPanelRef} id="referral-referrer-panel" className="referral-mode-panel" role="region" aria-labelledby="referral-mode-referrer" hidden={mode !== "referrer"}>
       <section className="referral-tool-shell" aria-labelledby="referrer-toolkit-title">
         <div className="referral-tool-header"><div><span className="section-kicker">Referrer toolkit</span><h2 id="referrer-toolkit-title">Define your availability and boundaries.</h2><p>Create a card you can share where you choose. It is not a public profile and does not enroll you in a matching service.</p></div><button className="button button-ghost button-sm" type="button" onClick={clearDraft}><RotateCcw size={14} />Clear draft</button></div>
         <form className="referral-form" onSubmit={(event) => { event.preventDefault(); setCardGenerated(true); }}>
@@ -273,7 +345,7 @@ export function ReferralWorkspace() {
       <section className="referral-decision-section" aria-labelledby="decision-title"><span className="section-kicker">Neutral workflow</span><h2 id="decision-title">A consistent way to decide</h2><p className="referral-section-note">Engineering Foundry provides this review aid but is not part of any final employer referral submission.</p><div className="referral-decision-flow">{referralGuidance.decisionSteps.map((item, index) => <article key={item.id}><span>{String(index + 1).padStart(2, "0")}</span><h3>{item.title}</h3><p>{item.text}</p></article>)}</div></section>
 
       <section className="referral-templates" aria-labelledby="templates-title"><span className="section-kicker">Response library</span><h2 id="templates-title">Decline or ask for specific context.</h2><p>These neutral templates protect the recipient&apos;s dignity and your boundaries. Personalize them before use.</p><div className="referral-template-grid">{referralTemplates.map((template) => <article key={template.id}><span>{template.kind === "decline" ? "Decline" : "More information"}</span><h3>{template.title}</h3><p>{template.body}</p><CopyButton text={template.body} label="Copy template" /></article>)}</div></section>
-    </>}
+    </div>
 
     <section className="referral-community-safety" aria-labelledby="community-safety-title">
       <div><ShieldCheck size={24} aria-hidden="true" /><span className="section-kicker">Community safety</span><h2 id="community-safety-title">Keep every interaction voluntary and professional.</h2><GuidanceList items={referralGuidance.communitySafety} /><a className="button button-secondary" href={siteConfig.discordUrl} target="_blank" rel="noopener noreferrer" onClick={() => track("referral_community_clicked", { placement: "referrals_page" })}>Discuss referral etiquette in the community <ExternalLink size={15} /></a></div>
