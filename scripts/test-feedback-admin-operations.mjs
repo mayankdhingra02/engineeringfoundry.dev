@@ -83,6 +83,55 @@ try {
   else process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED = originalAccountsEnabled;
 }
 for (const marker of ["useActionState", "role=\"alert\"", "role=\"status\"", "contact_consent", "5,000", "referenceId"]) assert.ok(feedbackForm.includes(marker), `feedback form is missing ${marker}`);
+for (const marker of [
+  'aria-describedby={state.fieldErrors?.category ? "feedback-category-error" : undefined}',
+  'aria-describedby={state.fieldErrors?.message ? "feedback-message-help feedback-message-error" : "feedback-message-help"}',
+  'aria-describedby={state.fieldErrors?.contact_email ? "feedback-contact-error" : undefined}',
+]) assert.ok(feedbackForm.includes(marker), `feedback form does not conditionally reference an existing description: ${marker}`);
+for (const marker of [
+  'id="feedback-category-error"',
+  'id="feedback-message-help"',
+  'id="feedback-message-error"',
+  'id="feedback-contact-error"',
+  'id="feedback-contact-consent"',
+  'aria-invalid={Boolean(state.fieldErrors?.contact_consent)}',
+  'aria-describedby={state.fieldErrors?.contact_consent ? "feedback-contact-consent-error" : undefined}',
+  'id="feedback-contact-consent-error"',
+]) assert.ok(feedbackForm.includes(marker), `feedback field/error linkage is missing ${marker}`);
+assert.ok(!feedbackForm.includes('aria-describedby="feedback-message-help feedback-message-error"'), "feedback message must not reference an absent error node before validation fails");
+
+for (const marker of [
+  "useEffect(() => {",
+  "if (handledStateRef.current === state) return;",
+  "if (state.status !== \"error\" || !state.fieldErrors || userResumedEditing) return;",
+  "{ error: state.fieldErrors.category, control: categoryRef.current }",
+  "{ error: state.fieldErrors.message, control: messageRef.current }",
+  "{ error: state.fieldErrors.contact_email, control: contactEmailRef.current }",
+  "{ error: state.fieldErrors.contact_consent, control: contactConsentRef.current }",
+  "].find(({ error, control }) => Boolean(error && control))?.control",
+  "firstInvalidControl?.focus()",
+  "}, [state]);",
+]) assert.ok(feedbackForm.includes(marker), `returned feedback validation state lacks its ordered first-invalid focus contract: ${marker}`);
+for (const marker of [
+  "const submissionInFlightRef = useRef(false);",
+  "const editedSinceSubmitRef = useRef(false);",
+  "onSubmitCapture={() => {\n      submissionInFlightRef.current = true;\n      editedSinceSubmitRef.current = false;\n    }}",
+  "onInputCapture={() => {\n      if (submissionInFlightRef.current) editedSinceSubmitRef.current = true;\n    }}",
+  "const userResumedEditing = editedSinceSubmitRef.current;\n    submissionInFlightRef.current = false;\n    editedSinceSubmitRef.current = false;",
+]) assert.ok(feedbackForm.includes(marker), `feedback submission/edit tracking is missing ${marker}`);
+const successFocusIndex = feedbackForm.indexOf('if (state.status === "success") {\n      receiptTitleRef.current?.focus();');
+const resumedEditingGuardIndex = feedbackForm.indexOf('if (state.status !== "error" || !state.fieldErrors || userResumedEditing) return;');
+assert.ok(successFocusIndex >= 0 && resumedEditingGuardIndex > successFocusIndex, "success receipt focus must remain unconditional while resumed editing suppresses only returned-error focus recovery");
+const categoryFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.category, control: categoryRef.current }");
+const messageFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.message, control: messageRef.current }");
+const emailFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.contact_email, control: contactEmailRef.current }");
+const consentFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.contact_consent, control: contactConsentRef.current }");
+assert.ok(categoryFocusIndex >= 0 && categoryFocusIndex < messageFocusIndex && messageFocusIndex < emailFocusIndex && emailFocusIndex < consentFocusIndex, "first-invalid focus order must follow the rendered category, message, email, and consent controls");
+for (const marker of ["ref={categoryRef}", "ref={messageRef}", "ref={contactEmailRef}", "ref={contactConsentRef}"]) assert.ok(feedbackForm.includes(marker), `feedback focus target is not attached: ${marker}`);
+
+assert.ok(successFocusIndex >= 0, "successful feedback state must focus its receipt heading after render");
+assert.ok(feedbackForm.includes('<h2 ref={receiptTitleRef} id="feedback-receipt-title" tabIndex={-1}>'), "feedback receipt heading must be programmatically focusable without entering the tab order");
+assert.ok(feedbackForm.includes('role="status" aria-live="polite" aria-atomic="true"'), "feedback receipt must announce as one polite atomic status update");
 assert.ok(publicFeedbackPage.includes("const feedbackAvailable = isSupabaseConfigured();"), "feedback route does not derive intake availability at the server boundary");
 assert.match(publicFeedbackPage, /feedbackAvailable \? <FeedbackForm \/> : <section/, "feedback route does not keep the live form behind the configured-intake branch");
 assert.ok(contactPage.includes("const feedbackAvailable = isSupabaseConfigured();"), "contact route does not derive private-feedback availability at the server boundary");
@@ -115,4 +164,4 @@ assert.ok(!Object.hasOwn(priorityCompanyGuides[0], "freshness"), "freshness oper
 
 assert.ok(STATIC_STEPS.some((step) => step.args?.includes("test:feedback-admin-operations")) && workflow.includes("npm run qualify:static"), "P0.8 static qualification is not in local and hosted CI parity");
 assert.ok(JSON.parse(packageJson).scripts["test:feedback-admin-operations"], "P0.8 test command is absent");
-console.log("PASS  P0.8 feedback, admin authorization, RLS/RPC boundaries, lifecycle semantics, company freshness, privacy, and CI parity hold.");
+console.log("PASS  P0.8 feedback, admin authorization, RLS/RPC boundaries, lifecycle semantics, source-level feedback focus semantics, company freshness, privacy, and CI parity hold. Actual browser focus remains future rendered coverage.");

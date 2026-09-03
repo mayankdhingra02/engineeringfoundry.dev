@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "bcbc1e06b810bef10ad699faed1393031d32a4ad",
-  "repository_state_sha256": "35b82a88aaee0718948945016bebb9368c96b8143ff7948b08bfd778ea733e81",
+  "repository_sha": "2f59510f9acd4df8e7f3966937628c668bb7e367",
+  "repository_state_sha256": "1f65dcf6bb47f99c76604b402921f78069d37f90411911ba98e6002f980b5a19",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1511,6 +1511,7 @@
       "acceptance_criteria": [
         "Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior.",
         "When public Supabase intake is configured, anonymous feedback remains available through the controlled submission boundary even while accounts are disabled; when it is unconfigured, Feedback renders a server-rendered unavailable state and public-channel warning without a form, submit control, or account-free intake promise, and Contact removes its private-feedback handoff.",
+        "The Feedback form conditionally links controls to present help and error descriptions, focuses the first invalid field after a returned server error only when the user has not resumed editing and made a newer focus claim, and moves focus to a polite atomic success receipt; this source-level contract is attributed to features/feedback/feedback-form.tsx and npm run test:feedback-admin-operations, while actual browser focus remains future rendered coverage.",
         "Referral mode is derived from a validated URL value; explicit mode switches create traversable history, Back and Forward restore mode without persisting or exposing draft fields or emitting navigation-only analytics, invalid mode URLs canonicalize to the default, and focus recovery runs only when previously focused mode content becomes hidden and focus remains unclaimed, targeting a connected persistent mode selector.",
         "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes."
       ],
