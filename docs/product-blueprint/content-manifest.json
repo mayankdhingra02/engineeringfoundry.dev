@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "2f59510f9acd4df8e7f3966937628c668bb7e367",
-  "repository_state_sha256": "1f65dcf6bb47f99c76604b402921f78069d37f90411911ba98e6002f980b5a19",
+  "repository_sha": "06518a3b766ce3a36fa95a8d52fd64f77abd69af",
+  "repository_state_sha256": "7e22e7765ad0cd0b6be4db9f33c439a74e8b2b0d162ff845b35205b07a7c9fdc",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -334,6 +334,7 @@
       "acceptance_criteria": [
         "Canonical questions, patterns, topics, routes, filters, and published language guides remain internally consistent.",
         "Every DSA topic handoff uses the canonical topic-map route with the selected canonical topic ID; unknown topic IDs fail closed without producing a misleading link.",
+        "The production Question Browser URL helper derives its allowlists from injected question and company catalogs, rejects malformed and duplicate scalar state, removes hidden progress filters while signed out, keeps fixed-company scope authoritative, serializes only an owner-resolved canonical application ID, and bounds search and pagination; lib/dsa/queries.ts validates application input before its owner-scoped query. The component source uses replacement history for active search and guarded canonicalization, push history for discrete changes, no-op protection, page clamping, and focus recovery only after history disconnects its prior target and no newer connected target claimed focus. Executable helper and source-integration coverage is attributed to npm run test:dsa-pattern-index; rendered Back/Forward and focus behavior remains unautomated.",
         "Account-disabled DSA routes remain public and useful without inoperable sign-in or persistence handoffs, while browser-local activity is labeled honestly and enabled account modes retain their existing behavior.",
         "The shared activity control requires explicit account availability, retains the bounded 160-item fallback, and never applies a stale item result to a different DSA item."
       ],
@@ -344,14 +345,17 @@
         "data/dsa/core-roadmap.ts",
         "features/dsa",
         "features/dsa/languages/interview-template.tsx",
+        "features/dsa/questions/question-browser.tsx",
         "features/dsa/strategy/pattern-reference.tsx",
         "features/dsa/strategy/stuck-recovery.tsx",
         "features/dsa/study-plans/study-plan-week.tsx",
         "features/preparation-progress/actions.ts",
         "lib/dsa/queries.ts",
+        "lib/dsa/question-browser-url-state.ts",
         "lib/preparation-progress/activity-save.ts",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-dsa-languages.mjs",
+        "scripts/test-dsa-pattern-index.mjs",
         "scripts/test-dsa-progress.mjs",
         "scripts/test-dsa-strategy.mjs",
         "scripts/test-dsa-study-plans.mjs",
