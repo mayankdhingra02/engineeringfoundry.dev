@@ -76,10 +76,11 @@ function BrowserCore({ questions, companies, mode, fixedCompanySlug, initialFilt
   const hasFilters = Boolean(filters.search || (!fixedCompanySlug && filters.company !== "all") || filters.difficulty !== "all" || filters.topics.length || filters.source !== "all" || filters.progress !== "all");
 
   useEffect(() => {
+    if (deferredSearch !== filters.search) return;
     if (mode === "full" && onFiltersChange && filters.page !== currentPage) {
       onFiltersChange(clampDsaQuestionBrowserPage(filters, filtered.length), "replace");
     }
-  }, [currentPage, filtered.length, filters, mode, onFiltersChange]);
+  }, [currentPage, deferredSearch, filtered.length, filters, mode, onFiltersChange]);
 
   function commit(patch: Partial<QuestionBrowserFilters>, resetPage = true, intent: BrowserHistoryIntent = "push") {
     const next = { ...filters, ...patch, page: resetPage ? 1 : (patch.page ?? filters.page) };

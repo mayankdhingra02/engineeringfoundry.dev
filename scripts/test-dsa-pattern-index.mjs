@@ -185,6 +185,7 @@ requireText(browser, "matchesDsaQuestionSearch(question, deferredSearch, company
 // browser-history behavior still require a real DOM/browser integration test.
 requireText(browser, "canonicalizeDsaQuestionBrowserUrlState(filters, context)", "Question browser does not canonicalize parsed URL state.");
 requireText(browser, "clampDsaQuestionBrowserPage(filters, filtered.length)", "Question browser does not replace an out-of-range result page with its bounded page.");
+requireText(browser, "if (deferredSearch !== filters.search) return;", "Question browser can overwrite a restored page using stale deferred search results.");
 requireText(browser, 'const searchIsActive = document.activeElement?.id === "dsa-question-browser-search";', "Guarded canonicalization does not preserve active search typing.");
 requireText(browser, 'if (href !== currentHref) window.history.replaceState(null, "", href);', "Direct or malformed URL state is not repaired with replacement history.");
 requireText(browser, 'onChange={(event) => commit({ search: event.target.value }, true, "search")}', "Question-browser search typing does not use replacement history.");
