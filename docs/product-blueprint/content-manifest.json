@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "c4981cfaf603810ecd24133564692d712c0c822c",
-  "repository_state_sha256": "1aa3d817334aa4509e3fb6193ede1161b889069bec32b20745735e252ed67c8f",
+  "repository_sha": "2191ee69e365522c32001c1be975d7c83b6ad91e",
+  "repository_state_sha256": "90b99ceed565acfd5d14df31e413f61bd86bebeb7c462e297d6ea0e09af29e4c",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1166,13 +1166,22 @@
     },
     {
       "acceptance_criteria": [
-        "Planning and round guidance preserve existing evidence boundaries and public handoffs."
+        "Planning and round guidance preserve existing evidence boundaries and public handoffs.",
+        "Owner-scoped round preparation counts preserve distinct ready, genuinely untouched, and unavailable states across Dashboard, Application Detail, and Interview Playbook; empty input resolves before actor work, a nonempty request without an actor or any failed count query cannot render zero, start-plan, or not-started claims, and the shared retry exposes guarded pending, live-status, and responsive source contracts. Only an explicit successful retry announces that preparation progress loaded, and its source-regressed focus recovery targets the connected success status after a frame only when the retry trigger owned focus and no newer focus claim exists; rendered focus behavior remains browser/manual validation."
       ],
       "code_paths": [
+        "app/applications/[id]/page.tsx",
+        "app/dashboard/page.tsx",
+        "app/globals.css",
         "app/interview-playbook",
         "app/interview-tips",
         "components/interview-playbook",
-        "lib/interview-playbook"
+        "components/preparation-counts-status.tsx",
+        "lib/interview-playbook",
+        "lib/interview-preparation/preparation-counts.ts",
+        "lib/interview-preparation/queries.ts",
+        "scripts/test-application-tracker.mjs",
+        "scripts/test-interview-preparation-hub.mjs"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
@@ -1210,9 +1219,11 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run test:application-tracker",
         "npm run test:interview-execution-taxonomy",
         "npm run test:interview-playbook-diagnostic",
-        "npm run test:interview-playbook-planning"
+        "npm run test:interview-playbook-planning",
+        "npm run test:interview-preparation-hub"
       ],
       "title": "Interview Playbook",
       "visual_ids": []
