@@ -36,6 +36,13 @@ export const DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS = [
   { route: "/ml-design/recommendation-system", marker: "Account saving is unavailable" },
 ];
 
+export const UNCONFIGURED_FEEDBACK_EXPECTATION = {
+  route: "/feedback",
+  marker: "Private feedback is unavailable in this configuration.",
+  publicWarning: "GitHub Issues are public. Do not include passwords, access tokens, personal data, confidential employer information, or private interview material.",
+  recovery: "Open GitHub Issues",
+};
+
 const ACCOUNT_ROUTES = [
   "/signin", "/signup", "/forgot-password", "/reset-password", "/onboarding", "/dashboard", "/settings/profile", "/applications", "/applications/new", "/applications/11111111-1111-4111-8111-111111111111", "/behavioral/workspace", "/behavioral/questions", "/behavioral/questions/new", "/behavioral/questions/beh-lead-01", "/behavioral/questions/beh-lead-01/answers/new", "/behavioral/questions/beh-lead-01/answers/11111111-1111-4111-8111-111111111111/edit", "/behavioral/stories", "/behavioral/stories/new", "/behavioral/stories/11111111-1111-4111-8111-111111111111",
 ];
@@ -84,7 +91,10 @@ function requestUrl(origin, route) {
   return `${origin}${route}`;
 }
 
-export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {}) {
+export async function runPublicRouteAssertions(origin, { fetchImpl = fetch, feedbackExpectation = "either" } = {}) {
+  if (!["configured", "unconfigured", "either"].includes(feedbackExpectation)) {
+    throw new Error("feedbackExpectation must be configured, unconfigured, or either.");
+  }
   const publicBodies = new Map();
   async function request(route, expectedStatus = 200, headers = undefined) {
     const response = await fetchImpl(requestUrl(origin, route), { redirect: "manual", headers });
@@ -163,10 +173,37 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch } = {
     if (!body.includes(marker)) throw new Error(`${route} lacks the disabled-account preparation state: ${marker}.`);
   }
 
+  const feedback = publicBodies.get(UNCONFIGURED_FEEDBACK_EXPECTATION.route) ?? (await request(UNCONFIGURED_FEEDBACK_EXPECTATION.route)).body;
+  const unsupportedFeedbackPromise = "You do not need an account, and feedback is never published.";
+  const feedbackUnavailable = feedback.includes(UNCONFIGURED_FEEDBACK_EXPECTATION.marker);
+  const feedbackHasForm = /<form\b/i.test(feedback);
+  const feedbackHasSubmitControl = /type=["']submit["']/i.test(feedback) || feedback.includes(">Send feedback <");
+  const feedbackHasAccountFreePromise = feedback.includes(unsupportedFeedbackPromise);
+  if (feedbackExpectation === "unconfigured" && !feedbackUnavailable) {
+    throw new Error("/feedback must render the explicit unconfigured state for this smoke configuration.");
+  }
+  if (feedbackExpectation === "configured" && feedbackUnavailable) {
+    throw new Error("/feedback must render the configured anonymous intake for this smoke configuration.");
+  }
+
   const contact = await request("/contact");
   if (/<form\b/i.test(contact.body)) throw new Error("Contact renders a disconnected form.");
   if (contact.body.includes("hello@engineeringfoundry.dev")) throw new Error("Contact renders an unconfigured mailbox.");
   for (const marker of ["Open Discord", "Open GitHub Issues"]) if (!contact.body.includes(marker)) throw new Error(`Contact lacks ${marker}.`);
+  if (feedbackUnavailable) {
+    for (const requiredMarker of [UNCONFIGURED_FEEDBACK_EXPECTATION.publicWarning, UNCONFIGURED_FEEDBACK_EXPECTATION.recovery]) {
+      if (!feedback.includes(requiredMarker)) throw new Error(`/feedback lacks the unconfigured feedback state: ${requiredMarker}`);
+    }
+    if (feedbackHasForm) throw new Error("/feedback renders a live form while feedback intake is unconfigured.");
+    if (feedbackHasSubmitControl) throw new Error("/feedback renders a live Send feedback control while feedback intake is unconfigured.");
+    if (feedbackHasAccountFreePromise) throw new Error(`/feedback exposes an unsupported account-free intake promise while feedback is unconfigured: ${unsupportedFeedbackPromise}`);
+    if (!contact.body.includes("Private website feedback is unavailable")) throw new Error("Contact lacks the unconfigured private-feedback state.");
+    if (contact.body.includes("Send private feedback")) throw new Error("Contact exposes a private-feedback CTA while feedback intake is unconfigured.");
+  } else {
+    if (!feedbackHasForm || !feedbackHasSubmitControl || !feedbackHasAccountFreePromise) throw new Error("/feedback renders neither a complete configured intake nor the explicit unconfigured state.");
+    if (contact.body.includes("Private website feedback is unavailable")) throw new Error("Contact exposes an unavailable-feedback claim while feedback intake is configured.");
+    if (!contact.body.includes("Send private feedback") || !contact.body.includes('href="/feedback"')) throw new Error("Contact lacks its private-feedback CTA while feedback intake is configured.");
+  }
 
   for (const route of ACCOUNT_ROUTES) {
     const { body } = await request(route);
@@ -236,7 +273,7 @@ export async function runPublicRouteSmoke({ args, env = process.env, fetchImpl =
   const { server, output } = startLocalServer({ port: configuration.port, env, spawnImpl });
   try {
     await waitForServer({ server, output, origin: configuration.origin, fetchImpl });
-    const result = await runPublicRouteAssertions(configuration.origin, { fetchImpl });
+    const result = await runPublicRouteAssertions(configuration.origin, { fetchImpl, feedbackExpectation: "unconfigured" });
     return { ...configuration, ...result };
   } finally {
     await stopLocalServer(server);
