@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { resolveRecentPasswordRecoverySubject } from "../lib/auth/password-recovery-claims.ts";
 
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -10,9 +11,9 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost):54321$/.test(apiUrl)) {
   throw new Error("Refusing to run qualification against a non-local Supabase project.");
 }
 
-function client() {
+function client(flowType = "implicit") {
   return createClient(apiUrl, publishableKey, {
-    auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false },
+    auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false, flowType },
   });
 }
 
@@ -49,6 +50,33 @@ async function confirmLatestEmail(email) {
   expect([302, 303].includes(verification.status), `confirmation endpoint returned ${verification.status}`);
 }
 
+async function capturedMessageIds(email) {
+  const list = await fetch(`${mailpitUrl}/api/v1/messages`).then((response) => response.json());
+  return new Set(
+    list.messages
+      .filter((candidate) => candidate.To.some((recipient) => recipient.Address === email))
+      .map((candidate) => candidate.ID),
+  );
+}
+
+async function waitForNewVerificationUrl(email, previousMessageIds) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const list = await fetch(`${mailpitUrl}/api/v1/messages`).then((response) => response.json());
+    const message = list.messages
+      .filter((candidate) => candidate.To.some((recipient) => recipient.Address === email))
+      .filter((candidate) => !previousMessageIds.has(candidate.ID))
+      .sort((left, right) => new Date(right.Created) - new Date(left.Created))[0];
+    if (message) {
+      const detail = await fetch(`${mailpitUrl}/api/v1/message/${message.ID}`).then((response) => response.json());
+      const verifyUrl = detail.Text.match(/https?:\/\/[^\s)]+\/auth\/v1\/verify\?[^\s)]+/)?.[0];
+      expect(verifyUrl, "verification URL was absent from the new Mailpit message");
+      return verifyUrl;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error("new recovery email was not captured by Mailpit");
+}
+
 async function ensureConfirmedUser(email) {
   let authClient = client();
   let signedIn = await authClient.auth.signInWithPassword({ email, password });
@@ -76,6 +104,38 @@ const a = await ensureConfirmedUser("qualification-a@example.test");
 const b = await ensureConfirmedUser("qualification-b@example.test");
 const c = await ensureConfirmedUser("qualification-incomplete@example.test");
 const anonymous = client();
+
+await check("password recovery issues a recent user-bound recovery AMR while password sign-in cannot elevate", async () => {
+  const email = "qualification-a@example.test";
+  const previousMessageIds = await capturedMessageIds(email);
+  const recoveryClient = client("pkce");
+  const recoveryRequest = await recoveryClient.auth.resetPasswordForEmail(email, {
+    redirectTo: "http://localhost:3000/auth/callback?next=%2Freset-password&flow=recovery",
+  });
+  expect(!recoveryRequest.error, `password recovery request failed: ${recoveryRequest.error?.message}`);
+
+  const verifyUrl = await waitForNewVerificationUrl(email, previousMessageIds);
+  const verification = await fetch(verifyUrl, { redirect: "manual" });
+  expect([302, 303].includes(verification.status), `recovery verification endpoint returned ${verification.status}`);
+  const location = verification.headers.get("location");
+  expect(location, "recovery verification response omitted its callback location");
+  const callback = new URL(location, verifyUrl);
+  expect(callback.pathname === "/auth/callback", `unexpected recovery callback path ${callback.pathname}`);
+  const code = callback.searchParams.get("code");
+  expect(code, "recovery callback omitted its PKCE code");
+
+  const exchanged = await recoveryClient.auth.exchangeCodeForSession(code);
+  expect(!exchanged.error && exchanged.data.session && exchanged.data.user, `recovery code exchange failed: ${exchanged.error?.message}`);
+  const recoveryClaims = await recoveryClient.auth.getClaims(exchanged.data.session.access_token);
+  expect(!recoveryClaims.error && recoveryClaims.data?.claims, `recovery claims verification failed: ${recoveryClaims.error?.message}`);
+  const recoverySubject = resolveRecentPasswordRecoverySubject(recoveryClaims.data.claims);
+  expect(recoverySubject === exchanged.data.user.id.toLowerCase(), "verified recovery claims were absent, stale, or bound to another user");
+
+  const passwordClaims = await a.authClient.auth.getClaims();
+  expect(!passwordClaims.error && passwordClaims.data?.claims, `password-session claims verification failed: ${passwordClaims.error?.message}`);
+  expect(resolveRecentPasswordRecoverySubject(passwordClaims.data.claims) === null, "an ordinary password session gained a recovery capability");
+  return "recovery AMR accepted; password AMR rejected";
+});
 
 await check("profile trigger created one row for each auth user", async () => {
   for (const account of [a, b, c]) {

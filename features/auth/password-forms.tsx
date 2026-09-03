@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { LoaderCircle, Mail, ShieldCheck } from "lucide-react";
 import { useActionState, useState } from "react";
+import { PASSWORD_REQUIREMENT } from "@/lib/auth/credentials";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updatePasswordAction, type PasswordActionState } from "./password-actions";
 import { PasswordInput } from "./password-input";
@@ -20,7 +21,6 @@ export function ForgotPasswordForm() {
     const email = String(new FormData(event.currentTarget).get("email") ?? "").trim();
     const callback = new URL("/auth/callback", window.location.origin);
     callback.searchParams.set("next", "/reset-password");
-    callback.searchParams.set("flow", "recovery");
     const { error: recoveryError } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: callback.toString() });
     if (recoveryError) { setError("We couldn't send reset instructions right now. Wait a moment and try again."); setPending(false); return; }
     // Deliberately return the same state whether or not the account exists.
@@ -33,5 +33,5 @@ export function ForgotPasswordForm() {
 export function ResetPasswordForm() {
   const [state, action, pending] = useActionState(updatePasswordAction, initialPasswordState);
   const hasError = state.status === "error";
-  return <div className="auth-card"><h1>Choose a new password.</h1><p className="auth-intro">Use at least eight characters and avoid reusing a password from another service.</p><form className="auth-form" action={action}><div className="form-group"><label htmlFor="new-password">New password</label><PasswordInput id="new-password" name="password" autoComplete="new-password" describedBy={hasError ? "password-update-error" : undefined} invalid={hasError} /></div><div className="form-group"><label htmlFor="confirm-new-password">Confirm new password</label><PasswordInput id="confirm-new-password" name="confirm_password" autoComplete="new-password" describedBy={hasError ? "password-update-error" : undefined} invalid={hasError} /></div>{hasError && <p className="form-error" id="password-update-error" role="alert">{state.message}</p>}<button className="button auth-submit" disabled={pending} type="submit">{pending ? <><LoaderCircle className="spin" size={16} />Updating…</> : "Update password"}</button></form></div>;
+  return <div className="auth-card"><h1>Choose a new password.</h1><p className="auth-intro">{PASSWORD_REQUIREMENT} Avoid reusing a password from another service.</p><form className="auth-form" action={action}><div className="form-group"><label htmlFor="new-password">New password</label><PasswordInput id="new-password" name="password" autoComplete="new-password" maxLength={128} describedBy={hasError ? "password-update-error" : undefined} invalid={hasError} /></div><div className="form-group"><label htmlFor="confirm-new-password">Confirm new password</label><PasswordInput id="confirm-new-password" name="confirm_password" autoComplete="new-password" maxLength={128} describedBy={hasError ? "password-update-error" : undefined} invalid={hasError} /></div>{hasError && <p className="form-error" id="password-update-error" role="alert">{state.message}</p>}<button className="button auth-submit" disabled={pending} type="submit">{pending ? <><LoaderCircle className="spin" size={16} />Updating…</> : "Update password"}</button></form></div>;
 }
