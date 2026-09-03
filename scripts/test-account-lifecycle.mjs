@@ -12,7 +12,7 @@ import { collectAccountExportRows, EXPORT_PAGE_SIZE } from "../lib/account/expor
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage] = await Promise.all([
+const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage] = await Promise.all([
   read("supabase/migrations/202608150001_create_account_lifecycle.sql"),
   read("features/account/actions.ts"),
   read("app/api/account/export/route.ts"),
@@ -20,6 +20,8 @@ const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm
   read("app/onboarding/page.tsx"),
   read("features/account/onboarding-form.tsx"),
   read("app/dashboard/page.tsx"),
+  read("lib/dashboard/private-state.ts"),
+  read("lib/dashboard/queries.ts"),
   read("components/account-control.tsx"),
   read("features/auth/auth-form.tsx"),
   read("features/auth/password-forms.tsx"),
@@ -87,7 +89,9 @@ for (const marker of ["preferredRoleLevel", "interviewScheduled", "primaryPrepar
   assert.ok(onboardingForm.includes(marker), `onboarding form is missing ${marker}`);
 }
 assert.ok(onboardingPage.includes("profile.onboarding_complete"), "established users are not redirected away from onboarding");
-assert.ok(dashboard.includes("preparationHasStarted") && dashboard.includes("primary_preparation_focus"), "dashboard lacks the preference-aware first-use transition");
+assert.ok(dashboard.includes("preparationHasStarted") && dashboard.includes("getDashboardPrivateStartState()") && dashboard.includes("privateStartState.focus"), "dashboard lacks the validated preference-aware first-use transition");
+assert.ok(dashboardPrivateState.includes("resolveDashboardPrivateStartState") && dashboardPrivateState.includes('focus === null) return "unsure"'), "dashboard private-state resolver lost the explicit persisted-focus contract");
+assert.match(dashboardQueries, /getAuthenticatedActor\(\)[\s\S]*\.from\("user_preparation_preferences"\)[\s\S]*\.eq\("user_id", actor\.user\.id\)[\s\S]*resolveDashboardPrivateStartState/, "dashboard first-use preferences no longer flow through the owner-scoped resolver");
 assert.ok(dashboard.indexOf('!preparationHasStarted') < dashboard.indexOf('className="pipeline-summary"'), "new users see zero-value summaries before the first-use action");
 
 assert.match(actions, /String\(form\.get\("confirmation"\)[\s\S]*!== "DELETE"/, "deletion lacks exact confirmation");
