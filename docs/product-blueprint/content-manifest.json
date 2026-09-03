@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "8e80771033a1d96526785d5c96dd703bdcd79625",
-  "repository_state_sha256": "c3cb4e1c001dc6a7981dffc24954f73b01432fe4a8d57037759e3ab17dddcbee",
+  "repository_sha": "1cecf6b84cbe2e62552e864e7de59b4a9839e702",
+  "repository_state_sha256": "a20676b6cb771bab24fbd7f13021899f26af852ea4874581dab010839a21e9fc",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -956,13 +956,16 @@
     {
       "acceptance_criteria": [
         "Local practice packets and self-review keep private session material within documented boundaries.",
-        "Validated public configuration follows direct links and history while private session material never enters shared URLs and is retired when configuration changes."
+        "Validated public configuration follows direct links and history while private session material never enters shared URLs and is retired when configuration changes.",
+        "Mock review persistence accepts only exact, canonical catalog-backed session input before account availability, actor lookup, or RPC work; client-side source contracts reject incomplete reviews, prevent duplicate saves, preserve newer edits and sessions from stale results, expose accessible pending and result status, and emit saved-review analytics only after confirmed persistence using the request's canonical identifiers. Executable parser and source-integration coverage is attributed to npm run test:mock-interview-review."
       ],
       "code_paths": [
         "app/mock-interviews",
         "components/mock-interview-lab.tsx",
         "data/mock-interviews",
+        "lib/mock-interviews/review-input.ts",
         "lib/mock-interviews/url-state.ts",
+        "scripts/test-mock-interview-review.mjs",
         "scripts/test-practice-url-state.mjs"
       ],
       "content_paths": [
@@ -997,6 +1000,7 @@
       "status": "partial",
       "test_commands": [
         "npm run test:mock-content-validator",
+        "npm run test:mock-interview-review",
         "npm run test:practice-url-state",
         "npm run validate:mock-content"
       ],

@@ -74,7 +74,14 @@ for (const event of ["dsa_practice_started", "system_design_practice_started", "
 assert.ok(docs.includes("first useful action") && docs.includes("never mastery"), "first useful action and activity semantics must remain explicit");
 assert.ok(home.includes('track("continuation_presented"') && home.includes('track("continuation_selected"'), "continuation instrumentation is missing");
 assert.ok(home.includes('track("study_plan_resumed"') && read("components/save-study-plan-control.tsx").includes('track("study_plan_activated"'), "saved-plan activation/resume instrumentation is missing");
-assert.ok(mock.includes('if (result.ok) track("mock_review_saved"'), "mock completion must wait for a successful persisted review");
+const mockSaveStart = mock.indexOf("async function savePracticeReview()");
+const mockSaveEnd = mock.indexOf("function trackGuidance", mockSaveStart);
+const mockSave = mock.slice(mockSaveStart, mockSaveEnd);
+const mockPersistenceIndex = mockSave.indexOf("await saveMockInterviewReview");
+const mockAnalyticsIndex = mockSave.indexOf('if (result.ok) track("mock_review_saved"');
+const mockStaleUiGuardIndex = mockSave.indexOf("savingGeneration !== sessionGeneration.current");
+assert.ok(mockPersistenceIndex >= 0 && mockPersistenceIndex < mockAnalyticsIndex && mockAnalyticsIndex < mockStaleUiGuardIndex, "mock completion analytics must follow confirmed persistence with the request snapshot even when a stale response cannot settle current UI");
+assert.equal((mockSave.match(/track\("mock_review_saved"/g) ?? []).length, 1, "mock review persistence must keep exactly one successful analytics emission point");
 assert.ok(preparationActivity.includes('next === "completed" && outcome.persisted') && preparationActivity.includes("persistence: outcome.persistence") && lldActivity.includes('if (!complete) track("low_level_design_activity_recorded"'), "activity completion must require a resolved confirmed persistence outcome");
 assert.equal((preparationActivity.match(/trackAnalytics\("preparation_activity_recorded"/g) ?? []).length, 1, "shared preparation activity must keep exactly one post-persistence analytics emission point");
 assert.match(preparationActivity, /writeLocalPreparationProgress\(window\.localStorage, updated\);\s*window\.dispatchEvent\(new CustomEvent\(preparationProgressEvent\)\)/, "browser-local preparation events must follow a verified storage write");

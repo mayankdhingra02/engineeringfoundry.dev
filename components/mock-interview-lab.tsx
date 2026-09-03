@@ -52,6 +52,13 @@ import { saveMockInterviewReview } from "@/app/mock-interviews/actions";
 const ratings = ["Strong", "Developing", "Needs attention"] as const;
 type Rating = (typeof ratings)[number];
 type TimerState = "idle" | "running" | "paused";
+type SaveState = "idle" | "saving" | "saved" | "failed" | "dirty" | "stale-saved";
+
+const defaultSaveMessage = "Not saved automatically.";
+const missingRatingMessage = "Add at least one rating before saving this private review.";
+const unconfirmedSaveMessage = "We could not confirm whether your review was saved. Check your connection before trying again.";
+const dirtyReviewMessage = "Your latest changes are not saved.";
+const staleSavedReviewMessage = "Your earlier review was saved. Save again to include your latest changes.";
 
 // Next can retain client-state snapshots for native history entries. Keep the
 // privacy epoch outside those snapshots so a traversed entry cannot revive an
@@ -165,10 +172,14 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
   const [notes, setNotes] = useState({ strength: "", improvement: "", followUp: "" });
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const [linkCopyState, setLinkCopyState] = useState<"idle" | "copied" | "failed">("idle");
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveMessage, setSaveMessage] = useState(defaultSaveMessage);
   const sessionId = useRef<string | null>(null);
   const startedAt = useRef<string | null>(null);
   const sessionGeneration = useRef(0);
+  const reviewRevision = useRef(0);
+  const saveRequestSequence = useRef(0);
+  const pendingSaveRequestId = useRef<number | null>(null);
   const trackedGuidance = useRef(new Set<string>());
   const pendingHistoryFocusCleanup = useRef<(() => void) | null>(null);
 
@@ -189,8 +200,12 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
     setCopyState("idle");
     setLinkCopyState("idle");
     setSaveState("idle");
+    setSaveMessage(defaultSaveMessage);
     sessionId.current = null;
     startedAt.current = null;
+    reviewRevision.current = 0;
+    saveRequestSequence.current += 1;
+    pendingSaveRequestId.current = null;
   }, []);
 
   useEffect(() => {
@@ -271,17 +286,55 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
     requestAnimationFrame(() => document.querySelector("#session-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
+  function markReviewEdited() {
+    reviewRevision.current += 1;
+    if (saveState === "saved" || saveState === "failed") {
+      setSaveState("dirty");
+      setSaveMessage(dirtyReviewMessage);
+    }
+  }
+
   async function savePracticeReview() {
+    if (pendingSaveRequestId.current !== null) return;
     const ratingsForSave = Object.entries(marks).map(([dimension_id, rating]) => ({ dimension_id, rating }));
-    if (!accountPlatformAvailable || !ratingsForSave.length || !sessionId.current || !startedAt.current) { setSaveState("failed"); return; }
+    if (!ratingsForSave.length) {
+      setSaveState("failed");
+      setSaveMessage(missingRatingMessage);
+      return;
+    }
+    if (!accountPlatformAvailable || !sessionId.current || !startedAt.current) return;
     const savingGeneration = sessionGeneration.current;
     const savingSessionId = sessionId.current;
     const savingStartedAt = startedAt.current;
+    const savingReviewRevision = reviewRevision.current;
+    const requestId = saveRequestSequence.current + 1;
+    saveRequestSequence.current = requestId;
+    pendingSaveRequestId.current = requestId;
     setSaveState("saving");
-    const result = await saveMockInterviewReview({ sessionId: savingSessionId, track: selectedPlan.track, mode, planId: selectedPlan.id, promptId: selectedPlan.content_reference.id, rubricId: selectedPlan.rubric_id, startedAt: savingStartedAt, elapsedSeconds, strength: notes.strength, improvement: notes.improvement, followUp: notes.followUp, ratings: ratingsForSave });
-    if (result.ok) track("mock_review_saved", analyticsProperties(selectedPlan, mode));
-    if (savingGeneration !== sessionGeneration.current || savingSessionId !== sessionId.current) return;
-    setSaveState(result.ok ? "saved" : "failed");
+    setSaveMessage("Saving private review…");
+    try {
+      const result = await saveMockInterviewReview({ sessionId: savingSessionId, track: selectedPlan.track, mode, planId: selectedPlan.id, promptId: selectedPlan.content_reference.id, rubricId: selectedPlan.rubric_id, startedAt: savingStartedAt, elapsedSeconds, strength: notes.strength, improvement: notes.improvement, followUp: notes.followUp, ratings: ratingsForSave });
+      if (result.ok) track("mock_review_saved", analyticsProperties(selectedPlan, mode));
+      if (savingGeneration !== sessionGeneration.current || savingSessionId !== sessionId.current || pendingSaveRequestId.current !== requestId) return;
+      if (!result.ok) {
+        setSaveState("failed");
+        setSaveMessage(result.error);
+        return;
+      }
+      if (savingReviewRevision !== reviewRevision.current) {
+        setSaveState("stale-saved");
+        setSaveMessage(staleSavedReviewMessage);
+        return;
+      }
+      setSaveState("saved");
+      setSaveMessage(result.message);
+    } catch {
+      if (savingGeneration !== sessionGeneration.current || savingSessionId !== sessionId.current || pendingSaveRequestId.current !== requestId) return;
+      setSaveState("failed");
+      setSaveMessage(unconfirmedSaveMessage);
+    } finally {
+      if (pendingSaveRequestId.current === requestId) pendingSaveRequestId.current = null;
+    }
   }
 
   function trackGuidance(section: string, open: boolean) {
@@ -355,10 +408,10 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
       {mode === "solo" ? <details className="mock-guidance" onToggle={(event) => trackGuidance("solo_guidance", event.currentTarget.open)}><summary><span><Sparkles size={18} /></span><div><strong>Reveal solo practice guidance</strong><small>Open only after you have made an initial attempt.</small></div></summary><ul>{revealGuidance(selectedPlan).map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></details> : <details className="mock-guidance mock-interviewer-packet" onToggle={(event) => trackGuidance("interviewer_packet", event.currentTarget.open)}><summary><span><MessageSquareText size={18} /></span><div><strong>Open interviewer packet</strong><small>Candidate: hand the screen to your peer before opening.</small></div></summary><div className="mock-interviewer-body"><section><h3>Follow-ups and facilitation</h3><ul>{selectedPlan.interviewer_instructions.map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul></section><section><h3>Observe these dimensions</h3><ul>{rubric.dimensions.map((dimension) => <li key={dimension.id}><strong>{dimension.label}</strong><span>{dimension.description}</span></li>)}</ul></section><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></div></details>}
 
       <section className="mock-feedback"><SectionHeading eyebrow="Qualitative reflection" title={mode === "solo" ? "Review your reasoning, not a predicted outcome." : "Give specific feedback without pretending to make a hiring decision."} description={rubric.disclaimer} />
-        <p className="session-only-banner"><ShieldCheck size={17} /><span><strong>Private until you save.</strong> Ratings and notes stay in browser memory until you explicitly save this review. Saved ratings are self-report evidence; saved reflections remain private and never determine evidence.</span></p>
-        <div className="mock-rubric">{rubric.dimensions.map((dimension) => <fieldset key={dimension.id}><legend><strong>{dimension.label}</strong><span>{dimension.description}</span></legend><div>{ratings.map((rating) => <label key={rating}><input type="radio" name={`rubric-${dimension.id}`} value={rating} checked={marks[dimension.id] === rating} onChange={() => setMarks((current) => ({ ...current, [dimension.id]: rating }))} /><span><i aria-hidden="true" />{rating}</span></label>)}</div></fieldset>)}</div>
-        <div className="mock-notes"><label><span>Strength</span><textarea value={notes.strength} onChange={(event) => setNotes((current) => ({ ...current, strength: event.target.value }))} placeholder="What worked well?" /></label><label><span>One improvement</span><textarea value={notes.improvement} onChange={(event) => setNotes((current) => ({ ...current, improvement: event.target.value }))} placeholder="What is one concrete adjustment?" /></label><label><span>Follow-up practice</span><textarea value={notes.followUp} onChange={(event) => setNotes((current) => ({ ...current, followUp: event.target.value }))} placeholder="What should the next session focus on?" /></label></div>
-        <div className="mock-feedback-actions"><button type="button" className="button" onClick={copyFeedback}><Clipboard size={15} />Copy feedback</button>{accountPlatformAvailable && <button type="button" className="button button-secondary" onClick={savePracticeReview} disabled={saveState === "saving"}><ShieldCheck size={15} />{saveState === "saving" ? "Saving review…" : "Save practice review"}</button>}<span role="status">{!accountPlatformAvailable ? "Private saving is unavailable in this public configuration. Copy feedback to keep it yourself." : saveState === "saved" ? "Saved privately. Your review remains self-reported." : saveState === "failed" ? "Add at least one rating and sign in to save this private review." : "Not saved automatically."}</span><span role="status">{copyState === "copied" ? "Feedback copied to your clipboard." : copyState === "failed" ? "Clipboard access failed; your review is still available here." : "Notes are private and never used to determine evidence."}</span></div>
+        <p className="session-only-banner"><ShieldCheck size={17} /><span>{accountPlatformAvailable ? <><strong>Private until you save.</strong> Ratings and notes stay in browser memory until you explicitly save this review. Saved ratings are self-report evidence; saved reflections remain private and never determine evidence.</> : <><strong>Private in this session.</strong> Ratings and notes stay in browser memory and are not sent to an account service in this configuration. Copy feedback to keep them yourself.</>}</span></p>
+        <div className="mock-rubric">{rubric.dimensions.map((dimension) => <fieldset key={dimension.id}><legend><strong>{dimension.label}</strong><span>{dimension.description}</span></legend><div>{ratings.map((rating) => <label key={rating}><input type="radio" name={`rubric-${dimension.id}`} value={rating} checked={marks[dimension.id] === rating} onChange={() => { markReviewEdited(); setMarks((current) => ({ ...current, [dimension.id]: rating })); }} /><span><i aria-hidden="true" />{rating}</span></label>)}</div></fieldset>)}</div>
+        <div className="mock-notes"><label><span>Strength</span><textarea value={notes.strength} maxLength={5000} onChange={(event) => { markReviewEdited(); setNotes((current) => ({ ...current, strength: event.target.value })); }} placeholder="What worked well?" /></label><label><span>One improvement</span><textarea value={notes.improvement} maxLength={5000} onChange={(event) => { markReviewEdited(); setNotes((current) => ({ ...current, improvement: event.target.value })); }} placeholder="What is one concrete adjustment?" /></label><label><span>Follow-up practice</span><textarea value={notes.followUp} maxLength={5000} onChange={(event) => { markReviewEdited(); setNotes((current) => ({ ...current, followUp: event.target.value })); }} placeholder="What should the next session focus on?" /></label></div>
+        <div className="mock-feedback-actions"><button type="button" className="button" onClick={copyFeedback}><Clipboard size={15} />Copy feedback</button>{accountPlatformAvailable && <button type="button" className="button button-secondary" onClick={savePracticeReview} aria-disabled={saveState === "saving"} aria-describedby="mock-review-save-status"><ShieldCheck size={15} />{saveState === "saving" ? "Saving review…" : "Save practice review"}</button>}<span id="mock-review-save-status" role="status" aria-live="polite" aria-atomic="true">{!accountPlatformAvailable ? "Private saving is unavailable in this public configuration. Copy feedback to keep it yourself." : saveMessage}</span><span role="status">{copyState === "copied" ? "Feedback copied to your clipboard." : copyState === "failed" ? "Clipboard access failed; your review is still available here." : "Notes are private and never used to determine evidence."}</span></div>
       </section>
     </div></section>}
 

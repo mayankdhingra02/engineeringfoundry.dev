@@ -93,7 +93,11 @@ assert.ok(!/useState\([^)]*searchParams|get\("(?:track|problem|mode)"\)/.test(mo
 assert.ok(!mockComponent.includes("key={queryString}"), "Mock history reconciliation must not remount the interactive subtree.");
 assert.ok(read("app/mock-interviews/page.tsx").includes("isAccountPlatformAvailable()"), "Mock private-save controls must receive the account-platform boundary.");
 const mockAction = read("app/mock-interviews/actions.ts");
-assert.ok(mockAction.includes("if (!isAccountPlatformAvailable())") && mockAction.indexOf("if (!isAccountPlatformAvailable())") < mockAction.indexOf("getAuthenticatedActor()"), "The Mock save action must enforce account availability before reading an actor or writing a review.");
+const mockParseIndex = mockAction.indexOf("const parsed = parseMockInterviewReviewInput(input);");
+const mockAvailabilityIndex = mockAction.indexOf("if (!isAccountPlatformAvailable())");
+const mockActorIndex = mockAction.indexOf("getAuthenticatedActor()", mockAvailabilityIndex);
+const mockRpcIndex = mockAction.indexOf('actor.supabase.rpc("save_mock_interview_review"');
+assert.ok(mockParseIndex >= 0 && mockParseIndex < mockAvailabilityIndex && mockAvailabilityIndex < mockActorIndex && mockActorIndex < mockRpcIndex, "The Mock save action must parse unknown input before enforcing account availability, reading an actor, or writing a review.");
 const model = read("docs/mock-interview-model.md");
 assert.ok(model.includes("Nothing is saved automatically") && model.includes("owner-scoped Supabase tables"), "Mock privacy documentation must distinguish unsaved browser state from explicit private persistence.");
 assert.ok(!model.includes("No migrations, tables, saved sessions"), "Mock documentation must not deny implemented owner-scoped persistence.");

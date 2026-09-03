@@ -15,6 +15,7 @@
     "test:content-validator": "node scripts/test-content-validator.mjs",
     "test:interview-content-validator": "node scripts/test-interview-content-validator.mjs",
     "test:mock-content-validator": "node scripts/test-mock-content-validator.mjs",
+    "test:mock-interview-review": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-mock-interview-review.mjs",
     "test:referral-privacy": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-referral-privacy.mjs",
     "test:challenge-privacy": "node scripts/test-challenge-privacy.mjs",
     "test:recognition-integrity": "node scripts/test-recognition-integrity.mjs",

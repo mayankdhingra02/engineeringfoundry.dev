@@ -12,7 +12,7 @@ export const STATIC_STEPS = [
   npmStep("lint", "ESLint"),
   npmStep("typecheck", "TypeScript"),
   ...[
-    "test:content-validator", "test:interview-content-validator", "test:mock-content-validator",
+    "test:content-validator", "test:interview-content-validator", "test:mock-content-validator", "test:mock-interview-review",
     "test:referral-privacy", "test:challenge-privacy", "test:recognition-integrity",
     "test:experience-privacy", "test:experience-integrity", "test:interview-experiences-v1", "test:public-route-smoke",
     "test:public-launch-integrity", "test:auth-foundation", "test:application-tracker",
