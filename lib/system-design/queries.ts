@@ -2,7 +2,13 @@ import "server-only";
 
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
-import { asSystemDesignAttempt, progressBySystemDesignItem } from "@/lib/system-design/workspace";
+import { PrivateDataUnavailableError } from "@/lib/persistence/errors";
+import {
+  isSystemDesignAttemptId,
+  resolveSystemDesignAttemptQuery,
+  SYSTEM_DESIGN_ATTEMPT_PRIVATE_DATA_DOMAIN,
+} from "@/lib/system-design/attempt-query";
+import { progressBySystemDesignItem } from "@/lib/system-design/workspace";
 
 const summaryColumns = "id,problem_id,application_id,title,status,confidence,first_practiced_at,last_practiced_at,created_at,updated_at";
 
@@ -42,11 +48,13 @@ export async function getSystemDesignItemState(itemId: string, itemType: "concep
 
 export async function getSystemDesignAttempt(attemptId: string) {
   if (!isAccountPlatformAvailable()) return null;
+  if (!isSystemDesignAttemptId(attemptId)) {
+    throw new PrivateDataUnavailableError(SYSTEM_DESIGN_ATTEMPT_PRIVATE_DATA_DOMAIN);
+  }
   const actor = await getAuthenticatedActor();
-  if (!actor) return null;
-  const { data, error } = await actor.supabase.from("system_design_attempts").select("*").eq("id", attemptId).eq("user_id", actor.user.id).maybeSingle();
-  if (error || !data) return null;
-  return asSystemDesignAttempt(data);
+  if (!actor) throw new PrivateDataUnavailableError(SYSTEM_DESIGN_ATTEMPT_PRIVATE_DATA_DOMAIN);
+  const result = await actor.supabase.from("system_design_attempts").select("*").eq("id", attemptId).eq("user_id", actor.user.id).maybeSingle();
+  return resolveSystemDesignAttemptQuery(result);
 }
 
 export async function getSystemDesignProblemAttempts(problemId: string) {
