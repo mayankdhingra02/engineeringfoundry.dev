@@ -41,10 +41,13 @@ const supportingPaths = [
 ];
 
 export default async function HomePage() {
-  const accountDeleted = isAccountDeletionProof((await cookies()).get(accountDeletionProofCookieName)?.value);
+  const accountDeleted = isAccountDeletionProof(
+    (await cookies()).get(accountDeletionProofCookieName)?.value,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
+  );
   return (
     <>
-      {accountDeleted && <div className="account-deleted-notice" role="status"><div className="page-width"><ShieldCheck size={18} aria-hidden="true" /><p><strong>Your account was deleted.</strong> Your private Engineering Foundry data and authentication identity have been removed.</p></div></div>}
+      {accountDeleted && <div className="account-deleted-notice" role="status"><div className="page-width"><ShieldCheck size={18} aria-hidden="true" /><p><strong>Your account was deleted.</strong> Your authentication identity and account-owned records were removed. Previously submitted feedback remains private operational data with its account link removed.</p></div></div>}
       <section className="home-entry">
         <div className="page-width">
           <div className="home-entry-heading">
