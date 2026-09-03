@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "6670b8d1d427d1f008ba18b6211b24ddac960ac0",
-  "repository_state_sha256": "a7b2ecf46af59bed8182ff08b1ab06dfce86d2c8ad967d71d6fbeb55f5b34742",
+  "repository_sha": "bcbc1e06b810bef10ad699faed1393031d32a4ad",
+  "repository_state_sha256": "35b82a88aaee0718948945016bebb9368c96b8143ff7948b08bfd778ea733e81",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -545,12 +545,14 @@
     {
       "acceptance_criteria": [
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
-        "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item."
+        "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
+        "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection."
       ],
       "code_paths": [
         "app/globals.css",
         "app/layout.tsx",
         "app/page.tsx",
+        "app/u/[username]/page.tsx",
         "components/global-search.tsx",
         "components/header.tsx",
         "components/home-entry-experience.tsx",
@@ -560,6 +562,8 @@
         "features/preparation-progress/actions.ts",
         "features/preparation-progress/plan-actions.ts",
         "lib/auth/account-deletion.ts",
+        "lib/auth/public-profile-query.ts",
+        "lib/auth/queries.ts",
         "lib/global-search.ts",
         "lib/header-navigation.ts",
         "lib/home-track-catalog.ts",
@@ -568,6 +572,7 @@
         "scripts/smoke-public-routes.mjs",
         "scripts/test-account-lifecycle.mjs",
         "scripts/test-analytics-launch-evidence.mjs",
+        "scripts/test-auth-foundation.mjs",
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-unified-progress.mjs"
       ],
@@ -600,6 +605,7 @@
         "npm run lint",
         "npm run test:account-lifecycle",
         "npm run test:analytics-launch-evidence",
+        "npm run test:auth-foundation",
         "npm run test:global-search",
         "npm run test:header-navigation",
         "npm run test:homepage-entry",
