@@ -227,6 +227,15 @@ expectError(validateSynthetic({
   }],
   sourceEntries: [{ file: "components/comment-route.tsx", source: '<a href="/api/comment-only">Comment only</a>' }],
 }), /does not resolve to an application page or public asset/);
+for (const [routeName, routeSource] of [
+  ["default-get", "export default function GET() { return new Response(); }"],
+  ["type-only-get", 'export type { GET } from "./types";'],
+]) {
+  expectError(validateSynthetic({
+    routeEntries: [{ file: `app/api/${routeName}/route.ts`, source: routeSource }],
+    sourceEntries: [{ file: `components/${routeName}.tsx`, source: `<a href="/api/${routeName}">Not navigable</a>` }],
+  }), /does not resolve to an application page or public asset/);
+}
 expectError(validateSynthetic({ resourceSource: '[{"url":"http://example.com"}]' }), /prohibited external-link pattern/);
 expectValid(validateSynthetic({ discordUrl: "https://discord.gg/invite" }));
 for (const discordUrl of [

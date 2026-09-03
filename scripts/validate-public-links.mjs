@@ -241,18 +241,21 @@ function extractLiteralInternalLinks(source, file) {
 function hasNavigationRouteMethod(source) {
   const sourceFile = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const isNavigationName = (name) => name === "GET" || name === "HEAD";
-  const isExported = (node) => ts.canHaveModifiers(node)
-    && (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
+  const hasModifier = (node, kind) => ts.canHaveModifiers(node)
+    && (ts.getModifiers(node) ?? []).some((modifier) => modifier.kind === kind);
 
   return sourceFile.statements.some((statement) => {
     if (ts.isFunctionDeclaration(statement)) {
-      return isExported(statement) && isNavigationName(statement.name?.text);
+      return hasModifier(statement, ts.SyntaxKind.ExportKeyword)
+        && !hasModifier(statement, ts.SyntaxKind.DefaultKeyword)
+        && isNavigationName(statement.name?.text);
     }
-    if (ts.isVariableStatement(statement) && isExported(statement)) {
+    if (ts.isVariableStatement(statement) && hasModifier(statement, ts.SyntaxKind.ExportKeyword)) {
       return statement.declarationList.declarations.some((declaration) => ts.isIdentifier(declaration.name) && isNavigationName(declaration.name.text));
     }
     if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
-      return statement.exportClause.elements.some((element) => isNavigationName(element.name.text));
+      return !statement.isTypeOnly
+        && statement.exportClause.elements.some((element) => !element.isTypeOnly && isNavigationName(element.name.text));
     }
     return false;
   });
