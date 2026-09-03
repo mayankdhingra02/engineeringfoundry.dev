@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "44bd69b7c3f0dbd11edad47bfd412e454f902364",
-  "repository_state_sha256": "ce98d2895ae879ca19fde6efa4f66bfc6e747e939526252a2c9d5ddace9ea6b9",
+  "repository_sha": "6467972e8fe3859f414fd0e70770d085f2cecbe4",
+  "repository_state_sha256": "4720dcee37374dd741a6747802f5a776b5113bc0964bfb6027dfdd7178d42a8d",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -554,10 +554,12 @@
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
         "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values.",
         "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed.",
-        "Uncaught private Server Component failures reach the accessible temporary application error state, whose explicit Try again control uses Next 16's refetching retry contract; this source regression does not claim rendered browser execution."
+        "Uncaught private Server Component failures reach the accessible temporary application error state, whose explicit Try again control uses Next 16's refetching retry contract; this source regression does not claim rendered browser execution.",
+        "Dashboard first-use focus and Behavioral story count come only from complete owner-scoped query results; query errors, malformed result shapes, invalid persisted focus values, and invalid counts surface one sanitized private-data error before first-use copy instead of defaulting to unsure or zero."
       ],
       "code_paths": [
         "app/api/preparation/continuation/route.ts",
+        "app/dashboard/page.tsx",
         "app/error.tsx",
         "app/globals.css",
         "app/layout.tsx",
@@ -578,6 +580,8 @@
         "lib/auth/public-profile-query.ts",
         "lib/auth/queries.ts",
         "lib/auth/validation.ts",
+        "lib/dashboard/private-state.ts",
+        "lib/dashboard/queries.ts",
         "lib/global-search.ts",
         "lib/header-navigation.ts",
         "lib/home-track-catalog.ts",
@@ -590,6 +594,7 @@
         "scripts/smoke-public-routes.mjs",
         "scripts/test-account-lifecycle.mjs",
         "scripts/test-analytics-launch-evidence.mjs",
+        "scripts/test-application-tracker.mjs",
         "scripts/test-auth-foundation.mjs",
         "scripts/test-homepage-entry.mjs",
         "scripts/test-public-launch-integrity.mjs",
@@ -630,6 +635,7 @@
         "npm run qualify:auth-local",
         "npm run test:account-lifecycle",
         "npm run test:analytics-launch-evidence",
+        "npm run test:application-tracker",
         "npm run test:auth-foundation",
         "npm run test:global-search",
         "npm run test:header-navigation",

@@ -17,12 +17,12 @@ import { attentionLabel, applicationNeedsAttention, isActiveApplication } from "
 import { formatCountdown, formatInterviewDate } from "@/lib/applications/format";
 import { getDashboardPipeline } from "@/lib/applications/queries";
 import { getReadyBehavioralStoryCount } from "@/lib/behavioral/queries";
+import { getDashboardPrivateStartState } from "@/lib/dashboard/queries";
 import { getDsaDashboardSummary } from "@/lib/dsa/queries";
 import { modulesForRound } from "@/lib/interview-preparation/model";
 import { getPreparationCounts } from "@/lib/interview-preparation/queries";
 import { getRoundReminderStates } from "@/lib/interview-calendar/queries";
 import { getSystemDesignDashboardSummary } from "@/lib/system-design/queries";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { PrimaryPreparationFocus } from "@/lib/account/preferences";
 
 export const metadata: Metadata = { title: "Dashboard", description: "Your private interview pipeline.", robots: { index: false, follow: false } };
@@ -46,24 +46,23 @@ const gettingStartedPaths: Record<PrimaryPreparationFocus, { title: string; desc
 
 export default async function DashboardPage() {
   if (!isAccountPlatformAvailable()) return <AccountUnavailable />;
-  const { user, profile } = await requireMemberProfile("/dashboard");
+  const { profile } = await requireMemberProfile("/dashboard");
   const pipeline = await getDashboardPipeline(4);
   const behavioralRound = pipeline.upcoming.find((round) => modulesForRound(round.round_type).includes("behavioral"));
   const codingRound = pipeline.upcoming.find((round) => modulesForRound(round.round_type).includes("dsa"));
   const systemDesignRound = pipeline.upcoming.find((round) => modulesForRound(round.round_type).includes("system-design"));
-  const supabase = await createSupabaseServerClient();
-  const [readyStoryCount, dsaSummary, systemDesignSummary, preparationCounts, reminderStates, preferenceResult, storyCountResult] = await Promise.all([behavioralRound ? getReadyBehavioralStoryCount() : 0, getDsaDashboardSummary(), getSystemDesignDashboardSummary(), getPreparationCounts(pipeline.upcoming.map((round) => round.id)), getRoundReminderStates(pipeline.upcoming.map((round) => round.id)), supabase ? supabase.from("user_preparation_preferences").select("preferred_role_level,primary_preparation_focus").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }), supabase ? supabase.from("behavioral_stories").select("id", { count: "exact", head: true }).eq("user_id", user.id) : Promise.resolve({ count: 0 })]);
+  const [readyStoryCount, dsaSummary, systemDesignSummary, preparationCounts, reminderStates, privateStartState] = await Promise.all([behavioralRound ? getReadyBehavioralStoryCount() : 0, getDsaDashboardSummary(), getSystemDesignDashboardSummary(), getPreparationCounts(pipeline.upcoming.map((round) => round.id)), getRoundReminderStates(pipeline.upcoming.map((round) => round.id)), getDashboardPrivateStartState()]);
   const active = pipeline.applications.filter((application) => isActiveApplication(application.status)).length;
   const offers = pipeline.applications.filter((application) => ["Offer", "Accepted"].includes(application.status)).length;
   const attention = pipeline.applications.filter((application) => applicationNeedsAttention(application));
   const name = profile.display_name ?? profile.username ?? "Engineer";
   const preparationHasStarted = Boolean(
     pipeline.applications.length
-    || (storyCountResult.count ?? 0)
+    || privateStartState.storyCount
     || (dsaSummary && (dsaSummary.completed || dsaSummary.attempted || dsaSummary.review))
     || (systemDesignSummary && (systemDesignSummary.practiced || systemDesignSummary.drafts || systemDesignSummary.review || systemDesignSummary.comfortable)),
   );
-  const focus = (preferenceResult.data?.primary_preparation_focus ?? "unsure") as PrimaryPreparationFocus;
+  const focus = privateStartState.focus;
   const firstPath = gettingStartedPaths[focus];
   const summaries = [
     { label: "Active applications", value: active, icon: BriefcaseBusiness },

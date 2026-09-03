@@ -6,6 +6,11 @@ register(new URL("./typescript-path-loader.mjs", import.meta.url));
 
 const { parseApplicationForm, parseRoundForm } = await import("../lib/applications/validation.ts");
 const { applicationNeedsAttention, attentionLabel, isActiveApplication, isActiveInterviewProcess, isUpcomingInterview, roundProgress } = await import("../lib/applications/insights.ts");
+const {
+  DASHBOARD_PRIVATE_DATA_DOMAIN,
+  resolveDashboardPrivateStartState,
+} = await import("../lib/dashboard/private-state.ts");
+const { PrivateDataUnavailableError } = await import("../lib/persistence/errors.ts");
 
 const failures = [];
 const read = (file) => readFileSync(file, "utf8");
@@ -43,11 +48,82 @@ const validation = read("lib/applications/validation.ts");
 for (const marker of ["validHttpUrl", "validEmail", "zonedDateTimeToUtc", "duration_minutes", "FieldErrors"]) requireText(validation, marker, `Server validation lacks ${marker}.`);
 
 const dashboard = read("app/dashboard/page.tsx");
+const dashboardPrivateState = read("lib/dashboard/private-state.ts");
+const dashboardQueries = read("lib/dashboard/queries.ts");
 for (const marker of ["getDashboardPipeline", "Your interview pipeline", "Upcoming interviews", "Applications needing attention", "Add an application", "formatCountdown"]) requireText(dashboard, marker, `Dashboard tracker integration lacks ${marker}.`);
+requireText(dashboard, "getDashboardPrivateStartState()", "Dashboard does not load its first-use facts through the owner-derived private query.");
+requireText(dashboard, "privateStartState.storyCount", "Dashboard does not use the validated story count for first-use truth.");
+requireText(dashboard, "privateStartState.focus", "Dashboard does not use the validated preparation focus.");
+if (dashboard.indexOf("getDashboardPrivateStartState()") > dashboard.indexOf("const preparationHasStarted")) failures.push("Dashboard decides first-use state before its private facts are checked.");
+prohibit(dashboard, /createSupabaseServerClient|\.from\(["'](?:user_preparation_preferences|behavioral_stories)["']\)|preferenceResult|storyCountResult/, "Dashboard bypasses the owner-derived private-state query with a direct raw read.");
+prohibit(dashboard, /\bas PrimaryPreparationFocus\b|primary_preparation_focus\s*\?\?|storyCountResult\.count\s*\?\?/, "Dashboard casts or defaults an unchecked private focus/count result.");
+requireText(dashboardQueries, "getAuthenticatedActor()", "Dashboard private-state query does not derive its owner from the authenticated actor.");
+if ((dashboardQueries.match(/\.eq\("user_id", actor\.user\.id\)/g) ?? []).length !== 2) failures.push("Dashboard preference and story-count reads are not both owner-scoped.");
+requireText(dashboardQueries, "return resolveDashboardPrivateStartState({ preferenceResult, storyCountResult })", "Dashboard query does not delegate complete results to the strict resolver.");
+requireText(dashboardPrivateState, "preferenceResult.error !== null || storyCountResult.error !== null", "Dashboard resolver does not fail closed before interpreting returned private data.");
 requireText(dashboard, "<PreparationCountsStatus status={preparationCounts.status} />", "Dashboard does not expose the shared preparation-count recovery state.");
 if (!/preparationCounts\.status === "unavailable" \? "Task count unavailable\." : count \? `\$\{count\.completed\}\/\$\{count\.total\} tasks` : "Start plan"/.test(dashboard)) failures.push("Dashboard can still present unavailable preparation counts as a fresh plan.");
 requireText(detail, "<PreparationCountsStatus status={preparationCounts.status} />", "Application Detail does not expose the shared preparation-count recovery state.");
 if (!/preparationCounts\.status === "unavailable" \? "Task count unavailable\." : count \? `\$\{count\.completed\} of \$\{count\.total\} tasks complete` : "Build a focused preparation plan"/.test(detail)) failures.push("Application Detail can still present unavailable preparation counts as an untouched plan.");
+
+const dashboardResults = (data, count) => ({
+  preferenceResult: { data, error: null },
+  storyCountResult: { count, error: null },
+});
+for (const focus of ["dsa", "system_design", "behavioral", "applications", "unsure"]) {
+  assert.deepEqual(
+    resolveDashboardPrivateStartState(dashboardResults({ primary_preparation_focus: focus }, 0)),
+    { focus, storyCount: 0 },
+    `${focus} remains an allowed persisted dashboard focus`,
+  );
+}
+assert.deepEqual(resolveDashboardPrivateStartState(dashboardResults(null, 7)), { focus: "unsure", storyCount: 7 }, "a genuine absent preference resolves to unsure without erasing a positive story count");
+assert.deepEqual(resolveDashboardPrivateStartState(dashboardResults({ primary_preparation_focus: null }, 0)), { focus: "unsure", storyCount: 0 }, "a persisted null focus resolves to unsure with a genuine zero story count");
+
+const dashboardUnavailableMessage = "Your private dashboard data is temporarily unavailable. Please try again.";
+const privateOwnerToken = "33333333-3333-4333-8333-333333333333";
+function expectDashboardUnavailable(input, label) {
+  let caught = null;
+  try {
+    resolveDashboardPrivateStartState(input);
+  } catch (error) {
+    caught = error;
+  }
+  assert.ok(caught instanceof PrivateDataUnavailableError, `${label} must raise PrivateDataUnavailableError`);
+  assert.equal(caught.name, "PrivateDataUnavailableError", `${label} must retain the stable private-data error name`);
+  assert.equal(caught.message, dashboardUnavailableMessage, `${label} must use the exact sanitized dashboard message`);
+  assert.ok(!caught.message.includes("user_preparation_preferences") && !caught.message.includes(privateOwnerToken), `${label} must not expose database or owner detail`);
+}
+
+expectDashboardUnavailable({
+  preferenceResult: { data: { primary_preparation_focus: "dsa" }, error: { message: `user_preparation_preferences unavailable for ${privateOwnerToken}` } },
+  storyCountResult: { count: 8, error: null },
+}, "preference query error with otherwise valid data");
+expectDashboardUnavailable({
+  preferenceResult: { data: { primary_preparation_focus: "behavioral" }, error: null },
+  storyCountResult: { count: 8, error: { message: `behavioral_stories unavailable for ${privateOwnerToken}` } },
+}, "story-count query error with otherwise valid data");
+
+for (const [label, input] of [
+  ["null root result", null],
+  ["array root result", []],
+  ["missing nested results", {}],
+  ["null preference result", { preferenceResult: null, storyCountResult: { count: 0, error: null } }],
+  ["null story-count result", { preferenceResult: { data: null, error: null }, storyCountResult: null }],
+  ["missing preference error member", { preferenceResult: { data: null }, storyCountResult: { count: 0, error: null } }],
+  ["missing story-count error member", { preferenceResult: { data: null, error: null }, storyCountResult: { count: 0 } }],
+]) expectDashboardUnavailable(input, label);
+
+for (const invalidFocus of ["DSA", "company_research", "", 1, [], {}, { primary_preparation_focus: "dsa", user_id: privateOwnerToken }]) {
+  const data = typeof invalidFocus === "object" && invalidFocus !== null && !Array.isArray(invalidFocus)
+    ? invalidFocus
+    : { primary_preparation_focus: invalidFocus };
+  expectDashboardUnavailable(dashboardResults(data, 0), `invalid persisted focus ${JSON.stringify(invalidFocus)}`);
+}
+for (const invalidCount of [null, 1.5, -1, Number.MAX_SAFE_INTEGER + 1, "1", NaN, Infinity]) {
+  expectDashboardUnavailable(dashboardResults({ primary_preparation_focus: "dsa" }, invalidCount), `invalid story count ${String(invalidCount)}`);
+}
+assert.equal(DASHBOARD_PRIVATE_DATA_DOMAIN, "dashboard", "dashboard failures use the fixed sanitized private-data domain");
 
 const css = read("app/globals.css");
 for (const marker of [".tracker-workspace", ".tracker-table-wrap", ".tracker-mobile-list", ".tracker-timeline", "@media (max-width: 800px)"]) requireText(css, marker, `Tracker responsive styling lacks ${marker}.`);
