@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "7fd3c4542e7d3da2f1a067d48c1ca878992fa3c8",
-  "repository_state_sha256": "bcb09a3958852a63e01070f114353730afc6a92c1857d641345e1e39b879d10d",
+  "repository_sha": "392d9dc94da8d79703bb62ac67bc514ec7c00e38",
+  "repository_state_sha256": "ae247bae1f18325632de0f8642a550149f8161e35072080ff2177f288491b548",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -551,7 +551,8 @@
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
-        "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values."
+        "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values.",
+        "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed."
       ],
       "code_paths": [
         "app/globals.css",
@@ -578,13 +579,16 @@
         "lib/home-track-catalog.ts",
         "lib/preparation-progress/activity-save.ts",
         "lib/preparation-progress/plan-save.ts",
+        "lib/public-route-inventory.ts",
         "scripts/qualify-auth-local.mjs",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-account-lifecycle.mjs",
         "scripts/test-analytics-launch-evidence.mjs",
         "scripts/test-auth-foundation.mjs",
+        "scripts/test-public-links.mjs",
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-unified-progress.mjs",
+        "scripts/validate-public-links.mjs",
         "supabase/migrations/202608240001_harden_profile_professional_links.sql",
         "supabase/tests/database/auth_profile_hardening.test.sql"
       ],
@@ -623,6 +627,7 @@
         "npm run test:header-navigation",
         "npm run test:homepage-entry",
         "npm run test:public-launch-integrity",
+        "npm run test:public-links",
         "npm run test:public-route-smoke",
         "npm run test:unified-progress",
         "npm run typecheck",
@@ -1528,7 +1533,8 @@
         "When public Supabase intake is configured, anonymous feedback remains available through the controlled submission boundary even while accounts are disabled; when it is unconfigured, Feedback renders a server-rendered unavailable state and public-channel warning without a form, submit control, or account-free intake promise, and Contact removes its private-feedback handoff.",
         "The Feedback form conditionally links controls to present help and error descriptions, focuses the first invalid field after a returned server error only when the user has not resumed editing and made a newer focus claim, and moves focus to a polite atomic success receipt; this source-level contract is attributed to features/feedback/feedback-form.tsx and npm run test:feedback-admin-operations, while actual browser focus remains future rendered coverage.",
         "Referral mode is derived from a validated URL value; explicit mode switches create traversable history, Back and Forward restore mode without persisting or exposing draft fields or emitting navigation-only analytics, invalid mode URLs canonicalize to the default, and focus recovery runs only when previously focused mode content becomes hidden and focus remains unclaimed, targeting a connected persistent mode selector.",
-        "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes."
+        "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes.",
+        "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed."
       ],
       "code_paths": [
         "app/challenges",
@@ -1544,6 +1550,7 @@
         "features/resources/resource-directory.tsx",
         "lib/account-platform.ts",
         "lib/global-search.ts",
+        "lib/public-route-inventory.ts",
         "lib/referrals/url-state.ts",
         "lib/resources/resource-directory-url-state.ts",
         "lib/supabase/public.ts",
@@ -1551,9 +1558,11 @@
         "scripts/test-feedback-admin-operations.mjs",
         "scripts/test-global-search.mjs",
         "scripts/test-public-launch-integrity.mjs",
+        "scripts/test-public-links.mjs",
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-referral-privacy.mjs",
-        "scripts/test-resource-directory.mjs"
+        "scripts/test-resource-directory.mjs",
+        "scripts/validate-public-links.mjs"
       ],
       "content_paths": [],
       "gap_inventory_ids": [],
@@ -1590,6 +1599,7 @@
         "npm run test:global-search",
         "npm run test:homepage-entry",
         "npm run test:public-launch-integrity",
+        "npm run test:public-links",
         "npm run test:public-route-smoke",
         "npm run test:referral-privacy",
         "npm run test:resource-directory",
