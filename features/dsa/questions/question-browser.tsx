@@ -1,61 +1,31 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, FilterX, Search, SlidersHorizontal, X } from "lucide-react";
 import type { DSACompany, DSAInterviewQuestion, DSAQuestionSourceType } from "@/data/dsa/interview-prep";
 import type { DsaProgressMap } from "@/lib/dsa/progress";
 import { matchesDsaQuestionSearch } from "@/lib/dsa/question-search";
+import {
+  canonicalizeDsaQuestionBrowserUrlState,
+  clampDsaQuestionBrowserPage,
+  createDsaQuestionBrowserUrlContext,
+  defaultDsaQuestionBrowserUrlState,
+  dsaQuestionBrowserHref,
+  dsaQuestionBrowserTopicSlug,
+  DSA_QUESTION_BROWSER_SEARCH_LIMIT,
+  parseDsaQuestionBrowserUrlState,
+  type DsaQuestionBrowserUrlState,
+} from "@/lib/dsa/question-browser-url-state";
 import { QuestionTable } from "./question-table";
 
-export interface QuestionBrowserFilters {
-  search: string;
-  company: string;
-  difficulty: string;
-  topics: string[];
-  source: string;
-  progress: string;
-  page: number;
-  pageSize: number;
-}
-
-const defaultFilters: QuestionBrowserFilters = { search: "", company: "all", difficulty: "all", topics: [], source: "all", progress: "all", page: 1, pageSize: 25 };
-
-function filterSlug(value: string) {
-  return value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
+export type QuestionBrowserFilters = DsaQuestionBrowserUrlState;
+type BrowserHistoryIntent = "search" | "replace" | "push";
 
 function sourceLabel(type: DSAQuestionSourceType) {
   if (type === "leetcode") return "LeetCode";
   if (type === "leetcode-ca") return "LeetCode.ca";
   return "Other / original";
-}
-
-function parseFilters(params: URLSearchParams): QuestionBrowserFilters {
-  const pageSize = Number(params.get("pageSize"));
-  return {
-    search: params.get("q") ?? "",
-    company: params.get("company") ?? "all",
-    difficulty: params.get("difficulty") ?? "all",
-    topics: (params.get("topic") ?? "").split(",").filter(Boolean),
-    source: params.get("source") ?? "all",
-    progress: params.get("progress") ?? "all",
-    page: Math.max(1, Number(params.get("page")) || 1),
-    pageSize: [25, 50, 100].includes(pageSize) ? pageSize : 25,
-  };
-}
-
-function filtersToParams(filters: QuestionBrowserFilters) {
-  const params = new URLSearchParams();
-  if (filters.search) params.set("q", filters.search);
-  if (filters.company !== "all") params.set("company", filters.company);
-  if (filters.difficulty !== "all") params.set("difficulty", filters.difficulty.toLowerCase());
-  if (filters.topics.length) params.set("topic", filters.topics.join(","));
-  if (filters.source !== "all") params.set("source", filters.source);
-  if (filters.progress !== "all") params.set("progress", filters.progress);
-  if (filters.page > 1) params.set("page", String(filters.page));
-  if (filters.pageSize !== 25) params.set("pageSize", String(filters.pageSize));
-  return params;
 }
 
 function QuestionStats({ questions }: { questions: DSAInterviewQuestion[] }) {
@@ -68,14 +38,14 @@ function TopicQuickFilters({ topics, selected, onToggle }: { topics: Array<{ tit
   return <div className="dsa-topic-quick-filters" aria-label="Quick topic filters"><div>{primary.map((topic) => <button type="button" className={selected.includes(topic.slug) ? "active" : undefined} aria-pressed={selected.includes(topic.slug)} onClick={() => onToggle(topic.slug)} key={topic.slug}>{topic.title}<span>{topic.count}</span></button>)}{remaining.length > 0 && <details><summary>More</summary><div>{remaining.map((topic) => <button type="button" className={selected.includes(topic.slug) ? "active" : undefined} aria-pressed={selected.includes(topic.slug)} onClick={() => onToggle(topic.slug)} key={topic.slug}>{topic.title}<span>{topic.count}</span></button>)}</div></details>}</div></div>;
 }
 
-function BrowserCore({ questions, companies, mode, fixedCompanySlug, initialFilters = defaultFilters, filters: controlledFilters, onFiltersChange, progress = {}, signedIn = false, accountPlatformAvailable, applicationId }: {
+function BrowserCore({ questions, companies, mode, fixedCompanySlug, initialFilters = defaultDsaQuestionBrowserUrlState, filters: controlledFilters, onFiltersChange, progress = {}, signedIn = false, accountPlatformAvailable, applicationId }: {
   questions: DSAInterviewQuestion[]; companies: DSACompany[]; mode: "preview" | "full"; fixedCompanySlug?: string;
-  initialFilters?: QuestionBrowserFilters; filters?: QuestionBrowserFilters; onFiltersChange?: (filters: QuestionBrowserFilters) => void; progress?: DsaProgressMap; signedIn?: boolean; accountPlatformAvailable: boolean; applicationId?: string;
+  initialFilters?: QuestionBrowserFilters; filters?: QuestionBrowserFilters; onFiltersChange?: (filters: QuestionBrowserFilters, intent: BrowserHistoryIntent) => void; progress?: DsaProgressMap; signedIn?: boolean; accountPlatformAvailable: boolean; applicationId?: string;
 }) {
   const [localFilters, setLocalFilters] = useState<QuestionBrowserFilters>({ ...initialFilters, company: fixedCompanySlug ?? initialFilters.company });
-  const filters = controlledFilters === undefined
+  const filters = useMemo(() => controlledFilters === undefined
     ? localFilters
-    : { ...controlledFilters, company: fixedCompanySlug ?? controlledFilters.company };
+    : { ...controlledFilters, company: fixedCompanySlug ?? controlledFilters.company }, [controlledFilters, fixedCompanySlug, localFilters]);
   const [advancedOpen, setAdvancedOpen] = useState((controlledFilters ?? initialFilters).source !== "all");
   const deferredSearch = useDeferredValue(filters.search);
 
@@ -83,7 +53,7 @@ function BrowserCore({ questions, companies, mode, fixedCompanySlug, initialFilt
   const scopedQuestions = useMemo(() => fixedCompanySlug ? questions.filter((question) => question.companies.some((association) => association.companySlug === fixedCompanySlug)) : questions, [fixedCompanySlug, questions]);
   const topicMetadata = useMemo(() => {
     const counts = new Map<string, { title: string; count: number }>();
-    scopedQuestions.forEach((question) => question.topics.forEach((title) => { const slug = filterSlug(title); const current = counts.get(slug); counts.set(slug, { title, count: (current?.count ?? 0) + 1 }); }));
+    scopedQuestions.forEach((question) => question.topics.forEach((title) => { const slug = dsaQuestionBrowserTopicSlug(title); const current = counts.get(slug); counts.set(slug, { title, count: (current?.count ?? 0) + 1 }); }));
     return [...counts.entries()].map(([slug, value]) => ({ slug, ...value })).sort((a, b) => b.count - a.count || a.title.localeCompare(b.title));
   }, [scopedQuestions]);
   const sourceTypes = useMemo(() => [...new Set(scopedQuestions.flatMap((question) => question.sources.map((source) => source.type)))], [scopedQuestions]);
@@ -94,7 +64,7 @@ function BrowserCore({ questions, companies, mode, fixedCompanySlug, initialFilt
     return matchesDsaQuestionSearch(question, deferredSearch, companyNames)
       && (fixedCompanySlug || filters.company === "all" || question.companies.some((association) => association.companySlug === filters.company))
       && (filters.difficulty === "all" || question.difficulty.toLowerCase() === filters.difficulty.toLowerCase())
-      && (!filters.topics.length || filters.topics.every((topic) => question.topics.some((title) => filterSlug(title) === topic)))
+      && (!filters.topics.length || filters.topics.every((topic) => question.topics.some((title) => dsaQuestionBrowserTopicSlug(title) === topic)))
       && (filters.source === "all" || question.sources.some((source) => source.type === filters.source))
       && (filters.progress === "all"
         || (filters.progress === "bookmarked" ? Boolean(progress[question.id]?.bookmarked) : (progress[question.id]?.status ?? "not_started") === filters.progress));
@@ -105,49 +75,100 @@ function BrowserCore({ questions, companies, mode, fixedCompanySlug, initialFilt
   const shown = mode === "preview" ? filtered.slice(0, 4) : filtered.slice((currentPage - 1) * filters.pageSize, currentPage * filters.pageSize);
   const hasFilters = Boolean(filters.search || (!fixedCompanySlug && filters.company !== "all") || filters.difficulty !== "all" || filters.topics.length || filters.source !== "all" || filters.progress !== "all");
 
-  function commit(patch: Partial<QuestionBrowserFilters>, resetPage = true) {
+  useEffect(() => {
+    if (mode === "full" && onFiltersChange && filters.page !== currentPage) {
+      onFiltersChange(clampDsaQuestionBrowserPage(filters, filtered.length), "replace");
+    }
+  }, [currentPage, filtered.length, filters, mode, onFiltersChange]);
+
+  function commit(patch: Partial<QuestionBrowserFilters>, resetPage = true, intent: BrowserHistoryIntent = "push") {
     const next = { ...filters, ...patch, page: resetPage ? 1 : (patch.page ?? filters.page) };
     if (controlledFilters === undefined) setLocalFilters(next);
-    onFiltersChange?.(next);
+    onFiltersChange?.(next, intent);
   }
   function toggleTopic(slugOrTitle: string) {
-    const slug = filterSlug(slugOrTitle);
+    const slug = dsaQuestionBrowserTopicSlug(slugOrTitle);
     commit({ topics: filters.topics.includes(slug) ? filters.topics.filter((item) => item !== slug) : [...filters.topics, slug] });
   }
   function reset() {
-    const next = { ...defaultFilters, company: fixedCompanySlug ?? "all" };
+    const next = { ...defaultDsaQuestionBrowserUrlState, company: fixedCompanySlug ?? "all" };
     if (controlledFilters === undefined) setLocalFilters(next);
-    onFiltersChange?.(next);
+    onFiltersChange?.(next, "push");
   }
 
   const resultDescription = [filters.search ? `“${filters.search}”` : undefined, !fixedCompanySlug && filters.company !== "all" ? companyMap.get(filters.company)?.name : undefined, filters.difficulty !== "all" ? filters.difficulty : undefined, ...filters.topics.map((slug) => topicMetadata.find((topic) => topic.slug === slug)?.title), filters.source !== "all" ? sourceLabel(filters.source as DSAQuestionSourceType) : undefined].filter(Boolean).join(" + ");
   const activeFilterCount = Number(!fixedCompanySlug && filters.company !== "all") + Number(filters.difficulty !== "all") + filters.topics.length + Number(filters.source !== "all");
-  return <section className={`dsa-question-database ${mode}`} aria-label={mode === "full" ? "Question browser" : "Practice question preview"}>
+  return <section id={mode === "full" ? "dsa-question-browser" : undefined} className={`dsa-question-database ${mode}`} aria-label={mode === "full" ? "Question browser" : "Practice question preview"}>
     {mode === "full" && <header className="dsa-browser-section-heading"><h2>Question library</h2><p>Keep search and core filters close; open source filtering only when you need it.</p></header>}
     {mode === "full" && <QuestionStats questions={scopedQuestions} />}
     {scopedQuestions.some((question) => question.isSample) && <div className="dsa-database-integrity"><strong>Demo company tags</strong><span>Company associations demonstrate the browser and are not verified interview history.</span></div>}
     <div className="dsa-database-filters">
-      <label className="search"><span>Search</span><span className="field-with-icon"><Search size={15} aria-hidden="true" /><input type="search" value={filters.search} onChange={(event) => commit({ search: event.target.value })} placeholder="Search title, company, or topic…" /></span></label>
+      <label className="search"><span>Search</span><span className="field-with-icon"><Search size={15} aria-hidden="true" /><input id={mode === "full" ? "dsa-question-browser-search" : undefined} type="search" maxLength={DSA_QUESTION_BROWSER_SEARCH_LIMIT} value={filters.search} onChange={(event) => commit({ search: event.target.value }, true, "search")} onBlur={() => commit({ search: filters.search.trim() }, false, "replace")} placeholder="Search title, company, or topic…" /></span></label>
       {!fixedCompanySlug && <label><span>Company</span><select value={filters.company} onChange={(event) => commit({ company: event.target.value })}><option value="all">All companies</option>{availableCompanies.map((company) => <option value={company.slug} key={company.slug}>{company.name}</option>)}</select></label>}
-      <label><span>Difficulty</span><select value={filters.difficulty} onChange={(event) => commit({ difficulty: event.target.value })}><option value="all">All difficulties</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></label>
+      <label><span>Difficulty</span><select value={filters.difficulty} onChange={(event) => commit({ difficulty: event.target.value as QuestionBrowserFilters["difficulty"] })}><option value="all">All difficulties</option><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></label>
       <label><span>Topics</span><select value="" onChange={(event) => event.target.value && toggleTopic(event.target.value)}><option value="">Add topic</option>{topicMetadata.filter((topic) => !filters.topics.includes(topic.slug)).map((topic) => <option value={topic.slug} key={topic.slug}>{topic.title}</option>)}</select></label>
-      {signedIn && <label><span>Progress</span><select value={filters.progress} onChange={(event) => commit({ progress: event.target.value })}><option value="all">Any status</option><option value="not_started">Not started</option><option value="attempted">Attempted</option><option value="solved">Solved</option><option value="review">Review</option><option value="bookmarked">Bookmarked</option></select></label>}
-      <details className="dsa-filter-more" open={advancedOpen || filters.source !== "all"} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}><summary><SlidersHorizontal size={14} aria-hidden="true" />More filters{filters.source !== "all" && <span>1</span>}</summary><div><label><span>Source</span><select value={filters.source} onChange={(event) => commit({ source: event.target.value })}><option value="all">All sources</option>{sourceTypes.map((source) => <option value={source} key={source}>{sourceLabel(source)}</option>)}</select></label></div></details>
+      {signedIn && <label><span>Progress</span><select value={filters.progress} onChange={(event) => commit({ progress: event.target.value as QuestionBrowserFilters["progress"] })}><option value="all">Any status</option><option value="not_started">Not started</option><option value="attempted">Attempted</option><option value="solved">Solved</option><option value="review">Review</option><option value="bookmarked">Bookmarked</option></select></label>}
+      <details className="dsa-filter-more" open={advancedOpen || filters.source !== "all"} onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}><summary><SlidersHorizontal size={14} aria-hidden="true" />More filters{filters.source !== "all" && <span>1</span>}</summary><div><label><span>Source</span><select value={filters.source} onChange={(event) => commit({ source: event.target.value as QuestionBrowserFilters["source"] })}><option value="all">All sources</option>{sourceTypes.map((source) => <option value={source} key={source}>{sourceLabel(source)}</option>)}</select></label></div></details>
       <button type="button" className="dsa-filter-reset" onClick={reset} disabled={!hasFilters}><FilterX size={14} />Reset</button>
     </div>
-    <div className="dsa-database-results"><span aria-live="polite"><strong>{filtered.length}</strong> question{filtered.length === 1 ? "" : "s"}{resultDescription ? ` matching ${resultDescription}` : ""}</span>{activeFilterCount > 0 && <div className="dsa-active-filters" aria-label="Active filters"><span>Active</span>{!fixedCompanySlug && filters.company !== "all" && <button type="button" onClick={() => commit({ company: "all" })}>{companyMap.get(filters.company)?.name ?? filters.company}<X size={12} aria-hidden="true" /></button>}{filters.difficulty !== "all" && <button type="button" onClick={() => commit({ difficulty: "all" })}>{filters.difficulty}<X size={12} aria-hidden="true" /></button>}{filters.topics.map((slug) => <button type="button" onClick={() => toggleTopic(slug)} key={slug}>{topicMetadata.find((topic) => topic.slug === slug)?.title ?? slug}<X size={12} aria-hidden="true" /></button>)}{filters.source !== "all" && <button type="button" onClick={() => commit({ source: "all" })}>{sourceLabel(filters.source as DSAQuestionSourceType)}<X size={12} aria-hidden="true" /></button>}</div>}</div>
+    <div className="dsa-database-results"><span id={mode === "full" ? "dsa-question-browser-results" : undefined} tabIndex={mode === "full" ? -1 : undefined} role="status" aria-live="polite" aria-atomic="true"><strong>{filtered.length}</strong> question{filtered.length === 1 ? "" : "s"}{resultDescription ? ` matching ${resultDescription}` : ""}</span>{activeFilterCount > 0 && <div className="dsa-active-filters" aria-label="Active filters"><span>Active</span>{!fixedCompanySlug && filters.company !== "all" && <button type="button" onClick={() => commit({ company: "all" })}>{companyMap.get(filters.company)?.name ?? filters.company}<X size={12} aria-hidden="true" /></button>}{filters.difficulty !== "all" && <button type="button" onClick={() => commit({ difficulty: "all" })}>{filters.difficulty}<X size={12} aria-hidden="true" /></button>}{filters.topics.map((slug) => <button type="button" onClick={() => toggleTopic(slug)} key={slug}>{topicMetadata.find((topic) => topic.slug === slug)?.title ?? slug}<X size={12} aria-hidden="true" /></button>)}{filters.source !== "all" && <button type="button" onClick={() => commit({ source: "all" })}>{sourceLabel(filters.source as DSAQuestionSourceType)}<X size={12} aria-hidden="true" /></button>}</div>}</div>
     {mode === "full" && <TopicQuickFilters topics={topicMetadata} selected={filters.topics} onToggle={toggleTopic} />}
     {shown.length > 0 ? <QuestionTable questions={shown} companies={companies} fixedCompanySlug={fixedCompanySlug} selectedCompanySlug={!fixedCompanySlug && filters.company !== "all" ? filters.company : undefined} onToggleTopic={toggleTopic} progress={progress} signedIn={signedIn} accountPlatformAvailable={accountPlatformAvailable} applicationId={applicationId} /> : <div className="dsa-database-empty"><FilterX size={20} /><strong>No questions match these filters.</strong><p>Try removing a company, topic, source, progress, or difficulty filter.</p><button type="button" className="button button-secondary" onClick={reset}>Clear filters</button></div>}
-    {mode === "full" && pageCount > 1 && <nav className="dsa-database-pagination" aria-label="Question results pages"><label><span>Rows per page</span><select value={filters.pageSize} onChange={(event) => commit({ pageSize: Number(event.target.value) })}><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option></select></label><div><button type="button" disabled={currentPage <= 1} onClick={() => commit({ page: currentPage - 1 }, false)}><ChevronLeft size={14} />Previous</button><span>{currentPage} / {pageCount}</span><button type="button" disabled={currentPage >= pageCount} onClick={() => commit({ page: currentPage + 1 }, false)}>Next<ChevronRight size={14} /></button></div></nav>}
+    {mode === "full" && pageCount > 1 && <nav className="dsa-database-pagination" aria-label="Question results pages"><label><span>Rows per page</span><select value={filters.pageSize} onChange={(event) => commit({ pageSize: Number(event.target.value) as QuestionBrowserFilters["pageSize"] })}><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option></select></label><div><button type="button" disabled={currentPage <= 1} onClick={() => commit({ page: currentPage - 1 }, false)}><ChevronLeft size={14} />Previous</button><span>{currentPage} / {pageCount}</span><button type="button" disabled={currentPage >= pageCount} onClick={() => commit({ page: currentPage + 1 }, false)}>Next<ChevronRight size={14} /></button></div></nav>}
   </section>;
 }
 
 export function QuestionBrowser({ questions, companies, fixedCompanySlug, progress = {}, signedIn = false, accountPlatformAvailable, applicationId }: { questions: DSAInterviewQuestion[]; companies: DSACompany[]; fixedCompanySlug?: string; progress?: DsaProgressMap; signedIn?: boolean; accountPlatformAvailable: boolean; applicationId?: string }) {
   const pathname = usePathname(); const searchParams = useSearchParams(); const queryString = searchParams.toString();
-  const filters = useMemo(() => parseFilters(new URLSearchParams(queryString)), [queryString]);
-  function updateUrl(filters: QuestionBrowserFilters) {
-    const params = filtersToParams(filters); const retainedApplication = searchParams.get("application"); if (retainedApplication) params.set("application", retainedApplication); const query = params.toString();
-    window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
+  const context = useMemo(() => createDsaQuestionBrowserUrlContext({ questions, companies, fixedCompanySlug, signedIn, applicationId }), [applicationId, companies, fixedCompanySlug, questions, signedIn]);
+  const filters = useMemo(() => parseDsaQuestionBrowserUrlState(queryString, context), [context, queryString]);
+  const canonicalFilters = useMemo(() => canonicalizeDsaQuestionBrowserUrlState(filters, context), [context, filters]);
+  const currentQueryRef = useRef(queryString);
+  const pendingHistoryFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    currentQueryRef.current = queryString;
+  }, [queryString]);
+
+  useEffect(() => {
+    const searchIsActive = document.activeElement?.id === "dsa-question-browser-search";
+    const canonicalState = searchIsActive ? { ...canonicalFilters, search: filters.search } : canonicalFilters;
+    const href = dsaQuestionBrowserHref(pathname, canonicalState, context, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (href !== currentHref) window.history.replaceState(null, "", href);
+  }, [canonicalFilters, context, filters.search, pathname]);
+
+  useEffect(() => {
+    function handlePopState() {
+      pendingHistoryFocusRef.current = null;
+      if (window.location.pathname !== pathname || window.location.search.slice(1) === currentQueryRef.current) return;
+      const browser = document.getElementById("dsa-question-browser");
+      const activeElement = document.activeElement;
+      if (browser && activeElement instanceof HTMLElement && browser.contains(activeElement)) pendingHistoryFocusRef.current = activeElement;
+    }
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      pendingHistoryFocusRef.current = null;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const previousFocus = pendingHistoryFocusRef.current;
+    pendingHistoryFocusRef.current = null;
+    if (!previousFocus || previousFocus.isConnected) return;
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement && activeElement !== document.body && activeElement.isConnected) return;
+    document.getElementById("dsa-question-browser-results")?.focus();
+  }, [queryString]);
+
+  function updateUrl(nextFilters: QuestionBrowserFilters, intent: BrowserHistoryIntent) {
+    const state = intent === "search" ? nextFilters : canonicalizeDsaQuestionBrowserUrlState(nextFilters, context);
+    const href = dsaQuestionBrowserHref(pathname, state, context, window.location.hash);
+    const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (href === currentHref) return;
+    if (intent === "push") window.history.pushState(null, "", href);
+    else window.history.replaceState(null, "", href);
   }
   return <BrowserCore questions={questions} companies={companies} mode="full" fixedCompanySlug={fixedCompanySlug} filters={filters} onFiltersChange={updateUrl} progress={progress} signedIn={signedIn} accountPlatformAvailable={accountPlatformAvailable} applicationId={applicationId} />;
 }
