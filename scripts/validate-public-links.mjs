@@ -136,6 +136,24 @@ function parseRouteHref(value, { allowAbsolute = false, canonicalSiteOrigin } = 
   return { pathname: url.pathname };
 }
 
+function isCanonicalDiscordInvite(value) {
+  if (typeof value !== "string" || !value.startsWith("https://") || containsControlOrBackslash(value) || /\s/.test(value)) return false;
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  return url.protocol === "https:"
+    && url.hostname === "discord.gg"
+    && !url.username
+    && !url.password
+    && !url.port
+    && url.pathname !== "/"
+    && !url.search
+    && !url.hash;
+}
+
 function validateFiniteDefinitions(definitions, pages, errors) {
   if (!Array.isArray(definitions)) {
     errors.push("finitePublicRouteDefinitions must be an array.");
@@ -300,7 +318,7 @@ export function validatePublicLinkModel({
   sitemapEntries = [],
   searchItems = [],
   resourceSource = "",
-  siteSource = 'export const support = "https://discord.gg/example";',
+  discordUrl = "https://discord.gg/example",
   redirectSourcePaths,
   canonicalSiteOrigin = "https://engineeringfoundry.dev",
 }) {
@@ -348,7 +366,7 @@ export function validatePublicLinkModel({
   for (const marker of [/http:\/\//i, /[?&](?:utm_[^=]*|ref|affiliate)=/i]) {
     if (marker.test(resourceSource)) errors.push(`Curated resources matched prohibited external-link pattern ${marker}.`);
   }
-  if (!siteSource.includes("https://discord.gg/")) errors.push("Configured Discord fallback must use a real HTTPS discord.gg invite.");
+  if (!isCanonicalDiscordInvite(discordUrl)) errors.push("Configured Discord fallback must use a canonical HTTPS discord.gg invite without credentials, a port, query, or fragment.");
 
   return { errors, internalLinkCount: internalLinks.size, pageCount: pages.length };
 }
@@ -370,17 +388,17 @@ export async function validatePublicLinks({
   sitemapEntries = sitemap(),
   searchItems = globalSearchItems,
   canonicalSiteOrigin = new URL(siteConfig.url).origin,
+  discordUrl = siteConfig.discordUrl,
 } = {}) {
   const pageFiles = await walkFiles(repositoryRoot, "app", ["page.tsx"]);
   const routeFiles = await walkFiles(repositoryRoot, "app", ["route.ts"]);
   const sourceFiles = (await Promise.all(sourceDirectories.map((directory) => walkFiles(repositoryRoot, directory, sourceExtensions)))).flat();
-  const [pageEntries, routeEntries, sourceEntries, assets, resourceSource, siteSource] = await Promise.all([
+  const [pageEntries, routeEntries, sourceEntries, assets, resourceSource] = await Promise.all([
     loadEntries(repositoryRoot, pageFiles),
     loadEntries(repositoryRoot, routeFiles),
     loadEntries(repositoryRoot, sourceFiles),
     findPublicAssetPaths(repositoryRoot),
     readFile(path.join(repositoryRoot, "data/resources/resources.json"), "utf8"),
-    readFile(path.join(repositoryRoot, "config/site.ts"), "utf8"),
   ]);
   return validatePublicLinkModel({
     pageEntries,
@@ -392,7 +410,7 @@ export async function validatePublicLinks({
     searchItems,
     canonicalSiteOrigin,
     resourceSource,
-    siteSource,
+    discordUrl,
   });
 }
 

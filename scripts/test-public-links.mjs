@@ -201,7 +201,18 @@ expectError(validateSynthetic({
   sourceEntries: [{ file: "components/external.tsx", source: '<a href="https://example.com" target="_blank">External</a>' }],
 }), /new-tab link without rel="noopener noreferrer"/);
 expectError(validateSynthetic({ resourceSource: '[{"url":"http://example.com"}]' }), /prohibited external-link pattern/);
-expectError(validateSynthetic({ siteSource: 'export const support = "https://example.com";' }), /Discord fallback/);
+expectValid(validateSynthetic({ discordUrl: "https://discord.gg/invite" }));
+for (const discordUrl of [
+  "https://example.com/https://discord.gg/invite",
+  "https://discord.gg.evil.test/invite",
+  "https://user@discord.gg/invite",
+  "https:discord.gg/invite",
+  "https://discord.gg/",
+  "https://discord.gg/invite?campaign=unsafe",
+  "https://discord.gg/invite#fragment",
+]) {
+  expectError(validateSynthetic({ discordUrl }), /Discord fallback/);
+}
 
 const productionReport = await validatePublicLinks();
 expectValid(productionReport, `production sitemap, globalSearchItems, literal links, pages, and assets must resolve:\n${productionReport.errors.join("\n")}`);
