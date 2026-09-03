@@ -15,6 +15,8 @@ export function FeedbackForm() {
   const contactConsentRef = useRef<HTMLInputElement>(null);
   const receiptTitleRef = useRef<HTMLHeadingElement>(null);
   const handledStateRef = useRef(state);
+  const submissionInFlightRef = useRef(false);
+  const editedSinceSubmitRef = useRef(false);
   // The feedback route itself is the current page in the normal no-JS and JS
   // flows. The server collapses any manipulated value before it reaches storage.
   const pageContext = "/feedback";
@@ -22,12 +24,15 @@ export function FeedbackForm() {
   useEffect(() => {
     if (handledStateRef.current === state) return;
     handledStateRef.current = state;
+    const userResumedEditing = editedSinceSubmitRef.current;
+    submissionInFlightRef.current = false;
+    editedSinceSubmitRef.current = false;
 
     if (state.status === "success") {
       receiptTitleRef.current?.focus();
       return;
     }
-    if (state.status !== "error" || !state.fieldErrors) return;
+    if (state.status !== "error" || !state.fieldErrors || userResumedEditing) return;
 
     const firstInvalidControl = [
       { error: state.fieldErrors.category, control: categoryRef.current },
@@ -46,7 +51,18 @@ export function FeedbackForm() {
     </section>;
   }
 
-  return <form action={action} className="feedback-form form-shell" aria-describedby="feedback-privacy-note">
+  return <form
+    action={action}
+    className="feedback-form form-shell"
+    aria-describedby="feedback-privacy-note"
+    onSubmitCapture={() => {
+      submissionInFlightRef.current = true;
+      editedSinceSubmitRef.current = false;
+    }}
+    onInputCapture={() => {
+      if (submissionInFlightRef.current) editedSinceSubmitRef.current = true;
+    }}
+  >
     <input type="hidden" name="page_context" value={pageContext} />
     <div className="form-group">
       <label htmlFor="feedback-category">What is this about? <span>Required</span></label>
