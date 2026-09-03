@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "1cecf6b84cbe2e62552e864e7de59b4a9839e702",
-  "repository_state_sha256": "a20676b6cb771bab24fbd7f13021899f26af852ea4874581dab010839a21e9fc",
+  "repository_sha": "16cafdb9abfc57c595a70eace7d01dc5e7fb0555",
+  "repository_state_sha256": "45e52131c94b87220bdc2e4444e3766d3a36fff8e4c63e261d5d66818f93303c",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1052,19 +1052,23 @@
       "acceptance_criteria": [
         "Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale.",
         "Release qualification timestamps and interview-resource verification dates accept only their canonical formats, valid UTC calendar values, and values no later than their validation instant or date.",
+        "Branded sources and providers accept only canonical HTTPS URLs on their exact registered hostnames; deceptive or noncanonical URLs and impossible or future verification dates fail closed.",
         "Impact-ledger validation excludes only the exact root templates and fails closed on unknown keys or non-date-aligned direct record paths; accepts real canonical dates, chronological verification dates, completed filename-month windows, and reproducible HTTPS or safe repository-relative references; requires full 40-character Git SHAs, nonnegative integer aggregates, rates from 0 through 1, testimonial retention consent, and public excerpts only with public-attribution consent.",
         "Superseded pull-request runs may be cancelled, while push and scheduled CI or CodeQL runs retain exact-commit verification evidence."
       ],
       "code_paths": [
         ".github/workflows/ci.yml",
         ".github/workflows/codeql.yml",
+        "scripts/canonical-content-url.mjs",
         "scripts/product-blueprint-governance.mjs",
         "scripts/release-record.mjs",
         "scripts/release-verification-manifest.mjs",
         "scripts/test-analytics-launch-evidence.mjs",
+        "scripts/test-content-validator.mjs",
         "scripts/test-interview-content-validator.mjs",
         "scripts/test-release-record.mjs",
         "scripts/test-v1-launch-readiness.mjs",
+        "scripts/validate-content.mjs",
         "scripts/validate-impact-ledger.mjs",
         "scripts/validate-interview-content.mjs"
       ],
@@ -1100,10 +1104,12 @@
       "status": "partial",
       "test_commands": [
         "npm run test:analytics-launch-evidence",
+        "npm run test:content-validator",
         "npm run test:interview-content-validator",
         "npm run test:product-blueprint-governance",
         "npm run test:release-record",
         "npm run test:v1-launch-readiness",
+        "npm run validate:content",
         "npm run validate:impact-ledger",
         "npm run validate:interview-content",
         "npm run validate:product-blueprint"
