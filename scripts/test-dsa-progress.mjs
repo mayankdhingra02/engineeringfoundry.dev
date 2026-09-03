@@ -3,6 +3,11 @@ import { canonicalDsaQuestionById, canonicalDsaQuestions } from "../lib/dsa/cata
 import { dsaInterviewQuestionDatabase } from "../data/dsa/question-database.ts";
 import { roadmapProblems } from "../data/dsa/roadmap-problem-registry.ts";
 import { chooseContinueQuestion, getNeedsReview, getRoadmapProgress, getTopicProgress, progressByQuestionId } from "../lib/dsa/progress.ts";
+import {
+  DSA_WORKSPACE_PRIVATE_DATA_DOMAIN,
+  resolveDsaWorkspacePrivateState,
+} from "../lib/dsa/workspace-state.ts";
+import { PrivateDataUnavailableError } from "../lib/persistence/errors.ts";
 
 const checks = [];
 const check = (name, value) => checks.push({ name, ok: Boolean(value) });
@@ -33,6 +38,125 @@ check("Needs review includes attempted", getNeedsReview(progress).some((entry) =
 check("Needs review includes low-confidence solved", getNeedsReview(progress).some((entry) => entry.question.id === "longest-substring-without-repeating-characters"));
 check("Needs review includes explicit review", getNeedsReview(progress).some((entry) => entry.question.id === "course-schedule"));
 check("topic summaries derive from question activity", getTopicProgress(progress).some((topic) => topic.practiced > 0));
+
+const workspaceOwnerId = "11111111-1111-4111-8111-111111111111";
+const workspaceApplicationId = "22222222-2222-4222-8222-222222222222";
+const workspaceContext = {
+  ownerId: workspaceOwnerId,
+  requestedApplicationId: workspaceApplicationId,
+  canonicalQuestionIds: ids,
+};
+const workspaceProgressRow = {
+  ...row("two-sum", "solved", "high", 1),
+  user_id: workspaceOwnerId,
+  notes: "Revisit the invariant.",
+};
+const workspaceApplication = {
+  id: workspaceApplicationId,
+  company_name: "Example Company",
+  company_slug: "example-company",
+  role_title: "Software Engineer",
+};
+const workspaceInput = ({
+  progressData = [workspaceProgressRow],
+  preferenceData = { dsa_level: "sde2" },
+  applicationData = workspaceApplication,
+} = {}) => ({
+  progressResult: { data: progressData, error: null },
+  preferenceResult: { data: preferenceData, error: null },
+  applicationResult: { data: applicationData, error: null },
+});
+const expectedWorkspaceError = `Your private ${DSA_WORKSPACE_PRIVATE_DATA_DOMAIN} data is temporarily unavailable. Please try again.`;
+const expectWorkspaceUnavailable = (input, context, label) => {
+  let error;
+  try {
+    resolveDsaWorkspacePrivateState(input, context);
+  } catch (caught) {
+    error = caught;
+  }
+  check(label, error instanceof PrivateDataUnavailableError
+    && error.name === "PrivateDataUnavailableError"
+    && error.message === expectedWorkspaceError
+    && !error.message.includes("database detail")
+    && !error.message.includes(workspaceOwnerId));
+};
+
+for (const [preferenceData, expectedLevel] of [
+  [null, "sde2"],
+  [{ dsa_level: null }, "sde2"],
+  [{ dsa_level: "sde1" }, "sde1"],
+  [{ dsa_level: "sde2" }, "sde2"],
+  [{ dsa_level: "sde3plus" }, "sde3plus"],
+]) {
+  check(`workspace resolves ${JSON.stringify(preferenceData)} to ${expectedLevel}`, resolveDsaWorkspacePrivateState(
+    workspaceInput({ preferenceData }),
+    workspaceContext,
+  ).preferredRoadmap === expectedLevel);
+}
+const resolvedWorkspace = resolveDsaWorkspacePrivateState(workspaceInput(), workspaceContext);
+check("workspace resolves a complete owner progress row", resolvedWorkspace.progress[workspaceProgressRow.question_id]?.user_id === workspaceOwnerId
+  && resolvedWorkspace.progress[workspaceProgressRow.question_id]?.status === "solved"
+  && resolvedWorkspace.progress[workspaceProgressRow.question_id]?.confidence === "high"
+  && resolvedWorkspace.progress[workspaceProgressRow.question_id]?.notes === "Revisit the invariant.");
+check("workspace resolves the requested owner application projection", JSON.stringify(resolvedWorkspace.application) === JSON.stringify(workspaceApplication));
+const emptyWorkspace = resolveDsaWorkspacePrivateState(
+  workspaceInput({ progressData: [], preferenceData: null, applicationData: null }),
+  { ...workspaceContext, requestedApplicationId: null },
+);
+check("genuine empty workspace results preserve explicit defaults", Object.keys(emptyWorkspace.progress).length === 0
+  && emptyWorkspace.preferredRoadmap === "sde2"
+  && emptyWorkspace.application === null);
+const maximumQuestionId = "q".repeat(200);
+const maximumQuestionState = resolveDsaWorkspacePrivateState(
+  workspaceInput({ progressData: [{ ...workspaceProgressRow, question_id: maximumQuestionId }] }),
+  { ...workspaceContext, canonicalQuestionIds: [...ids, maximumQuestionId] },
+);
+check("workspace accepts the database's 200-character canonical question ID boundary", maximumQuestionState.progress[maximumQuestionId]?.question_id === maximumQuestionId);
+const oversizedQuestionId = "q".repeat(201);
+expectWorkspaceUnavailable(
+  workspaceInput({ progressData: [{ ...workspaceProgressRow, question_id: oversizedQuestionId }] }),
+  { ...workspaceContext, canonicalQuestionIds: [...ids, oversizedQuestionId] },
+  "workspace rejects a canonical question ID beyond the database boundary",
+);
+
+for (const resultName of ["progressResult", "preferenceResult", "applicationResult"]) {
+  const failed = workspaceInput();
+  failed[resultName] = { data: null, error: new Error(`database detail from ${resultName} for ${workspaceOwnerId}`) };
+  expectWorkspaceUnavailable(failed, workspaceContext, `${resultName} query failure is unavailable`);
+
+  const failedWithData = workspaceInput();
+  failedWithData[resultName] = {
+    ...failedWithData[resultName],
+    error: new Error(`database detail with data from ${resultName} for ${workspaceOwnerId}`),
+  };
+  expectWorkspaceUnavailable(failedWithData, workspaceContext, `${resultName} error takes precedence over returned data`);
+}
+
+for (const [input, context, label] of [
+  [null, workspaceContext, "null workspace result"],
+  [[], workspaceContext, "array workspace result"],
+  [{}, workspaceContext, "missing workspace result members"],
+  [{ ...workspaceInput(), unexpected: true }, workspaceContext, "unknown workspace result member"],
+  [{ ...workspaceInput(), progressResult: null }, workspaceContext, "non-object progress wrapper"],
+  [{ ...workspaceInput(), preferenceResult: { data: null } }, workspaceContext, "missing preference error member"],
+  [{ ...workspaceInput(), applicationResult: { error: null } }, workspaceContext, "missing application data member"],
+  [{ ...workspaceInput(), progressResult: { data: [], error: undefined } }, workspaceContext, "undefined progress error member"],
+  [workspaceInput({ progressData: null }), workspaceContext, "non-array progress data"],
+  [workspaceInput({ progressData: [{ ...workspaceProgressRow, user_id: "33333333-3333-4333-8333-333333333333" }] }), workspaceContext, "foreign progress owner"],
+  [workspaceInput({ progressData: [{ ...workspaceProgressRow, question_id: "unknown-but-valid-slug" }] }), workspaceContext, "unknown canonical question"],
+  [workspaceInput({ progressData: [{ ...workspaceProgressRow, status: "complete" }] }), workspaceContext, "invalid persisted progress status"],
+  [workspaceInput({ progressData: [{ ...workspaceProgressRow, first_attempted_at: "August 11, 2026" }] }), workspaceContext, "non-ISO progress timestamp"],
+  [workspaceInput({ progressData: [{ ...workspaceProgressRow, updated_at: "2026-02-30T12:00:00Z" }] }), workspaceContext, "impossible progress timestamp"],
+  [workspaceInput({ progressData: [{ ...workspaceProgressRow, created_at: "0000-01-01T00:00:00Z" }] }), workspaceContext, "year-zero progress timestamp"],
+  [workspaceInput({ preferenceData: { dsa_level: "senior" } }), workspaceContext, "invalid persisted roadmap level"],
+  [workspaceInput({ applicationData: { ...workspaceApplication, id: "33333333-3333-4333-8333-333333333333" } }), workspaceContext, "mismatched application ID"],
+  [workspaceInput({ applicationData: { id: workspaceApplicationId } }), workspaceContext, "incomplete application projection"],
+  [workspaceInput({ applicationData: workspaceApplication }), { ...workspaceContext, requestedApplicationId: null }, "application without requested context"],
+  [workspaceInput(), { ...workspaceContext, ownerId: "not-a-user" }, "malformed owner context"],
+  [workspaceInput(), { ...workspaceContext, requestedApplicationId: "not-an-application" }, "malformed application context"],
+]) {
+  expectWorkspaceUnavailable(input, context, `${label} is unavailable`);
+}
 
 const migration = read("supabase/migrations/202608140007_create_dsa_question_progress.sql");
 const seedBlock = migration.match(/select unnest\(array\[([\s\S]*?)\]\);/)?.[1] ?? "";
@@ -66,7 +190,35 @@ check("dashboard coding context preserves the company slug", read("app/dashboard
 check("company question routes receive private progress when signed in", routes.includes("progress={state.progress} signedIn={state.signedIn}"));
 check("roadmap status uses status and confidence without legacy comfortable state", !read("data/dsa/roadmap-planning.ts").includes('"comfortable"') && read("data/dsa/roadmap-planning.ts").includes("confidenceByProblemId"));
 check("quick mutations expose pending and accessible error feedback", read("features/dsa/progress/quick-progress-actions.tsx").includes("Saving…") && read("features/dsa/progress/quick-progress-actions.tsx").includes('role="alert"') && read("features/dsa/progress/roadmap-preference-controls.tsx").includes("Saving preferred roadmap…"));
-check("workspace state distinguishes disabled accounts before actor resolution", querySource.indexOf("if (!accountPlatformAvailable) return") > -1 && querySource.indexOf("if (!accountPlatformAvailable) return") < querySource.indexOf("await getAuthenticatedActor()"));
+const canonicalApplicationIndex = querySource.indexOf("parseDsaQuestionBrowserApplicationId(applicationId)");
+const availabilityIndex = querySource.indexOf("isAccountPlatformAvailable()", canonicalApplicationIndex);
+const disabledReturnIndex = querySource.indexOf("if (!accountPlatformAvailable) return", availabilityIndex);
+const actorIndex = querySource.indexOf("await getAuthenticatedActor()", disabledReturnIndex);
+const signedOutReturnIndex = querySource.indexOf("if (!actor) return", actorIndex);
+const progressQueryIndex = querySource.indexOf('.from("dsa_question_progress")', signedOutReturnIndex);
+const preferenceQueryIndex = querySource.indexOf('.from("user_preparation_preferences")', progressQueryIndex);
+const applicationQueryIndex = querySource.indexOf('.from("applications")', preferenceQueryIndex);
+const resolverIndex = querySource.indexOf("resolveDsaWorkspacePrivateState(", applicationQueryIndex);
+check("workspace state validates application context then distinguishes disabled and signed-out states before private queries", canonicalApplicationIndex >= 0
+  && availabilityIndex > canonicalApplicationIndex
+  && disabledReturnIndex > availabilityIndex
+  && actorIndex > disabledReturnIndex
+  && signedOutReturnIndex > actorIndex
+  && progressQueryIndex > signedOutReturnIndex);
+const progressQuerySource = querySource.slice(progressQueryIndex, preferenceQueryIndex);
+const preferenceQuerySource = querySource.slice(preferenceQueryIndex, applicationQueryIndex);
+const applicationQuerySource = querySource.slice(applicationQueryIndex, resolverIndex);
+check("every DSA workspace private query is owner scoped", progressQuerySource.includes('.eq("user_id", actor.user.id)')
+  && preferenceQuerySource.includes('.eq("user_id", actor.user.id)')
+  && applicationQuerySource.includes('.eq("id", canonicalApplicationId)')
+  && applicationQuerySource.includes('.eq("user_id", actor.user.id)'));
+check("DSA workspace query results delegate together to the strict owner-context resolver", resolverIndex > applicationQueryIndex
+  && querySource.indexOf("{ progressResult, preferenceResult, applicationResult }", resolverIndex) > resolverIndex
+  && querySource.indexOf("ownerId: actor.user.id", resolverIndex) > resolverIndex
+  && querySource.indexOf("requestedApplicationId: canonicalApplicationId", resolverIndex) > resolverIndex
+  && querySource.indexOf("canonicalQuestionIds: canonicalDsaQuestions.map((question) => question.id)", resolverIndex) > resolverIndex
+  && !querySource.includes("progressResult.data ?? []")
+  && !querySource.includes("preferenceResult.data?.dsa_level"));
 check("DSA routes propagate account availability through every public progress surface", routes.includes("accountPlatformAvailable={state.accountPlatformAvailable}") && read("app/dsa/page.tsx").includes("accountPlatformAvailable={accountPlatformAvailable}") && read("features/dsa/question-browser-preview.tsx").includes("accountPlatformAvailable={accountPlatformAvailable}"));
 check("enabled signed-out DSA surfaces retain intentional sign-in handoffs without account-state contradictions", practice.includes("accountPlatformAvailable ? <aside") && practice.includes('href={`/signin?next=') && questionTable.includes("accountPlatformAvailable ? <Link") && questionDetail.includes("accountPlatformAvailable ? <aside") && questionDetail.includes("Browser-local completion is recorded separately.") && questionDetail.includes("{signedIn ? <><h2>Current state</h2>") && roadmapModule.includes('accountPlatformAvailable ? "Sign in to persist'));
 check("disabled DSA surfaces render honest public and local states", practice.includes("Public practice remains available") && routes.includes("Account progress unavailable · demo associations") && routes.includes("Account progress unavailable · public roadmap") && questionTable.includes("Account progress unavailable") && !questionTable.includes('<span className="dsa-signin-progress">Account progress unavailable</span>') && questionDetail.includes("Browser-local practice") && questionDetail.includes("Private notes are unavailable in this configuration") && roadmapExperience.includes("accountPlatformAvailable={accountPlatformAvailable}") && roadmapModule.includes("Account-backed problem progress is unavailable in this configuration"));
@@ -74,7 +226,7 @@ check("disabled DSA local activity skips its Server Action and reports persisten
 check("direct progress actions report disabled account persistence before actor resolution", progressActions.includes("if (!isAccountPlatformAvailable()) return accountUnavailable()") && progressActions.indexOf("if (!isAccountPlatformAvailable()) return accountUnavailable()") < progressActions.indexOf("await getAuthenticatedActor()") && preparationActions.indexOf("if (!isAccountPlatformAvailable()) return") < preparationActions.indexOf("await getAuthenticatedActor()"));
 
 const failed = checks.filter((entry) => !entry.ok);
-if (checks.length !== 37) throw new Error(`Expected 37 regression checks, found ${checks.length}.`);
+if (checks.length !== 76) throw new Error(`Expected 76 regression checks, found ${checks.length}.`);
 if (failed.length) {
   console.error(`DSA progress regression failed:\n- ${failed.map((entry) => entry.name).join("\n- ")}`);
   process.exit(1);
