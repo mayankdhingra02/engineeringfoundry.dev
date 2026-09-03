@@ -1853,7 +1853,7 @@ button.flow-card { cursor: pointer; }
 .profile-form-header h2 { margin: 0 0 7px; font-size: 25px; letter-spacing: -.035em; }
 .profile-form-header p:last-child { margin: 0; color: var(--text-secondary); font-size: 13px; }
 .profile-form .form-group label > span { color: var(--muted); font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
-.profile-form .form-group > small { color: var(--muted); font-size: 10px; }
+.profile-form .form-group > small { color: var(--muted); font-size: 13px; }
 .input-prefix { display: flex; align-items: stretch; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease; }
 .input-prefix:focus-within { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 16%, transparent); }
 .input-prefix > span { display: flex; align-items: center; padding: 0 10px; color: var(--muted); border-right: 1px solid var(--line); font: 650 9px ui-monospace, monospace; white-space: nowrap; }

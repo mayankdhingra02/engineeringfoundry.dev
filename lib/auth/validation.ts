@@ -7,9 +7,14 @@ export interface ProfileInput {
   currentCompany: string | null;
   currentRole: string | null;
   yearsExperience: number | null;
+  linkedinUrl: string | null | undefined;
+  githubUrl: string | null | undefined;
+  isPublic: boolean;
+}
+
+export interface StoredProfileLinks {
   linkedinUrl: string | null;
   githubUrl: string | null;
-  isPublic: boolean;
 }
 
 export const USERNAME_PATTERN = /^[a-z0-9][a-z0-9_-]{2,29}$/;
@@ -55,7 +60,20 @@ function cleanOptional(value: FormDataEntryValue | null, max: number) {
   return normalized ? normalized.slice(0, max) : null;
 }
 
-export function parseProfileForm(formData: FormData): { data?: ProfileInput; error?: string } {
+function preserveUnchangedInvalidProfileLink(
+  platform: "github" | "linkedin",
+  postedValue: FormDataEntryValue | null,
+  storedValue: string | null | undefined,
+  parsed: { value: string | null; error?: string },
+): { value: string | null | undefined; error?: string } {
+  if (!parsed.error) return parsed;
+
+  const stored = parseOptionalProfileLink(platform, storedValue);
+  if (stored.error && typeof postedValue === "string" && postedValue === storedValue) return { value: undefined };
+  return parsed;
+}
+
+export function parseProfileForm(formData: FormData, storedLinks?: StoredProfileLinks): { data?: ProfileInput; error?: string } {
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const displayName = String(formData.get("display_name") ?? "").trim();
   if (!USERNAME_PATTERN.test(username)) return { error: "Use 3–30 lowercase letters, numbers, underscores, or hyphens. Start with a letter or number." };
@@ -69,8 +87,20 @@ export function parseProfileForm(formData: FormData): { data?: ProfileInput; err
   const yearsExperience = rawYears === "" ? null : Number(rawYears);
   if (yearsExperience !== null && (!Number.isInteger(yearsExperience) || yearsExperience < 0 || yearsExperience > 80)) return { error: "Years of experience must be a whole number between 0 and 80." };
 
-  const linkedin = parseOptionalProfileLink("linkedin", formData.get("linkedin_url"));
-  const github = parseOptionalProfileLink("github", formData.get("github_url"));
+  const postedLinkedin = formData.get("linkedin_url");
+  const postedGithub = formData.get("github_url");
+  const linkedin = preserveUnchangedInvalidProfileLink(
+    "linkedin",
+    postedLinkedin,
+    storedLinks?.linkedinUrl,
+    parseOptionalProfileLink("linkedin", formData.get("linkedin_url")),
+  );
+  const github = preserveUnchangedInvalidProfileLink(
+    "github",
+    postedGithub,
+    storedLinks?.githubUrl,
+    parseOptionalProfileLink("github", formData.get("github_url")),
+  );
   if (linkedin.error || github.error) return { error: linkedin.error ?? github.error };
 
   return { data: { username, displayName, bio, currentCompany, currentRole, yearsExperience, linkedinUrl: linkedin.value, githubUrl: github.value, isPublic: formData.get("is_public") === "public" } };

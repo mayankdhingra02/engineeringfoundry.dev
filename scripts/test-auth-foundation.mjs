@@ -108,6 +108,7 @@ try {
       "https://127.0.0.1/member", "https://localhost/member", "http://github.com/member", "ftp://github.com/member",
       "javascript:alert(1)", "data:text/plain,github", "//github.com/member", "https://user:password@github.com/member",
       "https://github.com@evil.test/member", "https://github.com:444/member", "https://", "https://github.com/member\nnext",
+      String.raw`https://github.com\evil.test/member`, String.raw`https:\\github.com/member`,
       `https://github.com/${"a".repeat(PROFILE_LINK_MAX_LENGTH)}`,
     ],
     linkedin: [
@@ -116,6 +117,7 @@ try {
       "https://127.0.0.1/in/member", "https://localhost/in/member", "http://linkedin.com/in/member", "ftp://linkedin.com/in/member",
       "javascript:alert(1)", "data:text/plain,linkedin", "//linkedin.com/in/member", "https://user:password@linkedin.com/in/member",
       "https://linkedin.com@evil.test/in/member", "https://linkedin.com:444/in/member", "https://", "https://linkedin.com/in/member\u0000next",
+      String.raw`https://linkedin.com\evil.test/in/member`, String.raw`https:\\linkedin.com/in/member`,
       `https://linkedin.com/${"a".repeat(PROFILE_LINK_MAX_LENGTH)}`,
     ],
   };
@@ -150,6 +152,33 @@ try {
   const nonStringProfile = profileForm();
   nonStringProfile.set("github_url", new Blob(["https://github.com/member"]));
   assert.equal(parseProfileForm(nonStringProfile).error, "GitHub URL must use https://github.com.");
+
+  const legacyGithub = "https://github.com.evil.test/legacy";
+  const legacyLinkedin = String.raw`https://linkedin.com\evil.test/in/legacy`;
+  const unchangedLegacy = parseProfileForm(profileForm({ github: legacyGithub, linkedin: legacyLinkedin }), {
+    githubUrl: legacyGithub,
+    linkedinUrl: legacyLinkedin,
+  });
+  assert.equal(unchangedLegacy.error, undefined, "Unchanged legacy-invalid links blocked an unrelated profile edit.");
+  assert.equal(unchangedLegacy.data?.githubUrl, undefined, "An unchanged legacy-invalid GitHub value was not omitted from the update.");
+  assert.equal(unchangedLegacy.data?.linkedinUrl, undefined, "An unchanged legacy-invalid LinkedIn value was not omitted from the update.");
+  const replacedLegacy = parseProfileForm(profileForm({ github: "https://www.github.com/member?tab=profile", linkedin: "" }), {
+    githubUrl: legacyGithub,
+    linkedinUrl: legacyLinkedin,
+  });
+  assert.equal(replacedLegacy.error, undefined);
+  assert.equal(replacedLegacy.data?.githubUrl, "https://github.com/member", "A valid replacement for a legacy-invalid GitHub value was not canonicalized.");
+  assert.equal(replacedLegacy.data?.linkedinUrl, null, "Clearing a legacy-invalid LinkedIn value did not remain an explicit clear.");
+  assert.equal(
+    parseProfileForm(profileForm({ github: "https://github.com.evil.test/changed" }), { githubUrl: legacyGithub, linkedinUrl: null }).error,
+    "GitHub URL must use https://github.com.",
+    "A changed legacy-invalid GitHub value bypassed validation.",
+  );
+  assert.equal(
+    parseProfileForm(profileForm({ linkedin: String.raw`https://linkedin.com\evil.test/in/changed` }), { githubUrl: null, linkedinUrl: legacyLinkedin }).error,
+    "LinkedIn URL must use https://www.linkedin.com.",
+    "A changed legacy-invalid LinkedIn value bypassed validation.",
+  );
 
   const unsafeLegacy = { username: "legacy", github_url: "https://attacker.example/phish", linkedin_url: "https://github.com/legacy", extra: "preserved" };
   const sanitizedLegacy = sanitizePublicProfileLinks(unsafeLegacy);
@@ -209,6 +238,8 @@ const authQueries = read("lib/auth/queries.ts");
 const publicProfilePage = read("app/u/[username]/page.tsx");
 const profileValidation = read("lib/auth/validation.ts");
 const profileFormSource = read("features/profile/profile-form.tsx");
+const profileActions = read("features/profile/actions.ts");
+const globalStyles = read("app/globals.css");
 for (const marker of ['rpc("get_public_profile"', "profile_username: username", ".maybeSingle()", "const result = await", "resolvePublicProfileQuery(result)"]) requireText(authQueries, marker, `Public-profile query must retain data and error for the resolver: ${marker}.`);
 prohibit(authQueries, /const\s*\{\s*data\s*\}\s*=\s*await\s+supabase\.rpc\("get_public_profile"/, "Public-profile query discards its RPC error before resolution.");
 if ((authQueries.match(/\.toLowerCase\(\)/g) ?? []).length !== 1 || publicProfilePage.includes(".toLowerCase()")) failures.push("Public-profile usernames must be normalized exactly once at the shared query boundary for metadata and page rendering.");
@@ -221,8 +252,42 @@ for (const marker of ["profile.display_name", "profile.username", "profile.bio",
 const resolvedProfileIndex = authQueries.indexOf("const profile = resolvePublicProfileQuery(result);");
 const sanitizedProfileIndex = authQueries.indexOf("profile ? sanitizePublicProfileLinks(profile) : null");
 if (resolvedProfileIndex < 0 || sanitizedProfileIndex <= resolvedProfileIndex) failures.push("Public-profile links are not sanitized after resolver error/null semantics complete.");
-for (const marker of ['parseOptionalProfileLink("linkedin", formData.get("linkedin_url"))', 'parseOptionalProfileLink("github", formData.get("github_url"))']) requireText(profileValidation, marker, `Profile form parsing bypasses canonical professional-link validation: ${marker}.`);
+for (const [platform, postedName, storedName] of [["linkedin", "postedLinkedin", "linkedinUrl"], ["github", "postedGithub", "githubUrl"]]) {
+  const updatePattern = new RegExp(`preserveUnchangedInvalidProfileLink\\(\\s*"${platform}",\\s*${postedName},\\s*storedLinks\\?\\.${storedName},\\s*parseOptionalProfileLink\\("${platform}",\\s*formData\\.get\\("${platform}_url"\\)\\),\\s*\\)`);
+  if (!updatePattern.test(profileValidation)) failures.push(`Profile form parsing bypasses the ${platform} canonical/preserve update boundary.`);
+}
+for (const marker of [
+  "function preserveUnchangedInvalidProfileLink(",
+  "if (!parsed.error) return parsed;",
+  "const stored = parseOptionalProfileLink(platform, storedValue);",
+  'stored.error && typeof postedValue === "string" && postedValue === storedValue',
+  "return { value: undefined }",
+]) requireText(profileValidation, marker, `Legacy professional-link preservation lacks its exact-invalid-value boundary: ${marker}.`);
+const parsedSuccessIndex = profileValidation.indexOf("if (!parsed.error) return parsed;");
+const storedValidationIndex = profileValidation.indexOf("const stored = parseOptionalProfileLink(platform, storedValue);", parsedSuccessIndex);
+const exactPreserveIndex = profileValidation.indexOf('stored.error && typeof postedValue === "string" && postedValue === storedValue', storedValidationIndex);
+if (parsedSuccessIndex < 0 || storedValidationIndex <= parsedSuccessIndex || exactPreserveIndex <= storedValidationIndex) failures.push("Legacy-link preservation must reject changed invalid values before checking exact raw equality with a stored-invalid value.");
+const storedLinkReadIndex = profileActions.indexOf('.select("github_url,linkedin_url")');
+const ownerScopeIndex = profileActions.indexOf('.eq("id", current.user.id)', storedLinkReadIndex);
+const parseProfileIndex = profileActions.indexOf("parseProfileForm(formData, {", storedLinkReadIndex);
+const updateProfileIndex = profileActions.indexOf(".update(profileUpdate)", parseProfileIndex);
+if (storedLinkReadIndex < 0 || ownerScopeIndex <= storedLinkReadIndex || parseProfileIndex <= ownerScopeIndex || updateProfileIndex <= parseProfileIndex) failures.push("Profile save must read the owner's current links before the preserve decision and update.");
+const profileUpdateStart = profileActions.indexOf('const profileUpdate: Database["public"]["Tables"]["profiles"]["Update"] = {', parseProfileIndex);
+const profileUpdateEnd = profileActions.indexOf("};", profileUpdateStart);
+if (profileUpdateStart < 0 || profileUpdateEnd <= profileUpdateStart) failures.push("Profile save lacks a typed base update object.");
+else prohibit(profileActions.slice(profileUpdateStart, profileUpdateEnd), /\b(?:github_url|linkedin_url)\s*:/, "Profile save unconditionally includes a professional-link column in its base update.");
+for (const marker of [
+  "if (storedProfileError)",
+  "if (!storedProfile)",
+  "githubUrl: storedProfile.github_url",
+  "linkedinUrl: storedProfile.linkedin_url",
+  "if (input.linkedinUrl !== undefined) profileUpdate.linkedin_url = input.linkedinUrl;",
+  "if (input.githubUrl !== undefined) profileUpdate.github_url = input.githubUrl;",
+]) requireText(profileActions, marker, `Profile save can rewrite or lose an unchanged legacy link: ${marker}.`);
 for (const marker of ['name="linkedin_url" type="url" inputMode="url" maxLength={500} aria-describedby="linkedin-url-help"', 'id="linkedin-url-help">Use a full HTTPS URL on linkedin.com.', 'name="github_url" type="url" inputMode="url" maxLength={500} aria-describedby="github-url-help"', 'id="github-url-help">Use a full HTTPS URL on github.com.']) requireText(profileFormSource, marker, `Profile professional-link input lacks its bound/help contract: ${marker}.`);
+const profileHelpRule = globalStyles.match(/\.profile-form\s+\.form-group\s*>\s*small\s*\{([^}]*)\}/)?.[1];
+const profileHelpFontSize = profileHelpRule?.match(/font-size:\s*([\d.]+)px/)?.[1];
+if (!profileHelpFontSize || Number(profileHelpFontSize) < 13) failures.push("Profile field help text must remain readable at 13px or larger.");
 requireText(publicProfilePage, "No supported professional links are available.", "Public profile does not describe a sanitized zero-link state honestly.");
 
 for (const marker of [
