@@ -21,7 +21,7 @@ Account-backed candidates always outrank browser candidates. Ties are resolved b
 
 Signed-out activity uses the versioned `engineering-foundry-preparation-progress-v1` browser record. It contains only canonical track and item identifiers, `in-progress`/`completed`, timestamps, and optional DSA/System Design plan labels and internal links. It never stores notes, answers, stories, or analytics payloads. Malformed, unknown-version, and oversized storage is safely ignored.
 
-After sign-in, the homepage offers an explicit import. It validates every identifier against canonical content, does not overwrite any existing account record, and removes only the local activity confirmed as imported. Existing account records are reported as left unchanged. Local saved plans are intentionally not imported automatically: the user can explicitly save the chosen plan from its actual plan page. A failed import leaves all browser activity recoverable.
+After sign-in, the homepage offers an explicit import. It validates every identifier against canonical content and uses insert-only account operations, so existing account records are reported without being overwritten. After the account response, only a current browser row that exactly matches the submitted snapshot and is reported as `imported` or `existing` is cleared from primary or legacy storage. Partial success can clear those confirmed unchanged snapshots while failed, concurrently changed, and unrelated browser activity remains recoverable. A malformed or unavailable request clears nothing. Local saved plans always stay in the browser until the user explicitly saves the chosen plan from its actual plan page.
 
 ## Durable activity and plans
 

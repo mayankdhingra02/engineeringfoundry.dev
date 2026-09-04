@@ -877,6 +877,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      import_preparation_track_progress_if_absent: {
+        Args: { target_track: "ml-design" | "behavioral"; target_item_id: string; target_status: "in-progress" | "completed" };
+        Returns: boolean;
+      };
       save_preparation_track_progress: {
         Args: { target_track: "ml-design" | "behavioral"; target_item_id: string; target_status: "in-progress" | "completed" };
         Returns: Database["public"]["Tables"]["preparation_track_progress"]["Row"][];
@@ -1006,6 +1010,13 @@ export type Database = {
         Args: { import_version: number };
         Returns: boolean;
       };
+      import_dsa_question_progress_if_absent: {
+        Args: {
+          target_question_id: string;
+          target_status: "attempted" | "review";
+        };
+        Returns: boolean;
+      };
       save_dsa_question_progress: {
         Args: {
           target_question_id: string;
@@ -1023,6 +1034,13 @@ export type Database = {
           target_bookmarked: boolean | null;
         };
         Returns: string;
+      };
+      import_system_design_item_progress_if_absent: {
+        Args: {
+          target_item_id: string;
+          target_item_type: "concept" | "design_problem";
+        };
+        Returns: boolean;
       };
       save_system_design_item_progress: {
         Args: {

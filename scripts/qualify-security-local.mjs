@@ -194,6 +194,72 @@ await check("atomic DSA quick progress derives the owner without exposing a fore
   return "separate owner rows; private fields preserved";
 });
 
+await check("anonymous callers cannot invoke insert-only browser import RPCs", async () => {
+  const attempts = await Promise.all([
+    anon.rpc("import_dsa_question_progress_if_absent", { target_question_id: "two-sum", target_status: "attempted" }),
+    anon.rpc("import_system_design_item_progress_if_absent", { target_item_id: "estimation", target_item_type: "concept" }),
+    anon.rpc("import_preparation_track_progress_if_absent", { target_track: "behavioral", target_item_id: "beh-lead-01", target_status: "completed" }),
+  ]);
+  for (const attempt of attempts) assert.equal(attempt.error?.code, "42501", "anonymous import execution must fail with 42501");
+  return "all three RPCs returned SQLSTATE 42501";
+});
+
+await check("insert-only browser import RPCs reject invalid catalog and bounded values", async () => {
+  const invalid = await Promise.all([
+    a.client.rpc("import_dsa_question_progress_if_absent", { target_question_id: "fabricated-question", target_status: "attempted" }),
+    a.client.rpc("import_dsa_question_progress_if_absent", { target_question_id: "two-sum", target_status: "solved" }),
+    a.client.rpc("import_system_design_item_progress_if_absent", { target_item_id: "fabricated-concept", target_item_type: "concept" }),
+    a.client.rpc("import_system_design_item_progress_if_absent", { target_item_id: "estimation", target_item_type: "lesson" }),
+    a.client.rpc("import_preparation_track_progress_if_absent", { target_track: "dsa", target_item_id: "two-sum", target_status: "completed" }),
+    a.client.rpc("import_preparation_track_progress_if_absent", { target_track: "behavioral", target_item_id: "Not Canonical", target_status: "completed" }),
+  ]);
+  assert.deepEqual(invalid.map((result) => result.error?.code), ["23503", "23514", "23503", "23514", "23514", "23514"]);
+  return "catalog failures 23503; bounded-value failures 23514";
+});
+
+await check("insert-only browser imports derive independent owners without exposing foreign state", async () => {
+  const seeded = await Promise.all([
+    a.client.rpc("save_dsa_question_progress", {
+      target_question_id: "valid-palindrome", target_status: "solved", target_confidence: "high",
+      target_bookmarked: true, target_notes: "Owner A import-isolation note.",
+    }),
+    a.client.rpc("save_system_design_item_progress", {
+      target_item_id: "leaderboard", target_item_type: "design_problem", target_status: "comfortable",
+      target_confidence: "high", target_bookmarked: true, target_notes: "Owner A design isolation note.",
+    }),
+    a.client.rpc("save_preparation_track_progress", {
+      target_track: "behavioral", target_item_id: "beh-lead-02", target_status: "completed",
+    }),
+  ]);
+  for (const result of seeded) assert.ifError(result.error);
+
+  const ownerBefore = await Promise.all([
+    a.client.from("dsa_question_progress").select("*").eq("question_id", "valid-palindrome").single(),
+    a.client.from("system_design_item_progress").select("*").eq("item_id", "leaderboard").eq("item_type", "design_problem").single(),
+    a.client.from("preparation_track_progress").select("*").eq("track", "behavioral").eq("item_id", "beh-lead-02").single(),
+  ]);
+  for (const result of ownerBefore) assert.ifError(result.error);
+
+  const foreignSameKeys = await Promise.all([
+    b.client.rpc("import_dsa_question_progress_if_absent", { target_question_id: "valid-palindrome", target_status: "attempted" }),
+    b.client.rpc("import_system_design_item_progress_if_absent", { target_item_id: "leaderboard", target_item_type: "design_problem" }),
+    b.client.rpc("import_preparation_track_progress_if_absent", { target_track: "behavioral", target_item_id: "beh-lead-02", target_status: "in-progress" }),
+  ]);
+  for (const result of foreignSameKeys) {
+    assert.ifError(result.error);
+    assert.equal(result.data, true, "another owner's matching key must not be reported as existing");
+  }
+
+  const ownerAfter = await Promise.all([
+    a.client.from("dsa_question_progress").select("*").eq("question_id", "valid-palindrome").single(),
+    a.client.from("system_design_item_progress").select("*").eq("item_id", "leaderboard").eq("item_type", "design_problem").single(),
+    a.client.from("preparation_track_progress").select("*").eq("track", "behavioral").eq("item_id", "beh-lead-02").single(),
+  ]);
+  for (const result of ownerAfter) assert.ifError(result.error);
+  assert.deepEqual(ownerAfter.map((result) => result.data), ownerBefore.map((result) => result.data), "foreign imports changed Owner A state");
+  return "Owner B inserted three independent rows; Owner A rows unchanged";
+});
+
 await check("a fabricated System Design concept cannot be persisted", async () => {
   const { error } = await a.client.rpc("save_system_design_item_progress", {
     target_item_id: "invented-concept",

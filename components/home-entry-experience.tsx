@@ -9,12 +9,20 @@ import { systemDesignProgressEvent, systemDesignProgressStorageKey } from "./sys
 import {
   migrateLegacySystemDesignProgress,
   preparationActivityDaysThisWeek,
-  removeLocalProgressItems,
   parseLocalPreparationProgress,
   preparationProgressEvent,
   readLocalPreparationProgress,
   writeLocalPreparationProgress,
 } from "@/lib/preparation-progress/local";
+import {
+  parsePreparationImportError,
+  parsePreparationImportRequest,
+  parsePreparationImportResponse,
+  preparationImportStatusMessage,
+  PREPARATION_IMPORT_INVALID_MESSAGE,
+  PREPARATION_IMPORT_UNAVAILABLE_MESSAGE,
+  reconcilePreparationImport,
+} from "@/lib/preparation-progress/import";
 import {
   createUnavailableAccountPreparationContinuationState,
   choosePreparationContinuation,
@@ -37,8 +45,14 @@ const trackIcons = {
 
 function readBrowserProgressWithLegacy() {
   const current = readLocalPreparationProgress(window.localStorage);
-  const legacy = JSON.parse(window.localStorage.getItem(systemDesignProgressStorageKey) ?? "{}");
+  let legacy: unknown = null;
+  try {
+    legacy = JSON.parse(window.localStorage.getItem(systemDesignProgressStorageKey) ?? "{}");
+  } catch {
+    // Malformed legacy storage remains untouched and is not submitted.
+  }
   return {
+    current,
     legacy,
     progress: parseLocalPreparationProgress({
       ...current,
@@ -49,6 +63,7 @@ function readBrowserProgressWithLegacy() {
 
 export function HomeEntryExperience({ continuationCatalog }: { continuationCatalog: ContinuationCatalog }) {
   const [localCandidates, setLocalCandidates] = useState<PreparationContinuation[]>([]);
+  const [localImportableActivityCount, setLocalImportableActivityCount] = useState(0);
   const [localWeeklyActivityDays, setLocalWeeklyActivityDays] = useState(0);
   const [accountState, setAccountState] = useState<AccountPreparationContinuationState | null>(null);
   const [accountRequestPending, setAccountRequestPending] = useState(false);
@@ -59,6 +74,12 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
   const mountedRef = useRef(false);
   const accountRequestIdRef = useRef(0);
   const accountRequestPendingRef = useRef(false);
+  const importRequestIdRef = useRef(0);
+  const importPendingRef = useRef(false);
+  const importButtonRef = useRef<HTMLButtonElement>(null);
+  const importStatusRef = useRef<HTMLElement>(null);
+  const recoverImportFocusRef = useRef(false);
+  const importFocusFrameRef = useRef<number | null>(null);
   const retryButtonRef = useRef<HTMLButtonElement>(null);
   const recoverFocusAfterRetryRef = useRef(false);
   const focusFrameRef = useRef<number | null>(null);
@@ -69,9 +90,11 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
     try {
       const { progress } = readBrowserProgressWithLegacy();
       setLocalCandidates(localContinuationCandidates(progress, continuationCatalog));
+      setLocalImportableActivityCount(progress.items.length);
       setLocalWeeklyActivityDays(preparationActivityDaysThisWeek(progress.items));
     } catch {
       setLocalCandidates([]);
+      setLocalImportableActivityCount(0);
     }
     setProgressChecked(true);
   }, [continuationCatalog]);
@@ -127,36 +150,83 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
       mountedRef.current = false;
       accountRequestIdRef.current += 1;
       accountRequestPendingRef.current = false;
+      importRequestIdRef.current += 1;
+      importPendingRef.current = false;
       if (focusFrameRef.current !== null) window.cancelAnimationFrame(focusFrameRef.current);
+      if (importFocusFrameRef.current !== null) window.cancelAnimationFrame(importFocusFrameRef.current);
     };
   }, [loadAccountProgress]);
 
   async function importBrowserActivity() {
+    if (!mountedRef.current || importPendingRef.current) return;
+    importPendingRef.current = true;
+    recoverImportFocusRef.current = false;
+    const requestId = ++importRequestIdRef.current;
     setImporting(true);
     setImportMessage(null);
     try {
-      const { progress, legacy } = readBrowserProgressWithLegacy();
-      const response = await fetch("/api/preparation/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(progress) });
-      const result = await response.json() as { imported?: string[]; skipped?: string[]; plansRequireChoice?: boolean; error?: string };
-      if (!response.ok) throw new Error(result.error ?? "Browser activity could not be imported.");
-      if (result.imported?.length) {
-        writeLocalPreparationProgress(window.localStorage, removeLocalProgressItems(progress, result.imported));
-        const importedSystemIds = new Set(result.imported.filter((key) => key.startsWith("system-design:")).map((key) => key.slice("system-design:".length)));
-        if (importedSystemIds.size && legacy && typeof legacy === "object" && !Array.isArray(legacy)) {
-          const remainingLegacy = Object.fromEntries(Object.entries(legacy as Record<string, unknown>).filter(([key]) => importedSystemIds.has(key.slice(key.indexOf(":") + 1)) === false));
-          window.localStorage.setItem(systemDesignProgressStorageKey, JSON.stringify(remainingLegacy));
+      const { progress } = readBrowserProgressWithLegacy();
+      const submitted = parsePreparationImportRequest(progress);
+      if (!submitted) throw new Error(PREPARATION_IMPORT_INVALID_MESSAGE);
+      const response = await fetch("/api/preparation/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submitted),
+      });
+      const payload: unknown = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(parsePreparationImportError(payload) ?? PREPARATION_IMPORT_UNAVAILABLE_MESSAGE);
+      const result = parsePreparationImportResponse(payload, submitted);
+      if (!result) throw new Error(PREPARATION_IMPORT_UNAVAILABLE_MESSAGE);
+      if (!mountedRef.current || requestId !== importRequestIdRef.current) return;
+
+      const current = readBrowserProgressWithLegacy();
+      const reconciliation = reconcilePreparationImport(submitted, result, current.current, current.legacy);
+      let localReconciliationFailed = false;
+      let localStateChanged = false;
+      try {
+        if (reconciliation.primaryChanged) {
+          writeLocalPreparationProgress(window.localStorage, reconciliation.progress);
+          localStateChanged = true;
         }
-        window.dispatchEvent(new CustomEvent(preparationProgressEvent));
+        if (reconciliation.legacyChanged && reconciliation.legacySystemDesignProgress) {
+          window.localStorage.setItem(
+            systemDesignProgressStorageKey,
+            JSON.stringify(reconciliation.legacySystemDesignProgress),
+          );
+          localStateChanged = true;
+        }
+      } catch {
+        localReconciliationFailed = true;
       }
-      setImportMessage(`${result.imported?.length ?? 0} activities imported${result.skipped?.length ? `; ${result.skipped.length} existing account activities were left unchanged.` : "."}${result.plansRequireChoice ? " Saved plans remain in this browser until you choose one on its plan page." : ""}`);
+      if (localStateChanged) {
+        window.dispatchEvent(new CustomEvent(preparationProgressEvent));
+        window.dispatchEvent(new CustomEvent(systemDesignProgressEvent));
+      }
+      recoverImportFocusRef.current = document.activeElement === importButtonRef.current;
+      setImportMessage(preparationImportStatusMessage(result, {
+        changedLocallyCount: reconciliation.changedLocallyCount,
+        localReconciliationFailed,
+      }));
       await loadAccountProgress();
-    } catch (error) { setImportMessage(error instanceof Error ? error.message : "Browser activity could not be imported."); }
-    finally { setImporting(false); }
+    } catch (error) {
+      if (!mountedRef.current || requestId !== importRequestIdRef.current) return;
+      const safeMessage = error instanceof Error
+        ? parsePreparationImportError({ error: error.message })
+        : null;
+      setImportMessage(safeMessage ?? PREPARATION_IMPORT_UNAVAILABLE_MESSAGE);
+    } finally {
+      if (mountedRef.current && requestId === importRequestIdRef.current) {
+        importPendingRef.current = false;
+        setImporting(false);
+      }
+    }
   }
 
   const accountCandidates = accountState?.status === "ready" ? accountState.candidates : [];
   const accountWeeklyActivityDays = accountState?.status === "ready" ? accountState.weeklyActivityDays : 0;
   const authenticated = accountState?.status === "ready";
+  const importAvailable = accountState?.status === "ready" && localCandidates.length > 0
+    && localImportableActivityCount > 0;
   const continuation = choosePreparationContinuation(accountCandidates, localCandidates);
   const weeklyActivityDays = accountWeeklyActivityDays || localWeeklyActivityDays;
   const continuationSource = continuation ? `${continuation.source}:${continuation.kind}` : null;
@@ -171,6 +241,23 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
       (continuationHeadingRef.current ?? trackHeadingRef.current)?.focus();
     });
   }, [accountState?.status, continuation]);
+
+  useEffect(() => {
+    if (!recoverImportFocusRef.current || importing || !importMessage) return;
+    recoverImportFocusRef.current = false;
+    if (importButtonRef.current?.isConnected) return;
+    importFocusFrameRef.current = window.requestAnimationFrame(() => {
+      importFocusFrameRef.current = null;
+      if (!mountedRef.current) return;
+      if (importButtonRef.current?.isConnected) return;
+      if (document.activeElement && document.activeElement !== document.body) return;
+      importStatusRef.current?.focus();
+    });
+    return () => {
+      if (importFocusFrameRef.current !== null) window.cancelAnimationFrame(importFocusFrameRef.current);
+      importFocusFrameRef.current = null;
+    };
+  }, [accountState?.status, importMessage, importing]);
 
   useEffect(() => {
     if (!accountState || accountState.status === "unavailable" || !progressChecked || !continuation || !continuationSource || presentedContinuations.current.has(continuationSource)) return;
@@ -214,11 +301,35 @@ export function HomeEntryExperience({ continuationCatalog }: { continuationCatal
         </aside>
       )}
 
-      {accountState?.status === "ready" && localCandidates.length > 0 && (
-        <aside className="home-local-import" aria-live="polite">
-          <div><strong>Browser activity found</strong><p>Import only activity that is not already in your account. Existing account progress is never overwritten.</p></div>
-          <button type="button" className="button button-secondary" disabled={importing} onClick={() => { void importBrowserActivity(); }}>{importing ? "Importing…" : "Import activity"}</button>
-          {importMessage && <small role="status">{importMessage}</small>}
+      {((importAvailable || (accountState?.status === "ready" && importing)) || importMessage) && (
+        <aside className="home-local-import">
+          <div><strong>{localImportableActivityCount > 0 || importing ? "Browser activity found" : "Browser activity import result"}</strong><p>Import only activity that is not already in your account. Existing account progress is never overwritten.</p></div>
+          {(importAvailable || (accountState?.status === "ready" && importing)) && (
+            <button
+              ref={importButtonRef}
+              type="button"
+              className="button button-secondary"
+              aria-disabled={importing}
+              aria-describedby="home-browser-import-status"
+              onClick={() => {
+                if (importPendingRef.current) return;
+                void importBrowserActivity();
+              }}
+            >
+              {importing ? "Importing browser activity…" : "Import activity"}
+            </button>
+          )}
+          <small
+            ref={importStatusRef}
+            id="home-browser-import-status"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-busy={importing}
+            tabIndex={-1}
+          >
+            {importing ? "Importing browser activity. Browser activity will remain here until each account result is confirmed." : importMessage}
+          </small>
         </aside>
       )}
 

@@ -125,8 +125,8 @@ async function cleanOwnedFixtures(account) {
     owned.from("behavioral_custom_questions").delete().like("question_text", "Phase 5A qualification%"),
     owned.from("applications").delete().like("company_name", `${fixtureCompany}%`),
     owned.from("dsa_progress").delete().like("item_id", `${fixturePrefix}:%`),
-    owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters", "course-schedule", "group-anagrams", "binary-search"]),
-    owned.from("system_design_item_progress").delete().in("item_id", ["estimation", "url-shortener", "vector-search"]),
+    owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters", "course-schedule", "group-anagrams", "binary-search", "valid-parentheses", "valid-anagram", "climbing-stairs", "coin-change", "merge-intervals"]),
+    owned.from("system_design_item_progress").delete().in("item_id", ["estimation", "url-shortener", "vector-search", "rate-limiter", "notification-service"]),
     owned.from("system_design_progress").delete().like("item_id", `${fixturePrefix}:%`),
     owned.from("user_preparation_preferences").delete().eq("user_id", account.user.id),
   ];
@@ -135,6 +135,10 @@ async function cleanOwnedFixtures(account) {
     const result = await operation;
     expect(!result.error, `fixture cleanup failed: ${result.error?.message}`);
   }
+  queryLocalDatabase(
+    "delete from public.preparation_track_progress where user_id = :'user_id'::uuid",
+    { user_id: account.user.id },
+  );
 }
 
 function cleanPublicExperienceFixtures() {
@@ -1403,6 +1407,100 @@ await check("fake canonical System Design IDs are rejected", async () => {
     target_item_id: `${fixturePrefix}-fake`, target_item_type: "concept", target_status: "reviewed",
     target_confidence: "low", target_bookmarked: false, target_notes: null,
   }), "23503");
+});
+
+await check("insert-only browser import preserves rich existing progress across every storage family", async () => {
+  expectSuccess(await a.authClient.rpc("save_dsa_question_progress", {
+    target_question_id: "valid-parentheses", target_status: "solved", target_confidence: "high",
+    target_bookmarked: true, target_notes: "Keep this DSA note and every timestamp.",
+  }), "DSA import-preservation setup failed");
+  expectSuccess(await a.authClient.rpc("save_system_design_item_progress", {
+    target_item_id: "rate-limiter", target_item_type: "design_problem", target_status: "comfortable",
+    target_confidence: "high", target_bookmarked: true, target_notes: "Keep this design note and every timestamp.",
+  }), "System Design import-preservation setup failed");
+  expectSuccess(await a.authClient.rpc("save_preparation_track_progress", {
+    target_track: "ml-design", target_item_id: "ml-problem-recommendation", target_status: "completed",
+  }), "track import-preservation setup failed");
+
+  const before = await Promise.all([
+    a.authClient.from("dsa_question_progress").select("*").eq("question_id", "valid-parentheses").single(),
+    a.authClient.from("system_design_item_progress").select("*").eq("item_id", "rate-limiter").eq("item_type", "design_problem").single(),
+    a.authClient.from("preparation_track_progress").select("*").eq("track", "ml-design").eq("item_id", "ml-problem-recommendation").single(),
+  ]).then((responses) => responses.map((response) => expectSuccess(response, "import-preservation setup read failed")));
+
+  const imports = await Promise.all([
+    a.authClient.rpc("import_dsa_question_progress_if_absent", { target_question_id: "valid-parentheses", target_status: "review" }),
+    a.authClient.rpc("import_system_design_item_progress_if_absent", { target_item_id: "rate-limiter", target_item_type: "design_problem" }),
+    a.authClient.rpc("import_preparation_track_progress_if_absent", { target_track: "ml-design", target_item_id: "ml-problem-recommendation", target_status: "in-progress" }),
+  ]);
+  for (const result of imports) expect(expectSuccess(result, "existing browser import failed") === false, "an existing owner row was misreported as inserted");
+
+  const after = await Promise.all([
+    a.authClient.from("dsa_question_progress").select("*").eq("question_id", "valid-parentheses").single(),
+    a.authClient.from("system_design_item_progress").select("*").eq("item_id", "rate-limiter").eq("item_type", "design_problem").single(),
+    a.authClient.from("preparation_track_progress").select("*").eq("track", "ml-design").eq("item_id", "ml-problem-recommendation").single(),
+  ]).then((responses) => responses.map((response) => expectSuccess(response, "import-preservation result read failed")));
+  expect(JSON.stringify(after) === JSON.stringify(before), "an insert-only import changed an existing rich progress row");
+  return "all three RPCs returned existing; complete rows unchanged";
+});
+
+await check("concurrent same-key browser imports insert exactly once", async () => {
+  const races = await Promise.all([
+    Promise.all([
+      a.authClient.rpc("import_dsa_question_progress_if_absent", { target_question_id: "valid-anagram", target_status: "attempted" }),
+      a.authClient.rpc("import_dsa_question_progress_if_absent", { target_question_id: "valid-anagram", target_status: "attempted" }),
+    ]),
+    Promise.all([
+      a.authClient.rpc("import_system_design_item_progress_if_absent", { target_item_id: "notification-service", target_item_type: "design_problem" }),
+      a.authClient.rpc("import_system_design_item_progress_if_absent", { target_item_id: "notification-service", target_item_type: "design_problem" }),
+    ]),
+    Promise.all([
+      a.authClient.rpc("import_preparation_track_progress_if_absent", { target_track: "behavioral", target_item_id: "beh-lead-01", target_status: "completed" }),
+      a.authClient.rpc("import_preparation_track_progress_if_absent", { target_track: "behavioral", target_item_id: "beh-lead-01", target_status: "completed" }),
+    ]),
+  ]);
+  for (const pair of races) {
+    const outcomes = pair.map((result) => expectSuccess(result, "same-key concurrent import failed")).sort();
+    expect(JSON.stringify(outcomes) === JSON.stringify([false, true]), `expected one inserted and one existing result, observed ${JSON.stringify(outcomes)}`);
+  }
+  return "DSA, System Design, and Behavioral races each returned one true and one false";
+});
+
+await check("concurrent browser import and rich DSA save preserve the full-save intent", async () => {
+  const [imported, saved] = await Promise.all([
+    a.authClient.rpc("import_dsa_question_progress_if_absent", {
+      target_question_id: "merge-intervals",
+      target_status: "attempted",
+    }),
+    a.authClient.rpc("save_dsa_question_progress", {
+      target_question_id: "merge-intervals",
+      target_status: "solved",
+      target_confidence: "high",
+      target_bookmarked: true,
+      target_notes: "The full editor owns this final rich snapshot.",
+    }),
+  ]);
+  const importOutcome = expectSuccess(imported, "concurrent browser import failed");
+  const savedRows = expectSuccess(saved, "concurrent full DSA save failed");
+  expect(typeof importOutcome === "boolean", "concurrent import did not return a deterministic boolean outcome");
+  expect(savedRows.length === 1, "concurrent full save did not return its owned row");
+  const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,confidence,bookmarked,notes,first_attempted_at,last_practiced_at,solved_at").eq("question_id", "merge-intervals").single(), "concurrent import/full-save read failed");
+  expect(row.status === "solved" && row.confidence === "high" && row.bookmarked === true, "browser import displaced the full editor status, confidence, or bookmark");
+  expect(row.notes === "The full editor owns this final rich snapshot.", "browser import displaced the full editor private note");
+  expect(row.first_attempted_at && row.last_practiced_at && row.solved_at, "the final full-save timestamps are inconsistent");
+  return `import returned ${importOutcome}; rich full-save snapshot prevailed`;
+});
+
+await check("concurrent different-key browser imports commute", async () => {
+  const [first, second] = await Promise.all([
+    a.authClient.rpc("import_dsa_question_progress_if_absent", { target_question_id: "climbing-stairs", target_status: "attempted" }),
+    a.authClient.rpc("import_dsa_question_progress_if_absent", { target_question_id: "coin-change", target_status: "review" }),
+  ]);
+  expect(expectSuccess(first, "first different-key import failed") === true, "first different key was not inserted");
+  expect(expectSuccess(second, "second different-key import failed") === true, "second different key was not inserted");
+  const rows = expectSuccess(await a.authClient.from("dsa_question_progress").select("question_id,status").in("question_id", ["climbing-stairs", "coin-change"]), "different-key import read failed");
+  expect(rows.length === 2, `different-key imports produced ${rows.length} rows`);
+  return "both owner keys inserted without interference";
 });
 
 await check("User A creates an application-linked structured design attempt", async () => {
