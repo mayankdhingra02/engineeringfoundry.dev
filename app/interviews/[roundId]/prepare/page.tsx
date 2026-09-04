@@ -19,6 +19,7 @@ import { formatCountdown, formatInterviewDate } from "@/lib/applications/format"
 import { requireMemberProfile } from "@/lib/auth/guards";
 import { chooseRoundPreparationNextAction } from "@/lib/interview-preparation/next-action";
 import { getInterviewPreparationHub } from "@/lib/interview-preparation/queries";
+import { PREPARATION_TEXT_ABSENT_REVISION } from "@/lib/interview-preparation/text-action-input";
 import { getRoundReminderStates } from "@/lib/interview-calendar/queries";
 import { getRoundExecutionGuide, roundExecutionGuideHref } from "@/lib/interview-playbook/round-execution-presentation";
 import { behavioralContentStatusLabel } from "@/lib/behavioral/readiness";
@@ -52,6 +53,7 @@ export default async function InterviewPreparationPage({ params }: { params: Pro
   });
   const notesAction = savePreparationNotesAction.bind(null, round.id, applicationId);
   const reflectionAction = savePreparationReflectionAction.bind(null, round.id, applicationId);
+  const latestHref = `/interviews/${round.id}/prepare`;
   const stateLabel = round.status === "Cancelled" ? "This round was cancelled. Your preparation is preserved." : round.status === "Completed" ? "Round completed. Capture what happened while it is fresh." : round.status === "Rescheduled" ? "Rescheduled round. Your checklist and notes carried forward." : null;
 
   return <div className="prep-hub" data-direction-seed="68d019a3"><div className="page-width prep-shell">
@@ -73,11 +75,11 @@ export default async function InterviewPreparationPage({ params }: { params: Pro
 
       {hub.modules.includes("company") && <section className="prep-module prep-company"><header><Building2 size={21} /><div><h2>Company context</h2><p>Use only the research Engineering Foundry can resolve confidently.</p></div></header>{hub.company.hasGuide && hub.company.slug ? <Link className="prep-company-link" href={`/companies/${hub.company.slug}`}><BookOpenCheck size={18} /><span><strong>Review the {round.application.company_name} interview guide</strong><small>Process context, themes, and reliable preparation guidance</small></span><ExternalLink size={14} /></Link> : <div className="prep-empty-inline"><p>No verified company guide matches this application. Your application notes remain the source of truth.</p><Link href={`/applications/${applicationId}`}>Review application</Link></div>}</section>}
 
-      {round.status === "Completed" && <section className="prep-reflection"><header><UserRound size={21} /><div><h2>Private post-interview reflection</h2><p>Record evidence for your next round. This stays private to your account.</p></div></header><PreparationReflectionForm action={reflectionAction} values={{ topicsAsked: preparation?.topics_asked ?? "", wentWell: preparation?.went_well ?? "", needsImprovement: preparation?.needs_improvement ?? "", followUpNotes: preparation?.follow_up_notes ?? "" }} /></section>}
+      {round.status === "Completed" && <section className="prep-reflection"><header><UserRound size={21} /><div><h2>Private post-interview reflection</h2><p>Record evidence for your next round. This stays private to your account.</p></div></header><PreparationReflectionForm action={reflectionAction} values={{ topicsAsked: preparation?.topics_asked ?? "", wentWell: preparation?.went_well ?? "", needsImprovement: preparation?.needs_improvement ?? "", followUpNotes: preparation?.follow_up_notes ?? "" }} revision={preparation?.reflection_updated_at ?? PREPARATION_TEXT_ABSENT_REVISION} latestHref={latestHref} /></section>}
     </div>
 
     <aside className="prep-side"><section className="prep-checklist"><header><ListChecks size={20} /><div><h2>Round checklist</h2><p>{hub.completedCount} of {hub.totalCount} complete</p></div></header><div className="prep-progress-track" aria-label={`${hub.completedCount} of ${hub.totalCount} preparation tasks complete`}><span style={{ width: `${hub.totalCount ? (hub.completedCount / hub.totalCount) * 100 : 0}%` }} /></div><ul>{checklist.map((item) => { const complete = completedIds.includes(item.id); const action = togglePreparationChecklistAction.bind(null, round.id, item.id, !complete); return <li key={item.id}><PreparationChecklistControl action={action} complete={complete} label={item.label} /></li>; })}{tasks.map((task) => { const toggle = togglePreparationTaskAction.bind(null, round.id, applicationId, task.id); const remove = deletePreparationTaskAction.bind(null, round.id, applicationId, task.id); return <li key={task.id} className="custom"><PreparationTaskControl action={toggle} complete={task.completed} label={task.title} /><PreparationTaskDeleteControl action={remove} /></li>; })}</ul>{tasks.length < 12 && <PreparationAddTaskForm action={addPreparationTaskAction.bind(null, round.id, applicationId)} />}</section>
-      <section className="prep-notes"><PreparationNotesForm action={notesAction} value={preparation?.private_notes ?? ""} /></section>
+      <section className="prep-notes"><PreparationNotesForm action={notesAction} value={preparation?.private_notes ?? ""} revision={preparation?.private_notes_updated_at ?? PREPARATION_TEXT_ABSENT_REVISION} latestHref={latestHref} /></section>
       <p className="prep-privacy">Checklist, custom tasks, notes, and reflections are private to your account.</p>
     </aside></div>
   </div></div>;

@@ -838,12 +838,39 @@ await check("clearing a missing checklist item is idempotent without creating pr
   return "application returned; 0 preparation rows";
 });
 
+await check("concurrent absent notes and checklist saves preserve both fields", async () => {
+  const roundId = requireFixture(fixture.firstRoundId, "first round");
+  const [notesResult, checklistResult] = await Promise.all([
+    a.authClient.rpc("save_interview_preparation_notes_if_revision", {
+      target_round_id: roundId,
+      target_expect_absent: true,
+      target_expected_updated_at: null,
+      target_notes: "First-round notes created beside checklist state.",
+    }),
+    a.authClient.rpc("set_interview_preparation_checklist_item", {
+      target_round_id: roundId,
+      target_item_id: "company-research",
+      target_completed: true,
+    }),
+  ]);
+  const notesRows = expectSuccess(notesResult, "absent notes save failed");
+  expect(notesRows.length === 1 && notesRows[0].round_id === roundId, "absent notes save returned an invalid result");
+  expect(expectSuccess(checklistResult, "concurrent checklist save failed") === fixture.applicationId, "concurrent checklist save returned the wrong application");
+  const row = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes,private_notes_updated_at,completed_template_item_ids").eq("round_id", roundId).single(), "absent notes/checklist read failed");
+  expect(row.private_notes === "First-round notes created beside checklist state." && row.private_notes_updated_at === notesRows[0].updated_at, "absent notes snapshot was not retained");
+  expect(row.completed_template_item_ids.length === 1 && row.completed_template_item_ids[0] === "company-research", "absent notes save lost the checklist update");
+  return "notes revision and checklist membership retained";
+});
+
 await check("User A creates notes and concurrent desired-state checklist updates retain both items", async () => {
-  const saved = await a.authClient.rpc("save_interview_preparation", {
+  const saved = await a.authClient.rpc("save_interview_preparation_notes_if_revision", {
     target_round_id: requireFixture(fixture.secondRoundId, "second round"),
-    notes_value: "Review the interviewer context and narrate trade-offs.",
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_notes: "Review the interviewer context and narrate trade-offs.",
   });
-  fixture.preparationId = expectSuccess(saved, "preparation save failed");
+  const savedRows = expectSuccess(saved, "preparation save failed");
+  expect(savedRows.length === 1 && savedRows[0].round_id === fixture.secondRoundId, "preparation save returned an invalid result");
   const checklistResults = await Promise.all([
     a.authClient.rpc("set_interview_preparation_checklist_item", {
       target_round_id: fixture.secondRoundId,
@@ -859,7 +886,8 @@ await check("User A creates notes and concurrent desired-state checklist updates
   for (const result of checklistResults) {
     expect(expectSuccess(result, "concurrent checklist update failed") === fixture.applicationId, "checklist update returned the wrong application");
   }
-  const row = expectSuccess(await a.authClient.from("interview_preparations").select("round_id,private_notes,completed_template_item_ids").eq("id", fixture.preparationId).single(), "preparation read failed");
+  const row = expectSuccess(await a.authClient.from("interview_preparations").select("id,round_id,private_notes,private_notes_updated_at,completed_template_item_ids").eq("round_id", fixture.secondRoundId).single(), "preparation read failed");
+  fixture.preparationId = row.id;
   expect(row.round_id === fixture.secondRoundId, "preparation state attached to the wrong round");
   expect(row.private_notes.includes("trade-offs"), "concurrent checklist updates replaced private notes");
   expect(row.completed_template_item_ids.length === 2 && row.completed_template_item_ids.includes("logistics-confirm") && row.completed_template_item_ids.includes("dsa-review-queue"), "concurrent checklist updates did not retain both items");
@@ -927,10 +955,13 @@ await check("invalid checklist inputs fail before mutation", async () => {
 
 await check("concurrent note and checklist writes preserve both fields", async () => {
   const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const before = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes_updated_at").eq("round_id", roundId).single(), "preparation revision read failed");
   const [notesResult, checklistResult] = await Promise.all([
-    a.authClient.rpc("save_interview_preparation", {
+    a.authClient.rpc("save_interview_preparation_notes_if_revision", {
       target_round_id: roundId,
-      notes_value: "Concurrent note and checklist preservation; narrate trade-offs.",
+      target_expect_absent: false,
+      target_expected_updated_at: before.private_notes_updated_at,
+      target_notes: "Concurrent note and checklist preservation; narrate trade-offs.",
     }),
     a.authClient.rpc("set_interview_preparation_checklist_item", {
       target_round_id: roundId,
@@ -938,12 +969,35 @@ await check("concurrent note and checklist writes preserve both fields", async (
       target_completed: true,
     }),
   ]);
-  expectSuccess(notesResult, "concurrent note save failed");
+  expect(expectSuccess(notesResult, "concurrent note save failed").length === 1, "concurrent note save did not return one revision");
   expect(expectSuccess(checklistResult, "concurrent checklist save failed") === fixture.applicationId, "concurrent checklist save returned the wrong application");
   const row = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes,completed_template_item_ids").eq("id", fixture.preparationId).single(), "concurrent field read failed");
   expect(row.private_notes === "Concurrent note and checklist preservation; narrate trade-offs.", "concurrent checklist save lost the note update");
   expect(row.completed_template_item_ids.includes("logistics-confirm") && row.completed_template_item_ids.includes("company-research"), "concurrent note save lost checklist membership");
   return "note and two checklist memberships retained";
+});
+
+await check("concurrent notes snapshots accept exactly one revision", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const before = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes_updated_at,completed_template_item_ids").eq("round_id", roundId).single(), "notes race setup read failed");
+  const candidates = [
+    "First coherent notes snapshot from one stale editor.",
+    "Second coherent notes snapshot from another stale editor.",
+  ];
+  const results = await Promise.all(candidates.map((target_notes) => a.authClient.rpc("save_interview_preparation_notes_if_revision", {
+    target_round_id: roundId,
+    target_expect_absent: false,
+    target_expected_updated_at: before.private_notes_updated_at,
+    target_notes,
+  })));
+  const rows = results.map((result) => expectSuccess(result, "concurrent notes snapshot failed"));
+  expect(rows.filter((result) => result.length === 1).length === 1 && rows.filter((result) => result.length === 0).length === 1, "concurrent notes snapshots did not produce one winner and one conflict");
+  const winnerIndex = rows.findIndex((result) => result.length === 1);
+  const winner = rows[winnerIndex][0];
+  const saved = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes,private_notes_updated_at,completed_template_item_ids").eq("round_id", roundId).single(), "notes race result read failed");
+  expect(saved.private_notes === candidates[winnerIndex] && saved.private_notes_updated_at === winner.updated_at, "notes race did not preserve the winning coherent snapshot");
+  expect(saved.completed_template_item_ids.length === before.completed_template_item_ids.length && before.completed_template_item_ids.every((item) => saved.completed_template_item_ids.includes(item)), "notes race changed checklist state");
+  return `winner ${winnerIndex + 1}; loser returned conflict`;
 });
 
 await check("direct client writes cannot spoof preparation ownership", async () => {
@@ -970,8 +1024,14 @@ await check("User B cannot read or toggle User A preparation state", async () =>
 });
 
 await check("post-interview reflection is rejected before completion", async () => {
-  const result = await a.authClient.rpc("save_interview_preparation", {
-    target_round_id: requireFixture(fixture.secondRoundId, "second round"), went_well_value: "Clear requirements pass",
+  const result = await a.authClient.rpc("save_interview_preparation_reflection_if_revision", {
+    target_round_id: requireFixture(fixture.secondRoundId, "second round"),
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_topics_asked: "",
+    target_went_well: "Clear requirements pass",
+    target_needs_improvement: "",
+    target_follow_up_notes: "",
   });
   expect(result.error, "reflection unexpectedly saved before completion");
   return result.error.code;
@@ -979,19 +1039,78 @@ await check("post-interview reflection is rejected before completion", async () 
 
 await check("rescheduling preserves round preparation", async () => {
   const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const before = expectSuccess(await a.authClient.from("interview_preparations").select("id,private_notes,private_notes_updated_at,completed_template_item_ids").eq("round_id", roundId).single(), "preparation snapshot before reschedule failed");
   expectSuccess(await a.authClient.from("interview_rounds").update({ status: "Rescheduled", scheduled_at: "2026-09-01T15:00:00Z" }).eq("id", roundId).select("id").single(), "round reschedule failed");
-  const row = expectSuccess(await a.authClient.from("interview_preparations").select("id,private_notes").eq("round_id", roundId).single(), "preparation lookup after reschedule failed");
-  expect(row.id === fixture.preparationId && row.private_notes.includes("trade-offs"), "reschedule replaced or cleared preparation");
+  const after = expectSuccess(await a.authClient.from("interview_preparations").select("id,private_notes,private_notes_updated_at,completed_template_item_ids").eq("round_id", roundId).single(), "preparation lookup after reschedule failed");
+  expect(after.id === fixture.preparationId && JSON.stringify(after) === JSON.stringify(before), "reschedule replaced or changed preparation");
 });
 
 await check("completed rounds accept a private reflection", async () => {
   const roundId = requireFixture(fixture.secondRoundId, "second round");
   expectSuccess(await a.authClient.from("interview_rounds").update({ status: "Completed" }).eq("id", roundId).select("id").single(), "round completion failed");
-  expectSuccess(await a.authClient.rpc("save_interview_preparation", {
-    target_round_id: roundId, topics_asked_value: "Caching and failure modes", went_well_value: "Clear trade-offs", needs_improvement_value: "Estimate sooner", follow_up_notes_value: "Send thanks",
+  const saved = expectSuccess(await a.authClient.rpc("save_interview_preparation_reflection_if_revision", {
+    target_round_id: roundId,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_topics_asked: "Caching and failure modes",
+    target_went_well: "Clear trade-offs",
+    target_needs_improvement: "Estimate sooner",
+    target_follow_up_notes: "Send thanks",
   }), "completed reflection save failed");
+  expect(saved.length === 1 && saved[0].round_id === roundId, "completed reflection save returned an invalid result");
   const row = expectSuccess(await a.authClient.from("interview_preparations").select("topics_asked,went_well,needs_improvement,follow_up_notes").eq("round_id", roundId).single(), "reflection read failed");
   expect(row.topics_asked.includes("Caching") && row.needs_improvement.includes("Estimate"), "reflection did not round-trip");
+});
+
+await check("concurrent reflection snapshots accept exactly one coherent revision", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const before = expectSuccess(await a.authClient.from("interview_preparations").select("reflection_updated_at").eq("round_id", roundId).single(), "reflection race setup read failed");
+  const candidates = [
+    { target_topics_asked: "Candidate A topics", target_went_well: "Candidate A strengths", target_needs_improvement: "Candidate A improvement", target_follow_up_notes: "Candidate A follow-up" },
+    { target_topics_asked: "Candidate B topics", target_went_well: "Candidate B strengths", target_needs_improvement: "Candidate B improvement", target_follow_up_notes: "Candidate B follow-up" },
+  ];
+  const results = await Promise.all(candidates.map((candidate) => a.authClient.rpc("save_interview_preparation_reflection_if_revision", {
+    target_round_id: roundId,
+    target_expect_absent: false,
+    target_expected_updated_at: before.reflection_updated_at,
+    ...candidate,
+  })));
+  const rows = results.map((result) => expectSuccess(result, "concurrent reflection snapshot failed"));
+  expect(rows.filter((result) => result.length === 1).length === 1 && rows.filter((result) => result.length === 0).length === 1, "concurrent reflection snapshots did not produce one winner and one conflict");
+  const winnerIndex = rows.findIndex((result) => result.length === 1);
+  const winner = rows[winnerIndex][0];
+  const saved = expectSuccess(await a.authClient.from("interview_preparations").select("topics_asked,went_well,needs_improvement,follow_up_notes,reflection_updated_at").eq("round_id", roundId).single(), "reflection race result read failed");
+  expect(saved.topics_asked === candidates[winnerIndex].target_topics_asked && saved.went_well === candidates[winnerIndex].target_went_well && saved.needs_improvement === candidates[winnerIndex].target_needs_improvement && saved.follow_up_notes === candidates[winnerIndex].target_follow_up_notes, "reflection race mixed fields from competing snapshots");
+  expect(saved.reflection_updated_at === winner.updated_at, "reflection race returned the wrong winning revision");
+  return `winner ${winnerIndex + 1}; coherent four-field snapshot retained`;
+});
+
+await check("notes and reflection saves advance independently", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const before = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes_updated_at,reflection_updated_at,completed_template_item_ids").eq("round_id", roundId).single(), "independent text revision setup read failed");
+  const [notesResult, reflectionResult] = await Promise.all([
+    a.authClient.rpc("save_interview_preparation_notes_if_revision", {
+      target_round_id: roundId,
+      target_expect_absent: false,
+      target_expected_updated_at: before.private_notes_updated_at,
+      target_notes: "Notes and reflection use independent revision domains.",
+    }),
+    a.authClient.rpc("save_interview_preparation_reflection_if_revision", {
+      target_round_id: roundId,
+      target_expect_absent: false,
+      target_expected_updated_at: before.reflection_updated_at,
+      target_topics_asked: "Independent topics",
+      target_went_well: "Independent strengths",
+      target_needs_improvement: "Independent improvements",
+      target_follow_up_notes: "Independent follow-up",
+    }),
+  ]);
+  expect(expectSuccess(notesResult, "independent notes save failed").length === 1, "independent notes save conflicted");
+  expect(expectSuccess(reflectionResult, "independent reflection save failed").length === 1, "independent reflection save conflicted");
+  const saved = expectSuccess(await a.authClient.from("interview_preparations").select("private_notes,topics_asked,went_well,needs_improvement,follow_up_notes,completed_template_item_ids").eq("round_id", roundId).single(), "independent text revision result read failed");
+  expect(saved.private_notes === "Notes and reflection use independent revision domains." && saved.topics_asked === "Independent topics" && saved.went_well === "Independent strengths" && saved.needs_improvement === "Independent improvements" && saved.follow_up_notes === "Independent follow-up", "independent text saves lost one snapshot");
+  expect(saved.completed_template_item_ids.length === before.completed_template_item_ids.length && before.completed_template_item_ids.every((item) => saved.completed_template_item_ids.includes(item)), "independent text saves changed checklist state");
+  return "both text families saved; checklist unchanged";
 });
 
 await check("User B cannot forge User A as an application owner", async () => {

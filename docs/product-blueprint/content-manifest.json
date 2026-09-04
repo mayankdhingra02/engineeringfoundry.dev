@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "d75189921307c79a8a4fe9e903223b91aacf1ec9",
-  "repository_state_sha256": "a266c1134df199f0e4b13da126e0421a020d1a2946d2b046327a20341a3cd39f",
+  "repository_sha": "dece163a8c6c8cd3140ee55322dc4c97ef0da816",
+  "repository_state_sha256": "69d05216d6dfaa9397e4237360dcc577e83a1d9e7b7e7730055406da3ac2dc4c",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1280,7 +1280,8 @@
         "Planning and round guidance preserve existing evidence boundaries and public handoffs.",
         "Interview-round full edits carry the exact loaded database revision into an owner- and application-scoped timestamp compare-and-swap, so a newer completion or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
         "Owner-scoped round preparation counts preserve distinct ready, genuinely untouched, and unavailable states across Dashboard, Application Detail, and Interview Playbook; empty input resolves before actor work, a nonempty request without an actor or any failed count query cannot render zero, start-plan, or not-started claims, and the shared retry exposes guarded pending, live-status, and responsive source contracts. Only an explicit successful retry announces that preparation progress loaded, and its source-regressed focus recovery targets the connected success status after a frame only when the retry trigger owned focus and no newer focus claim exists; rendered focus behavior remains browser/manual validation.",
-        "Checklist mutations parse one exact round identifier, canonical item identifier, and boolean desired membership before actor or persistence work; the route submits no whole-array snapshot, and the owner-scoped database function serializes and idempotently changes only that item while preserving independent checklist progress and returning the owning application for revalidation. The legacy save RPC rejects non-null whole-array checklist writes, cross-owner changes remain forbidden, executable and source contracts run in npm run test:interview-preparation-hub, database behavior remains assigned to npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step.",
+        "Checklist mutations parse one exact round identifier, canonical item identifier, and boolean desired membership before actor or persistence work; the route submits no whole-array snapshot, and the owner-scoped database function serializes and idempotently changes only that item while preserving independent checklist progress and returning the owning application for revalidation. The retired legacy snapshot RPC fails safely before any checklist or text mutation, cross-owner changes remain forbidden, executable and source contracts run in npm run test:interview-preparation-hub, database behavior remains assigned to npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step.",
+        "Round-preparation notes and completed-round reflections strictly parse exact browser fields, bound round/application UUIDs, and an explicit absent or loaded family revision before actor or persistence work, then use only the owner-derived revision-checked notes or reflection RPC. The two text families use independent revisions under the round lock shared with checklist updates: stale, missing, and foreign saves return zero rows without mutation, one of two same-revision snapshots wins coherently, notes and reflection can both save without invalidating each other, checklist state is preserved, and the legacy snapshot RPC fails safely. Executable parser, result, display-state, and source-integration checks run in npm run test:interview-preparation-hub; database concurrency, grants, lifecycle, and owner isolation run in npm run qualify:database, while hosted verification remains an unchecked external-owner step. Source-integration checks cover manual-submit draft retention, duplicate guards, revision submission, earlier-snapshot truth, pending/live-region semantics, and safe conflict-link attributes; rendered draft retention, focus, and assistive-technology behavior remain browser/manual validation.",
         "Reminder-preference saves strictly parse one complete checkbox snapshot and an explicit absent or loaded revision before availability, actor, or persistence work, then use only the owner-derived revision-checked RPC. Stale full saves and stale absence retries return conflicts without changing preferences or reminder rows; successful saves advance the revision and resynchronize future reminders atomically under the owner lock shared with round changes, while repeated completed-onboarding submissions cannot bypass that boundary and the legacy snapshot RPC fails safely. Executable parsing, result correlation, and source-integration checks run in npm run test:interview-calendar-reminders; database concurrency, rollback, grants, and owner isolation run in npm run qualify:database, and hosted checks remain an unchecked external-owner step. Source-integration checks cover manual-submit draft retention, duplicate guards, revision submission, pending/live-region semantics, and safe conflict recovery-link attributes; rendered draft retention and assistive-technology behavior remain browser/manual validation.",
         "Interview Playbook diagnostic saves strictly parse one complete browser form and an explicit absent or loaded revision before availability, actor, or persistence work, then use only the owner-derived revision-checked aggregate RPC. Zero-row stale saves are conflicts, successful saves advance the revision, and the legacy whole-aggregate RPC fails safely; reads use one strict coherent aggregate snapshot that distinguishes genuine absence from failed or malformed snapshot-RPC results and preserves canonical child ordering. This criterion does not claim the shared actor resolver distinguishes an auth-service failure from an anonymous actor. Executable parser, snapshot, result, display-state, and source-integration checks run in npm run test:interview-playbook-diagnostic-inputs; database concurrency, coherent-read, grants, and owner-isolation checks run in npm run qualify:database, while hosted checks remain unchecked external-owner work. Source-integration checks cover manual-submit draft retention, duplicate guards, revision submission, earlier-snapshot truth, pending/live-region semantics, stable constraint keys, and safe conflict-link attributes; rendered draft retention, focus, and assistive-technology behavior remain browser/manual validation."
       ],
@@ -1295,11 +1296,13 @@
         "app/settings/interviews/page.tsx",
         "components/interview-playbook",
         "components/preparation-counts-status.tsx",
+        "docs/authenticated-workspace.md",
         "features/applications/actions.ts",
         "features/applications/round-form.tsx",
         "features/interview-calendar/actions.ts",
         "features/interview-calendar/preferences-form.tsx",
         "features/interview-preparation/actions.ts",
+        "features/interview-preparation/text-form.tsx",
         "lib/applications/edit-revision.ts",
         "lib/interview-calendar/queries.ts",
         "lib/interview-calendar/reminder-preference-action-input.ts",
@@ -1308,6 +1311,7 @@
         "lib/interview-preparation/checklist-action-input.ts",
         "lib/interview-preparation/preparation-counts.ts",
         "lib/interview-preparation/queries.ts",
+        "lib/interview-preparation/text-action-input.ts",
         "lib/supabase/database.types.ts",
         "scripts/qualify-account-lifecycle-local.mjs",
         "scripts/qualify-persistence-local.mjs",
@@ -1319,6 +1323,7 @@
         "supabase/migrations/202609030001_set_interview_preparation_checklist_item.sql",
         "supabase/migrations/202609040001_save_interview_reminder_preferences_if_revision.sql",
         "supabase/migrations/202609040002_save_interview_playbook_diagnostic_inputs_if_revision.sql",
+        "supabase/migrations/202609040004_save_interview_preparation_text_if_revision.sql",
         "supabase/tests/database/account_lifecycle.test.sql",
         "supabase/tests/database/interview_calendar_reminders.test.sql",
         "supabase/tests/database/interview_playbook_diagnostic_inputs.test.sql",
