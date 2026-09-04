@@ -25,6 +25,7 @@ import {
   parseEmailChangeActionInput,
   parsePasswordChangeActionInput,
 } from "@/lib/account/account-action-input";
+import { parseProfileMutationResult } from "@/lib/auth/profile-action-input";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logServerOperationalFailure, logServerOperationalWarning } from "@/lib/observability/log";
 import { supportsPasswordReauthentication, verifyPasswordForSensitiveAction } from "@/lib/auth/reauthentication";
@@ -90,11 +91,11 @@ export async function updateDisplayNameAction(_: AccountActionState, form: unkno
   }
   const actor = await getAuthenticatedActor();
   if (!actor) return expired();
-  const { error } = await actor.supabase
-    .from("profiles")
-    .update({ display_name: parsed.value.displayName })
-    .eq("id", actor.user.id);
-  if (error) return { status: "error", message: "We couldn’t update your display name. Try again." };
+  const { data, error } = await actor.supabase.rpc("set_profile_display_name", {
+    target_display_name: parsed.value.displayName,
+  });
+  const outcome = parseProfileMutationResult(data, actor.user.id);
+  if (error || outcome.status !== "saved") return { status: "error", message: "We couldn’t update your display name. Try again." };
   revalidatePath("/settings/account");
   revalidatePath("/dashboard");
   return { status: "success", message: parsed.value.displayName ? "Display name updated." : "Display name removed." };

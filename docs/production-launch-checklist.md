@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 39 migrations are recorded, ending at `202609040005_set_interview_preparation_task_completed`
+4. [ ] `supabase migration list --linked` — confirm all 40 migrations are recorded, ending at `202609040006_save_profile_if_revision`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -111,6 +111,8 @@ Apply `202609040004_save_interview_preparation_text_if_revision.sql` before depl
 
 Apply `202609040005_set_interview_preparation_task_completed.sql` before deploying the desired-state custom-task action. Migration-first makes already-loaded flip-current clients fail safely with `0A000`, preventing duplicate stale intentions from inverting the saved state. Application-first protects only newly loaded controls and leaves the legacy toggle path available until the migration lands. Rolling application code back after the migration is safe but degraded because the old toggle remains unavailable; keep the migration and roll forward.
 
+Apply `202609040006_save_profile_if_revision.sql` before deploying revision-aware profile settings. Migration-first makes already-loaded direct profile updates fail safely with `42501`; the new full-profile CAS and one-field display-name writer serialize under one owner lock. Application-first makes new saves fail safely while the RPCs are absent but leaves the old stale-write path available until migration. Rolling application code back after migration is safe but degraded because direct profile updates remain unavailable; keep the migration and roll forward.
+
 ---
 
 ## Hosted qualification
@@ -123,6 +125,9 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Confirmation link works once; a profile row is created by the trigger
 - [ ] Sign in succeeds; invalid credentials fail without revealing whether the account exists
 - [ ] Onboarding completes; a second disposable account skips it and no preferences are invented
+- [ ] With one disposable member, save a full public profile from its returned revision and confirm exactly one row plus a newer revision; submit two different full snapshots from one revision and confirm exactly one coherent winner
+- [ ] Race a full profile save against `set_profile_display_name` and confirm the desired display name survives while all other fields remain one coherent full snapshot; a stale revision returns zero rows without mutation
+- [ ] Confirm `anon` cannot execute either profile writer, authenticated direct `profiles` updates fail with `42501`, and another member cannot use the first member's revision to observe or mutate either row
 - [ ] An established account is never trapped back in onboarding
 - [ ] Password recovery: request, callback, update, expired-link reuse, sign-in with the new password
 - [ ] Password change succeeds and **the active session is not signed out** by the verification step

@@ -1,12 +1,12 @@
 # Authentication and profile security
 
-This document describes the enforceable boundary introduced by the authentication foundation and extended by `202608130002_auth_profile_hardening.sql` and `202608150001_create_account_lifecycle.sql`. Application checks improve the user experience; Postgres grants, constraints, functions, and Row Level Security remain the final authority.
+This document describes the enforceable boundary introduced by the authentication foundation and extended through `202609040006_save_profile_if_revision.sql`. Application checks improve the user experience; Postgres grants, constraints, functions, and Row Level Security remain the final authority.
 
 ## Data-access model
 
 - `public.profiles` is an account-owned base table. `anon` has no `SELECT` privilege. An `authenticated` request has `SELECT` privilege but RLS returns only the row whose `id` equals `auth.uid()`.
 - Profile inserts are created only by the `auth.users` trigger. Anonymous and authenticated API roles cannot insert or delete profile rows.
-- Authenticated users can update only their own row and only the explicitly granted profile columns. A profile update must return the updated row identifier; zero rows is treated as an integrity failure rather than a successful save or an insert opportunity.
+- Authenticated clients cannot update `profiles` directly. Full profile edits use `save_profile_if_revision`, which derives the owner from `auth.uid()`, requires the exact loaded `updated_at`, and returns one row only when that revision still matches. The account page's display-name control uses `set_profile_display_name`; both writers share an owner lock and advance a monotonic revision, so a stale full form cannot erase the one-field change.
 - Public lookup goes through `public.get_public_profile(text)`, a stable `SECURITY DEFINER` SQL function with an explicitly empty `search_path`, fully qualified relations, no dynamic SQL, and a fixed nine-column return shape.
 - The RPC returns only completed, public profiles. It never returns profile UUIDs, visibility flags, onboarding state, or creation/update timestamps.
 
@@ -19,6 +19,9 @@ The public return shape is exactly: `username`, `display_name`, `bio`, `current_
 | `public.set_updated_at()` | Security invoker; empty `search_path` | Revoked | Revoked | Revoked | Trigger-only timestamp maintenance |
 | `public.handle_new_user()` | Security definer; empty `search_path` | Revoked | Revoked | Revoked | Trigger-only profile creation |
 | `public.get_public_profile(text)` | Stable security definer; empty `search_path` | Revoked | Granted | Granted | Minimal public profile lookup |
+| `public.set_profile_updated_at()` | Security invoker; empty `search_path` | Revoked | Revoked | Revoked | Trigger-only monotonic profile revision |
+| `public.save_profile_if_revision(timestamptz,...)` | Volatile security definer; empty `search_path`; actor-derived | Revoked | Revoked | Granted | Revision-checked coherent profile edit |
+| `public.set_profile_display_name(text)` | Volatile security definer; empty `search_path`; actor-derived | Revoked | Revoked | Granted | Serialized one-field display-name edit |
 | `public.complete_account_onboarding(text,text,text)` | Security definer; empty `search_path`; actor-derived | Revoked | Revoked | Granted | Atomic onboarding completion and minimal preference seed |
 | `public.save_account_preparation_preferences(text,text,text)` | Security definer; empty `search_path`; actor-derived | Revoked | Revoked | Granted | Save the caller's preparation defaults |
 
@@ -64,8 +67,11 @@ The pgTAP suite at `supabase/tests/database/auth_profile_hardening.test.sql` aut
 | Anonymous calls public RPC for incomplete User B | No row |
 | Authenticated User A reads base profile A | Allowed |
 | Authenticated User A reads base profile B | No row |
-| Authenticated User A updates profile A | Exactly one row updated |
-| Authenticated User A updates profile B | Zero rows updated |
+| Authenticated User A directly updates any profile | Permission denied |
+| Authenticated User A saves profile A from its current revision | Exactly one RPC row with a newer revision |
+| Two full profile saves use the same revision | Exactly one coherent snapshot wins |
+| A one-field display-name save races a stale full profile save | Desired display name survives; rich fields remain one coherent snapshot |
+| User B submits User A's revision | Zero rows; neither profile is exposed or changed |
 | Authenticated User A directly inserts a profile | Permission denied |
 | Authenticated User A deletes a profile | Permission denied |
 | User submits a reserved username through the UI | Friendly reserved-name error |
@@ -94,6 +100,8 @@ Holding an unlocked session is not the same as proving current credentials. Phas
 Verification runs against an **isolated Supabase client** created with `persistSession: false`. That client keeps its session in memory and never touches cookie storage, so confirming a password cannot rewrite or invalidate the caller's active session. The throwaway session is signed out locally afterwards, and the verified identity is compared against the caller's user ID so valid credentials for a different account are rejected.
 
 Account credential and deletion actions strictly parse their exact runtime fields before resolving the actor or calling Auth. Duplicate, file-valued, missing, unknown, and non-`FormData` inputs cannot be coerced into credentials or confirmations. Signup, password recovery, and signed-in password change share one policy predicate: 8–128 characters with at least one ASCII letter and one number. Client `minLength`/`maxLength` constraints and associated help expose that same policy, but the server parser remains authoritative.
+
+Profile settings apply the same runtime discipline to all ten submitted fields. Missing, duplicate, file-valued, unknown, control-bearing, oversized, or non-`FormData` inputs fail before actor or profile reads. The parser requires the exact loaded revision and explicit visibility state; optional blanks are intentional `null`, not defaults for omitted fields. Changed invalid professional links fail, while an exact unchanged legacy-invalid stored link is omitted from the mutation so unrelated edits neither rewrite nor expose it. The client manually dispatches the edit form to preserve an uncontrolled draft on conflict, blocks duplicate submissions synchronously, announces pending/error/success atomically, and distinguishes an earlier saved snapshot when a field changes in flight. Rendered draft retention, focus, and assistive-technology behavior remain browser/manual validation.
 
 | Action | Password-capable account | OAuth-only account |
 | --- | --- | --- |

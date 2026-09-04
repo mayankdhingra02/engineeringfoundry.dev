@@ -1,36 +1,66 @@
 "use client";
 
 import { LoaderCircle, LockKeyhole, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import type { Profile } from "@/lib/supabase/database.types";
 import { identifyUser, track } from "@/lib/analytics";
-import { safeInternalPath } from "@/lib/auth/redirects";
+import {
+  PROFILE_EXPECTED_REVISION_FIELD,
+  resolveProfileDisplayState,
+} from "@/lib/auth/profile-action-input";
 import { saveProfileAction, type ProfileActionState } from "./actions";
 
-const initialProfileState: ProfileActionState = { status: "idle", message: "" };
-
-export function ProfileForm({ profile, mode, next, userId }: { profile: Profile; mode: "onboarding" | "settings"; next?: string; userId: string }) {
-  const [state, action, pending] = useActionState(saveProfileAction, initialProfileState);
+export function ProfileForm({ profile, userId }: { profile: Profile; userId: string }) {
+  const [state, action, pending] = useActionState(saveProfileAction, {
+    status: "idle",
+    message: "",
+    revision: profile.updated_at,
+  } satisfies ProfileActionState);
   const router = useRouter();
+  const submissionPending = useRef(false);
+  const [changedSinceSubmit, setChangedSinceSubmit] = useState(false);
+
   useEffect(() => {
-    if (mode === "onboarding") track("profile_onboarding_started");
-  }, [mode]);
+    if (!pending) submissionPending.current = false;
+  }, [pending]);
+  useEffect(() => () => {
+    submissionPending.current = false;
+  }, []);
   useEffect(() => {
     if (state.status !== "success") return;
-    if (mode === "onboarding") {
-      identifyUser(userId, { onboarding_complete: true });
-      track("profile_onboarding_completed", { profile_visibility: state.visibility });
-      router.push(safeInternalPath(next));
-    } else {
-      track("profile_updated", { profile_visibility: state.visibility, username_changed: state.username !== profile.username });
-      router.refresh();
-    }
-  }, [mode, next, profile.username, router, state, userId]);
+    identifyUser(userId, { profile_visibility: state.visibility });
+    track("profile_updated", { profile_visibility: state.visibility, username_changed: state.username !== profile.username });
+    router.refresh();
+  }, [profile.username, router, state, userId]);
 
-  return <form action={action} className="profile-form form-shell">
-    <input type="hidden" name="mode" value={mode} />
-    <div className="profile-form-header"><div><p className="auth-kicker">{mode === "onboarding" ? "Account → Profile → Ready" : "Public identity"}</p><h2>{mode === "onboarding" ? "Set up your profile" : "Profile settings"}</h2><p>{mode === "onboarding" ? "Only a username and display name are required. Everything else is optional." : "Control what other engineers see on your public profile."}</p></div><span className="icon-well"><UserRound size={20} /></span></div>
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submissionPending.current) return;
+    submissionPending.current = true;
+    setChangedSinceSubmit(false);
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => action(formData));
+  };
+  const displayState = resolveProfileDisplayState(
+    state,
+    pending,
+    changedSinceSubmit,
+  );
+
+  return <form action={action} onSubmit={submit} onChange={() => {
+    if (submissionPending.current) setChangedSinceSubmit(true);
+  }} aria-busy={pending} className="profile-form form-shell">
+    <input type="hidden" name={PROFILE_EXPECTED_REVISION_FIELD} value={state.revision ?? profile.updated_at} />
+    <div className="profile-form-header"><div><p className="auth-kicker">Public identity</p><h2>Profile settings</h2><p>Control what other engineers see on your public profile.</p></div><span className="icon-well"><UserRound size={20} /></span></div>
     <div className="form-grid">
       <div className="form-group"><label htmlFor="username">Username <span>Required</span></label><div className="input-prefix"><span>engineeringfoundry.dev/u/</span><input id="username" name="username" required minLength={3} maxLength={30} pattern={"[a-zA-Z0-9][a-zA-Z0-9_\\-]{2,29}"} defaultValue={profile.username ?? ""} autoCapitalize="none" autoCorrect="off" /></div><small>3–30 letters, numbers, underscores, or hyphens.</small></div>
       <div className="form-group"><label htmlFor="display-name">Display name <span>Required</span></label><input id="display-name" name="display_name" required maxLength={80} defaultValue={profile.display_name ?? ""} autoComplete="name" /></div>
@@ -42,7 +72,7 @@ export function ProfileForm({ profile, mode, next, userId }: { profile: Profile;
       <div className="form-group full"><label htmlFor="bio">Short bio <span>Optional · 280 characters</span></label><textarea id="bio" name="bio" maxLength={280} defaultValue={profile.bio ?? ""} placeholder="What do you build, learn, or help others with?" /></div>
       <fieldset className="visibility-field form-group full"><legend>Profile visibility</legend><label><input type="radio" name="is_public" value="public" defaultChecked={profile.is_public} /><span><UserRound size={17} /><strong>Public</strong><small>Your completed profile can appear at /u/username.</small></span></label><label><input type="radio" name="is_public" value="private" defaultChecked={!profile.is_public} /><span><LockKeyhole size={17} /><strong>Private</strong><small>Your profile won&apos;t be visible to public visitors or other members.</small></span></label></fieldset>
     </div>
-    {state.message && <p className={state.status === "error" ? "form-error" : "form-success"} role={state.status === "error" ? "alert" : "status"}>{state.message}</p>}
-    <div className="profile-form-actions"><button className="button" disabled={pending} type="submit">{pending ? <><LoaderCircle className="spin" size={16} />Saving…</> : mode === "onboarding" ? "Complete setup" : "Save profile"}</button>{mode === "settings" && state.visibility === "public" && state.username && <a className="button button-secondary" href={`/u/${state.username}`}>View profile</a>}</div>
+    {(pending || displayState.message) && <p className={displayState.status === "error" ? "form-error" : displayState.status === "success" ? "form-success" : undefined} role={displayState.status === "error" ? "alert" : "status"} aria-live={displayState.status === "error" ? "assertive" : "polite"} aria-atomic="true">{displayState.message}{!pending && state.conflict && <><br /><Link href="/settings/profile" target="_blank" rel="noopener noreferrer">Review latest in a new tab</Link></>}</p>}
+    <div className="profile-form-actions"><button className="button" aria-disabled={pending} type="submit">{pending ? <><LoaderCircle className="spin" size={16} />Saving…</> : "Save profile"}</button>{state.visibility === "public" && state.username && <a className="button button-secondary" href={`/u/${state.username}`}>View profile</a>}</div>
   </form>;
 }

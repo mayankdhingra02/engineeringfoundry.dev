@@ -32,7 +32,18 @@ import {
   parseOptionalProfileLink,
   sanitizePublicProfileLinks,
 } from "../lib/auth/profile-links.ts";
-import { parseProfileForm } from "../lib/auth/validation.ts";
+import {
+  PROFILE_CONFLICT_ERROR,
+  PROFILE_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  PROFILE_EXPECTED_REVISION_FIELD,
+  PROFILE_INVALID_INPUT_ERROR,
+  PROFILE_PERSISTENCE_ERROR,
+  PROFILE_SAVED_MESSAGE,
+  parseProfileActionEnvelope,
+  parseProfileMutationResult,
+  resolveProfileActionInput,
+  resolveProfileDisplayState,
+} from "../lib/auth/profile-action-input.ts";
 import { safeInternalPath } from "../lib/auth/redirects.ts";
 
 const failures = [];
@@ -304,15 +315,6 @@ try {
   failures.push(`Password-recovery claim or action-input validation failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
-function profileForm({ github = "", linkedin = "" } = {}) {
-  const form = new FormData();
-  form.set("username", "profile_member");
-  form.set("display_name", "Profile Member");
-  if (github !== undefined) form.set("github_url", github);
-  if (linkedin !== undefined) form.set("linkedin_url", linkedin);
-  return form;
-}
-
 try {
   const canonicalCases = [
     ["github", "https://github.com", "https://github.com/"],
@@ -365,54 +367,6 @@ try {
     }
   }
 
-  const absentProfileForm = new FormData();
-  absentProfileForm.set("username", "profile_member");
-  absentProfileForm.set("display_name", "Profile Member");
-  const blankProfile = parseProfileForm(absentProfileForm);
-  assert.equal(blankProfile.error, undefined);
-  assert.equal(blankProfile.data?.githubUrl, null);
-  assert.equal(blankProfile.data?.linkedinUrl, null);
-  const canonicalProfile = parseProfileForm(profileForm({
-    github: " HTTPS://WWW.GITHUB.COM/member?tab=repositories#top ",
-    linkedin: " HTTPS://LINKEDIN.COM/in/member?trk=profile#about ",
-  }));
-  assert.equal(canonicalProfile.error, undefined);
-  assert.equal(canonicalProfile.data?.githubUrl, "https://github.com/member");
-  assert.equal(canonicalProfile.data?.linkedinUrl, "https://www.linkedin.com/in/member");
-  assert.equal(parseProfileForm(profileForm({ github: "https://linkedin.com/in/member" })).error, "GitHub URL must use https://github.com.");
-  assert.equal(parseProfileForm(profileForm({ linkedin: "https://github.com/member" })).error, "LinkedIn URL must use https://www.linkedin.com.");
-  assert.equal(parseProfileForm(profileForm({ github: `https://github.com/${"a".repeat(PROFILE_LINK_MAX_LENGTH)}` })).error, "GitHub URL must use https://github.com.");
-  const nonStringProfile = profileForm();
-  nonStringProfile.set("github_url", new Blob(["https://github.com/member"]));
-  assert.equal(parseProfileForm(nonStringProfile).error, "GitHub URL must use https://github.com.");
-
-  const legacyGithub = "https://github.com.evil.test/legacy";
-  const legacyLinkedin = String.raw`https://linkedin.com\evil.test/in/legacy`;
-  const unchangedLegacy = parseProfileForm(profileForm({ github: legacyGithub, linkedin: legacyLinkedin }), {
-    githubUrl: legacyGithub,
-    linkedinUrl: legacyLinkedin,
-  });
-  assert.equal(unchangedLegacy.error, undefined, "Unchanged legacy-invalid links blocked an unrelated profile edit.");
-  assert.equal(unchangedLegacy.data?.githubUrl, undefined, "An unchanged legacy-invalid GitHub value was not omitted from the update.");
-  assert.equal(unchangedLegacy.data?.linkedinUrl, undefined, "An unchanged legacy-invalid LinkedIn value was not omitted from the update.");
-  const replacedLegacy = parseProfileForm(profileForm({ github: "https://www.github.com/member?tab=profile", linkedin: "" }), {
-    githubUrl: legacyGithub,
-    linkedinUrl: legacyLinkedin,
-  });
-  assert.equal(replacedLegacy.error, undefined);
-  assert.equal(replacedLegacy.data?.githubUrl, "https://github.com/member", "A valid replacement for a legacy-invalid GitHub value was not canonicalized.");
-  assert.equal(replacedLegacy.data?.linkedinUrl, null, "Clearing a legacy-invalid LinkedIn value did not remain an explicit clear.");
-  assert.equal(
-    parseProfileForm(profileForm({ github: "https://github.com.evil.test/changed" }), { githubUrl: legacyGithub, linkedinUrl: null }).error,
-    "GitHub URL must use https://github.com.",
-    "A changed legacy-invalid GitHub value bypassed validation.",
-  );
-  assert.equal(
-    parseProfileForm(profileForm({ linkedin: String.raw`https://linkedin.com\evil.test/in/changed` }), { githubUrl: null, linkedinUrl: legacyLinkedin }).error,
-    "LinkedIn URL must use https://www.linkedin.com.",
-    "A changed legacy-invalid LinkedIn value bypassed validation.",
-  );
-
   const unsafeLegacy = { username: "legacy", github_url: "https://attacker.example/phish", linkedin_url: "https://github.com/legacy", extra: "preserved" };
   const sanitizedLegacy = sanitizePublicProfileLinks(unsafeLegacy);
   assert.equal(sanitizedLegacy.github_url, null, "An unsafe legacy GitHub value reached public rendering.");
@@ -424,6 +378,116 @@ try {
   assert.equal(sanitizedSafeAliases.linkedin_url, "https://www.linkedin.com/in/legacy", "A safe legacy LinkedIn alias was not canonicalized independently.");
 } catch (error) {
   failures.push(`Professional profile-link validation failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+try {
+  const revision = "2026-09-04T12:34:56.123456+00:00";
+  const profileActionForm = (overrides = {}) => {
+    const values = {
+      username: "profile_member",
+      display_name: "Profile Member",
+      bio: "Builds reliable systems.",
+      current_company: "Foundry",
+      current_role: "Engineer",
+      years_experience: "7",
+      linkedin_url: "https://linkedin.com/in/profile-member",
+      github_url: "https://www.github.com/profile-member",
+      is_public: "public",
+      [PROFILE_EXPECTED_REVISION_FIELD]: revision,
+      ...overrides,
+    };
+    const form = new FormData();
+    for (const [name, value] of Object.entries(values)) form.append(name, value);
+    return form;
+  };
+  const validEnvelope = parseProfileActionEnvelope(profileActionForm());
+  assert.equal(validEnvelope.ok, true);
+  assert.deepEqual(validEnvelope.ok && resolveProfileActionInput(validEnvelope.value, {
+    githubUrl: null,
+    linkedinUrl: null,
+  }), {
+    ok: true,
+    value: {
+      expectedUpdatedAt: revision,
+      username: "profile_member",
+      displayName: "Profile Member",
+      bio: "Builds reliable systems.",
+      currentCompany: "Foundry",
+      currentRole: "Engineer",
+      yearsExperience: 7,
+      linkedinUrl: "https://www.linkedin.com/in/profile-member",
+      githubUrl: "https://github.com/profile-member",
+      isPublic: true,
+    },
+  });
+  assert.deepEqual(parseProfileActionEnvelope(null), { ok: false, reason: "invalid-input" });
+  for (const name of [
+    "username", "display_name", "bio", "current_company", "current_role",
+    "years_experience", "linkedin_url", "github_url", "is_public",
+    PROFILE_EXPECTED_REVISION_FIELD,
+  ]) {
+    const missing = profileActionForm();
+    missing.delete(name);
+    assert.deepEqual(parseProfileActionEnvelope(missing), { ok: false, reason: "invalid-input" }, `profile action accepted missing ${name}`);
+    const duplicate = profileActionForm();
+    duplicate.append(name, "duplicate");
+    assert.deepEqual(parseProfileActionEnvelope(duplicate), { ok: false, reason: "invalid-input" }, `profile action accepted duplicate ${name}`);
+    const file = profileActionForm();
+    file.delete(name);
+    file.append(name, new Blob(["not text"], { type: "text/plain" }));
+    assert.deepEqual(parseProfileActionEnvelope(file), { ok: false, reason: "invalid-input" }, `profile action accepted file-valued ${name}`);
+  }
+  const unknown = profileActionForm();
+  unknown.append("unexpected", "value");
+  assert.deepEqual(parseProfileActionEnvelope(unknown), { ok: false, reason: "invalid-input" });
+  const frameworkMetadata = profileActionForm();
+  frameworkMetadata.append("$ACTION_ID_test", "metadata");
+  assert.equal(parseProfileActionEnvelope(frameworkMetadata).ok, true);
+  for (const overrides of [
+    { username: "admin" },
+    { display_name: "" },
+    { display_name: "x".repeat(81) },
+    { display_name: "Profile\nMember" },
+    { bio: "x".repeat(281) },
+    { current_company: "x".repeat(101) },
+    { current_role: "x".repeat(101) },
+    { years_experience: "01" },
+    { years_experience: "81" },
+    { is_public: "on" },
+    { bio: "unsafe\u0000bio" },
+    { [PROFILE_EXPECTED_REVISION_FIELD]: "2026-02-30T12:00:00Z" },
+  ]) {
+    assert.deepEqual(parseProfileActionEnvelope(profileActionForm(overrides)), { ok: false, reason: "invalid-input" });
+  }
+  const invalidGithubEnvelope = parseProfileActionEnvelope(profileActionForm({ github_url: "https://github.com.evil.test/member" }));
+  assert.equal(invalidGithubEnvelope.ok, true);
+  if (invalidGithubEnvelope.ok) {
+    assert.deepEqual(resolveProfileActionInput(invalidGithubEnvelope.value, { githubUrl: null, linkedinUrl: null }), { ok: false, reason: "invalid-github" });
+    assert.equal(resolveProfileActionInput(invalidGithubEnvelope.value, { githubUrl: "https://github.com.evil.test/member", linkedinUrl: null }).ok, true, "an unchanged legacy-invalid GitHub link was not preserved without rewrite");
+  }
+  const invalidLinkedinEnvelope = parseProfileActionEnvelope(profileActionForm({ linkedin_url: String.raw`https://linkedin.com\evil.test/in/member` }));
+  assert.equal(invalidLinkedinEnvelope.ok, true);
+  if (invalidLinkedinEnvelope.ok) {
+    assert.deepEqual(resolveProfileActionInput(invalidLinkedinEnvelope.value, { githubUrl: null, linkedinUrl: null }), { ok: false, reason: "invalid-linkedin" });
+  }
+  const profileId = "123e4567-e89b-42d3-a456-426614174000";
+  assert.deepEqual(parseProfileMutationResult([], profileId), { status: "conflict" });
+  assert.deepEqual(parseProfileMutationResult([{ profile_id: profileId, updated_at: revision }], profileId), { status: "saved", updatedAt: revision });
+  for (const malformed of [
+    null,
+    {},
+    [{ profile_id: profileId, updated_at: revision, extra: true }],
+    [{ profile_id: "223e4567-e89b-42d3-a456-426614174000", updated_at: revision }],
+    [{ profile_id: profileId, updated_at: "not-a-revision" }],
+    [{ profile_id: profileId, updated_at: revision }, { profile_id: profileId, updated_at: revision }],
+  ]) assert.deepEqual(parseProfileMutationResult(malformed, profileId), { status: "invalid" });
+  assert.deepEqual(resolveProfileDisplayState({ status: "idle", message: "" }, true, false), { status: "pending", message: "Saving profile…" });
+  assert.deepEqual(resolveProfileDisplayState({ status: "success", message: PROFILE_SAVED_MESSAGE }, false, true), { status: "success", message: PROFILE_EARLIER_SNAPSHOT_SAVED_MESSAGE });
+  assert.deepEqual(resolveProfileDisplayState({ status: "error", message: PROFILE_CONFLICT_ERROR }, false, true), { status: "error", message: PROFILE_CONFLICT_ERROR });
+  assert.equal(PROFILE_INVALID_INPUT_ERROR, "Review the profile fields and try again.");
+  assert.equal(PROFILE_PERSISTENCE_ERROR, "We couldn't save your profile. Check the fields and try again.");
+} catch (error) {
+  failures.push(`Profile action input, mutation result, or display-state validation failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 const authForm = read("features/auth/auth-form.tsx");
@@ -510,6 +574,10 @@ else {
   if (!globalRequirement.content_paths.includes("docs/auth-security.md")) failures.push("EF-GLOBAL lacks account-navigation documentation attribution.");
   if (!globalRequirement.test_commands.includes("npm run test:auth-foundation")) failures.push("EF-GLOBAL lacks its account-navigation regression command.");
   if (!globalRequirement.acceptance_criteria.some((criterion) => criterion.includes("only Supabase's explicit missing-session error becomes anonymous") && criterion.includes("broader shared actor authentication-service-versus-anonymous ambiguity remains outside"))) failures.push("EF-GLOBAL overclaims or omits the route-specific account-navigation truth boundary.");
+  for (const path of ["app/settings/profile/page.tsx", "features/profile/actions.ts", "features/profile/profile-form.tsx", "lib/auth/profile-action-input.ts", "supabase/migrations/202609040006_save_profile_if_revision.sql", "supabase/tests/database/auth_profile_hardening.test.sql"]) {
+    if (!globalRequirement.code_paths.includes(path)) failures.push(`EF-GLOBAL lacks profile revision path ${path}.`);
+  }
+  if (!globalRequirement.acceptance_criteria.some((criterion) => criterion.includes("Profile settings strictly parse one complete singleton browser snapshot") && criterion.includes("rendered draft retention, focus, and assistive-technology behavior remain browser/manual validation"))) failures.push("EF-GLOBAL overclaims or omits the revision-checked profile editing boundary.");
 }
 const signOutActionSource = read("features/auth/sign-out-action.ts");
 for (const marker of ["createSupabaseServerClient", "supabase.auth.signOut()", 'scope: "local"']) requireText(signOutActionSource, marker, `Server-authoritative sign-out lacks ${marker}.`);
@@ -520,17 +588,19 @@ prohibit([proxy, actor, read("lib/auth/queries.ts"), guards].join("\n"), /\.auth
 requireText(read("lib/supabase/client.ts"), "browserClient ??= createBrowserClient", "Browser auth does not reuse a singleton Supabase client.");
 
 const professionalLinkMigration = read("supabase/migrations/202608240001_harden_profile_professional_links.sql");
+const profileRevisionMigration = read("supabase/migrations/202609040006_save_profile_if_revision.sql");
 const profileDatabaseTest = read("supabase/tests/database/auth_profile_hardening.test.sql");
-const migration = read("supabase/migrations/202608130001_create_profiles.sql") + read("supabase/migrations/202608130002_auth_profile_hardening.sql") + professionalLinkMigration;
+const migration = read("supabase/migrations/202608130001_create_profiles.sql") + read("supabase/migrations/202608130002_auth_profile_hardening.sql") + professionalLinkMigration + profileRevisionMigration;
 for (const marker of ["enable row level security", 'to authenticated', "(select auth.uid()) = id", "handle_new_user", "on_auth_user_created", "revoke select on table public.profiles from anon"]) requireText(migration, marker, `Profile schema/security lacks ${marker}.`);
 for (const operation of ["insert", "delete"]) requireText(migration, `revoke insert, delete on public.profiles`, `Profiles do not deny client ${operation}.`);
 for (const marker of ["get_public_profile(profile_username text)", "returns table (", "username text", "display_name text", "bio text", "current_company text", '"current_role" text', "years_experience integer", "linkedin_url text", "github_url text", "avatar_url text", "security definer", "profiles.is_public = true", "profiles.onboarding_complete = true", "grant execute on function public.get_public_profile(text) to anon, authenticated"]) requireText(migration, marker, `Public-profile RPC projection or visibility boundary lacks ${marker}.`);
 
 const authQueries = read("lib/auth/queries.ts");
 const publicProfilePage = read("app/u/[username]/page.tsx");
-const profileValidation = read("lib/auth/validation.ts");
+const profileActionInput = read("lib/auth/profile-action-input.ts");
 const profileFormSource = read("features/profile/profile-form.tsx");
 const profileActions = read("features/profile/actions.ts");
+const accountActions = read("features/account/actions.ts");
 const globalStyles = read("app/globals.css");
 for (const marker of [".account-control-unavailable {", ".mobile-account-unavailable {", '.account-control-unavailable button[aria-disabled="true"]', ".mobile-account-unavailable button { min-width: 64px; min-height: 44px; }"]) requireText(globalStyles, marker, `Account-navigation unavailable state lacks ${marker}.`);
 const accountUnavailableCopyRule = globalStyles.match(/\.account-control-unavailable\s*>\s*span,\s*\.mobile-account-unavailable\s*>\s*span\s*\{([^}]*)\}/)?.[1];
@@ -551,43 +621,77 @@ for (const marker of ["profile.display_name", "profile.username", "profile.bio",
 const resolvedProfileIndex = authQueries.indexOf("const profile = resolvePublicProfileQuery(result);");
 const sanitizedProfileIndex = authQueries.indexOf("profile ? sanitizePublicProfileLinks(profile) : null");
 if (resolvedProfileIndex < 0 || sanitizedProfileIndex <= resolvedProfileIndex) failures.push("Public-profile links are not sanitized after resolver error/null semantics complete.");
-for (const [platform, postedName, storedName] of [["linkedin", "postedLinkedin", "linkedinUrl"], ["github", "postedGithub", "githubUrl"]]) {
-  const updatePattern = new RegExp(`preserveUnchangedInvalidProfileLink\\(\\s*"${platform}",\\s*${postedName},\\s*storedLinks\\?\\.${storedName},\\s*parseOptionalProfileLink\\("${platform}",\\s*formData\\.get\\("${platform}_url"\\)\\),\\s*\\)`);
-  if (!updatePattern.test(profileValidation)) failures.push(`Profile form parsing bypasses the ${platform} canonical/preserve update boundary.`);
-}
-for (const marker of [
-  "function preserveUnchangedInvalidProfileLink(",
-  "if (!parsed.error) return parsed;",
-  "const stored = parseOptionalProfileLink(platform, storedValue);",
-  'stored.error && typeof postedValue === "string" && postedValue === storedValue',
-  "return { value: undefined }",
-]) requireText(profileValidation, marker, `Legacy professional-link preservation lacks its exact-invalid-value boundary: ${marker}.`);
-const parsedSuccessIndex = profileValidation.indexOf("if (!parsed.error) return parsed;");
-const storedValidationIndex = profileValidation.indexOf("const stored = parseOptionalProfileLink(platform, storedValue);", parsedSuccessIndex);
-const exactPreserveIndex = profileValidation.indexOf('stored.error && typeof postedValue === "string" && postedValue === storedValue', storedValidationIndex);
-if (parsedSuccessIndex < 0 || storedValidationIndex <= parsedSuccessIndex || exactPreserveIndex <= storedValidationIndex) failures.push("Legacy-link preservation must reject changed invalid values before checking exact raw equality with a stored-invalid value.");
 const storedLinkReadIndex = profileActions.indexOf('.select("github_url,linkedin_url")');
 const ownerScopeIndex = profileActions.indexOf('.eq("id", current.user.id)', storedLinkReadIndex);
-const parseProfileIndex = profileActions.indexOf("parseProfileForm(formData, {", storedLinkReadIndex);
-const updateProfileIndex = profileActions.indexOf(".update(profileUpdate)", parseProfileIndex);
-if (storedLinkReadIndex < 0 || ownerScopeIndex <= storedLinkReadIndex || parseProfileIndex <= ownerScopeIndex || updateProfileIndex <= parseProfileIndex) failures.push("Profile save must read the owner's current links before the preserve decision and update.");
-const profileUpdateStart = profileActions.indexOf('const profileUpdate: Database["public"]["Tables"]["profiles"]["Update"] = {', parseProfileIndex);
-const profileUpdateEnd = profileActions.indexOf("};", profileUpdateStart);
-if (profileUpdateStart < 0 || profileUpdateEnd <= profileUpdateStart) failures.push("Profile save lacks a typed base update object.");
-else prohibit(profileActions.slice(profileUpdateStart, profileUpdateEnd), /\b(?:github_url|linkedin_url)\s*:/, "Profile save unconditionally includes a professional-link column in its base update.");
+const envelopeIndex = profileActions.indexOf("parseProfileActionEnvelope(formData)");
+const actorIndex = profileActions.indexOf("getAuthenticatedActor()", envelopeIndex);
+const resolveProfileIndex = profileActions.indexOf("resolveProfileActionInput(envelope.value", storedLinkReadIndex);
+const saveProfileIndex = profileActions.indexOf('rpc("save_profile_if_revision"', resolveProfileIndex);
+const parseResultIndex = profileActions.indexOf("parseProfileMutationResult(data, current.user.id)", saveProfileIndex);
+if (envelopeIndex < 0 || actorIndex <= envelopeIndex || storedLinkReadIndex <= actorIndex || ownerScopeIndex <= storedLinkReadIndex || resolveProfileIndex <= ownerScopeIndex || saveProfileIndex <= resolveProfileIndex || parseResultIndex <= saveProfileIndex) failures.push("Profile save must strictly parse before actor work, resolve legacy links after the owner read, then use and validate only the revision RPC.");
+prohibit(profileActions, /\.from\("profiles"\)\.update|parseProfileForm\(/, "Profile save still performs a direct or coercive legacy profile update.");
 for (const marker of [
   "if (storedProfileError)",
   "if (!storedProfile)",
   "githubUrl: storedProfile.github_url",
   "linkedinUrl: storedProfile.linkedin_url",
-  "if (input.linkedinUrl !== undefined) profileUpdate.linkedin_url = input.linkedinUrl;",
-  "if (input.githubUrl !== undefined) profileUpdate.github_url = input.githubUrl;",
+  "target_update_linkedin_url: input.linkedinUrl !== undefined",
+  "target_update_github_url: input.githubUrl !== undefined",
+  'outcome.status === "conflict"',
+  "PROFILE_CONFLICT_ERROR",
 ]) requireText(profileActions, marker, `Profile save can rewrite or lose an unchanged legacy link: ${marker}.`);
+for (const marker of [
+  "parseProfileActionEnvelope",
+  "hasOnlyKnownFields",
+  "singleString",
+  "containsDisallowedTextControl",
+  "isCanonicalProfileRevision",
+  "resolveProfileActionInput",
+  "candidate.raw === storedValue",
+  "parseProfileMutationResult",
+  "resolveProfileDisplayState",
+]) requireText(profileActionInput, marker, `Strict profile action boundary lacks ${marker}.`);
+for (const marker of [
+  "PROFILE_EXPECTED_REVISION_FIELD",
+  "profile.updated_at",
+  "action={action}",
+  "onSubmit={submit}",
+  "event.preventDefault()",
+  "submissionPending.current",
+  "new FormData(event.currentTarget)",
+  "startTransition(() => action(formData))",
+  "setChangedSinceSubmit(true)",
+  "resolveProfileDisplayState",
+  'aria-busy={pending}',
+  'aria-disabled={pending}',
+  'aria-atomic="true"',
+  'target="_blank"',
+  'rel="noopener noreferrer"',
+]) requireText(profileFormSource, marker, `Profile form lacks revision-safe draft behavior: ${marker}.`);
+prohibit(profileFormSource, /\sdisabled=\{pending\}|key=\{state\.revision/, "Profile form can lose focus or remount its draft while saving.");
+for (const marker of ['rpc("set_profile_display_name"', "parseProfileMutationResult(data, actor.user.id)"]) requireText(accountActions, marker, `Account display-name action bypasses the serialized profile writer: ${marker}.`);
+prohibit(accountActions, /\.from\("profiles"\)[\s\S]{0,120}\.update\(\{ display_name/, "Account display-name action still writes the profile row directly.");
 for (const marker of ['name="linkedin_url" type="url" inputMode="url" maxLength={500} aria-describedby="linkedin-url-help"', 'id="linkedin-url-help">Use a full HTTPS URL on linkedin.com.', 'name="github_url" type="url" inputMode="url" maxLength={500} aria-describedby="github-url-help"', 'id="github-url-help">Use a full HTTPS URL on github.com.']) requireText(profileFormSource, marker, `Profile professional-link input lacks its bound/help contract: ${marker}.`);
 const profileHelpRule = globalStyles.match(/\.profile-form\s+\.form-group\s*>\s*small\s*\{([^}]*)\}/)?.[1];
 const profileHelpFontSize = profileHelpRule?.match(/font-size:\s*([\d.]+)px/)?.[1];
 if (!profileHelpFontSize || Number(profileHelpFontSize) < 13) failures.push("Profile field help text must remain readable at 13px or larger.");
 requireText(publicProfilePage, "No supported professional links are available.", "Public profile does not describe a sanitized zero-link state honestly.");
+
+for (const marker of [
+  "create or replace function public.set_profile_updated_at()",
+  "old.updated_at + interval '1 microsecond'",
+  "create or replace function public.save_profile_if_revision(",
+  "target_expected_updated_at timestamptz",
+  "pg_catalog.hashtextextended('profile-owner:' || current_user_id::text, 0)",
+  "profile.updated_at = target_expected_updated_at",
+  "target_update_linkedin_url",
+  "target_update_github_url",
+  "create or replace function public.set_profile_display_name(",
+  "revoke update on public.profiles from authenticated",
+  "revoke update (",
+  "grant execute on function public.save_profile_if_revision(",
+  "grant execute on function public.set_profile_display_name(text)",
+]) requireText(profileRevisionMigration, marker, `Revision-checked profile migration lacks ${marker}.`);
 
 for (const marker of [
   "create or replace function public.enforce_profile_professional_urls()",
@@ -610,10 +714,14 @@ for (const marker of [
   "anon cannot execute the professional URL trigger function",
   "authenticated cannot execute the professional URL trigger function",
   "profiles use the professional URL enforcement trigger",
-  "owner can store canonical professional URLs directly",
-  "GitHub rejects an off-domain URL",
-  "LinkedIn rejects an off-domain URL",
-  "an unrelated owner update remains possible on a legacy-invalid row",
+  "a current full profile revision saves one coherent snapshot",
+  "the profile RPC rejects a deceptive GitHub hostname",
+  "the profile RPC rejects a cross-platform LinkedIn URL",
+  "the profile RPC can preserve an unchanged legacy-invalid link during an unrelated edit",
+  "a stale full save cannot erase the newer display name or rich profile fields",
+  "authenticated cannot bypass profile RPCs with direct updates",
+  "authenticated has no residual profile column-update grant",
+  "a completed owner can intentionally remove the optional display name",
   "the public RPC masks a legacy-invalid GitHub URL",
   "the public RPC masks a legacy-invalid LinkedIn URL",
   "the public RPC preserves the safe legacy www GitHub alias",
