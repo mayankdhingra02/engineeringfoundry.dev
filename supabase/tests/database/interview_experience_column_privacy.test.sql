@@ -86,8 +86,8 @@ select ok(
   'authenticated authors retain internal-column privilege behind RLS'
 );
 select ok(
-  has_function_privilege('authenticated', 'public.save_interview_experience_draft(uuid,jsonb)', 'execute'),
-  'authenticated authors retain the controlled draft RPC'
+  has_function_privilege('authenticated', 'public.save_interview_experience_if_revision(uuid,boolean,timestamptz,boolean,text,text,text,text,date,text,text,text,boolean,jsonb)', 'execute'),
+  'authenticated authors can use the revision-checked aggregate RPC'
 );
 
 insert into auth.users (
@@ -111,10 +111,27 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', 'e1111111-1111-4111-8111-111111111111', true);
 select set_config(
   'test.owner_private_experience_id',
-  public.save_interview_experience_draft(
+  'e1111111-1111-4111-8111-111111111112',
+  true
+);
+select set_config(
+  'test.owner_private_experience_revision',
+  (select saved.updated_at::text from public.save_interview_experience_if_revision(
+    current_setting('test.owner_private_experience_id')::uuid,
+    true,
     null,
-    '{"company_name":"Private Company","role_title":"Software Engineer","role_level":"Mid","summary":"A private owner report used to verify internal fields remain available only to its author.","publication_consent":false,"public_identity":"anonymous","rounds":[{"round_type":"Technical","topic_labels":["Algorithms"],"process_notes":"Private process context."}]}'::jsonb
-  )::text,
+    false,
+    'Private Company',
+    'Software Engineer',
+    'Mid',
+    null,
+    null,
+    'A private owner report used to verify internal fields remain available only to its author.',
+    null,
+    'anonymous',
+    false,
+    '[{"round_type":"Technical","topic_labels":["Algorithms"],"process_notes":"Private process context."}]'::jsonb
+  ) as saved),
   true
 );
 select is(

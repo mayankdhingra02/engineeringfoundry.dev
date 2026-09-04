@@ -81,6 +81,30 @@ function behavioralAnswerArgs(overrides = {}) {
   };
 }
 
+function interviewExperienceArgs(overrides = {}) {
+  return {
+    target_experience_id: crypto.randomUUID(),
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_submit: false,
+    target_company_name: "Phase 9 aggregate security experience",
+    target_role_title: "Software Engineer",
+    target_role_level: null,
+    target_region: null,
+    target_interview_date: null,
+    target_summary: "Private Interview Experience aggregate security fixture.",
+    target_preparation_lessons: "Private preparation lesson.",
+    target_public_identity: "anonymous",
+    target_publication_consent: false,
+    target_rounds: [{
+      round_type: "Coding",
+      topic_labels: ["Arrays"],
+      process_notes: "Private round process notes.",
+    }],
+    ...overrides,
+  };
+}
+
 function interviewPlaybookDiagnosticArgs(overrides = {}) {
   return {
     target_expect_absent: true,
@@ -123,6 +147,7 @@ const consume = (client, max = 3, window = 900) =>
 let behavioralStory;
 let behavioralAnswer;
 let interviewPlaybookDiagnosticRevision;
+let interviewExperience;
 
 await check("Interview Playbook diagnostic snapshot and CAS RPCs deny anonymous callers", async () => {
   const [read, write] = await Promise.all([
@@ -218,6 +243,101 @@ await check("foreign and missing Interview Playbook diagnostic revision targets 
     updated_at: null,
   }]);
   return "both writes returned zero rows; owner B remained explicitly absent";
+});
+
+await check("Interview Experience revision RPCs deny anonymous callers", async () => {
+  const experienceId = crypto.randomUUID();
+  const revision = new Date().toISOString();
+  const attempts = await Promise.all([
+    anon.rpc("save_interview_experience_if_revision", interviewExperienceArgs({ target_experience_id: experienceId })),
+    anon.rpc("manage_interview_experience_if_revision", {
+      target_experience_id: experienceId,
+      target_expected_updated_at: revision,
+      target_action: "withdraw",
+    }),
+    anon.rpc("moderate_interview_experience_if_revision", {
+      target_experience_id: experienceId,
+      target_expected_updated_at: revision,
+      target_status: "approved",
+      target_moderation_note: null,
+    }),
+  ]);
+  for (const attempt of attempts) assert.equal(attempt.error?.code, "42501", "anonymous Interview Experience mutation must fail with 42501");
+  return "save, management, and moderation returned SQLSTATE 42501";
+});
+
+await check("Interview Experience aggregate derives its owner and retires split mutation paths", async () => {
+  const created = await a.client.rpc("save_interview_experience_if_revision", interviewExperienceArgs());
+  assert.ifError(created.error);
+  assert.equal(created.data?.length, 1, "owner Interview Experience create did not return one revision");
+  interviewExperience = created.data[0];
+
+  const directMutations = await Promise.all([
+    a.client.from("interview_experiences").insert({
+      author_id: a.user.id,
+      company_name: "Direct bypass",
+      role_title: "Direct bypass",
+    }),
+    a.client.from("interview_experiences").update({ summary: "Direct stale overwrite" }).eq("id", interviewExperience.experience_id),
+    a.client.from("interview_experience_rounds").delete().eq("experience_id", interviewExperience.experience_id),
+  ]);
+  for (const mutation of directMutations) assert.equal(mutation.error?.code, "42501", "direct Interview Experience aggregate mutation must fail with 42501");
+
+  const legacyAttempts = await Promise.all([
+    a.client.rpc("save_interview_experience_draft", { target_id: interviewExperience.experience_id, payload: {} }),
+    a.client.rpc("submit_interview_experience", { target_id: interviewExperience.experience_id }),
+    a.client.rpc("withdraw_interview_experience", { target_id: interviewExperience.experience_id }),
+    a.client.rpc("delete_interview_experience", { target_id: interviewExperience.experience_id }),
+    a.client.rpc("moderate_interview_experience", { target_id: interviewExperience.experience_id, next_status: "approved", moderation_note: null }),
+  ]);
+  for (const attempt of legacyAttempts) assert.equal(attempt.error?.code, "0A000", "legacy Interview Experience mutation must fail safely with 0A000");
+
+  const owner = await a.client.from("interview_experiences").select("status,summary,updated_at,interview_experience_rounds(process_notes)").eq("id", interviewExperience.experience_id).single();
+  assert.ifError(owner.error);
+  assert.deepEqual(owner.data, {
+    status: "draft",
+    summary: "Private Interview Experience aggregate security fixture.",
+    updated_at: interviewExperience.updated_at,
+    interview_experience_rounds: [{ process_notes: "Private round process notes." }],
+  });
+  return `owner aggregate ${interviewExperience.experience_id}; direct writes denied; legacy RPCs retired`;
+});
+
+await check("foreign and missing Interview Experience revision targets are indistinguishable", async () => {
+  assert.ok(interviewExperience, "owner Interview Experience fixture was unavailable");
+  const foreignSave = await b.client.rpc("save_interview_experience_if_revision", interviewExperienceArgs({
+    target_experience_id: interviewExperience.experience_id,
+    target_expect_absent: false,
+    target_expected_updated_at: interviewExperience.updated_at,
+    target_summary: "Foreign overwrite must not identify the owner row.",
+  }));
+  const missingSave = await b.client.rpc("save_interview_experience_if_revision", interviewExperienceArgs({
+    target_experience_id: crypto.randomUUID(),
+    target_expect_absent: false,
+    target_expected_updated_at: interviewExperience.updated_at,
+    target_summary: "Missing overwrite must match the foreign result.",
+  }));
+  const foreignManage = await b.client.rpc("manage_interview_experience_if_revision", {
+    target_experience_id: interviewExperience.experience_id,
+    target_expected_updated_at: interviewExperience.updated_at,
+    target_action: "withdraw",
+  });
+  const missingManage = await b.client.rpc("manage_interview_experience_if_revision", {
+    target_experience_id: crypto.randomUUID(),
+    target_expected_updated_at: interviewExperience.updated_at,
+    target_action: "withdraw",
+  });
+  for (const attempt of [foreignSave, missingSave, foreignManage, missingManage]) {
+    assert.ifError(attempt.error);
+    assert.deepEqual(attempt.data, [], "foreign and missing revision targets must both return zero rows");
+  }
+  const owner = await a.client.from("interview_experiences").select("summary,updated_at").eq("id", interviewExperience.experience_id).single();
+  assert.ifError(owner.error);
+  assert.deepEqual(owner.data, {
+    summary: "Private Interview Experience aggregate security fixture.",
+    updated_at: interviewExperience.updated_at,
+  });
+  return "foreign and missing save/management targets returned zero rows; owner data unchanged";
 });
 
 await check("Behavioral aggregate RPCs deny anonymous callers", async () => {
@@ -763,6 +883,8 @@ await check("deleting an account removes its private rows and throttle state", a
     const count = execFileSync("docker", ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", `select count(*) from public.${table} where user_id = '${a.user.id}'::uuid`], { encoding: "utf8" }).trim();
     assert.equal(count, "0", `${table} retained deleted-user rows`);
   }
+  const experiences = execFileSync("docker", ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", `select count(*) from public.interview_experiences where author_id = '${a.user.id}'::uuid`], { encoding: "utf8" }).trim();
+  assert.equal(experiences, "0", "Interview Experiences retained deleted-author rows");
   const profiles = execFileSync("docker", ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", `select count(*) from public.profiles where id = '${a.user.id}'::uuid`], { encoding: "utf8" }).trim();
   assert.equal(profiles, "0", "profile retained after deletion");
 });

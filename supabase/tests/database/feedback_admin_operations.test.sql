@@ -18,7 +18,7 @@ select ok(not has_table_privilege('authenticated', 'public.feedback_submissions'
 select has_function('public', 'is_current_admin', array[]::text[], 'database admin predicate exists');
 select has_function('public', 'submit_feedback_submission', array['jsonb','text'], 'controlled feedback submit RPC exists');
 select has_function('public', 'update_feedback_submission', array['uuid','text','text'], 'controlled feedback triage RPC exists');
-select has_function('public', 'moderate_interview_experience', array['uuid','text','text'], 'controlled experience moderation RPC exists');
+select has_function('public', 'moderate_interview_experience_if_revision', array['uuid','timestamptz','text','text'], 'revision-bound experience moderation RPC exists');
 select has_function('public', 'export_own_feedback_submissions', array[]::text[], 'actor-derived feedback export RPC exists');
 select ok(has_function_privilege('anon', 'public.submit_feedback_submission(jsonb,text)', 'execute'), 'anonymous users can use only the controlled submit RPC');
 select ok(not has_function_privilege('anon', 'public.update_feedback_submission(uuid,text,text)', 'execute'), 'anonymous users cannot triage feedback');
@@ -48,7 +48,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', 'b2000000-0000-4000-8000-000000000002', true);
 select is((select count(*)::integer from public.feedback_submissions), 0, 'normal member cannot read another sender feedback');
 select throws_ok($$select public.update_feedback_submission((select id from public.feedback_submissions limit 1), 'resolved', null)$$, '42501', 'Administrator access required', 'normal member cannot change feedback status');
-select throws_ok($$select public.moderate_interview_experience('11111111-1111-4111-8111-111111111111', 'approved', null)$$, '42501', 'Administrator access required', 'normal member cannot use experience moderation');
+select throws_ok($$select * from public.moderate_interview_experience_if_revision('11111111-1111-4111-8111-111111111111', now(), 'approved', null)$$, '42501', 'Administrator access required', 'normal member cannot use experience moderation');
 
 reset role;
 insert into public.admin_memberships (user_id) values ('c3000000-0000-4000-8000-000000000003');
@@ -66,13 +66,24 @@ select ok(not exists (select 1 from information_schema.columns where table_schem
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'a1000000-0000-4000-8000-000000000001', true);
-select set_config('test.experience_id', public.save_interview_experience_draft(null, '{"company_name":"Acme","role_title":"Engineer","summary":"A high-level contributor report suitable for moderation with no proprietary interview prompts.","publication_consent":true,"public_identity":"anonymous","rounds":[]}'::jsonb)::text, true);
-select is(public.submit_interview_experience(current_setting('test.experience_id')::uuid), true, 'owner submits an experience into the existing moderation state');
+select set_config('test.experience_id', 'a1000000-0000-4000-8000-000000000011', true);
+select set_config('test.experience_revision', (select saved.updated_at::text from public.save_interview_experience_if_revision(
+  current_setting('test.experience_id')::uuid, true, null, true,
+  'Acme', 'Engineer', null, null, null,
+  'A high-level contributor report suitable for moderation with no proprietary interview prompts.',
+  null, 'anonymous', true, '[]'::jsonb
+) as saved), true);
+select is((select status from public.interview_experiences where id = current_setting('test.experience_id')::uuid), 'submitted', 'owner atomically submits an experience into the moderation state');
 
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'c3000000-0000-4000-8000-000000000003', true);
-select lives_ok($$select public.moderate_interview_experience(current_setting('test.experience_id')::uuid, 'approved', 'Approved after privacy and usefulness review')$$, 'authorized admin can use the supported moderation decision');
+select lives_ok($$select * from public.moderate_interview_experience_if_revision(
+  current_setting('test.experience_id')::uuid,
+  current_setting('test.experience_revision')::timestamptz,
+  'approved',
+  'Approved after privacy and usefulness review'
+)$$, 'authorized admin can use the revision-bound moderation decision');
 select is((select status from public.interview_experiences where id = current_setting('test.experience_id')::uuid), 'approved', 'admin approval persists without direct table grants');
 select is((select count(*)::integer from public.admin_audit_events where target_type = 'interview_experience'), 1, 'experience moderation writes a minimal audit event');
 

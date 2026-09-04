@@ -55,6 +55,7 @@ try {
   const b = await createAccount(emails[1]);
   let applicationId;
   let roundId;
+  let interviewExperienceId;
 
 await check("new users begin with explicit incomplete onboarding state", async () => {
   const profile = await a.client.from("profiles").select("onboarding_complete,onboarding_completed_at").single();
@@ -173,6 +174,25 @@ await check("disposable account can populate every major private workspace", asy
   assert.ifError((await a.client.rpc("save_system_design_item_progress_if_revision", { target_item_id: "introduction", target_item_type: "concept", target_expect_absent: true, target_expected_updated_at: null, target_status: "reviewed", target_confidence: "medium", target_bookmarked: true, target_notes: "Private System Design note" })).error);
   const document = { functional_requirements: [], non_functional_requirements: [], capacity: { assumptions: [], calculations: [] }, apis: [], data_models: [], high_level_design: "Private design", deep_dives: [], bottlenecks: [], failure_modes: [], tradeoffs: [], follow_ups: [], final_review_notes: "" };
   assert.ifError((await a.client.rpc("create_system_design_attempt", { target_problem_id: "url-shortener", target_application_id: applicationId, target_title: "Phase 8 disposable attempt", target_document: document })).error);
+  interviewExperienceId = randomUUID();
+  const experience = await a.client.rpc("save_interview_experience_if_revision", {
+    target_experience_id: interviewExperienceId,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_submit: false,
+    target_company_name: "Phase 8 Disposable Experience Co",
+    target_role_title: "Software Engineer",
+    target_role_level: null,
+    target_region: null,
+    target_interview_date: null,
+    target_summary: "Private disposable Interview Experience summary.",
+    target_preparation_lessons: "Private disposable preparation lesson.",
+    target_public_identity: "anonymous",
+    target_publication_consent: false,
+    target_rounds: [{ round_type: "Coding", topic_labels: ["Arrays"], process_notes: "Private disposable process note." }],
+  });
+  assert.ifError(experience.error);
+  assert.equal(experience.data?.length, 1);
   const reminders = await a.client.from("interview_reminders").select("id").eq("round_id", roundId);
   assert.ok((reminders.data?.length ?? 0) > 0, "future interview did not create reminders");
   const feedback = await a.client.rpc("submit_feedback_submission", { payload: { category: "bug", message: feedbackMessage, page_context: "/dashboard", contact_email: null, contact_consent: false }, anonymous_subject: null });
@@ -193,6 +213,9 @@ await check("private JSON export contains owned Phase 1–7 data and excludes se
   assert.equal(exportPayload.dsa.question_progress[0].notes, "Private DSA note");
   assert.equal(exportPayload.system_design.item_progress[0].notes, "Private System Design note");
   assert.equal(exportPayload.system_design.attempts.length, 1);
+  assert.equal(exportPayload.interview_experiences.records[0].id, interviewExperienceId);
+  assert.equal(exportPayload.interview_experiences.records[0].preparation_lessons, "Private disposable preparation lesson.");
+  assert.equal(exportPayload.interview_experiences.rounds[0].process_notes, "Private disposable process note.");
   assert.equal(exportPayload.account.preparation_preferences.preferred_role_level, "sde2");
   assert.equal(exportPayload.feedback.submissions[0].message, feedbackMessage);
   const serialized = JSON.stringify(exportPayload);
@@ -217,6 +240,8 @@ await check("privileged Auth deletion removes identity, private rows, reminders,
     const count = queryLocalDatabase(`select count(*) from public.${table} where user_id = :'user_id'::uuid`, { user_id: a.user.id });
     assert.equal(count, "0", `${table} retained deleted-user rows`);
   }
+  const experienceCount = queryLocalDatabase("select count(*) from public.interview_experiences where author_id = :'user_id'::uuid", { user_id: a.user.id });
+  assert.equal(experienceCount, "0", "interview_experiences retained deleted-author rows");
   const staleUser = await a.client.auth.getUser();
   assert.ok(staleUser.error || !staleUser.data.user, "deleted session still resolves an Auth user");
   const staleRead = await a.client.from("applications").select("id");

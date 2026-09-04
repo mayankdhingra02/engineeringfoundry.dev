@@ -8,8 +8,9 @@ import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, feedbackAction, feedbackForm, publicFeedbackPage, publicSupabase, adminAuth, adminActions, adminLayout, adminHome, feedbackPage, feedbackDetail, experiencePage, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, workflow, packageJson] = await Promise.all([
+const [migration, revisionMigration, feedbackAction, feedbackForm, publicFeedbackPage, publicSupabase, adminAuth, adminActions, adminLayout, adminHome, feedbackPage, feedbackDetail, experiencePage, experienceQueries, experiencePrivateState, experienceActionInput, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, workflow, packageJson] = await Promise.all([
   read("supabase/migrations/202608230001_create_feedback_admin_operations.sql"),
+  read("supabase/migrations/202609040003_save_interview_experience_if_revision.sql"),
   read("features/feedback/actions.ts"),
   read("features/feedback/feedback-form.tsx"),
   read("app/feedback/page.tsx"),
@@ -21,6 +22,9 @@ const [migration, feedbackAction, feedbackForm, publicFeedbackPage, publicSupaba
   read("app/admin/feedback/page.tsx"),
   read("app/admin/feedback/[id]/page.tsx"),
   read("app/admin/interview-experiences/page.tsx"),
+  read("lib/interview-experiences/queries.ts"),
+  read("lib/interview-experiences/private-state.ts"),
+  read("lib/interview-experiences/action-input.ts"),
   read("app/admin/operational-health/page.tsx"),
   read("lib/privacy/routes.ts"),
   read("lib/privacy/analytics-properties.ts"),
@@ -139,12 +143,17 @@ assert.match(contactPage, /feedbackAvailable \? <>\s*<h2>Private website feedbac
 
 for (const marker of ["getAuthenticatedActor", "is_current_admin", "notFound"]) assert.ok(adminAuth.includes(marker), `admin guard is missing server-side ${marker}`);
 assert.ok(!adminAuth.includes("process.env.NEXT_PUBLIC") && !adminAuth.includes("email"), "admin authorization relies on a public/browser signal");
-for (const marker of ["update_feedback_submission", "moderate_interview_experience", "requireAdminActor", "revalidatePath"]) assert.ok(adminActions.includes(marker), `admin mutation action is missing ${marker}`);
+for (const marker of ["update_feedback_submission", "moderate_interview_experience_if_revision", "parseInterviewExperienceModerationInput", "parseInterviewExperienceMutationResult", "requireAdminActor", "revalidatePath"]) assert.ok(adminActions.includes(marker), `admin mutation action is missing ${marker}`);
+assert.ok(!adminActions.includes('rpc("moderate_interview_experience"'), "admin production code still calls the retired moderation RPC");
 assert.ok(!adminActions.includes("createSupabaseAdminClient") && !adminActions.includes("service_role"), "admin UI uses the service role as a login");
 for (const marker of ["robots", "force-dynamic", "requireAdminActor"]) assert.ok(adminLayout.includes(marker), `admin layout is missing private-route ${marker}`);
 for (const marker of ["Feedback requiring triage", "Experiences requiring moderation", "Company guides requiring review", "Operational configuration"]) assert.ok(adminHome.includes(marker), `admin home is missing ${marker}`);
 for (const source of [feedbackPage, feedbackDetail, experiencePage, healthPage]) assert.ok(source.includes("requireAdminActor") || source.includes("operationalHealth"), "admin surface lacks bounded operational access");
-for (const marker of ["interview_experience_rounds(position,round_type,topic_labels,process_notes)", "Submitted round context", "round.topic_labels", "round.process_notes"]) assert.ok(experiencePage.includes(marker), `experience moderation must expose submitted public round context: ${marker}`);
+for (const marker of ["preparation_lessons", "public_identity", "publication_consent", "interview_experience_rounds(position,round_type,topic_labels,process_notes)", 'in("status", ["submitted", "needs_changes"])', "resolveAdminInterviewExperienceQueue"]) assert.ok(experienceQueries.includes(marker), `experience moderation query must strictly project submitted public context: ${marker}`);
+for (const marker of ["Preparation lessons", "experience.preparation_lessons", "Public attribution:", "experience.public_identity", "experience.publication_consent", "Submitted round context", "round.topic_labels", "round.process_notes", "revision={experience.updated_at}"]) assert.ok(experiencePage.includes(marker), `experience moderation must expose the exact revision and every submitted public field: ${marker}`);
+for (const marker of ["INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT", 'return { status: "unavailable" }', "preparation_lessons", "public_identity"]) assert.ok(experiencePrivateState.includes(marker), `experience moderation result boundary is missing ${marker}`);
+for (const marker of ["parseInterviewExperienceModerationInput", "INTERVIEW_EXPERIENCE_MODERATION_CONFLICT_ERROR", "INTERVIEW_EXPERIENCE_MODERATION_SAVED_MESSAGE"]) assert.ok(experienceActionInput.includes(marker), `experience moderation input/result contract is missing ${marker}`);
+for (const marker of ["moderate_interview_experience_if_revision(uuid,timestamptz,text,text)", "Revision-checked interview experience moderation is required", "using errcode = '0A000'"]) assert.ok(revisionMigration.includes(marker), `revision-checked moderation migration is missing ${marker}`);
 assert.ok(privacyRoutes.includes('"/admin"'), "admin route is absent from canonical private-route protection");
 
 for (const name of ["message", "contact_email", "reference_id", "admin_note", "moderation_note"]) assert.ok(analyticsProperties.includes(`"${name}"`), `feedback/admin private field ${name} is not analytics-denied`);

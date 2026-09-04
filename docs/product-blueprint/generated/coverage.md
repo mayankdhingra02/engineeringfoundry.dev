@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: b4d42dc084a5e01ee2547e03b1f1515c57f39c8f
-repository_state_sha256: f37e1cdea1f35a0d8f3f7b865836664600fea41c59335008a811df4a9011317b
+repository_sha: 794162a5660ae94a3567e85207a82500671e3dad
+repository_state_sha256: d085a374edf3913712dee28bd67667a1d425ff2233ca6a2c98db721e7fc149b5
 ---
 
 # Engineering Foundry requirement coverage
@@ -120,7 +120,7 @@ repository_state_sha256: f37e1cdea1f35a0d8f3f7b865836664600fea41c59335008a811df4
 | EF-DSA | dsa | required | partial | needs-research | stale-review | missing | /dsa | — | 0 | 8 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
 | EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved-needs-source-import | stale-review | missing | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 0 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | missing | /dsa/languages | /dsa/languages/[slug] | 0 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
-| EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 3 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
+| EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 7 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 16 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
 | EF-LLD | low-level-design | required | partial | needs-research | stale-review | missing | /low-level-design | — | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |

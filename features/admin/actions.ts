@@ -2,10 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminActor } from "@/lib/admin/auth";
-import { EXPERIENCE_MODERATION_STATUSES, FEEDBACK_STATUSES, type FeedbackStatus } from "@/lib/feedback/model";
+import { FEEDBACK_STATUSES, type FeedbackStatus } from "@/lib/feedback/model";
+import {
+  INTERVIEW_EXPERIENCE_INVALID_MODERATION_ERROR,
+  INTERVIEW_EXPERIENCE_MODERATION_CONFLICT_ERROR,
+  INTERVIEW_EXPERIENCE_MODERATION_SAVED_MESSAGE,
+  parseInterviewExperienceModerationInput,
+  parseInterviewExperienceMutationResult,
+} from "@/lib/interview-experiences/action-input";
 import { logServerOperationalFailure } from "@/lib/observability/log";
 
-export type AdminMutationState = { status: "idle" | "error" | "success"; message?: string };
+export type AdminMutationState = { status: "idle" | "error" | "success"; message?: string; conflict?: boolean; revision?: string };
 export const initialAdminMutationState: AdminMutationState = { status: "idle" };
 
 export async function updateFeedbackAction(_: AdminMutationState, form: FormData): Promise<AdminMutationState> {
@@ -24,18 +31,25 @@ export async function updateFeedbackAction(_: AdminMutationState, form: FormData
   return { status: "success", message: "Feedback triage saved. The original report was not modified." };
 }
 
-export async function moderateInterviewExperienceAction(_: AdminMutationState, form: FormData): Promise<AdminMutationState> {
-  const id = String(form.get("experience_id") ?? "");
-  const status = String(form.get("status") ?? "");
-  const note = String(form.get("moderation_note") ?? "");
-  if (!/^[0-9a-f-]{36}$/i.test(id) || !EXPERIENCE_MODERATION_STATUSES.includes(status as (typeof EXPERIENCE_MODERATION_STATUSES)[number])) return { status: "error", message: "Choose an allowed moderation decision." };
-  if (note.length > 1000) return { status: "error", message: "Moderation notes must be 1,000 characters or fewer." };
+export async function moderateInterviewExperienceAction(_: AdminMutationState, form: unknown): Promise<AdminMutationState> {
+  const parsed = parseInterviewExperienceModerationInput(form);
+  if (!parsed.ok) return { status: "error", message: INTERVIEW_EXPERIENCE_INVALID_MODERATION_ERROR };
   const actor = await requireAdminActor("/admin/interview-experiences");
-  const { error } = await actor.supabase.rpc("moderate_interview_experience", { target_id: id, next_status: status as "needs_changes" | "approved" | "rejected", moderation_note: note || null });
+  const { data, error } = await actor.supabase.rpc("moderate_interview_experience_if_revision", {
+    target_experience_id: parsed.value.id,
+    target_expected_updated_at: parsed.value.expectedUpdatedAt,
+    target_status: parsed.value.status,
+    target_moderation_note: parsed.value.note,
+  });
   if (error) {
-    logServerOperationalFailure("admin_experience_moderation_failed", error, { status });
-    return { status: "error", message: "The experience was not changed. Refresh and try again." };
+    logServerOperationalFailure("admin_experience_moderation_failed", error, { status: parsed.value.status });
+    return { status: "error", message: "The experience was not changed. Please try again." };
   }
-  revalidatePath("/admin"); revalidatePath("/admin/interview-experiences"); revalidatePath("/interview-experiences");
-  return { status: "success", message: "Moderation decision saved without rewriting contributor content." };
+  const result = parseInterviewExperienceMutationResult(data, parsed.value.id, [parsed.value.status]);
+  if (result.status === "conflict") return { status: "error", message: INTERVIEW_EXPERIENCE_MODERATION_CONFLICT_ERROR, conflict: true };
+  if (result.status !== "saved") return { status: "error", message: "The experience was not changed. Please try again." };
+  revalidatePath("/admin");
+  revalidatePath("/admin/interview-experiences");
+  revalidatePath("/interview-experiences");
+  return { status: "success", message: INTERVIEW_EXPERIENCE_MODERATION_SAVED_MESSAGE, revision: result.updatedAt };
 }
