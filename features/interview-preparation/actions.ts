@@ -21,11 +21,17 @@ import {
   parsePreparationTextSaveResult,
 } from "@/lib/interview-preparation/text-action-input";
 import {
+  PREPARATION_TASK_DELETED_MESSAGE,
+  PREPARATION_TASK_DELETE_CONFLICT_ERROR,
+  PREPARATION_TASK_DELETE_INVALID_INPUT_ERROR,
+  PREPARATION_TASK_DELETE_PERSISTENCE_ERROR,
   PREPARATION_TASK_INVALID_INPUT_ERROR,
   PREPARATION_TASK_PERSISTENCE_ERROR,
   PREPARATION_TASK_SAVED_MESSAGE,
   parsePreparationTaskCompletionInput,
   parsePreparationTaskCompletionResult,
+  parsePreparationTaskDeleteInput,
+  parsePreparationTaskDeleteResult,
 } from "@/lib/interview-preparation/task-action-input";
 
 export type PreparationActionState = {
@@ -138,15 +144,49 @@ export async function togglePreparationTaskAction(roundId: unknown, taskId: unkn
   return { status: "success", message: PREPARATION_TASK_SAVED_MESSAGE };
 }
 
-export async function deletePreparationTaskAction(roundId: string, applicationId: string, taskId: string, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+export async function deletePreparationTaskAction(
+  roundId: unknown,
+  taskId: unknown,
+  expectedUpdatedAt: unknown,
+  previousState: PreparationActionState,
+  formData: unknown,
+): Promise<PreparationActionState> {
+  const parsed = parsePreparationTaskDeleteInput(
+    roundId,
+    taskId,
+    expectedUpdatedAt,
+    formData,
+  );
   void previousState;
-  void formData;
+  if (!parsed.ok) {
+    return { status: "error", message: PREPARATION_TASK_DELETE_INVALID_INPUT_ERROR };
+  }
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Your session expired. Sign in and try again." };
-  const { error } = await actor.supabase.rpc("delete_interview_preparation_task", { target_task_id: taskId });
-  if (error) return { status: "error", message: "Task was not removed. Try again." };
-  refresh(roundId, applicationId);
-  return { status: "success", message: "Task removed." };
+  const { data, error } = await actor.supabase.rpc(
+    "delete_interview_preparation_task_if_revision",
+    {
+      target_round_id: parsed.value.roundId,
+      target_task_id: parsed.value.taskId,
+      target_expected_updated_at: parsed.value.expectedUpdatedAt,
+    },
+  );
+  if (error) {
+    return { status: "error", message: PREPARATION_TASK_DELETE_PERSISTENCE_ERROR };
+  }
+  const outcome = parsePreparationTaskDeleteResult(data, parsed.value);
+  if (outcome.status === "conflict") {
+    return {
+      status: "error",
+      message: PREPARATION_TASK_DELETE_CONFLICT_ERROR,
+      conflict: true,
+    };
+  }
+  if (outcome.status === "invalid") {
+    return { status: "error", message: PREPARATION_TASK_DELETE_PERSISTENCE_ERROR };
+  }
+  refresh(parsed.value.roundId, outcome.applicationId);
+  return { status: "success", message: PREPARATION_TASK_DELETED_MESSAGE };
 }
 
 export async function savePreparationReflectionAction(

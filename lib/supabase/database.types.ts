@@ -1253,6 +1253,14 @@ export type Database = {
       };
       toggle_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };
       delete_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };
+      delete_interview_preparation_task_if_revision: {
+        Args: {
+          target_round_id: string;
+          target_task_id: string;
+          target_expected_updated_at: string;
+        };
+        Returns: { task_id: string; round_id: string; application_id: string }[];
+      };
       create_behavioral_story_with_themes: {
         Args: {
           target_title: string;
