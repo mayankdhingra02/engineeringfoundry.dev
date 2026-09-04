@@ -5,6 +5,15 @@ import {
   validateSignUpCredentials,
 } from "../lib/auth/credentials.ts";
 import {
+  PASSWORD_RECOVERY_CONFIRMATION_ERROR,
+  PASSWORD_RECOVERY_FUTURE_SKEW_SECONDS,
+  PASSWORD_RECOVERY_INVALID_INPUT_ERROR,
+  PASSWORD_RECOVERY_MAX_AGE_SECONDS,
+  PASSWORD_RECOVERY_SESSION_ERROR,
+  parsePasswordRecoveryActionInput,
+  resolveRecentPasswordRecoverySubject,
+} from "../lib/auth/password-recovery-claims.ts";
+import {
   PUBLIC_PROFILE_UNAVAILABLE_MESSAGE,
   PublicProfileUnavailableError,
   resolvePublicProfileQuery,
@@ -69,6 +78,111 @@ try {
   );
 } catch (error) {
   failures.push(`Credential, redirect, or public-profile query validation failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+try {
+  const validationInstant = new Date("2026-09-03T18:30:00.900Z");
+  const nowSeconds = Math.floor(validationInstant.getTime() / 1_000);
+  const subject = "123e4567-e89b-42d3-a456-426614174000";
+  const claims = (amr, sub = subject) => ({
+    sub,
+    aud: "authenticated",
+    amr,
+  });
+  const recovery = (timestamp) => ({ method: "recovery", timestamp });
+
+  assert.equal(PASSWORD_RECOVERY_MAX_AGE_SECONDS, 600);
+  assert.equal(PASSWORD_RECOVERY_FUTURE_SKEW_SECONDS, 60);
+  assert.equal(PASSWORD_RECOVERY_SESSION_ERROR, "This recovery session is invalid or expired. Request a new reset link.");
+  assert.equal(PASSWORD_RECOVERY_INVALID_INPUT_ERROR, "Review the password fields and try again.");
+  assert.equal(PASSWORD_RECOVERY_CONFIRMATION_ERROR, "Passwords do not match.");
+  assert.equal(resolveRecentPasswordRecoverySubject(claims([recovery(nowSeconds)]), validationInstant), subject);
+  assert.equal(resolveRecentPasswordRecoverySubject(claims([recovery(nowSeconds - PASSWORD_RECOVERY_MAX_AGE_SECONDS)]), validationInstant), subject, "The exact recovery-age boundary must remain valid.");
+  assert.equal(resolveRecentPasswordRecoverySubject(claims([recovery(nowSeconds + PASSWORD_RECOVERY_FUTURE_SKEW_SECONDS)]), validationInstant), subject, "The exact server-skew boundary must remain valid.");
+  assert.equal(resolveRecentPasswordRecoverySubject(claims([
+    { method: "password", timestamp: nowSeconds - 30 },
+    recovery(nowSeconds - 10),
+  ]), validationInstant), subject, "A valid recovery method was lost beside another well-formed AMR entry.");
+  assert.equal(
+    resolveRecentPasswordRecoverySubject(claims([recovery(nowSeconds)], subject.toUpperCase()), validationInstant),
+    subject,
+    "A valid UUID subject must be normalized before correlation.",
+  );
+
+  const invalidClaimCases = [
+    ["null claims", null],
+    ["array claims", []],
+    ["missing subject", { amr: [recovery(nowSeconds)] }],
+    ["non-string subject", claims([recovery(nowSeconds)], 42)],
+    ["nil UUID subject", claims([recovery(nowSeconds)], "00000000-0000-0000-0000-000000000000")],
+    ["malformed UUID subject", claims([recovery(nowSeconds)], "not-a-user")],
+    ["missing AMR", { sub: subject }],
+    ["non-array AMR", { sub: subject, amr: "recovery" }],
+    ["empty AMR", claims([])],
+    ["string-only AMR without freshness", claims(["recovery"])],
+    ["null AMR member", claims([null])],
+    ["missing method", claims([{ timestamp: nowSeconds }])],
+    ["empty method", claims([{ method: "", timestamp: nowSeconds }])],
+    ["missing timestamp", claims([{ method: "recovery" }])],
+    ["string timestamp", claims([{ method: "recovery", timestamp: String(nowSeconds) }])],
+    ["fractional timestamp", claims([recovery(nowSeconds - 0.5)])],
+    ["negative timestamp", claims([recovery(-1)])],
+    ["unsafe timestamp", claims([recovery(Number.MAX_SAFE_INTEGER + 1)])],
+    ["extra AMR member field", claims([{ method: "recovery", timestamp: nowSeconds, provider: "email" }])],
+    ["password-only session", claims([{ method: "password", timestamp: nowSeconds }])],
+    ["duplicate recovery methods", claims([recovery(nowSeconds), recovery(nowSeconds - 1)])],
+    ["malformed sibling entry", claims([recovery(nowSeconds), { method: "password" }])],
+    ["stale recovery", claims([recovery(nowSeconds - PASSWORD_RECOVERY_MAX_AGE_SECONDS - 1)])],
+    ["recovery beyond future skew", claims([recovery(nowSeconds + PASSWORD_RECOVERY_FUTURE_SKEW_SECONDS + 1)])],
+  ];
+  for (const [name, value] of invalidClaimCases) {
+    assert.equal(resolveRecentPasswordRecoverySubject(value, validationInstant), null, `${name} produced a recovery capability.`);
+  }
+  assert.equal(resolveRecentPasswordRecoverySubject(claims([recovery(nowSeconds)]), new Date(Number.NaN)), null, "An invalid validation instant produced a recovery capability.");
+
+  const recoveryForm = (password, confirmation = password) => {
+    const form = new FormData();
+    form.set("password", password);
+    form.set("confirm_password", confirmation);
+    return form;
+  };
+  const minimumPassword = "Foundry1";
+  const maximumPassword = `A1${"z".repeat(126)}`;
+  assert.deepEqual(parsePasswordRecoveryActionInput(recoveryForm(minimumPassword)), { ok: true, value: { password: minimumPassword } });
+  assert.deepEqual(parsePasswordRecoveryActionInput(recoveryForm(maximumPassword)), { ok: true, value: { password: maximumPassword } });
+  const actionMetadataForm = recoveryForm("Recovery123");
+  actionMetadataForm.append("$ACTION_ID_example", "opaque-next-metadata");
+  assert.deepEqual(parsePasswordRecoveryActionInput(actionMetadataForm), { ok: true, value: { password: "Recovery123" } }, "Next action metadata was not ignored safely.");
+
+  for (const input of [null, undefined, {}, [], "password", 42]) {
+    assert.deepEqual(parsePasswordRecoveryActionInput(input), { ok: false, error: PASSWORD_RECOVERY_INVALID_INPUT_ERROR }, "A non-FormData recovery payload was accepted.");
+  }
+  for (const name of ["password", "confirm_password"]) {
+    const form = recoveryForm("Recovery123");
+    form.delete(name);
+    assert.deepEqual(parsePasswordRecoveryActionInput(form), { ok: false, error: PASSWORD_RECOVERY_INVALID_INPUT_ERROR }, `A missing ${name} field was accepted.`);
+  }
+  for (const name of ["password", "confirm_password"]) {
+    const form = recoveryForm("Recovery123");
+    form.append(name, "Recovery123");
+    assert.deepEqual(parsePasswordRecoveryActionInput(form), { ok: false, error: PASSWORD_RECOVERY_INVALID_INPUT_ERROR }, `Duplicate ${name} fields were accepted.`);
+  }
+  for (const name of ["password", "confirm_password"]) {
+    const form = recoveryForm("Recovery123");
+    form.set(name, new Blob(["Recovery123"]));
+    assert.deepEqual(parsePasswordRecoveryActionInput(form), { ok: false, error: PASSWORD_RECOVERY_INVALID_INPUT_ERROR }, `A file-valued ${name} field was accepted.`);
+  }
+  for (const [name, value] of [["unknown field", "unexpected"], ["case-variant field", "Password"]]) {
+    const form = recoveryForm("Recovery123");
+    form.set(value, "Recovery123");
+    assert.deepEqual(parsePasswordRecoveryActionInput(form), { ok: false, error: PASSWORD_RECOVERY_INVALID_INPUT_ERROR }, `${name} was accepted.`);
+  }
+  for (const password of ["Short1", "abcdefgh", "12345678", `A1${"z".repeat(127)}`]) {
+    assert.deepEqual(parsePasswordRecoveryActionInput(recoveryForm(password)), { ok: false, error: "Use at least 8 characters with at least one letter and one number." }, `Weak recovery password ${JSON.stringify(password)} was accepted.`);
+  }
+  assert.deepEqual(parsePasswordRecoveryActionInput(recoveryForm("Recovery123", "Recovery124")), { ok: false, error: PASSWORD_RECOVERY_CONFIRMATION_ERROR });
+} catch (error) {
+  failures.push(`Password-recovery claim or action-input validation failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 function profileForm({ github = "", linkedin = "" } = {}) {
@@ -199,9 +313,29 @@ for (const marker of ['autoComplete="name"', 'autoComplete="email"', 'role="aler
 for (const route of ["app/signin/page.tsx", "app/signup/page.tsx"]) requireText(read(route), "AuthPage", `${route} does not render the shared authentication page.`);
 
 const passwordForms = read("features/auth/password-forms.tsx");
-for (const marker of ["resetPasswordForEmail", "PasswordInput", "If an account exists", 'role="alert"', "aria-describedby", "aria-invalid"]) requireText(passwordForms, marker, `Password recovery lacks ${marker}.`);
+for (const marker of ["resetPasswordForEmail", "PasswordInput", "If an account exists", 'role="alert"', "aria-describedby", "aria-invalid", "PASSWORD_REQUIREMENT", "maxLength={128}"]) requireText(passwordForms, marker, `Password recovery lacks ${marker}.`);
 const passwordActions = read("features/auth/password-actions.ts");
-for (const marker of ["ef-password-recovery", "getUser", "updateUser", "cookieStore.delete"]) requireText(passwordActions, marker, `Password update action lacks ${marker}.`);
+const authCallback = read("app/auth/callback/route.ts");
+const resetPasswordPage = read("app/reset-password/page.tsx");
+for (const source of [authCallback, resetPasswordPage, passwordActions]) prohibit(source, /ef-password-recovery/, "Password recovery still trusts the obsolete literal recovery cookie.");
+prohibit(authCallback, /searchParams\.get\(["']flow["']\)/, "The auth callback still trusts a caller-supplied recovery-flow label.");
+for (const marker of ["exchangeCodeForSession(code)", "data.session.access_token", "getClaims(", "resolveRecentPasswordRecoverySubject", "recoverySubject !== data.user.id.toLowerCase()", 'new URL("/auth/error?reason=callback"', "new URL(next, redirectOrigin)"]) requireText(authCallback, marker, `Auth callback recovery proof lacks ${marker}.`);
+const callbackExchangeIndex = authCallback.indexOf("exchangeCodeForSession(code)");
+const callbackClaimsIndex = authCallback.indexOf("getClaims(", callbackExchangeIndex);
+const callbackResolutionIndex = authCallback.indexOf("resolveRecentPasswordRecoverySubject", callbackClaimsIndex);
+const callbackCorrelationIndex = authCallback.indexOf("recoverySubject !== data.user.id.toLowerCase()", callbackResolutionIndex);
+const callbackRecoveryRedirectIndex = authCallback.indexOf("new URL(next, redirectOrigin)", callbackCorrelationIndex);
+if (callbackExchangeIndex < 0 || callbackClaimsIndex <= callbackExchangeIndex || callbackResolutionIndex <= callbackClaimsIndex || callbackCorrelationIndex <= callbackResolutionIndex || callbackRecoveryRedirectIndex <= callbackCorrelationIndex) failures.push("Auth callback does not verify the exchanged token's recent recovery method and correlated subject before redirecting to password reset.");
+for (const marker of ["createSupabaseServerClient", "getClaims()", "resolveRecentPasswordRecoverySubject", 'redirect("/forgot-password")', "ResetPasswordForm"]) requireText(resetPasswordPage, marker, `Reset-password page recovery gate lacks ${marker}.`);
+for (const marker of ["parsePasswordRecoveryActionInput(formData)", "createSupabaseServerClient", "getClaims()", "resolveRecentPasswordRecoverySubject", "getUser()", "recoverySubject !== userData.user.id.toLowerCase()", "updateUser({ password: parsed.value.password })"]) requireText(passwordActions, marker, `Password update action lacks ${marker}.`);
+const updatePasswordBody = passwordActions.slice(passwordActions.indexOf("export async function updatePasswordAction"));
+const parseRecoveryIndex = updatePasswordBody.indexOf("parsePasswordRecoveryActionInput(formData)");
+const rejectRecoveryIndex = updatePasswordBody.indexOf("if (!parsed.ok)", parseRecoveryIndex);
+const recoveryClientIndex = updatePasswordBody.indexOf("createSupabaseServerClient()", rejectRecoveryIndex);
+const recoveryClaimsIndex = updatePasswordBody.indexOf("getClaims()", recoveryClientIndex);
+const recoveryUserIndex = updatePasswordBody.indexOf("getUser()", recoveryClaimsIndex);
+const recoveryUpdateIndex = updatePasswordBody.indexOf("updateUser({ password: parsed.value.password })", recoveryUserIndex);
+if (parseRecoveryIndex < 0 || rejectRecoveryIndex <= parseRecoveryIndex || recoveryClientIndex <= rejectRecoveryIndex || recoveryClaimsIndex <= recoveryClientIndex || recoveryUserIndex <= recoveryClaimsIndex || recoveryUpdateIndex <= recoveryUserIndex) failures.push("Password recovery must reject malformed input before Auth work, then verify recent claims and the correlated user before updating the password.");
 
 const guards = read("lib/auth/guards.ts");
 for (const marker of ["requireAuthenticatedUser", "requireMemberProfile", "/signin?next=", "/onboarding?next=", "return { user, profile }"]) requireText(guards, marker, `Reusable route guards lack ${marker}.`);

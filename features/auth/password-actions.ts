@@ -1,24 +1,38 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  PASSWORD_RECOVERY_SESSION_ERROR,
+  parsePasswordRecoveryActionInput,
+  resolveRecentPasswordRecoverySubject,
+} from "@/lib/auth/password-recovery-claims";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export interface PasswordActionState { status: "idle" | "error" | "success"; message: string; }
 
-export async function updatePasswordAction(_: PasswordActionState, formData: FormData): Promise<PasswordActionState> {
-  const cookieStore = await cookies();
-  if (cookieStore.get("ef-password-recovery")?.value !== "1") return { status: "error", message: "This recovery session is invalid or expired. Request a new reset link." };
-  const password = String(formData.get("password") ?? "");
-  const confirmation = String(formData.get("confirm_password") ?? "");
-  if (password.length < 8) return { status: "error", message: "Use a password with at least 8 characters." };
-  if (password !== confirmation) return { status: "error", message: "Passwords do not match." };
+export async function updatePasswordAction(_: PasswordActionState, formData: unknown): Promise<PasswordActionState> {
+  const parsed = parsePasswordRecoveryActionInput(formData);
+  if (!parsed.ok) return { status: "error", message: parsed.error };
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { status: "error", message: "Password recovery is not configured in this environment." };
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return { status: "error", message: "This recovery session is invalid or expired. Request a new reset link." };
-  const { error } = await supabase.auth.updateUser({ password });
+  const validationInstant = new Date();
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const recoverySubject = claimsError
+    ? null
+    : resolveRecentPasswordRecoverySubject(
+        claimsData?.claims,
+        validationInstant,
+      );
+  if (!recoverySubject) return { status: "error", message: PASSWORD_RECOVERY_SESSION_ERROR };
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (
+    userError ||
+    !userData.user ||
+    recoverySubject !== userData.user.id.toLowerCase()
+  ) {
+    return { status: "error", message: PASSWORD_RECOVERY_SESSION_ERROR };
+  }
+  const { error } = await supabase.auth.updateUser({ password: parsed.value.password });
   if (error) return { status: "error", message: "We couldn't update your password. Request a new reset link and try again." };
-  cookieStore.delete("ef-password-recovery");
   redirect("/dashboard");
 }
