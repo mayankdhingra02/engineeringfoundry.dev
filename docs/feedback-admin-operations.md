@@ -20,7 +20,11 @@ This does not prevent a determined sender from rotating a browser token. Product
 
 `admin_memberships` is the only admin authorization source. Membership is checked in Postgres using `auth.uid()` and repeated inside every admin mutation RPC. The browser never receives a service-role credential, and admin routes return a not-found response to authenticated non-members.
 
+After an authenticated actor is resolved, only a successful `false` membership result is treated as not found. Membership-service failures and malformed responses surface the sanitized, retryable application error instead of impersonating an ordinary denial. The same private-result boundary protects the operations dashboard and feedback views: failed or malformed counts cannot render as zero, failed or malformed lists cannot render honest-empty copy, and a failed item lookup cannot become a 404. Exact successful zero, empty, and missing results retain those meanings.
+
 The first operator membership is a deliberate deployment bootstrap action, performed by the owner in the trusted Supabase administration environment after the account exists. The application contains no self-assignment, email-allowlist, user directory, or role-management screen. Once bootstrapped, the founder can triage feedback and moderate experiences from `/admin` without editing operational rows by hand.
+
+The feedback queue requests an exact filtered count and pages through at most 100 reports at a time using deterministic creation-time and ID ordering. Previous and next links retain the active status and category filters, the visible range is disclosed, and an out-of-range page returns to the last real page. No queue result is silently truncated.
 
 ## Audit and source review
 

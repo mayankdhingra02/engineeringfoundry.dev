@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Activity, ClipboardCheck, MessageSquare, Settings2 } from "lucide-react";
 import { operationalHealth, priorityCompanyGuideFreshness } from "@/lib/admin/operations";
 import { requireAdminActor } from "@/lib/admin/auth";
+import { resolveAdminCountResult } from "@/lib/admin/query-results";
 
 export default async function AdminHomePage() {
   const actor = await requireAdminActor("/admin");
@@ -11,9 +12,17 @@ export default async function AdminHomePage() {
   ]);
   const freshness = priorityCompanyGuideFreshness();
   const health = operationalHealth();
+  const feedbackCount = resolveAdminCountResult({
+    count: feedback.count,
+    error: feedback.error,
+  });
+  const experienceCount = resolveAdminCountResult({
+    count: experiences.count,
+    error: experiences.error,
+  });
   const cards = [
-    { href: "/admin/feedback", title: "Feedback requiring triage", value: feedback.count ?? 0, detail: "New and triaged private reports.", Icon: MessageSquare },
-    { href: "/admin/interview-experiences", title: "Experiences requiring moderation", value: experiences.count ?? 0, detail: "Submitted or changes-requested contributor reports.", Icon: ClipboardCheck },
+    { href: "/admin/feedback", title: "Feedback requiring triage", value: feedbackCount, detail: "New and triaged private reports.", Icon: MessageSquare },
+    { href: "/admin/interview-experiences", title: "Experiences requiring moderation", value: experienceCount, detail: "Submitted or changes-requested contributor reports.", Icon: ClipboardCheck },
     { href: "/admin/company-freshness", title: "Company guides requiring review", value: freshness.filter((item) => item.status === "review_due").length, detail: "A review reminder; it does not change public guidance.", Icon: Activity },
     { href: "/admin/operational-health", title: "Operational configuration", value: `${health.filter((item) => item.configured).length}/${health.length}`, detail: "Configured signals only—not external health probes.", Icon: Settings2 },
   ];
