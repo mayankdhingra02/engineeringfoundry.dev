@@ -14,6 +14,9 @@ import {
   resolvePreparationTextDisplayState,
 } from "../lib/interview-preparation/text-action-input.ts";
 import {
+  PREPARATION_TASK_ADDED_MESSAGE,
+  PREPARATION_TASK_ADD_INVALID_INPUT_ERROR,
+  PREPARATION_TASK_ADD_PERSISTENCE_ERROR,
   PREPARATION_TASK_DELETED_MESSAGE,
   PREPARATION_TASK_DELETE_CONFLICT_ERROR,
   PREPARATION_TASK_DELETE_INVALID_INPUT_ERROR,
@@ -21,6 +24,8 @@ import {
   PREPARATION_TASK_INVALID_INPUT_ERROR,
   PREPARATION_TASK_PERSISTENCE_ERROR,
   PREPARATION_TASK_SAVED_MESSAGE,
+  parsePreparationTaskAddInput,
+  parsePreparationTaskAddResult,
   parsePreparationTaskCompletionInput,
   parsePreparationTaskCompletionResult,
   parsePreparationTaskDeleteInput,
@@ -58,6 +63,10 @@ const checklistAction = actions.slice(
   actions.indexOf("export async function togglePreparationChecklistAction"),
   actions.indexOf("export async function addPreparationTaskAction"),
 );
+const taskAddAction = actions.slice(
+  actions.indexOf("export async function addPreparationTaskAction"),
+  actions.indexOf("export async function togglePreparationTaskAction"),
+);
 const taskCompletionAction = actions.slice(
   actions.indexOf("export async function togglePreparationTaskAction"),
   actions.indexOf("export async function deletePreparationTaskAction"),
@@ -73,6 +82,7 @@ const atomicChecklistMigration = read("supabase/migrations/202609030001_set_inte
 const preparationTextRevisionMigration = read("supabase/migrations/202609040004_save_interview_preparation_text_if_revision.sql");
 const taskCompletionMigration = read("supabase/migrations/202609040005_set_interview_preparation_task_completed.sql");
 const taskDeleteMigration = read("supabase/migrations/202609040011_delete_interview_preparation_task_if_revision.sql");
+const taskAddMigration = read("supabase/migrations/202609040013_harden_interview_preparation_task_add.sql");
 const notesRevisionFunction = preparationTextRevisionMigration.slice(
   preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation_notes_if_revision"),
   preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation_reflection_if_revision"),
@@ -195,6 +205,70 @@ for (const [roundId, itemId, targetCompleted] of [
 const preparationTaskRoundId = "abcdef12-3456-4abc-8def-1234567890ab";
 const preparationTaskId = "abcdef12-3456-4abc-9def-1234567890ab";
 const preparationTaskApplicationId = "abcdef12-3456-4abc-adef-1234567890ab";
+const preparationTaskAddForm = new FormData();
+preparationTaskAddForm.set("title", "  Rehearse the opening answer  ");
+preparationTaskAddForm.set("$ACTION_fixture", "ignored");
+assert.equal(PREPARATION_TASK_ADD_INVALID_INPUT_ERROR, "Review the task details and try again.");
+assert.equal(PREPARATION_TASK_ADD_PERSISTENCE_ERROR, "Task was not added. Try again.");
+assert.equal(PREPARATION_TASK_ADDED_MESSAGE, "Private task added.");
+assert.deepEqual(
+  parsePreparationTaskAddInput(
+    preparationTaskRoundId.toUpperCase(),
+    preparationTaskApplicationId.toUpperCase(),
+    preparationTaskAddForm,
+  ),
+  {
+    ok: true,
+    value: {
+      roundId: preparationTaskRoundId,
+      applicationId: preparationTaskApplicationId,
+      title: "Rehearse the opening answer",
+    },
+  },
+  "task addition must normalize bound UUIDs and trim one exact string title",
+);
+for (const [roundId, applicationId, form] of [
+  [undefined, preparationTaskApplicationId, preparationTaskAddForm],
+  [preparationTaskRoundId, undefined, preparationTaskAddForm],
+  ["not-a-uuid", preparationTaskApplicationId, preparationTaskAddForm],
+  [preparationTaskRoundId, "not-a-uuid", preparationTaskAddForm],
+  [preparationTaskRoundId, preparationTaskApplicationId, null],
+  [preparationTaskRoundId, preparationTaskApplicationId, new URLSearchParams("title=Task")],
+]) {
+  assert.deepEqual(parsePreparationTaskAddInput(roundId, applicationId, form), { ok: false });
+}
+for (const entries of [
+  [],
+  [["title", ""]],
+  [["title", "   "]],
+  [["title", "line\nbreak"]],
+  [["title", "x".repeat(161)]],
+  [["title", "Task"], ["title", "Duplicate"]],
+  [["title", "Task"], ["unexpected", "value"]],
+]) {
+  const form = new FormData();
+  for (const [key, value] of entries) form.append(key, value);
+  assert.deepEqual(
+    parsePreparationTaskAddInput(preparationTaskRoundId, preparationTaskApplicationId, form),
+    { ok: false },
+    "missing, blank, control-bearing, oversized, duplicate, or foreign task fields must fail closed",
+  );
+}
+const fileTaskForm = new FormData();
+fileTaskForm.set("title", new Blob(["Task"]), "task.txt");
+assert.deepEqual(
+  parsePreparationTaskAddInput(preparationTaskRoundId, preparationTaskApplicationId, fileTaskForm),
+  { ok: false },
+  "File values must not coerce into task titles",
+);
+assert.equal(
+  parsePreparationTaskAddResult(preparationTaskId.toUpperCase()),
+  preparationTaskId,
+  "a canonical task result UUID must normalize",
+);
+for (const value of [undefined, null, "", "not-a-uuid", [preparationTaskId], { taskId: preparationTaskId }]) {
+  assert.equal(parsePreparationTaskAddResult(value), null, "malformed task-add results must fail closed");
+}
 const preparationTaskInput = {
   roundId: preparationTaskRoundId,
   taskId: preparationTaskId,
@@ -981,6 +1055,12 @@ const cases = [
   ["atomic checklist RPC is authenticated-only", atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from public") && atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from anon") && atomicChecklistMigration.includes("grant execute on function public.set_interview_preparation_checklist_item(uuid,text,boolean) to authenticated")],
   ["pgTAP covers desired-state membership, idempotence, preservation, legacy rejection, and owner privacy", ["distinct desired-state updates retain both checklist items", "repeated true never creates a duplicate", "clearing one item preserves other checklist items", "rejected legacy snapshot writes leave preparation unchanged", "missing and foreign rounds are indistinguishable"].every((marker) => interviewPreparationDatabaseTest.includes(marker))],
   ["local persistence qualification exercises concurrent atomic updates and the legacy rejection", persistenceQualifier.includes('check("User A creates notes and concurrent desired-state checklist updates retain both items"') && persistenceQualifier.includes('rpc("set_interview_preparation_checklist_item"') && persistenceQualifier.includes("Promise.all") && persistenceQualifier.includes('expectSqlError(rejected, "0A000")')],
+  ["task addition parses exact bounded runtime input before actor or persistence work", taskAddAction.indexOf("parsePreparationTaskAddInput") >= 0 && taskAddAction.indexOf("parsePreparationTaskAddInput") < taskAddAction.indexOf("getAuthenticatedActor") && taskAddAction.indexOf("getAuthenticatedActor") < taskAddAction.indexOf('rpc("add_interview_preparation_task"')],
+  ["task addition sends only parsed owner-correlated values and validates the returned identity", taskAddAction.includes("target_round_id: parsed.value.roundId") && taskAddAction.includes("title_value: parsed.value.title") && taskAddAction.indexOf("parsePreparationTaskAddResult(data)") < taskAddAction.indexOf("refresh(parsed.value.roundId, parsed.value.applicationId)")],
+  ["task-add migration serializes the owner round before enforcing the cap and assigning position", taskAddMigration.includes("pg_advisory_xact_lock") && taskAddMigration.indexOf("pg_advisory_xact_lock") < taskAddMigration.indexOf("Custom task limit reached") && taskAddMigration.indexOf("Custom task limit reached") < taskAddMigration.indexOf("max(tasks.position)")],
+  ["task-add migration validates bounded single-line titles and exact ownership", taskAddMigration.includes("char_length(normalized_title) > 160") && taskAddMigration.includes("normalized_title ~ '[[:cntrl:]]'") && taskAddMigration.includes("where id = target_round_id") && taskAddMigration.includes("user_id = current_user_id")],
+  ["task-add RPC is hardened and authenticated only", taskAddMigration.includes("security definer") && taskAddMigration.includes("set search_path = ''") && taskAddMigration.includes("revoke all on function public.add_interview_preparation_task(uuid, text)") && taskAddMigration.includes("to authenticated")],
+  ["task-add database evidence covers the serialized cap and positions", interviewPreparationDatabaseTest.includes("the twelfth task occupies the final allowed position") && persistenceQualifier.includes("concurrent preparation task additions enforce one cap and distinct positions") && securityQualifier.includes("preparation task additions reject anonymous foreign and malformed writes")],
   ["task completion parses exact bound runtime intent before actor or persistence work", taskCompletionAction.indexOf("parsePreparationTaskCompletionInput") >= 0 && taskCompletionAction.indexOf("parsePreparationTaskCompletionInput") < taskCompletionAction.indexOf("getAuthenticatedActor") && taskCompletionAction.indexOf("getAuthenticatedActor") < taskCompletionAction.indexOf('rpc("set_interview_preparation_task_completed"')],
   ["task completion sends only the exact owner-correlated desired-state RPC arguments", ["target_round_id: parsed.value.roundId", "target_task_id: parsed.value.taskId", "target_completed: parsed.value.targetCompleted"].every((marker) => taskCompletionAction.includes(marker)) && !taskCompletionAction.includes('rpc("toggle_interview_preparation_task"')],
   ["task completion distinguishes transport and malformed-or-missing results before success", taskCompletionAction.indexOf("if (error)") < taskCompletionAction.indexOf("parsePreparationTaskCompletionResult") && taskCompletionAction.indexOf("parsePreparationTaskCompletionResult") < taskCompletionAction.indexOf('outcome.status !== "saved"') && taskCompletionAction.indexOf('outcome.status !== "saved"') < taskCompletionAction.indexOf("refresh(parsed.value.roundId, outcome.applicationId)")],
@@ -1005,7 +1085,7 @@ const cases = [
   ["revision task delete is owner round and timestamp correlated after the shared advisory lock", revisionTaskDeleteFunction.includes("pg_advisory_xact_lock") && revisionTaskDeleteFunction.indexOf("pg_advisory_xact_lock") < revisionTaskDeleteFunction.indexOf("delete from public.interview_preparation_custom_tasks") && ["tasks.id = target_task_id", "tasks.round_id = target_round_id", "tasks.user_id = current_user_id", "tasks.updated_at = target_expected_updated_at", "rounds.id = tasks.round_id", "rounds.user_id = current_user_id"].every((marker) => revisionTaskDeleteFunction.includes(marker))],
   ["revision task delete returns only correlated context and legacy deletion fails safely", revisionTaskDeleteFunction.includes("returns table(") && ["task_id uuid", "round_id uuid", "application_id uuid"].every((marker) => revisionTaskDeleteFunction.includes(marker)) && retiredTaskDeleteFunction.includes("Revision-checked preparation task deletion is required") && retiredTaskDeleteFunction.includes("errcode = '0A000'") && !retiredTaskDeleteFunction.includes("delete from")],
   ["revision task delete and retired compatibility path are authenticated only", ["delete_interview_preparation_task_if_revision(uuid,uuid,timestamptz)", "delete_interview_preparation_task(uuid)"].every((signature) => taskDeleteMigration.includes(`revoke all on function public.${signature}\n  from public, anon, authenticated`) && taskDeleteMigration.includes(`grant execute on function public.${signature}\n  to authenticated`))],
-  ["preparation pgTAP covers task revision deletion grants stale preservation privacy and legacy failure", ["revision-checked task delete RPC exists", "a stale task revision cannot delete newer completion state", "missing and foreign task deletion are indistinguishable", "legacy task deletion fails safely without mutation", "an exact owner task revision deletes and returns its correlated context"].every((marker) => interviewPreparationDatabaseTest.includes(marker)) && interviewPreparationDatabaseTest.includes("select plan(134)")],
+  ["preparation pgTAP covers task revision deletion grants stale preservation privacy and legacy failure", ["revision-checked task delete RPC exists", "a stale task revision cannot delete newer completion state", "missing and foreign task deletion are indistinguishable", "legacy task deletion fails safely without mutation", "an exact owner task revision deletes and returns its correlated context"].every((marker) => interviewPreparationDatabaseTest.includes(marker)) && interviewPreparationDatabaseTest.includes("select plan(154)")],
   ["persistence qualification races task completion against exact-revision deletion", persistenceQualifier.includes('check("concurrent preparation task completion and revision-delete accept exactly one outcome"') && persistenceQualifier.includes("completedRows.length + deletedRows.length === 1") && persistenceQualifier.includes("stale task deletion reported success after completion won")],
   ["security qualification covers task delete direct anonymous foreign missing legacy and exact-owner boundaries", securityQualifier.includes("direct preparation task writes cannot bypass the desired-state or revision-delete RPCs") && securityQualifier.includes("desired state, revision delete, and both retired task mutations denied") && securityQualifier.includes("foreign/missing zero rows; legacy 0A000")],
   ["notes action parses strict runtime input before actor or persistence work", notesAction.indexOf("parsePreparationNotesActionInput") >= 0 && notesAction.indexOf("parsePreparationNotesActionInput") < notesAction.indexOf("getAuthenticatedActor") && notesAction.indexOf("getAuthenticatedActor") < notesAction.indexOf('rpc(\n    "save_interview_preparation_notes_if_revision"')],

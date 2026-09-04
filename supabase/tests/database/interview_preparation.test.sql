@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(134);
+select plan(154);
 
 select has_table('public', 'interview_preparations', 'preparation table exists');
 select has_table('public', 'interview_preparation_custom_tasks', 'custom task table exists');
@@ -102,6 +102,28 @@ select ok(has_function_privilege('authenticated', 'public.toggle_interview_prepa
 select ok(not has_function_privilege('anon', 'public.toggle_interview_preparation_task(uuid)', 'execute'), 'anonymous callers cannot execute the retired task toggle');
 select ok(not has_table_privilege('authenticated', 'public.interview_preparation_custom_tasks', 'update'), 'clients cannot bypass desired-state task completion with direct updates');
 select ok(not has_table_privilege('authenticated', 'public.interview_preparation_custom_tasks', 'delete'), 'clients cannot bypass revision-checked task deletion with direct deletes');
+select ok(not has_table_privilege('authenticated', 'public.interview_preparation_custom_tasks', 'insert'), 'clients cannot bypass serialized task creation with direct inserts');
+select ok(has_function_privilege('authenticated', 'public.add_interview_preparation_task(uuid,text)', 'execute'), 'authenticated callers can add an owned preparation task');
+select ok(not has_function_privilege('anon', 'public.add_interview_preparation_task(uuid,text)', 'execute'), 'anonymous callers cannot add preparation tasks');
+select is(
+  (select prosecdef from pg_proc where oid = 'public.add_interview_preparation_task(uuid,text)'::regprocedure),
+  true,
+  'task addition is security definer'
+);
+select ok(
+  (select 'search_path=""' = any(proconfig) from pg_proc where oid = 'public.add_interview_preparation_task(uuid,text)'::regprocedure),
+  'task addition has an empty search path'
+);
+select is(
+  (select provolatile from pg_proc where oid = 'public.add_interview_preparation_task(uuid,text)'::regprocedure),
+  'v'::"char",
+  'task addition is volatile'
+);
+select is(
+  pg_get_function_result('public.add_interview_preparation_task(uuid,text)'::regprocedure),
+  'uuid',
+  'task addition returns only the created task identity'
+);
 select is(
   (select prosecdef from pg_proc where oid = 'public.set_interview_preparation_task_completed(uuid,uuid,boolean)'::regprocedure),
   true,
@@ -442,6 +464,70 @@ select is(
   0,
   'exact task deletion removes the intended row'
 );
+select ok(
+  public.add_interview_preparation_task(
+    '91919191-9191-4919-8919-919191919302',
+    '  Rehearse the concise opening  '
+  ) is not null,
+  'an owned bounded preparation task is added'
+);
+select is(
+  (select title from public.interview_preparation_custom_tasks where round_id = '91919191-9191-4919-8919-919191919302'),
+  'Rehearse the concise opening',
+  'task addition stores the normalized title'
+);
+select is(
+  (select position from public.interview_preparation_custom_tasks where round_id = '91919191-9191-4919-8919-919191919302'),
+  0,
+  'the first serialized task occupies position zero'
+);
+select results_eq(
+  $$select count(public.add_interview_preparation_task(
+    '91919191-9191-4919-8919-919191919302',
+    'Preparation task ' || task_number
+  )) from generate_series(1, 11) as task_number$$,
+  $$values (11::bigint)$$,
+  'eleven more owned tasks fill the bounded list'
+);
+select is(
+  (select count(*)::integer from public.interview_preparation_custom_tasks where round_id = '91919191-9191-4919-8919-919191919302'),
+  12,
+  'the serialized task list stops at twelve rows'
+);
+select is(
+  (select count(distinct position)::integer from public.interview_preparation_custom_tasks where round_id = '91919191-9191-4919-8919-919191919302'),
+  12,
+  'the twelve bounded tasks have distinct positions'
+);
+select is(
+  (select max(position) from public.interview_preparation_custom_tasks where round_id = '91919191-9191-4919-8919-919191919302'),
+  11,
+  'the twelfth task occupies the final allowed position'
+);
+select throws_ok(
+  $$select public.add_interview_preparation_task('91919191-9191-4919-8919-919191919302', 'Thirteenth task')$$,
+  'P0001',
+  'Custom task limit reached',
+  'a thirteenth task fails without exceeding the cap'
+);
+select throws_ok(
+  $$select public.add_interview_preparation_task('91919191-9191-4919-8919-919191919302', '   ')$$,
+  '23514',
+  'Invalid preparation task',
+  'blank task titles fail closed'
+);
+select throws_ok(
+  $$select public.add_interview_preparation_task('91919191-9191-4919-8919-919191919302', E'line\nbreak')$$,
+  '23514',
+  'Invalid preparation task',
+  'control-bearing task titles fail closed'
+);
+select throws_ok(
+  $$select public.add_interview_preparation_task('91919191-9191-4919-8919-919191919302', repeat('x', 161))$$,
+  '23514',
+  'Invalid preparation task',
+  'oversized task titles fail closed'
+);
 
 reset role;
 update public.interview_preparations
@@ -570,6 +656,18 @@ select throws_ok(
   'P0002',
   'Interview round not found',
   'missing and foreign rounds are indistinguishable'
+);
+select throws_ok(
+  $$select public.add_interview_preparation_task('91919191-9191-4919-8919-919191919302', 'Foreign task')$$,
+  'P0002',
+  'Interview round not found',
+  'foreign task additions do not disclose the owner round'
+);
+select throws_ok(
+  $$select public.add_interview_preparation_task('93939393-9393-4939-8939-939393939393', 'Missing task')$$,
+  'P0002',
+  'Interview round not found',
+  'missing and foreign task-add targets are indistinguishable'
 );
 select is(
   (select count(*)::integer from public.save_interview_preparation_notes_if_revision(

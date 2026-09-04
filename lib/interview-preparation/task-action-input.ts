@@ -10,6 +10,11 @@ export const PREPARATION_TASK_DELETE_CONFLICT_ERROR =
 export const PREPARATION_TASK_DELETE_PERSISTENCE_ERROR =
   "Task was not removed. Try again.";
 export const PREPARATION_TASK_DELETED_MESSAGE = "Task removed.";
+export const PREPARATION_TASK_ADD_INVALID_INPUT_ERROR =
+  "Review the task details and try again.";
+export const PREPARATION_TASK_ADD_PERSISTENCE_ERROR =
+  "Task was not added. Try again.";
+export const PREPARATION_TASK_ADDED_MESSAGE = "Private task added.";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -17,6 +22,16 @@ const DATABASE_TIMESTAMP_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?(Z|([+-])(\d{2}):(\d{2}))$/;
 const RESULT_KEYS = ["application_id", "completed", "round_id", "task_id"];
 const DELETE_RESULT_KEYS = ["application_id", "round_id", "task_id"];
+
+export type PreparationTaskAddInput = Readonly<{
+  roundId: string;
+  applicationId: string;
+  title: string;
+}>;
+
+export type PreparationTaskAddInputResult =
+  | Readonly<{ ok: true; value: PreparationTaskAddInput }>
+  | Readonly<{ ok: false }>;
 
 export type PreparationTaskCompletionInput = Readonly<{
   roundId: string;
@@ -144,6 +159,52 @@ function isActionOnlyFormData(value: unknown) {
     if (!key.startsWith("$ACTION_")) return false;
   }
   return true;
+}
+
+export function parsePreparationTaskAddInput(
+  roundId: unknown,
+  applicationId: unknown,
+  formInput: unknown,
+): PreparationTaskAddInputResult {
+  const normalizedRoundId = normalizeUuid(roundId);
+  const normalizedApplicationId = normalizeUuid(applicationId);
+  if (
+    normalizedRoundId === null ||
+    normalizedApplicationId === null ||
+    typeof FormData === "undefined" ||
+    !(formInput instanceof FormData)
+  ) {
+    return { ok: false };
+  }
+  for (const key of formInput.keys()) {
+    if (key !== "title" && !key.startsWith("$ACTION_")) {
+      return { ok: false };
+    }
+  }
+  const titles = formInput.getAll("title");
+  if (titles.length !== 1 || typeof titles[0] !== "string") {
+    return { ok: false };
+  }
+  const title = titles[0].trim();
+  if (
+    title.length === 0 ||
+    Array.from(title).length > 160 ||
+    /\p{Cc}/u.test(title)
+  ) {
+    return { ok: false };
+  }
+  return {
+    ok: true,
+    value: {
+      roundId: normalizedRoundId,
+      applicationId: normalizedApplicationId,
+      title,
+    },
+  };
+}
+
+export function parsePreparationTaskAddResult(value: unknown): string | null {
+  return normalizeUuid(value);
 }
 
 export function parsePreparationTaskCompletionInput(
