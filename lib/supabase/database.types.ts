@@ -1093,6 +1093,48 @@ export type Database = {
       add_interview_preparation_task: { Args: { target_round_id: string; title_value: string }; Returns: string };
       toggle_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };
       delete_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };
+      create_behavioral_story_with_themes: {
+        Args: {
+          target_title: string;
+          target_company_or_context: string | null;
+          target_role: string | null;
+          target_approximate_period: string | null;
+          target_project: string | null;
+          target_situation: string | null;
+          target_task: string | null;
+          target_action: string | null;
+          target_result: string | null;
+          target_reflection: string | null;
+          target_short_summary: string | null;
+          target_notes: string | null;
+          target_themes: string[];
+        };
+        Returns: { story_id: string; updated_at: string }[];
+      };
+      update_behavioral_story_with_themes_if_revision: {
+        Args: {
+          target_story_id: string;
+          target_expected_updated_at: string;
+          target_title: string;
+          target_company_or_context: string | null;
+          target_role: string | null;
+          target_approximate_period: string | null;
+          target_project: string | null;
+          target_situation: string | null;
+          target_task: string | null;
+          target_action: string | null;
+          target_result: string | null;
+          target_reflection: string | null;
+          target_short_summary: string | null;
+          target_notes: string | null;
+          target_themes: string[];
+        };
+        Returns: { story_id: string; updated_at: string }[];
+      };
+      duplicate_behavioral_story_with_themes: {
+        Args: { target_story_id: string };
+        Returns: { story_id: string; updated_at: string }[];
+      };
       replace_behavioral_story_themes: {
         Args: { target_story_id: string; theme_values: string[] };
         Returns: boolean;

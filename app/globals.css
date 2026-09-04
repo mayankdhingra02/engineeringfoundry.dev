@@ -3276,6 +3276,9 @@ button.flow-card { cursor: pointer; }
 .behavioral-theme-tags span { padding: 4px 7px; border-radius: 5px; color: var(--text-secondary); background: var(--surface-2); font-size: var(--type-label); font-weight: 690; }
 .behavioral-form-width { max-width: 980px; }
 .behavioral-form { display: grid; gap: 13px; }
+.behavioral-form .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
+.behavioral-form .button[aria-disabled="true"]:hover { background: var(--accent); border-color: var(--accent); transform: none; }
+.behavioral-save-status { margin: 2px 0; padding: 11px 13px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
 .behavioral-form-section { padding: 25px; display: grid; grid-template-columns: minmax(180px, .62fr) minmax(0, 1.45fr); gap: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .behavioral-form-section h2 { margin: 5px 0 8px; }
 .behavioral-form-section > div:first-child > p:last-child { color: var(--muted); font-size: var(--type-small); line-height: 1.6; }

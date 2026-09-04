@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: bb2c7da619aa092a7bd93f743c0a1bd2fb788882
-repository_state_sha256: 6d5bdbc2fa85ac734a1142f46aa6a1228ee766f54ffd5bf86a5f65fbb56554dc
+repository_sha: 93bc7bab4272503eebaf51ac6270d61f9444377d
+repository_state_sha256: b76833b77c0a50a40e42dfb12b5e6ef156b541a01dee2bbcbb990abb033af510
 ---
 
 # Engineering Foundry requirement coverage
@@ -113,7 +113,7 @@ repository_state_sha256: 6d5bdbc2fa85ac734a1142f46aa6a1228ee766f54ffd5bf86a5f65f
 | EF-AIB | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Audience, placement, source artifacts, and relationship to ML Design remain unresolved. |
 | EF-AIB-BEGINNER-SCOPE | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Learning outcomes, audience, relationship to ML Design, exercises, and source policy remain unresolved. |
 | EF-AIB-KIDS | ai-for-kids | excluded | excluded | not-applicable | unpublished | not-applicable | — | — | 0 | 0 | Explicitly excluded from the current product scope. |
-| EF-BEH | behavioral | required | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 5 | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.; Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
+| EF-BEH | behavioral | required | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 6 | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.; Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
 | EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |

@@ -14,7 +14,7 @@ select ok(has_table_privilege('authenticated', 'public.system_design_progress', 
 select ok(has_table_privilege('authenticated', 'public.behavioral_saved_questions', 'select'), 'authenticated can read owned saved questions through RLS');
 select ok(has_table_privilege('authenticated', 'public.preparation_track_progress', 'select'), 'authenticated can read owned ML or Behavioral preparation activity through RLS');
 select ok(not has_function_privilege('anon', 'public.replace_behavioral_story_themes(uuid,text[])', 'execute'), 'anon cannot replace story themes');
-select ok(has_function_privilege('authenticated', 'public.replace_behavioral_story_themes(uuid,text[])', 'execute'), 'authenticated can invoke owner-checked theme replacement');
+select ok(has_function_privilege('authenticated', 'public.replace_behavioral_story_themes(uuid,text[])', 'execute'), 'authenticated old clients receive the stable no-mutation theme-replacement failure');
 select ok(not has_function_privilege('anon', 'public.move_interview_round(uuid,uuid,text)', 'execute'), 'anon cannot reorder interview rounds');
 select ok(has_function_privilege('authenticated', 'public.move_interview_round(uuid,uuid,text)', 'execute'), 'authenticated can invoke owner-checked round reordering');
 select ok(not has_function_privilege('anon', 'public.record_local_system_design_import(integer)', 'execute'), 'anon cannot record a local System Design import');
@@ -91,11 +91,19 @@ select set_config(
   true
 );
 
-insert into public.behavioral_stories (user_id, title)
-values ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'Recovered a delayed launch');
 select set_config(
   'test.preparation_story_id',
-  (select id::text from public.behavioral_stories where title = 'Recovered a delayed launch'),
+  (
+    select story_id::text
+    from public.create_behavioral_story_with_themes(
+      'Recovered a delayed launch', null, null, null, null, null, null, null, null, null, null, null, array[]::text[]
+    )
+  ),
+  true
+);
+select set_config(
+  'test.preparation_story_revision',
+  (select updated_at::text from public.behavioral_stories where id = current_setting('test.preparation_story_id')::uuid),
   true
 );
 
@@ -195,22 +203,26 @@ select is(
 );
 select is(public.record_local_system_design_import(0), false, 'local import RPC rejects a non-positive version');
 select is(
-  public.replace_behavioral_story_themes(
-    current_setting('test.preparation_story_id')::uuid,
-    array[' Leadership ', 'Ownership', 'Leadership']
+  (
+    select count(*)::integer
+    from public.update_behavioral_story_with_themes_if_revision(
+      current_setting('test.preparation_story_id')::uuid,
+      current_setting('test.preparation_story_revision')::timestamptz,
+      'Recovered a delayed launch', null, null, null, null, null, null, null, null, null, null, null,
+      array[' Leadership ', 'Ownership', 'Leadership']
+    )
   ),
-  true,
-  'owner can atomically replace story themes'
+  1,
+  'owner can atomically update a story and its themes'
 );
 select is(
   (select array_agg(theme order by theme) from public.behavioral_story_themes where story_id = current_setting('test.preparation_story_id')::uuid),
   array['Leadership', 'Ownership']::text[],
   'theme replacement trims and deduplicates values'
 );
-select is(
-  public.replace_behavioral_story_themes(current_setting('test.preparation_story_id')::uuid, array['']),
-  false,
-  'theme replacement rejects an empty normalized theme'
+select throws_ok(
+  $$select * from public.update_behavioral_story_with_themes_if_revision(current_setting('test.preparation_story_id')::uuid, (select updated_at from public.behavioral_stories where id = current_setting('test.preparation_story_id')::uuid), 'Recovered a delayed launch', null, null, null, null, null, null, null, null, null, null, null, array[''])$$,
+  '23514'
 );
 select is((select count(*)::integer from public.behavioral_story_themes), 2, 'invalid theme replacement leaves existing themes intact');
 select is(
@@ -299,9 +311,12 @@ select throws_ok(
   '42501'
 );
 select is(
-  public.replace_behavioral_story_themes(current_setting('test.preparation_story_id')::uuid, array['Intrusion']),
-  false,
-  'another user cannot replace the owner story themes'
+  (
+    select count(*)::integer
+    from public.duplicate_behavioral_story_with_themes(current_setting('test.preparation_story_id')::uuid)
+  ),
+  0,
+  'another user cannot distinguish or duplicate the owner story aggregate'
 );
 select is(
   public.move_interview_round(current_setting('test.preparation_application_id')::uuid, current_setting('test.preparation_first_round_id')::uuid, 'down'),
@@ -387,7 +402,7 @@ select throws_ok(
 );
 select throws_ok(
   $$insert into public.behavioral_story_themes (user_id, story_id, theme) values ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', current_setting('test.preparation_story_id')::uuid, 'Unsupported theme')$$,
-  '23514'
+  '42501'
 );
 
 select throws_ok(

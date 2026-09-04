@@ -73,6 +73,25 @@ async function saveDsaProgress(supabase, values, expectation) {
   });
 }
 
+function behavioralStoryArgs(overrides = {}) {
+  return {
+    target_title: "Phase 5A qualification launch recovery",
+    target_company_or_context: null,
+    target_role: null,
+    target_approximate_period: null,
+    target_project: null,
+    target_situation: "A critical launch was at risk after an external dependency changed late in the release window.",
+    target_task: "I owned the safe rollout decision and stakeholder alignment.",
+    target_action: "I compared rollback options, reduced reversible scope, aligned the service owners, documented the decision, and monitored the agreed indicators throughout release.",
+    target_result: "The launch completed without customer impact, and the team retained a tested rollback path for later releases.",
+    target_reflection: null,
+    target_short_summary: null,
+    target_notes: null,
+    target_themes: ["Leadership", "Ownership"],
+    ...overrides,
+  };
+}
+
 function expectSqlError(result, expectedCodes) {
   const codes = Array.isArray(expectedCodes) ? expectedCodes : [expectedCodes];
   expect(result.error, `expected ${codes.join(" or ")}, observed no error`);
@@ -186,6 +205,7 @@ const fixture = {
   secondRoundId: null,
   customQuestionId: null,
   storyId: null,
+  storyRevision: null,
   storyLinkId: null,
   answerId: null,
   curatedSavedQuestionId: null,
@@ -732,61 +752,172 @@ await check("User A creates a custom behavioral question", async () => {
   return row.id;
 });
 
-await check("User A creates and updates a behavioral story", async () => {
-  const insertion = await a.authClient
-    .from("behavioral_stories")
-    .insert({
-      user_id: a.user.id,
-      title: "Phase 5A qualification launch recovery",
-      situation: "A critical launch was at risk after an external dependency changed late in the release window.",
-      task: "I owned the safe rollout decision and stakeholder alignment.",
-      action: "I compared rollback options, reduced reversible scope, aligned the service owners, documented the decision, and monitored the agreed indicators throughout release.",
-      result: "The launch completed without customer impact, and the team retained a tested rollback path for later releases.",
-    })
-    .select("id,title,status")
-    .single();
-  const row = expectSuccess(insertion, "story insertion failed");
-  fixture.storyId = row.id;
-
-  const update = await a.authClient
-    .from("behavioral_stories")
-    .update({ reflection: "Escalate the scope decision earlier." })
-    .eq("id", row.id)
-    .select("status,reflection")
-    .single();
-  const updated = expectSuccess(update, "story update failed");
-  expect(updated.status === "Ready" && updated.reflection?.includes("earlier"), "story update did not round-trip");
+await check("User A atomically creates a behavioral story and theme set", async () => {
+  const created = await a.authClient.rpc("create_behavioral_story_with_themes", behavioralStoryArgs({
+    target_themes: [" Leadership ", "Ownership", "Leadership"],
+  }));
+  const rows = expectSuccess(created, "story aggregate creation failed");
+  expect(rows.length === 1, `expected one created aggregate row, observed ${rows.length}`);
+  fixture.storyId = rows[0].story_id;
+  fixture.storyRevision = rows[0].updated_at;
+  const [story, themes] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("id,title,status,updated_at").eq("id", rows[0].story_id).single(),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", rows[0].story_id).order("theme"),
+  ]);
+  const storyRow = expectSuccess(story, "story aggregate read failed");
+  const themeRows = expectSuccess(themes, "story theme read failed");
+  expect(storyRow.status === "Ready" && storyRow.updated_at === rows[0].updated_at, "created aggregate returned the wrong canonical revision");
+  expect(JSON.stringify(themeRows.map((row) => row.theme)) === JSON.stringify(["Leadership", "Ownership"]), "themes were not normalized and deduplicated");
+  return `${rows[0].story_id} at ${rows[0].updated_at}`;
 });
 
-await check("atomic replace_behavioral_story_themes trims and deduplicates", async () => {
+await check("revision-checked story update advances monotonically with coherent themes", async () => {
   const storyId = requireFixture(fixture.storyId, "story");
-  const replacement = await a.authClient.rpc("replace_behavioral_story_themes", {
+  const priorRevision = requireFixture(fixture.storyRevision, "story revision");
+  const updated = await a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
     target_story_id: storyId,
-    theme_values: [" Leadership ", "Ownership", "Leadership"],
+    target_expected_updated_at: priorRevision,
+    ...behavioralStoryArgs({
+      target_reflection: "Escalate the scope decision earlier.",
+      target_themes: ["Growth", "Leadership"],
+    }),
   });
-  expect(!replacement.error && replacement.data === true, replacement.error?.message ?? "theme replacement returned false");
-
-  const read = await a.authClient
-    .from("behavioral_story_themes")
-    .select("theme")
-    .eq("story_id", storyId)
-    .order("theme");
-  const rows = expectSuccess(read, "theme lookup failed");
-  expect(JSON.stringify(rows.map((row) => row.theme)) === JSON.stringify(["Leadership", "Ownership"]), "themes were not normalized and deduplicated");
-  return "Leadership, Ownership";
+  const rows = expectSuccess(updated, "story aggregate update failed");
+  expect(rows.length === 1, `expected one updated aggregate row, observed ${rows.length}`);
+  expect(rows[0].updated_at !== priorRevision, "story revision did not advance");
+  fixture.storyRevision = rows[0].updated_at;
+  const [story, themes] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("status,reflection,updated_at").eq("id", storyId).single(),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", storyId).order("theme"),
+  ]);
+  const storyRow = expectSuccess(story, "updated story read failed");
+  const themeRows = expectSuccess(themes, "updated theme read failed");
+  expect(storyRow.status === "Ready" && storyRow.reflection?.includes("earlier"), "story update did not round-trip");
+  expect(storyRow.updated_at === rows[0].updated_at, "returned revision does not match persisted revision");
+  expect(JSON.stringify(themeRows.map((row) => row.theme)) === JSON.stringify(["Growth", "Leadership"]), "updated aggregate themes were incoherent");
 });
 
-await check("invalid atomic theme replacement preserves existing themes", async () => {
+await check("concurrent stale full-story saves commit exactly one coherent aggregate", async () => {
   const storyId = requireFixture(fixture.storyId, "story");
-  const replacement = await a.authClient.rpc("replace_behavioral_story_themes", {
+  const priorRevision = requireFixture(fixture.storyRevision, "story revision");
+  const save = (label, theme) => a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
     target_story_id: storyId,
-    theme_values: ["Unsupported theme"],
+    target_expected_updated_at: priorRevision,
+    ...behavioralStoryArgs({ target_notes: `Concurrent ${label} private note`, target_themes: [theme] }),
   });
-  expect(!replacement.error && replacement.data === false, replacement.error?.message ?? "invalid replacement unexpectedly succeeded");
-  const read = await a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", storyId).order("theme");
-  const rows = expectSuccess(read, "theme verification failed");
-  expect(JSON.stringify(rows.map((row) => row.theme)) === JSON.stringify(["Leadership", "Ownership"]), "invalid replacement partially deleted existing themes");
-  return "prior set intact";
+  const attempts = await Promise.all([save("A", "Conflict"), save("B", "Execution")]);
+  attempts.forEach((attempt) => expect(!attempt.error, attempt.error?.message ?? "concurrent story update failed"));
+  expect(attempts.filter((attempt) => attempt.data?.length === 1).length === 1, "concurrent updates did not yield exactly one winner");
+  expect(attempts.filter((attempt) => attempt.data?.length === 0).length === 1, "concurrent updates did not yield exactly one stale result");
+  const winner = attempts.find((attempt) => attempt.data?.length === 1);
+  fixture.storyRevision = winner.data[0].updated_at;
+  const [story, themes] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("notes,updated_at").eq("id", storyId).single(),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", storyId),
+  ]);
+  const storyRow = expectSuccess(story, "concurrent story read failed");
+  const themeRows = expectSuccess(themes, "concurrent theme read failed");
+  const coherent = (storyRow.notes === "Concurrent A private note" && themeRows[0]?.theme === "Conflict")
+    || (storyRow.notes === "Concurrent B private note" && themeRows[0]?.theme === "Execution");
+  expect(coherent && themeRows.length === 1, "parent and theme rows came from different concurrent snapshots");
+  return "one winner, one stale result, one coherent snapshot";
+});
+
+await check("reversed concurrent stale saves preserve the second winner as one aggregate", async () => {
+  const storyId = requireFixture(fixture.storyId, "story");
+  const priorRevision = requireFixture(fixture.storyRevision, "story revision");
+  const save = (label, theme) => a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
+    target_story_id: storyId,
+    target_expected_updated_at: priorRevision,
+    ...behavioralStoryArgs({ target_notes: `Reverse ${label} private note`, target_themes: [theme] }),
+  });
+  const attempts = await Promise.all([save("B", "Customer"), save("A", "Initiative")]);
+  attempts.forEach((attempt) => expect(!attempt.error, attempt.error?.message ?? "reverse concurrent story update failed"));
+  expect(attempts.filter((attempt) => attempt.data?.length === 1).length === 1, "reverse-order updates did not yield exactly one winner");
+  expect(attempts.filter((attempt) => attempt.data?.length === 0).length === 1, "reverse-order updates did not yield exactly one stale result");
+  const winner = attempts.find((attempt) => attempt.data?.length === 1);
+  fixture.storyRevision = winner.data[0].updated_at;
+  const [story, themes] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("notes").eq("id", storyId).single(),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", storyId),
+  ]);
+  const storyRow = expectSuccess(story, "reverse-order story read failed");
+  const themeRows = expectSuccess(themes, "reverse-order theme read failed");
+  const coherent = (storyRow.notes === "Reverse A private note" && themeRows[0]?.theme === "Initiative")
+    || (storyRow.notes === "Reverse B private note" && themeRows[0]?.theme === "Customer");
+  expect(coherent && themeRows.length === 1, "reverse-order parent and themes were torn");
+});
+
+await check("concurrent duplicate captures either complete aggregate snapshot", async () => {
+  const storyId = requireFixture(fixture.storyId, "story");
+  const priorRevision = requireFixture(fixture.storyRevision, "story revision");
+  const beforeStory = expectSuccess(await a.authClient.from("behavioral_stories").select("notes").eq("id", storyId).single(), "pre-duplicate story read failed");
+  const beforeThemes = expectSuccess(await a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", storyId).order("theme"), "pre-duplicate themes read failed");
+  const [updated, duplicated] = await Promise.all([
+    a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
+      target_story_id: storyId,
+      target_expected_updated_at: priorRevision,
+      ...behavioralStoryArgs({ target_notes: "Concurrent duplicate new snapshot", target_themes: ["Mentorship"] }),
+    }),
+    a.authClient.rpc("duplicate_behavioral_story_with_themes", { target_story_id: storyId }),
+  ]);
+  const updatedRows = expectSuccess(updated, "concurrent duplicate source update failed");
+  const duplicateRows = expectSuccess(duplicated, "concurrent duplicate failed");
+  expect(updatedRows.length === 1 && duplicateRows.length === 1, "concurrent update or duplicate returned no aggregate row");
+  fixture.storyRevision = updatedRows[0].updated_at;
+  const copyId = duplicateRows[0].story_id;
+  const [copy, copyThemes] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("notes").eq("id", copyId).single(),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", copyId).order("theme"),
+  ]);
+  const copyStory = expectSuccess(copy, "concurrent duplicate parent read failed");
+  const copiedThemes = expectSuccess(copyThemes, "concurrent duplicate theme read failed");
+  const copiedBefore = copyStory.notes === beforeStory.notes
+    && JSON.stringify(copiedThemes) === JSON.stringify(beforeThemes);
+  const copiedAfter = copyStory.notes === "Concurrent duplicate new snapshot"
+    && JSON.stringify(copiedThemes) === JSON.stringify([{ theme: "Mentorship" }]);
+  expect(copiedBefore || copiedAfter, "duplicate mixed the before/after parent and theme snapshots");
+  expectSuccess(await a.authClient.from("behavioral_stories").delete().eq("id", copyId), "concurrent duplicate cleanup failed");
+  return copiedBefore ? "complete pre-update snapshot" : "complete post-update snapshot";
+});
+
+await check("invalid aggregate themes roll back both parent and theme changes", async () => {
+  const storyId = requireFixture(fixture.storyId, "story");
+  const before = expectSuccess(await a.authClient.from("behavioral_stories").select("notes,updated_at").eq("id", storyId).single(), "pre-rollback story read failed");
+  const invalid = await a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
+    target_story_id: storyId,
+    target_expected_updated_at: before.updated_at,
+    ...behavioralStoryArgs({ target_notes: "Must roll back", target_themes: ["Unsupported theme"] }),
+  });
+  expectSqlError(invalid, "23514");
+  const [story, themes] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("notes,updated_at").eq("id", storyId).single(),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", storyId).order("theme"),
+  ]);
+  expect(JSON.stringify(expectSuccess(story, "rollback story read failed")) === JSON.stringify(before), "invalid themes changed the parent snapshot");
+  expect(expectSuccess(themes, "rollback theme read failed").length === 1, "invalid themes changed the prior theme snapshot");
+  return "SQLSTATE 23514; prior aggregate intact";
+});
+
+await check("atomic duplicate copies one owned parent and theme snapshot", async () => {
+  const sourceId = requireFixture(fixture.storyId, "story");
+  const duplicated = await a.authClient.rpc("duplicate_behavioral_story_with_themes", { target_story_id: sourceId });
+  const rows = expectSuccess(duplicated, "story aggregate duplicate failed");
+  expect(rows.length === 1, `expected one duplicate row, observed ${rows.length}`);
+  const [source, copy, sourceThemes, copyThemes] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("company_or_context,role,approximate_period,project,situation,task,action,result,reflection,short_summary,notes").eq("id", sourceId).single(),
+    a.authClient.from("behavioral_stories").select("title,company_or_context,role,approximate_period,project,situation,task,action,result,reflection,short_summary,notes").eq("id", rows[0].story_id).single(),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", sourceId).order("theme"),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", rows[0].story_id).order("theme"),
+  ]);
+  const sourceRow = expectSuccess(source, "source story snapshot read failed");
+  const copyRow = expectSuccess(copy, "duplicate story snapshot read failed");
+  const { title, ...copyWithoutTitle } = copyRow;
+  expect(title.endsWith(" (copy)"), "duplicate title lacks the copy suffix");
+  expect(JSON.stringify(copyWithoutTitle) === JSON.stringify(sourceRow), "duplicate parent is not the source snapshot");
+  expect(JSON.stringify(expectSuccess(copyThemes, "duplicate themes read failed")) === JSON.stringify(expectSuccess(sourceThemes, "source themes read failed")), "duplicate themes are not the source snapshot");
+  expectSuccess(await a.authClient.from("behavioral_stories").delete().eq("id", rows[0].story_id), "duplicate cleanup failed");
+  return rows[0].story_id;
 });
 
 await check("User A maps one story to multiple curated and custom questions", async () => {
@@ -940,9 +1071,9 @@ await check("User B cannot update or delete User A behavioral records", async ()
     await b.authClient.from("behavioral_custom_questions").delete().eq("id", customQuestionId).select("id"),
     "custom-question deletion",
   );
-  expectInvisible(
+  expectSqlError(
     await b.authClient.from("behavioral_stories").update({ title: "Cross-user mutation" }).eq("id", storyId).select("id"),
-    "story update",
+    "42501",
   );
   expectInvisible(
     await b.authClient.from("behavioral_stories").delete().eq("id", storyId).select("id"),
@@ -1002,13 +1133,25 @@ await check("User B cannot attach a theme to User A story", async () => {
   return expectSqlError(insertion, ["23503", "42501"]);
 });
 
-await check("User B cannot invoke theme replacement for User A", async () => {
+await check("authenticated legacy theme replacement fails without mutation", async () => {
   const replacement = await b.authClient.rpc("replace_behavioral_story_themes", {
     target_story_id: requireFixture(fixture.storyId, "story"),
     theme_values: ["Collaboration"],
   });
-  expect(!replacement.error && replacement.data === false, replacement.error?.message ?? "cross-user replacement unexpectedly succeeded");
-  return "owner check returned false";
+  return expectSqlError(replacement, "0A000");
+});
+
+await check("foreign and missing story duplicates are indistinguishable", async () => {
+  const foreign = await b.authClient.rpc("duplicate_behavioral_story_with_themes", {
+    target_story_id: requireFixture(fixture.storyId, "story"),
+  });
+  const missing = await b.authClient.rpc("duplicate_behavioral_story_with_themes", {
+    target_story_id: crypto.randomUUID(),
+  });
+  expect(!foreign.error && !missing.error, foreign.error?.message ?? missing.error?.message ?? "duplicate lookup failed");
+  expect(JSON.stringify(foreign.data) === JSON.stringify([]), "foreign story duplicate exposed a result");
+  expect(JSON.stringify(missing.data) === JSON.stringify([]), "missing story duplicate exposed a result");
+  return "both returned zero rows";
 });
 
 await check("behavioral story insert rejects client-assigned generated IDs", async () => {
@@ -1940,6 +2083,20 @@ await check("anonymous client cannot invoke revision-checked canonical DSA progr
   return expectSqlError(saved, "42501");
 });
 
+await check("anonymous client cannot invoke Behavioral story aggregate RPCs", async () => {
+  const attempts = await Promise.all([
+    anonymous.rpc("create_behavioral_story_with_themes", behavioralStoryArgs()),
+    anonymous.rpc("update_behavioral_story_with_themes_if_revision", {
+      target_story_id: crypto.randomUUID(),
+      target_expected_updated_at: new Date().toISOString(),
+      ...behavioralStoryArgs(),
+    }),
+    anonymous.rpc("duplicate_behavioral_story_with_themes", { target_story_id: crypto.randomUUID() }),
+  ]);
+  for (const attempt of attempts) expectSqlError(attempt, "42501");
+  return "create, update, and duplicate returned SQLSTATE 42501";
+});
+
 await check("authenticated legacy DSA full saves fail safely", async () => {
   const saved = await a.authClient.rpc("save_dsa_question_progress", {
     target_question_id: "two-sum",
@@ -1998,6 +2155,13 @@ await check("deleting a custom question cascades its saved-question reference", 
 
 await check("deleting a story cascades its themes", async () => {
   const storyId = requireFixture(fixture.storyId, "story");
+  const directMutations = await Promise.all([
+    a.authClient.from("behavioral_stories").insert({ user_id: a.user.id, title: "Phase 5A qualification direct bypass" }),
+    a.authClient.from("behavioral_stories").update({ title: "Phase 5A qualification direct overwrite" }).eq("id", storyId),
+    a.authClient.from("behavioral_story_themes").insert({ user_id: a.user.id, story_id: storyId, theme: "Ownership" }),
+    a.authClient.from("behavioral_story_themes").delete().eq("story_id", storyId),
+  ]);
+  for (const mutation of directMutations) expectSqlError(mutation, "42501");
   const deletion = await a.authClient.from("behavioral_stories").delete().eq("id", storyId).select("id").single();
   expectSuccess(deletion, "story deletion failed");
   const themeRead = await a.authClient.from("behavioral_story_themes").select("id").eq("story_id", storyId);

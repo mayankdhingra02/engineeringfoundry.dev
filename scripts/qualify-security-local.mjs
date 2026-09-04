@@ -43,6 +43,25 @@ const emails = [`phase9-a-${stamp}@example.test`, `phase9-b-${stamp}@example.tes
 const createdIds = [];
 const results = [];
 
+function behavioralStoryArgs(overrides = {}) {
+  return {
+    target_title: "Phase 9 aggregate security story",
+    target_company_or_context: null,
+    target_role: null,
+    target_approximate_period: null,
+    target_project: null,
+    target_situation: "A private aggregate security situation.",
+    target_task: "Protect the private aggregate boundary.",
+    target_action: "I validated every owner-derived write and exercised the aggregate mutation path.",
+    target_result: "The private story and themes remained coherent.",
+    target_reflection: null,
+    target_short_summary: null,
+    target_notes: "Owner A private Behavioral note.",
+    target_themes: ["Ownership"],
+    ...overrides,
+  };
+}
+
 async function check(name, work) {
   try {
     const note = await work();
@@ -67,6 +86,66 @@ async function createAccount(email) {
 const [a, b] = await Promise.all(emails.map(createAccount));
 const consume = (client, max = 3, window = 900) =>
   client.rpc("consume_account_action_rate_limit", { action_key: "account_export", max_requests: max, window_seconds: window });
+
+let behavioralStory;
+
+await check("Behavioral aggregate RPCs deny anonymous callers", async () => {
+  const attempts = await Promise.all([
+    anon.rpc("create_behavioral_story_with_themes", behavioralStoryArgs()),
+    anon.rpc("update_behavioral_story_with_themes_if_revision", {
+      target_story_id: crypto.randomUUID(),
+      target_expected_updated_at: new Date().toISOString(),
+      ...behavioralStoryArgs(),
+    }),
+    anon.rpc("duplicate_behavioral_story_with_themes", { target_story_id: crypto.randomUUID() }),
+  ]);
+  for (const attempt of attempts) assert.equal(attempt.error?.code, "42501", "anonymous Behavioral aggregate execution must fail with 42501");
+  return "create, update, and duplicate returned SQLSTATE 42501";
+});
+
+await check("Behavioral aggregate derives its owner and closes direct mutation bypasses", async () => {
+  const created = await a.client.rpc("create_behavioral_story_with_themes", behavioralStoryArgs());
+  assert.ifError(created.error);
+  assert.equal(created.data?.length, 1);
+  behavioralStory = created.data[0];
+  const directMutations = await Promise.all([
+    a.client.from("behavioral_stories").insert({ user_id: a.user.id, title: "Direct bypass" }),
+    a.client.from("behavioral_stories").update({ title: "Direct overwrite" }).eq("id", behavioralStory.story_id),
+    a.client.from("behavioral_story_themes").insert({ user_id: a.user.id, story_id: behavioralStory.story_id, theme: "Conflict" }),
+    a.client.from("behavioral_story_themes").delete().eq("story_id", behavioralStory.story_id),
+  ]);
+  for (const mutation of directMutations) assert.equal(mutation.error?.code, "42501", "direct Behavioral aggregate mutation must fail with 42501");
+  const legacy = await a.client.rpc("replace_behavioral_story_themes", {
+    target_story_id: behavioralStory.story_id,
+    theme_values: ["Conflict"],
+  });
+  assert.equal(legacy.error?.code, "0A000", "legacy theme replacement must fail safely with 0A000");
+  return `owner aggregate ${behavioralStory.story_id}; direct writes denied; legacy retired`;
+});
+
+await check("foreign and missing Behavioral aggregate targets are indistinguishable", async () => {
+  assert.ok(behavioralStory, "owner Behavioral fixture was unavailable");
+  const foreignUpdate = await b.client.rpc("update_behavioral_story_with_themes_if_revision", {
+    target_story_id: behavioralStory.story_id,
+    target_expected_updated_at: behavioralStory.updated_at,
+    ...behavioralStoryArgs({ target_title: "Foreign overwrite" }),
+  });
+  const missingUpdate = await b.client.rpc("update_behavioral_story_with_themes_if_revision", {
+    target_story_id: crypto.randomUUID(),
+    target_expected_updated_at: behavioralStory.updated_at,
+    ...behavioralStoryArgs({ target_title: "Missing overwrite" }),
+  });
+  const foreignDuplicate = await b.client.rpc("duplicate_behavioral_story_with_themes", { target_story_id: behavioralStory.story_id });
+  const missingDuplicate = await b.client.rpc("duplicate_behavioral_story_with_themes", { target_story_id: crypto.randomUUID() });
+  for (const attempt of [foreignUpdate, missingUpdate, foreignDuplicate, missingDuplicate]) {
+    assert.ifError(attempt.error);
+    assert.deepEqual(attempt.data, []);
+  }
+  const owner = await a.client.from("behavioral_stories").select("title,notes").eq("id", behavioralStory.story_id).single();
+  assert.ifError(owner.error);
+  assert.deepEqual(owner.data, { title: "Phase 9 aggregate security story", notes: "Owner A private Behavioral note." });
+  return "foreign and missing updates/duplicates returned zero rows; owner data unchanged";
+});
 
 // --- Export throttle -------------------------------------------------------
 await check("User A consumes their own export budget", async () => {
@@ -398,7 +477,7 @@ await check("deleting an account removes its private rows and throttle state", a
   // Counted directly in the database so the assertion cannot be satisfied by
   // RLS merely hiding rows that still exist.
   assert.match(a.user.id, /^[0-9a-f-]{36}$/i);
-  for (const table of ["applications", "interview_rounds", "interview_reminders", "account_action_rate_limits"]) {
+  for (const table of ["applications", "interview_rounds", "interview_reminders", "behavioral_stories", "account_action_rate_limits"]) {
     assert.match(table, /^[a-z_]+$/);
     const count = execFileSync("docker", ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", `select count(*) from public.${table} where user_id = '${a.user.id}'::uuid`], { encoding: "utf8" }).trim();
     assert.equal(count, "0", `${table} retained deleted-user rows`);

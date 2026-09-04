@@ -4,10 +4,21 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { findCuratedQuestion } from "@/lib/behavioral/catalog";
 import { reviewAnswerFacts } from "@/lib/behavioral/fact-integrity";
-import { parseAnswerForm, parseQuestionForm, parseStoryForm, type BehavioralFieldErrors } from "@/lib/behavioral/validation";
+import {
+  BEHAVIORAL_STORY_CONFLICT_ERROR,
+  BEHAVIORAL_STORY_CREATE_ERROR,
+  BEHAVIORAL_STORY_DUPLICATE_ERROR,
+  BEHAVIORAL_STORY_INVALID_INPUT_ERROR,
+  BEHAVIORAL_STORY_UPDATE_ERROR,
+  parseBehavioralStoryActionInput,
+  parseBehavioralStoryMutationResult,
+  parseCanonicalBehavioralStoryId,
+  type BehavioralStoryInput,
+} from "@/lib/behavioral/story-action-input";
+import { parseAnswerForm, parseQuestionForm, type BehavioralFieldErrors } from "@/lib/behavioral/validation";
 import { getAuthenticatedActor, type AuthenticatedActor } from "@/lib/auth/actor";
 
-export interface BehavioralActionState { status: "idle" | "error"; message: string; fieldErrors?: BehavioralFieldErrors }
+export interface BehavioralActionState { status: "idle" | "error"; message: string; fieldErrors?: BehavioralFieldErrors; conflict?: boolean }
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const sessionError = (): BehavioralActionState => ({ status: "error", message: "Your session has expired. Sign in and try again." });
@@ -68,28 +79,51 @@ function signInAgain(next: string): never {
   redirect(`/signin?next=${encodeURIComponent(next)}`);
 }
 
-export async function createStoryAction(_: BehavioralActionState, formData: FormData): Promise<BehavioralActionState> {
-  const current = await getAuthenticatedActor(); if (!current) return sessionError();
-  const parsed = parseStoryForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("behavioral_stories").insert({ ...parsed.data, user_id: current.user.id }).select("id").maybeSingle();
-  if (error || !data) return { status: "error", message: "We couldn't save this story. Review the fields and try again." };
-  const { data: themesSaved, error: themeError } = await current.supabase.rpc("replace_behavioral_story_themes", { target_story_id: data.id, theme_values: parsed.themes });
-  if (themeError || !themesSaved) {
-    await current.supabase.from("behavioral_stories").delete().eq("id", data.id).eq("user_id", current.user.id);
-    return { status: "error", message: "We couldn't save this story. Review the themes and try again." };
-  }
-  refreshBehavioral(); redirect(`/behavioral/stories/${data.id}`);
+function storyRpcArgs(story: BehavioralStoryInput) {
+  return {
+    target_title: story.title,
+    target_company_or_context: story.company_or_context,
+    target_role: story.role,
+    target_approximate_period: story.approximate_period,
+    target_project: story.project,
+    target_situation: story.situation,
+    target_task: story.task,
+    target_action: story.action,
+    target_result: story.result,
+    target_reflection: story.reflection,
+    target_short_summary: story.short_summary,
+    target_notes: story.notes,
+  };
 }
 
-export async function updateStoryAction(storyId: string, _: BehavioralActionState, formData: FormData): Promise<BehavioralActionState> {
+export async function createStoryAction(_: BehavioralActionState, formData: unknown): Promise<BehavioralActionState> {
+  const parsed = parseBehavioralStoryActionInput(formData, { kind: "create" });
+  if (!parsed.ok) return { status: "error", message: BEHAVIORAL_STORY_INVALID_INPUT_ERROR, fieldErrors: parsed.fieldErrors };
   const current = await getAuthenticatedActor(); if (!current) return sessionError();
-  if (!UUID_PATTERN.test(storyId)) return { status: "error", message: "This story could not be found." };
-  const parsed = parseStoryForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("behavioral_stories").update(parsed.data).eq("id", storyId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) return { status: "error", message: "We couldn't update this story. It may no longer be available." };
-  const { data: themesSaved, error: themeError } = await current.supabase.rpc("replace_behavioral_story_themes", { target_story_id: storyId, theme_values: parsed.themes });
-  if (themeError || !themesSaved) return { status: "error", message: "The story was updated, but its themes could not be replaced. Try saving again." };
-  refreshBehavioral(); revalidatePath(`/behavioral/stories/${storyId}`); redirect(`/behavioral/stories/${storyId}`);
+  const { story, themes } = parsed.value;
+  const { data, error } = await current.supabase.rpc("create_behavioral_story_with_themes", {
+    ...storyRpcArgs(story), target_themes: [...themes],
+  });
+  if (error) return { status: "error", message: BEHAVIORAL_STORY_CREATE_ERROR };
+  const outcome = parseBehavioralStoryMutationResult(data);
+  if (outcome.status !== "saved") return { status: "error", message: BEHAVIORAL_STORY_CREATE_ERROR };
+  refreshBehavioral(); redirect(`/behavioral/stories/${outcome.storyId}`);
+}
+
+export async function updateStoryAction(storyId: unknown, _: BehavioralActionState, formData: unknown): Promise<BehavioralActionState> {
+  const parsed = parseBehavioralStoryActionInput(formData, { kind: "edit", storyId });
+  if (!parsed.ok) return { status: "error", message: BEHAVIORAL_STORY_INVALID_INPUT_ERROR, fieldErrors: parsed.fieldErrors };
+  const current = await getAuthenticatedActor(); if (!current) return sessionError();
+  const { story, themes, expectedUpdatedAt } = parsed.value;
+  const { data, error } = await current.supabase.rpc("update_behavioral_story_with_themes_if_revision", {
+    target_story_id: parsed.value.storyId!, target_expected_updated_at: expectedUpdatedAt!,
+    ...storyRpcArgs(story), target_themes: [...themes],
+  });
+  if (error) return { status: "error", message: BEHAVIORAL_STORY_UPDATE_ERROR };
+  const outcome = parseBehavioralStoryMutationResult(data, parsed.value.storyId!);
+  if (outcome.status === "missing") return { status: "error", message: BEHAVIORAL_STORY_CONFLICT_ERROR, conflict: true };
+  if (outcome.status === "invalid") return { status: "error", message: BEHAVIORAL_STORY_UPDATE_ERROR };
+  refreshBehavioral(); revalidatePath(`/behavioral/stories/${outcome.storyId}`); redirect(`/behavioral/stories/${outcome.storyId}`);
 }
 
 export async function deleteStoryAction(storyId: string) {
@@ -100,29 +134,15 @@ export async function deleteStoryAction(storyId: string) {
   refreshBehavioral(); redirect("/behavioral/stories");
 }
 
-export async function duplicateStoryAction(storyId: string) {
+export async function duplicateStoryAction(storyId: unknown) {
+  const parsedStoryId = parseCanonicalBehavioralStoryId(storyId);
+  if (!parsedStoryId) mutationFailure(BEHAVIORAL_STORY_DUPLICATE_ERROR);
   const current = await getAuthenticatedActor(); if (!current) signInAgain("/behavioral/stories");
-  if (!UUID_PATTERN.test(storyId)) return;
-  const [storyResult, themesResult] = await Promise.all([
-    current.supabase.from("behavioral_stories").select("*").eq("id", storyId).eq("user_id", current.user.id).maybeSingle(),
-    current.supabase.from("behavioral_story_themes").select("theme").eq("story_id", storyId).eq("user_id", current.user.id),
-  ]);
-  if (storyResult.error || themesResult.error || !storyResult.data) mutationFailure("We couldn't duplicate this story. It may no longer be available.");
-  const story = storyResult.data;
-  const themes = themesResult.data;
-  const { data: duplicate, error: duplicateError } = await current.supabase.from("behavioral_stories").insert({
-    user_id: current.user.id, title: `${story.title} (copy)`, company_or_context: story.company_or_context,
-    role: story.role, approximate_period: story.approximate_period, project: story.project,
-    situation: story.situation, task: story.task, action: story.action, result: story.result,
-    reflection: story.reflection, short_summary: story.short_summary, notes: story.notes,
-  }).select("id").maybeSingle();
-  if (duplicateError || !duplicate) mutationFailure("We couldn't duplicate this story. Try again.");
-  const { data: themesSaved, error: themeError } = await current.supabase.rpc("replace_behavioral_story_themes", { target_story_id: duplicate.id, theme_values: themes?.map(({ theme }) => theme) ?? [] });
-  if (themeError || !themesSaved) {
-    await current.supabase.from("behavioral_stories").delete().eq("id", duplicate.id).eq("user_id", current.user.id);
-    mutationFailure("We couldn't duplicate this story. Try again.");
-  }
-  refreshBehavioral(); redirect(`/behavioral/stories/${duplicate.id}/edit`);
+  const { data, error } = await current.supabase.rpc("duplicate_behavioral_story_with_themes", { target_story_id: parsedStoryId });
+  if (error) mutationFailure(BEHAVIORAL_STORY_DUPLICATE_ERROR);
+  const outcome = parseBehavioralStoryMutationResult(data);
+  if (outcome.status !== "saved") mutationFailure(BEHAVIORAL_STORY_DUPLICATE_ERROR);
+  refreshBehavioral(); redirect(`/behavioral/stories/${outcome.storyId}/edit`);
 }
 
 export async function createQuestionAction(_: BehavioralActionState, formData: FormData): Promise<BehavioralActionState> {
