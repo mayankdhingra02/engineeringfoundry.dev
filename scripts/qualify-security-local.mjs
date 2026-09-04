@@ -1087,12 +1087,19 @@ await check("User A creates an owner-scoped preparation task security fixture", 
   preparationTaskId = created.data;
 });
 
-await check("direct preparation task completion writes cannot bypass the desired-state RPC", async () => {
-  const direct = await a.client
-    .from("interview_preparation_custom_tasks")
-    .update({ completed: true })
-    .eq("id", preparationTaskId);
-  assert.equal(direct.error?.code, "42501");
+await check("direct preparation task writes cannot bypass the desired-state or revision-delete RPCs", async () => {
+  const [directUpdate, directDelete] = await Promise.all([
+    a.client
+      .from("interview_preparation_custom_tasks")
+      .update({ completed: true })
+      .eq("id", preparationTaskId),
+    a.client
+      .from("interview_preparation_custom_tasks")
+      .delete()
+      .eq("id", preparationTaskId),
+  ]);
+  assert.equal(directUpdate.error?.code, "42501");
+  assert.equal(directDelete.error?.code, "42501");
   const ownerTask = await a.client
     .from("interview_preparation_custom_tasks")
     .select("completed")
@@ -1100,7 +1107,7 @@ await check("direct preparation task completion writes cannot bypass the desired
     .single();
   assert.ifError(ownerTask.error);
   assert.equal(ownerTask.data.completed, false);
-  return "direct UPDATE denied with SQLSTATE 42501; owner task unchanged";
+  return "direct UPDATE and DELETE denied with SQLSTATE 42501; owner task unchanged";
 });
 
 await check("foreign and nonexistent preparation text targets are indistinguishable", async () => {
@@ -1184,13 +1191,23 @@ await check("anonymous callers cannot execute desired-state or legacy preparatio
   const legacy = await anon.rpc("toggle_interview_preparation_task", {
     target_task_id: preparationTaskId,
   });
-  for (const call of [desired, legacy]) {
+  const revisionDelete = await anon.rpc("delete_interview_preparation_task_if_revision", {
+    target_round_id: roundId,
+    target_task_id: preparationTaskId,
+    target_expected_updated_at: new Date().toISOString(),
+  });
+  const legacyDelete = await anon.rpc("delete_interview_preparation_task", {
+    target_task_id: preparationTaskId,
+  });
+  for (const call of [desired, legacy, revisionDelete, legacyDelete]) {
     assert.equal(call.error?.code, "42501");
   }
-  return "desired state and retired toggle denied with SQLSTATE 42501";
+  return "desired state, revision delete, and both retired task mutations denied with SQLSTATE 42501";
 });
 
-await check("foreign and nonexistent preparation tasks are indistinguishable", async () => {
+await check("preparation task mutations derive the owner and keep foreign or missing targets indistinguishable", async () => {
+  const ownerBefore = await a.client.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", preparationTaskId).single();
+  assert.ifError(ownerBefore.error);
   const calls = await Promise.all([
     b.client.rpc("set_interview_preparation_task_completed", {
       target_round_id: roundId,
@@ -1202,15 +1219,36 @@ await check("foreign and nonexistent preparation tasks are indistinguishable", a
       target_task_id: "93939393-9393-4939-8939-939393939394",
       target_completed: true,
     }),
+    b.client.rpc("delete_interview_preparation_task_if_revision", {
+      target_round_id: roundId,
+      target_task_id: preparationTaskId,
+      target_expected_updated_at: ownerBefore.data.updated_at,
+    }),
+    b.client.rpc("delete_interview_preparation_task_if_revision", {
+      target_round_id: "93939393-9393-4939-8939-939393939393",
+      target_task_id: "93939393-9393-4939-8939-939393939394",
+      target_expected_updated_at: ownerBefore.data.updated_at,
+    }),
   ]);
   for (const call of calls) {
     assert.ifError(call.error);
     assert.deepEqual(call.data, []);
   }
-  const ownerTask = await a.client.from("interview_preparation_custom_tasks").select("completed").eq("id", preparationTaskId).single();
+  const ownerTask = await a.client.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", preparationTaskId).single();
   assert.ifError(ownerTask.error);
-  assert.equal(ownerTask.data.completed, false);
-  return "matching zero-row results; owner task unchanged";
+  assert.deepEqual(ownerTask.data, ownerBefore.data, "foreign task mutations changed the owner row");
+  const legacyDelete = await a.client.rpc("delete_interview_preparation_task", {
+    target_task_id: preparationTaskId,
+  });
+  assert.equal(legacyDelete.error?.code, "0A000", "retired task deletion did not fail safely");
+  const exactDelete = await a.client.rpc("delete_interview_preparation_task_if_revision", {
+    target_round_id: roundId,
+    target_task_id: preparationTaskId,
+    target_expected_updated_at: ownerBefore.data.updated_at,
+  });
+  assert.ifError(exactDelete.error);
+  assert.deepEqual(exactDelete.data, [{ task_id: preparationTaskId, round_id: roundId, application_id: applicationId }]);
+  return "foreign/missing zero rows; legacy 0A000; owner state stayed exact; exact owner revision deleted once";
 });
 
 await check("foreign and nonexistent checklist targets are indistinguishable and do not mutate", async () => {

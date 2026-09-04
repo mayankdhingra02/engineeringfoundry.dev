@@ -1218,6 +1218,46 @@ await check("repeated desired task completion does not churn its timestamp", asy
   return `stable revision ${after.updated_at}`;
 });
 
+await check("concurrent preparation task completion and revision-delete accept exactly one outcome", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const taskId = expectSuccess(await a.authClient.rpc("add_interview_preparation_task", {
+    target_round_id: roundId,
+    title_value: "Phase 5A qualification completion-delete race",
+  }), "task completion-delete race creation failed");
+  const before = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).single(), "task completion-delete race revision lookup failed");
+  expect(before.completed === false, "task completion-delete race did not begin incomplete");
+  const [completionResult, deletionResult] = await Promise.all([
+    a.authClient.rpc("set_interview_preparation_task_completed", {
+      target_round_id: roundId,
+      target_task_id: taskId,
+      target_completed: true,
+    }),
+    a.authClient.rpc("delete_interview_preparation_task_if_revision", {
+      target_round_id: roundId,
+      target_task_id: taskId,
+      target_expected_updated_at: before.updated_at,
+    }),
+  ]);
+  const completedRows = expectSuccess(completionResult, "concurrent task completion failed");
+  const deletedRows = expectSuccess(deletionResult, "concurrent task deletion failed");
+  expect(completedRows.length <= 1 && deletedRows.length <= 1 && completedRows.length + deletedRows.length === 1, "task completion/delete race did not produce exactly one winner");
+  const after = await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).maybeSingle();
+  expect(!after.error, `task completion-delete result read failed: ${after.error?.message}`);
+  if (completedRows.length === 1) {
+    expect(completedRows[0].completed === true && after.data?.completed === true && after.data.updated_at !== before.updated_at, "task completion winner did not preserve the newer desired state");
+    expect(deletedRows.length === 0, "stale task deletion reported success after completion won");
+    const cleanup = expectSuccess(await a.authClient.rpc("delete_interview_preparation_task_if_revision", {
+      target_round_id: roundId,
+      target_task_id: taskId,
+      target_expected_updated_at: after.data.updated_at,
+    }), "task completion-winner cleanup failed");
+    expect(cleanup.length === 1, "task completion-winner cleanup did not delete the exact revision");
+    return "completion won; stale delete returned zero and the newer desired state remained intact";
+  }
+  expect(deletedRows[0]?.task_id === taskId && after.data === null, "task deletion winner did not remove exactly the displayed revision");
+  return "delete won; stale completion returned zero and no replacement task was created";
+});
+
 await check("legacy preparation task toggles fail safely without mutation", async () => {
   const taskId = requireFixture(fixture.preparationTaskId, "preparation task");
   const before = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).single(), "legacy task setup read failed");

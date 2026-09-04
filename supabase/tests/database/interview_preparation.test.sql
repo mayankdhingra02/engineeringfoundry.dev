@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(115);
+select plan(134);
 
 select has_table('public', 'interview_preparations', 'preparation table exists');
 select has_table('public', 'interview_preparation_custom_tasks', 'custom task table exists');
@@ -30,6 +30,7 @@ select has_function('public', 'add_interview_preparation_task', array['uuid','te
 select has_function('public', 'set_interview_preparation_task_completed', array['uuid','uuid','boolean'], 'desired-state task completion RPC exists');
 select has_function('public', 'toggle_interview_preparation_task', array['uuid'], 'task toggle RPC exists');
 select has_function('public', 'delete_interview_preparation_task', array['uuid'], 'task delete RPC exists');
+select has_function('public', 'delete_interview_preparation_task_if_revision', array['uuid','uuid','timestamp with time zone'], 'revision-checked task delete RPC exists');
 select ok(has_function_privilege('authenticated', 'public.set_interview_preparation_checklist_item(uuid,text,boolean)', 'execute'), 'authenticated can set an owned checklist item');
 select ok(not has_function_privilege('anon', 'public.set_interview_preparation_checklist_item(uuid,text,boolean)', 'execute'), 'anonymous users cannot set checklist items');
 select ok(has_function_privilege('authenticated', 'public.save_interview_preparation_notes_if_revision(uuid,boolean,timestamptz,text)', 'execute'), 'authenticated can save owned notes with a revision');
@@ -100,6 +101,7 @@ select ok(not has_function_privilege('anon', 'public.set_interview_preparation_t
 select ok(has_function_privilege('authenticated', 'public.toggle_interview_preparation_task(uuid)', 'execute'), 'authenticated old clients can reach the retired task-toggle fail-safe');
 select ok(not has_function_privilege('anon', 'public.toggle_interview_preparation_task(uuid)', 'execute'), 'anonymous callers cannot execute the retired task toggle');
 select ok(not has_table_privilege('authenticated', 'public.interview_preparation_custom_tasks', 'update'), 'clients cannot bypass desired-state task completion with direct updates');
+select ok(not has_table_privilege('authenticated', 'public.interview_preparation_custom_tasks', 'delete'), 'clients cannot bypass revision-checked task deletion with direct deletes');
 select is(
   (select prosecdef from pg_proc where oid = 'public.set_interview_preparation_task_completed(uuid,uuid,boolean)'::regprocedure),
   true,
@@ -120,6 +122,28 @@ select is(
   'desired-state task completion returns only its correlated owner context'
 );
 select ok(has_function_privilege('authenticated', 'public.delete_interview_preparation_task(uuid)', 'execute'), 'authenticated can delete own task');
+select ok(not has_function_privilege('anon', 'public.delete_interview_preparation_task(uuid)', 'execute'), 'anonymous callers cannot execute the retired task delete');
+select ok(has_function_privilege('authenticated', 'public.delete_interview_preparation_task_if_revision(uuid,uuid,timestamptz)', 'execute'), 'authenticated can delete an owned task with its exact revision');
+select ok(not has_function_privilege('anon', 'public.delete_interview_preparation_task_if_revision(uuid,uuid,timestamptz)', 'execute'), 'anonymous callers cannot execute revision-checked task deletion');
+select is(
+  (select prosecdef from pg_proc where oid = 'public.delete_interview_preparation_task_if_revision(uuid,uuid,timestamptz)'::regprocedure),
+  true,
+  'revision-checked task deletion is security definer'
+);
+select ok(
+  (select 'search_path=""' = any(proconfig) from pg_proc where oid = 'public.delete_interview_preparation_task_if_revision(uuid,uuid,timestamptz)'::regprocedure),
+  'revision-checked task deletion has an empty search path'
+);
+select is(
+  (select provolatile from pg_proc where oid = 'public.delete_interview_preparation_task_if_revision(uuid,uuid,timestamptz)'::regprocedure),
+  'v'::"char",
+  'revision-checked task deletion is volatile'
+);
+select is(
+  pg_get_function_result('public.delete_interview_preparation_task_if_revision(uuid,uuid,timestamptz)'::regprocedure),
+  'TABLE(task_id uuid, round_id uuid, application_id uuid)',
+  'revision-checked task deletion returns only correlated owner context'
+);
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -336,6 +360,87 @@ select is(
   (select completed from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
   false,
   'a rejected legacy task toggle preserves the saved desired state'
+);
+select set_config(
+  'test.preparation_task_current_revision',
+  (select updated_at::text from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  true
+);
+select throws_ok(
+  $$select * from public.delete_interview_preparation_task_if_revision('91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919303', null)$$,
+  '23514',
+  'Expected preparation task revision is required',
+  'task deletion requires an exact loaded revision'
+);
+select is_empty(
+  $$select task_id from public.delete_interview_preparation_task_if_revision(
+    '91919191-9191-4919-8919-919191919302',
+    '91919191-9191-4919-8919-919191919303',
+    (select value from test_preparation_task_revision)
+  )$$,
+  'a stale task revision cannot delete newer completion state'
+);
+select is(
+  (select completed from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  false,
+  'stale task deletion preserves the newer desired state'
+);
+select throws_ok(
+  $$select public.delete_interview_preparation_task('91919191-9191-4919-8919-919191919303')$$,
+  '0A000',
+  'Revision-checked preparation task deletion is required',
+  'legacy task deletion fails safely without mutation'
+);
+
+select set_config('request.jwt.claim.sub', '92929292-9292-4929-8929-929292929292', true);
+select is_empty(
+  $$select task_id from public.delete_interview_preparation_task_if_revision(
+    '91919191-9191-4919-8919-919191919302',
+    '91919191-9191-4919-8919-919191919303',
+    current_setting('test.preparation_task_current_revision')::timestamptz
+  )$$,
+  'a foreign task delete returns no row'
+);
+select is_empty(
+  $$select task_id from public.delete_interview_preparation_task_if_revision(
+    '93939393-9393-4939-8939-939393939393',
+    '93939393-9393-4939-8939-939393939394',
+    '2026-09-04T00:00:00Z'
+  )$$,
+  'missing and foreign task deletion are indistinguishable'
+);
+
+select set_config('request.jwt.claim.sub', '91919191-9191-4919-8919-919191919191', true);
+select is_empty(
+  $$select task_id from public.delete_interview_preparation_task_if_revision(
+    '93939393-9393-4939-8939-939393939393',
+    '91919191-9191-4919-8919-919191919303',
+    current_setting('test.preparation_task_current_revision')::timestamptz
+  )$$,
+  'a mismatched round cannot delete the task'
+);
+select is(
+  (select completed from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  false,
+  'foreign missing and mismatched task deletions preserve the owner row'
+);
+select results_eq(
+  $$select task_id, round_id, application_id from public.delete_interview_preparation_task_if_revision(
+    '91919191-9191-4919-8919-919191919302',
+    '91919191-9191-4919-8919-919191919303',
+    current_setting('test.preparation_task_current_revision')::timestamptz
+  )$$,
+  $$values (
+    '91919191-9191-4919-8919-919191919303'::uuid,
+    '91919191-9191-4919-8919-919191919302'::uuid,
+    '91919191-9191-4919-8919-919191919301'::uuid
+  )$$,
+  'an exact owner task revision deletes and returns its correlated context'
+);
+select is(
+  (select count(*)::integer from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  0,
+  'exact task deletion removes the intended row'
 );
 
 reset role;
