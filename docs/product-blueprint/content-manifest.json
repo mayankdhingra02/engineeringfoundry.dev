@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "a5a63f3578d57560d375a6e5636f6bd42dbf72d4",
-  "repository_state_sha256": "bf1e879ca218618279d658b52b56fd930a72802de258118fb4f1eaf960cf1f0f",
+  "repository_sha": "16bcdc91a88bb95da20c1fa3e19820a1e55e2fa0",
+  "repository_state_sha256": "4e9fdc55deb44f7f9c776c71beacfd64c87b8fb66119ff8c81a885460ec38792",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -562,6 +562,7 @@
       "acceptance_criteria": [
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
         "Homepage account continuation distinguishes anonymous, ready (including genuinely empty), and unavailable states; authenticated continuation-data query failures plus client transport and malformed-response failures cannot masquerade as signed-out or zero activity, account import requires a ready response, browser-local continuation remains available, and retry status and guarded focus recovery are source-regressed without claiming rendered browser automation. The shared actor boundary still does not distinguish an authentication-service failure from a legitimate anonymous session.",
+        "Explicit browser-activity import strictly validates one bounded snapshot before actor work and uses owner-derived insert-only RPCs to report imported, existing, and failed outcomes without overwriting richer account progress. Only exact submitted snapshots confirmed imported or existing are removed from current primary and legacy browser state; concurrent edits, failed and unrelated activity, and saved plans remain. Duplicate, stale, and unmounted client settlements are guarded, while truthful live status and conditional focus recovery are source-regressed without claiming rendered browser automation; database atomicity, concurrency, and owner isolation run in npm run qualify:database, and hosted RPC checks remain an external owner gate.",
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
         "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values.",
@@ -574,6 +575,7 @@
       ],
       "code_paths": [
         "app/api/preparation/continuation/route.ts",
+        "app/api/preparation/import/route.ts",
         "app/auth/callback/route.ts",
         "app/dashboard/page.tsx",
         "app/error.tsx",
@@ -614,9 +616,13 @@
         "lib/preparation-progress/account.ts",
         "lib/preparation-progress/activity-save.ts",
         "lib/preparation-progress/continuation.ts",
+        "lib/preparation-progress/import.ts",
+        "lib/preparation-progress/local.ts",
         "lib/preparation-progress/plan-save.ts",
         "lib/public-route-inventory.ts",
         "scripts/qualify-auth-local.mjs",
+        "scripts/qualify-persistence-local.mjs",
+        "scripts/qualify-security-local.mjs",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-account-lifecycle.mjs",
         "scripts/test-analytics-launch-evidence.mjs",
@@ -629,10 +635,13 @@
         "scripts/test-unified-progress.mjs",
         "scripts/validate-public-links.mjs",
         "supabase/migrations/202608240001_harden_profile_professional_links.sql",
-        "supabase/tests/database/auth_profile_hardening.test.sql"
+        "supabase/migrations/202609030003_import_preparation_activity_if_absent.sql",
+        "supabase/tests/database/auth_profile_hardening.test.sql",
+        "supabase/tests/database/preparation_activity_import.test.sql"
       ],
       "content_paths": [
-        "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md"
+        "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md",
+        "docs/unified-preparation-progress.md"
       ],
       "gap_inventory_ids": [],
       "id": "EF-GLOBAL",
@@ -659,6 +668,7 @@
       "test_commands": [
         "npm run lint",
         "npm run qualify:auth-local",
+        "npm run qualify:database",
         "npm run test:account-lifecycle",
         "npm run test:analytics-launch-evidence",
         "npm run test:application-tracker",
