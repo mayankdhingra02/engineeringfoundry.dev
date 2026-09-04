@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "794162a5660ae94a3567e85207a82500671e3dad",
-  "repository_state_sha256": "d085a374edf3913712dee28bd67667a1d425ff2233ca6a2c98db721e7fc149b5",
+  "repository_sha": "48c798604b298e5e33c375c381b28187a83eac8d",
+  "repository_state_sha256": "edc7866564f87b9384876550e28ce9d7d9c294e16535dc352f759e29a848f373",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -114,7 +114,7 @@
         "Existing public questions and private/local practice preserve fact integrity and privacy boundaries.",
         "Public filters and selected prompts derive from validated, deterministic URL state across direct links and history snapshots.",
         "Behavioral prompt activity reports only confirmed account, browser-local, or visit-only outcomes; disabled-account rendering skips the account action and workspace handoff, and an in-flight result cannot be presented as belonging to a newly selected prompt.",
-        "Behavioral story create and full-edit actions strictly parse exact bounded runtime fields and a complete controlled-theme snapshot before actor or persistence work, then use only owner-derived aggregate RPCs; full edits compare the loaded revision, coherent duplication captures one parent/theme snapshot, and direct or legacy split writes fail safely. Executable parsing and source-integration checks run in npm run test:behavioral-workspace, while database atomicity, concurrency, rollback, grants, and owner privacy run in npm run qualify:database and hosted checks remain an unchecked external-owner step. Source-integration checks cover draft-preserving manual-submit wiring, duplicate guards, bounded text field-error relationships, live-region semantics, and safe conflict recovery-link attributes; rendered draft retention and focus behavior remain browser/manual validation.",
+        "Behavioral story create and full-edit actions strictly parse exact bounded runtime fields and a complete controlled-theme snapshot before actor or persistence work, then use only owner-derived aggregate RPCs; full edits compare the loaded revision, coherent duplication captures one parent/theme snapshot, and direct or legacy split writes fail safely. The edit route loads the exact parent revision and complete controlled-theme defaults through one strictly parsed owner-scoped nested database snapshot; successful absence remains distinct from failed, malformed, mismatched, or unavailable private data, and a concurrent aggregate update cannot produce mixed edit defaults. Executable parsing and source-integration checks run in npm run test:behavioral-workspace, while database atomicity, coherent concurrent reads, rollback, grants, and owner privacy run in npm run qualify:database and hosted checks remain an unchecked external-owner step. Source-integration checks cover draft-preserving manual-submit wiring, duplicate guards, bounded text field-error relationships, live-region semantics, and safe conflict recovery-link attributes; rendered draft retention and focus behavior remain browser/manual validation.",
         "Behavioral answer create and full-edit actions strictly parse exact bounded runtime fields, checkbox-presence sentinels, canonical question and relationship identifiers, and the loaded edit revision before actor or persistence work, then use only owner-derived aggregate RPCs. The database serializes each owner/question primary boundary, saves content and desired primary state atomically, and rejects stale, foreign, missing, or question-mismatched edits without mutation; direct answer inserts/updates and the legacy primary-only write fail safely. Executable parsing and source-integration checks run in npm run test:behavioral-workspace, while full-save and primary concurrency, rollback, grants, and owner privacy run in npm run qualify:database and hosted checks remain an unchecked external-owner step. Source-integration checks cover draft-preserving manual-submit wiring, duplicate guards, revision submission, live-region semantics, and safe conflict recovery-link attributes; rendered draft retention and focus behavior remain browser/manual validation."
       ],
       "code_paths": [
@@ -126,7 +126,9 @@
         "features/preparation-progress/actions.ts",
         "lib/behavioral/answer-action-input.ts",
         "lib/behavioral/practice-url-state.ts",
+        "lib/behavioral/queries.ts",
         "lib/behavioral/story-action-input.ts",
+        "lib/behavioral/story-edit-state.ts",
         "lib/preparation-progress/activity-save.ts",
         "lib/supabase/database.types.ts",
         "scripts/qualify-account-lifecycle-local.mjs",
