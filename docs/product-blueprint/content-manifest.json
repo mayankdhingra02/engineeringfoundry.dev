@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "48c798604b298e5e33c375c381b28187a83eac8d",
-  "repository_state_sha256": "edc7866564f87b9384876550e28ce9d7d9c294e16535dc352f759e29a848f373",
+  "repository_sha": "1cad0e52b551ee85b7b8e6408c2a6106f31ab9a3",
+  "repository_state_sha256": "8eed0228e9835a3808aafe5292a83fddfed23e7d69ec17a58e4ee5d7a2b5870b",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -623,6 +623,7 @@
         "Dashboard first-use focus and Behavioral story count come only from complete owner-scoped query results; query errors, malformed result shapes, invalid persisted focus values, and invalid counts surface one sanitized private-data error before first-use copy instead of defaulting to unsure or zero.",
         "The preparation-settings private read renders editable defaults only after a complete owner-scoped preference result; a successful zero-row response remains a genuine blank state, while query failures, malformed result shapes, and invalid persisted enum values surface the sanitized private-data error before the form instead of presenting writable blank defaults.",
         "Preparation-preference saves and complete-onboarding submissions parse the runtime fields they consume before actor, query, RPC, or revalidation work; intentional empty preference choices preserve null semantics, while malformed consumed fields return stable curated errors without mutation. Exact setup skips validate intent and destination, ignore inactive optional choices, and force those choices to null or false.",
+        "Display-name, email-change, password-change, and account-deletion actions strictly parse exact singleton runtime strings before actor, profile, Auth, or deletion work; non-FormData, missing, duplicate, file-valued, and unknown consumed fields fail without mutation while framework action metadata is explicitly ignored. Empty display-name removal stays intentional, deletion keeps exact confirmation and current-password proof where supported, and signup, recovery, and signed-in password change share the same 8–128-character letter-and-number policy. Executable parser and source-ordering checks run in npm run test:account-lifecycle and npm run test:production-hardening; rendered browser error announcement remains covered by the broader manual accessibility gap.",
         "Password-reset navigation and mutation require a recent verified Supabase recovery authentication-method claim correlated to the same account; caller-controlled callback labels and an ordinary authenticated session cannot create that capability, and malformed, duplicate, file-valued, unknown, weak, or mismatched password fields are rejected before Auth work without a literal application recovery cookie."
       ],
       "code_paths": [
@@ -653,6 +654,7 @@
         "features/preparation-progress/plan-actions.ts",
         "features/profile/actions.ts",
         "features/profile/profile-form.tsx",
+        "lib/account/account-action-input.ts",
         "lib/account/preparation-preference-action-input.ts",
         "lib/account/preparation-preferences-query.ts",
         "lib/account/preparation-preferences.ts",
@@ -685,6 +687,7 @@
         "scripts/test-application-tracker.mjs",
         "scripts/test-auth-foundation.mjs",
         "scripts/test-homepage-entry.mjs",
+        "scripts/test-production-hardening.mjs",
         "scripts/test-public-launch-integrity.mjs",
         "scripts/test-public-links.mjs",
         "scripts/test-public-route-smoke.mjs",
@@ -696,6 +699,8 @@
         "supabase/tests/database/preparation_activity_import.test.sql"
       ],
       "content_paths": [
+        "docs/account-lifecycle.md",
+        "docs/auth-security.md",
         "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md",
         "docs/unified-preparation-progress.md"
       ],
@@ -732,6 +737,7 @@
         "npm run test:global-search",
         "npm run test:header-navigation",
         "npm run test:homepage-entry",
+        "npm run test:production-hardening",
         "npm run test:public-launch-integrity",
         "npm run test:public-links",
         "npm run test:public-route-smoke",
