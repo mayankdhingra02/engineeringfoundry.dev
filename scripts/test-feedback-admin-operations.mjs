@@ -3,6 +3,18 @@ import { readFile } from "node:fs/promises";
 import { priorityCompanyGuides } from "../data/company-guides/v1.ts";
 import { COMPANY_GUIDE_REVIEW_AFTER_DAYS, companyGuideFreshness } from "../lib/company-guides/freshness.ts";
 import { sanitizedFeedbackPageContext } from "../lib/feedback/model.ts";
+import {
+  FEEDBACK_CONTACT_CONSENT_PRESENT_FIELD,
+  FEEDBACK_SUBMISSION_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  FEEDBACK_SUBMISSION_INVALID_INPUT_ERROR,
+  FEEDBACK_SUBMISSION_PENDING_MESSAGE,
+  FEEDBACK_SUBMISSION_PERSISTENCE_ERROR,
+  FEEDBACK_SUBMISSION_SAVED_MESSAGE,
+  feedbackSubmissionDraftSignature,
+  parseFeedbackSubmissionActionInput,
+  parseFeedbackSubmissionResult,
+  resolveFeedbackSubmissionDisplayState,
+} from "../lib/feedback/submission-action-input.ts";
 import { isSupabaseConfigured } from "../lib/account-platform.ts";
 import {
   ADMIN_FEEDBACK_QUEUE_LIMIT,
@@ -31,12 +43,13 @@ import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, revisionMigration, triageRevisionMigration, feedbackAction, feedbackForm, adminMutationForms, publicFeedbackPage, publicSupabase, adminAuth, adminQueryResults, adminActions, adminLayout, adminHome, errorPage, styles, feedbackPage, feedbackDetail, experiencePage, experienceQueries, experiencePrivateState, experienceActionInput, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, requirementsSource, workflow, packageJson, feedbackPgTap, persistenceQualifier, securityQualifier] = await Promise.all([
+const [migration, revisionMigration, triageRevisionMigration, feedbackAction, feedbackForm, feedbackSubmissionInput, adminMutationForms, publicFeedbackPage, publicSupabase, adminAuth, adminQueryResults, adminActions, adminLayout, adminHome, errorPage, styles, feedbackPage, feedbackDetail, experiencePage, experienceQueries, experiencePrivateState, experienceActionInput, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, requirementsSource, workflow, packageJson, feedbackPgTap, persistenceQualifier, securityQualifier] = await Promise.all([
   read("supabase/migrations/202608230001_create_feedback_admin_operations.sql"),
   read("supabase/migrations/202609040003_save_interview_experience_if_revision.sql"),
   read("supabase/migrations/202609040012_update_feedback_submission_if_revision.sql"),
   read("features/feedback/actions.ts"),
   read("features/feedback/feedback-form.tsx"),
+  read("lib/feedback/submission-action-input.ts"),
   read("features/admin/mutation-forms.tsx"),
   read("app/feedback/page.tsx"),
   read("lib/supabase/public.ts"),
@@ -103,6 +116,98 @@ const validFeedbackDetail = {
   admin_note: null,
   updated_at: "2026-09-04T12:05:00.000Z",
 };
+
+const feedbackSubmissionForm = (overrides = {}) => {
+  const values = {
+    category: "privacy_safety",
+    message: "  Please review this private report.  ",
+    contact_email: " Reporter@Example.com ",
+    contact_consent: "true",
+    [FEEDBACK_CONTACT_CONSENT_PRESENT_FIELD]: "true",
+    page_context: "/feedback?private=secret#fragment",
+    ...overrides,
+  };
+  const form = new FormData();
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined) form.append(key, value);
+  }
+  return form;
+};
+
+assert.deepEqual(parseFeedbackSubmissionActionInput(feedbackSubmissionForm()), {
+  ok: true,
+  value: {
+    category: "privacy_safety",
+    message: "Please review this private report.",
+    contactEmail: "reporter@example.com",
+    contactConsent: true,
+    pageContext: "/feedback",
+  },
+});
+for (const category of ["bug", "suggestion", "content_source", "accessibility", "privacy_safety", "other"]) {
+  assert.equal(parseFeedbackSubmissionActionInput(feedbackSubmissionForm({ category })).ok, true, `rejected feedback category ${category}`);
+}
+assert.deepEqual(parseFeedbackSubmissionActionInput(feedbackSubmissionForm({ contact_email: "", contact_consent: undefined })), {
+  ok: true,
+  value: {
+    category: "privacy_safety",
+    message: "Please review this private report.",
+    contactEmail: null,
+    contactConsent: false,
+    pageContext: "/feedback",
+  },
+});
+assert.equal(parseFeedbackSubmissionActionInput(feedbackSubmissionForm({ message: "🙂".repeat(5_000) })).ok, true, "rejected a 5,000-code-point feedback message");
+for (const [input, field, label] of [
+  [feedbackSubmissionForm({ category: "unknown" }), "category", "invalid category"],
+  [feedbackSubmissionForm({ message: "" }), "message", "empty message"],
+  [feedbackSubmissionForm({ message: "x".repeat(5_001) }), "message", "oversized message"],
+  [feedbackSubmissionForm({ message: "unsafe\u0000message" }), "message", "unsafe message control"],
+  [feedbackSubmissionForm({ contact_email: "invalid" }), "contact_email", "invalid email"],
+  [feedbackSubmissionForm({ contact_consent: undefined }), "contact_consent", "missing contact consent"],
+]) {
+  const parsed = parseFeedbackSubmissionActionInput(input);
+  assert.equal(parsed.ok, false, `accepted ${label}`);
+  assert.ok(!parsed.ok && parsed.fieldErrors[field], `${label} lacks its field error`);
+}
+for (const input of [null, undefined, {}, [], "invalid"]) {
+  assert.equal(parseFeedbackSubmissionActionInput(input).ok, false, "accepted a non-FormData feedback submission");
+}
+for (const name of ["category", "message", "contact_email", FEEDBACK_CONTACT_CONSENT_PRESENT_FIELD, "page_context"]) {
+  const missing = feedbackSubmissionForm({ [name]: undefined });
+  assert.equal(parseFeedbackSubmissionActionInput(missing).ok, false, `accepted missing feedback field ${name}`);
+  const duplicate = feedbackSubmissionForm();
+  duplicate.append(name, String(duplicate.get(name)));
+  assert.equal(parseFeedbackSubmissionActionInput(duplicate).ok, false, `accepted duplicate feedback field ${name}`);
+  const file = feedbackSubmissionForm();
+  file.set(name, new File(["value"], "value.txt"));
+  assert.equal(parseFeedbackSubmissionActionInput(file).ok, false, `accepted File feedback field ${name}`);
+}
+for (const mutation of ["duplicate", "file", "invalid-value"]) {
+  const form = feedbackSubmissionForm();
+  if (mutation === "duplicate") form.append("contact_consent", "true");
+  else if (mutation === "file") form.set("contact_consent", new File(["true"], "true.txt"));
+  else form.set("contact_consent", "on");
+  assert.equal(parseFeedbackSubmissionActionInput(form).ok, false, `accepted ${mutation} contact consent`);
+}
+const unknownFeedbackField = feedbackSubmissionForm();
+unknownFeedbackField.set("actor_id", "foreign-user");
+assert.equal(parseFeedbackSubmissionActionInput(unknownFeedbackField).ok, false, "accepted an unknown feedback identity field");
+const feedbackWithActionMetadata = feedbackSubmissionForm();
+feedbackWithActionMetadata.set("$ACTION_ID_example", "opaque");
+assert.equal(parseFeedbackSubmissionActionInput(feedbackWithActionMetadata).ok, true, "React action metadata broke a valid feedback submission");
+
+const feedbackReference = "EF-FB-0123456789ABCDEF0123456789ABCDEF";
+assert.equal(parseFeedbackSubmissionResult(feedbackReference), feedbackReference);
+for (const result of [null, undefined, "", "EF-FB-0123", "ef-fb-0123456789abcdef0123456789abcdef", `${feedbackReference}0`, { reference: feedbackReference }]) {
+  assert.equal(parseFeedbackSubmissionResult(result), null, `accepted malformed feedback result ${String(result)}`);
+}
+const feedbackSignature = feedbackSubmissionDraftSignature(feedbackSubmissionForm());
+assert.notEqual(feedbackSignature, feedbackSubmissionDraftSignature(feedbackSubmissionForm({ message: "A newer unsent edit" })), "feedback draft signature ignored the submitted message");
+assert.deepEqual(resolveFeedbackSubmissionDisplayState({ status: "idle" }, true, false), { status: "pending", message: FEEDBACK_SUBMISSION_PENDING_MESSAGE });
+assert.deepEqual(resolveFeedbackSubmissionDisplayState({ status: "success", message: FEEDBACK_SUBMISSION_SAVED_MESSAGE, referenceId: feedbackReference }, false, true), { status: "success", message: FEEDBACK_SUBMISSION_EARLIER_SNAPSHOT_SAVED_MESSAGE, referenceId: feedbackReference });
+assert.deepEqual(resolveFeedbackSubmissionDisplayState({ status: "error", message: FEEDBACK_SUBMISSION_PERSISTENCE_ERROR }, false, true), { status: "error", message: FEEDBACK_SUBMISSION_PERSISTENCE_ERROR });
+assert.equal(FEEDBACK_SUBMISSION_INVALID_INPUT_ERROR, "Check the marked fields and try again.");
 
 const feedbackId = validFeedbackQueueItem.id;
 const feedbackRevision = validFeedbackDetail.updated_at;
@@ -349,7 +454,8 @@ assert.equal(sanitizedFeedbackPageContext("/behavioral/stories/secret-id?token=n
 assert.equal(sanitizedFeedbackPageContext("/applications/abc-123?email=private@example.test"), "/applications/...", "private application context is not collapsed");
 assert.equal(sanitizedFeedbackPageContext("/companies/openai?utm_source=test"), "/companies/openai", "public feedback context should strip query strings");
 assert.equal(sanitizedFeedbackPageContext("https://evil.example/steal"), "/feedback", "external feedback context is accepted");
-for (const marker of ["randomUUID", "createHash", "httpOnly: true", "contact_consent", "submit_feedback_submission", "5000", "sanitizedFeedbackPageContext"]) assert.ok(feedbackAction.includes(marker), `feedback action is missing ${marker}`);
+for (const marker of ["randomUUID", "createHash", "httpOnly: true", "submit_feedback_submission", "parseFeedbackSubmissionActionInput", "parseFeedbackSubmissionResult"]) assert.ok(feedbackAction.includes(marker), `feedback action is missing ${marker}`);
+for (const marker of ["contact_consent", "5_000", "sanitizedFeedbackPageContext", "FEEDBACK_CONTACT_CONSENT_PRESENT_FIELD", "containsUnsafeControl"]) assert.ok(feedbackSubmissionInput.includes(marker), `feedback submission runtime boundary is missing ${marker}`);
 assert.ok(!feedbackAction.includes("SUPABASE_SERVICE_ROLE_KEY") && !feedbackAction.includes("createSupabaseAdminClient"), "feedback action exposes an admin credential boundary");
 assert.ok(!feedbackAction.includes("createSupabaseServerClient"), "actorless feedback still depends on the account-gated session client");
 assert.match(feedbackAction, /const supabase = actor\?\.supabase \?\? createSupabasePublicClient\(\);/, "feedback must preserve the actor-bound client and use the sessionless public client only as the actorless fallback");
@@ -382,11 +488,11 @@ try {
   if (originalAccountsEnabled === undefined) delete process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED;
   else process.env.NEXT_PUBLIC_ACCOUNTS_ENABLED = originalAccountsEnabled;
 }
-for (const marker of ["useActionState", "role=\"alert\"", "role=\"status\"", "contact_consent", "5,000", "referenceId"]) assert.ok(feedbackForm.includes(marker), `feedback form is missing ${marker}`);
+for (const marker of ["useActionState", 'role={displayState.status === "error" ? "alert" : "status"}', "contact_consent", "5,000", "referenceId"]) assert.ok(feedbackForm.includes(marker), `feedback form is missing ${marker}`);
 for (const marker of [
-  'aria-describedby={state.fieldErrors?.category ? "feedback-category-error" : undefined}',
-  'aria-describedby={state.fieldErrors?.message ? "feedback-message-help feedback-message-error" : "feedback-message-help"}',
-  'aria-describedby={state.fieldErrors?.contact_email ? "feedback-contact-error" : undefined}',
+  'aria-describedby={fieldErrors?.category ? "feedback-category-error" : undefined}',
+  'aria-describedby={fieldErrors?.message ? "feedback-message-help feedback-message-error" : "feedback-message-help"}',
+  'aria-describedby={fieldErrors?.contact_email ? "feedback-contact-error" : undefined}',
 ]) assert.ok(feedbackForm.includes(marker), `feedback form does not conditionally reference an existing description: ${marker}`);
 for (const marker of [
   'id="feedback-category-error"',
@@ -394,8 +500,8 @@ for (const marker of [
   'id="feedback-message-error"',
   'id="feedback-contact-error"',
   'id="feedback-contact-consent"',
-  'aria-invalid={Boolean(state.fieldErrors?.contact_consent)}',
-  'aria-describedby={state.fieldErrors?.contact_consent ? "feedback-contact-consent-error" : undefined}',
+  'aria-invalid={Boolean(fieldErrors?.contact_consent)}',
+  'aria-describedby={fieldErrors?.contact_consent ? "feedback-contact-consent-error" : undefined}',
   'id="feedback-contact-consent-error"',
 ]) assert.ok(feedbackForm.includes(marker), `feedback field/error linkage is missing ${marker}`);
 assert.ok(!feedbackForm.includes('aria-describedby="feedback-message-help feedback-message-error"'), "feedback message must not reference an absent error node before validation fails");
@@ -414,14 +520,37 @@ for (const marker of [
 ]) assert.ok(feedbackForm.includes(marker), `returned feedback validation state lacks its ordered first-invalid focus contract: ${marker}`);
 for (const marker of [
   "const submissionInFlightRef = useRef(false);",
+  "const submittedDraftSignatureRef = useRef<string | null>(null);",
   "const editedSinceSubmitRef = useRef(false);",
-  "onSubmitCapture={() => {\n      submissionInFlightRef.current = true;\n      editedSinceSubmitRef.current = false;\n    }}",
-  "onInputCapture={() => {\n      if (submissionInFlightRef.current) editedSinceSubmitRef.current = true;\n    }}",
-  "const userResumedEditing = editedSinceSubmitRef.current;\n    submissionInFlightRef.current = false;\n    editedSinceSubmitRef.current = false;",
+  "const receiptFocusPendingRef = useRef(false);",
+  "const [submissionActive, setSubmissionActive] = useState(false);",
+  "const [changedSinceSubmit, setChangedSinceSubmit] = useState(false);",
+  "action={action}",
+  "onSubmit={submit}",
+  "onChange={(event) => updateChangedSinceSubmit(event.currentTarget)}",
+  "const submitting = pending || submissionActive;",
+  "aria-busy={submitting}",
+  "name={FEEDBACK_CONTACT_CONSENT_PRESENT_FIELD}",
+  'name="contact_consent" value="true"',
+  "resolveFeedbackSubmissionDisplayState(",
+  "state.status === \"success\" && !changedSinceSubmit && !submitting",
+  "displayState.status === \"success\" && displayState.referenceId",
+  'aria-atomic="true"',
 ]) assert.ok(feedbackForm.includes(marker), `feedback submission/edit tracking is missing ${marker}`);
-const successFocusIndex = feedbackForm.indexOf('if (state.status === "success") {\n      receiptTitleRef.current?.focus();');
+const submitStart = feedbackForm.indexOf("const submit = (");
+const submitEnd = feedbackForm.indexOf("const updateChangedSinceSubmit", submitStart);
+const submitSource = feedbackForm.slice(submitStart, submitEnd);
+const preventSubmit = submitSource.indexOf("event.preventDefault()");
+const duplicateGuard = submitSource.indexOf("if (submissionInFlightRef.current) return");
+const setPendingRef = submitSource.indexOf("submissionInFlightRef.current = true");
+const snapshotForm = submitSource.indexOf("new FormData(event.currentTarget)");
+const snapshotSignature = submitSource.indexOf("submittedDraftSignatureRef.current =");
+const transitionDispatch = submitSource.indexOf("startTransition(() => action(formData))");
+const activeSubmission = submitSource.indexOf("setSubmissionActive(true)");
+assert.ok(submitStart >= 0 && preventSubmit >= 0 && duplicateGuard > preventSubmit && setPendingRef > duplicateGuard && snapshotForm > setPendingRef && snapshotSignature > snapshotForm && activeSubmission > snapshotSignature && transitionDispatch > activeSubmission, "feedback manual submission does not synchronously guard, snapshot, and dispatch without React host reset");
+const successFocusIndex = feedbackForm.indexOf('receiptFocusPendingRef.current =\n      state.status === "success" && !userResumedEditing;');
 const resumedEditingGuardIndex = feedbackForm.indexOf('if (state.status !== "error" || !state.fieldErrors || userResumedEditing) return;');
-assert.ok(successFocusIndex >= 0 && resumedEditingGuardIndex > successFocusIndex, "success receipt focus must remain unconditional while resumed editing suppresses only returned-error focus recovery");
+assert.ok(successFocusIndex >= 0 && resumedEditingGuardIndex > successFocusIndex, "feedback settlement must preserve a newer editing focus claim before first-invalid recovery");
 const categoryFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.category, control: categoryRef.current }");
 const messageFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.message, control: messageRef.current }");
 const emailFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.contact_email, control: contactEmailRef.current }");
@@ -429,9 +558,22 @@ const consentFocusIndex = feedbackForm.indexOf("{ error: state.fieldErrors.conta
 assert.ok(categoryFocusIndex >= 0 && categoryFocusIndex < messageFocusIndex && messageFocusIndex < emailFocusIndex && emailFocusIndex < consentFocusIndex, "first-invalid focus order must follow the rendered category, message, email, and consent controls");
 for (const marker of ["ref={categoryRef}", "ref={messageRef}", "ref={contactEmailRef}", "ref={contactConsentRef}"]) assert.ok(feedbackForm.includes(marker), `feedback focus target is not attached: ${marker}`);
 
-assert.ok(successFocusIndex >= 0, "successful feedback state must focus its receipt heading after render");
+const receiptFocusEffect = feedbackForm.indexOf('!receiptFocusPendingRef.current ||');
+const receiptFocusCall = feedbackForm.indexOf('receiptTitleRef.current.focus();', receiptFocusEffect);
+assert.ok(successFocusIndex >= 0 && receiptFocusEffect > successFocusIndex && receiptFocusCall > receiptFocusEffect, "successful feedback state must defer receipt focus until the guarded receipt has rendered");
 assert.ok(feedbackForm.includes('<h2 ref={receiptTitleRef} id="feedback-receipt-title" tabIndex={-1}>'), "feedback receipt heading must be programmatically focusable without entering the tab order");
 assert.ok(feedbackForm.includes('role="status" aria-live="polite" aria-atomic="true"'), "feedback receipt must announce as one polite atomic status update");
+for (const forbidden of ["form.reset()", "requestFormReset", "key={state", "onSubmitCapture", "onInputCapture"]) assert.ok(!feedbackForm.includes(forbidden), `feedback form retained a draft-losing reset/remount path: ${forbidden}`);
+const submissionActionStart = feedbackAction.indexOf("export async function submitFeedbackAction");
+const feedbackParse = feedbackAction.indexOf("parseFeedbackSubmissionActionInput(form)", submissionActionStart);
+const feedbackInvalidReturn = feedbackAction.indexOf("if (!parsed.ok)", feedbackParse);
+const feedbackActor = feedbackAction.indexOf("getAuthenticatedActor()", feedbackInvalidReturn);
+const feedbackCookies = feedbackAction.indexOf("anonymousSubject()", feedbackActor);
+const feedbackRpc = feedbackAction.indexOf('rpc("submit_feedback_submission"', feedbackActor);
+const feedbackResult = feedbackAction.indexOf("parseFeedbackSubmissionResult(data)", feedbackRpc);
+assert.match(feedbackAction.slice(submissionActionStart), /form: unknown\): Promise<FeedbackActionState> \{\s*const parsed = parseFeedbackSubmissionActionInput\(form\);/, "feedback action does not parse its unknown runtime payload first");
+assert.ok(feedbackParse > submissionActionStart && feedbackInvalidReturn > feedbackParse && feedbackActor > feedbackInvalidReturn && feedbackCookies > feedbackActor && feedbackRpc > feedbackCookies && feedbackResult > feedbackRpc, "feedback action does not reject malformed input before auth, cookie, persistence, and result work");
+for (const forbidden of ["form.get(", "String(form", "!data"]) assert.ok(!feedbackAction.slice(submissionActionStart).includes(forbidden), `feedback action bypasses the strict parser/result boundary: ${forbidden}`);
 assert.ok(publicFeedbackPage.includes("const feedbackAvailable = isSupabaseConfigured();"), "feedback route does not derive intake availability at the server boundary");
 assert.match(publicFeedbackPage, /feedbackAvailable \? <FeedbackForm \/> : <section/, "feedback route does not keep the live form behind the configured-intake branch");
 assert.ok(contactPage.includes("const feedbackAvailable = isSupabaseConfigured();"), "contact route does not derive private-feedback availability at the server boundary");
@@ -558,4 +700,4 @@ assert.ok(!Object.hasOwn(priorityCompanyGuides[0], "freshness"), "freshness oper
 
 assert.ok(STATIC_STEPS.some((step) => step.args?.includes("test:feedback-admin-operations")) && workflow.includes("npm run qualify:static"), "P0.8 static qualification is not in local and hosted CI parity");
 assert.ok(JSON.parse(packageJson).scripts["test:feedback-admin-operations"], "P0.8 test command is absent");
-console.log("PASS  P0.8 feedback, strict admin read truth, authorization, RLS/RPC boundaries, lifecycle semantics, source-level feedback focus semantics, company freshness, privacy, and CI parity hold. Actual browser focus remains future rendered coverage.");
+console.log("PASS  P0.8 strict public feedback input and pending-edit truth, admin read truth, authorization, RLS/RPC boundaries, lifecycle semantics, source-level focus semantics, company freshness, privacy, and CI parity hold. Actual browser focus remains future rendered coverage.");
