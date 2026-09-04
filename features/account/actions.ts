@@ -9,8 +9,12 @@ import {
   ONBOARDING_ACTION_INVALID_INPUT_ERROR,
   ONBOARDING_TIMEZONE_INVALID_ERROR,
   PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR,
+  PREPARATION_PREFERENCES_CONFLICT_ERROR,
+  PREPARATION_PREFERENCES_PERSISTENCE_ERROR,
+  PREPARATION_PREFERENCES_SAVED_MESSAGE,
   parseCompleteOnboardingActionInput,
   parseSavePreparationPreferencesActionInput,
+  parseSavePreparationPreferencesResult,
 } from "@/lib/account/preparation-preference-action-input";
 import {
   ACCOUNT_DELETION_CONFIRMATION_ERROR,
@@ -147,28 +151,54 @@ export async function changePasswordAction(_: AccountActionState, form: unknown)
   return { status: "success", message: "Password changed." };
 }
 
-export async function savePreparationPreferencesAction(_: AccountActionState, form: unknown): Promise<AccountActionState> {
+export async function savePreparationPreferencesAction(previousState: AccountActionState, form: unknown): Promise<AccountActionState> {
   const parsed = parseSavePreparationPreferencesActionInput(form);
   if (!parsed.ok) {
-    return { status: "error", message: PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR };
+    return {
+      status: "error",
+      message: PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR,
+      revision: previousState.revision,
+    };
   }
+  const input = parsed.value;
+  const failed = (message: string, conflict = false): AccountActionState => ({
+    status: "error",
+    message,
+    conflict,
+    revision: input.revision,
+  });
   const actor = await getAuthenticatedActor();
-  if (!actor) return expired();
+  if (!actor) return failed("Your session expired. Sign in and try again.");
   const {
     preferredRoleLevel: role,
     primaryPreparationFocus: focus,
     dsaLevel,
-  } = parsed.value;
-  const { error } = await actor.supabase.rpc("save_account_preparation_preferences", {
+  } = input;
+  const { data, error } = await actor.supabase.rpc("save_account_preparation_preferences_if_revision", {
+    target_expect_absent: input.expectAbsent,
+    target_expected_updated_at: input.expectedUpdatedAt,
     preferred_role_level_value: role,
     primary_preparation_focus_value: focus,
     preferred_dsa_level_value: dsaLevel,
   });
-  if (error) return { status: "error", message: "We couldn’t save preparation preferences. Try again." };
+  if (error) return failed(PREPARATION_PREFERENCES_PERSISTENCE_ERROR);
+
+  const outcome = parseSavePreparationPreferencesResult(data);
+  if (outcome.status === "conflict") {
+    return failed(PREPARATION_PREFERENCES_CONFLICT_ERROR, true);
+  }
+  if (outcome.status === "invalid") {
+    return failed(PREPARATION_PREFERENCES_PERSISTENCE_ERROR);
+  }
+
   revalidatePath("/settings/preparation");
   revalidatePath("/dashboard");
   revalidatePath("/dsa");
-  return { status: "success", message: "Preparation preferences saved." };
+  return {
+    status: "success",
+    message: PREPARATION_PREFERENCES_SAVED_MESSAGE,
+    revision: outcome.updatedAt,
+  };
 }
 
 export async function signOutEverywhereAction(previousState: AccountActionState, form: FormData): Promise<AccountActionState> {

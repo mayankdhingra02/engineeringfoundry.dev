@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Download, LoaderCircle, LogOut, Trash2 } from "lucide-react";
-import { useActionState, useEffect } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   changePasswordAction,
   deleteAccountAction,
@@ -14,6 +21,11 @@ import {
 } from "./actions";
 import { dsaLevelOptions, focusOptions, roleLevelOptions } from "@/lib/account/preferences";
 import type { PreparationPreferences } from "@/lib/account/preparation-preferences";
+import {
+  PREPARATION_PREFERENCES_ABSENT_REVISION,
+  PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD,
+  resolvePreparationPreferenceDisplayState,
+} from "@/lib/account/preparation-preference-action-input";
 import { PASSWORD_REQUIREMENT } from "@/lib/auth/credentials";
 import { initialAccountActionState } from "./state";
 
@@ -70,13 +82,63 @@ export function GlobalSignOutForm() {
 }
 
 export function PreparationPreferencesForm({ preference }: { preference: PreparationPreferences | null }) {
-  const [state, action, pending] = useActionState(savePreparationPreferencesAction, initialAccountActionState);
-  return <form className="preparation-preferences-form" action={action}>
+  const initialRevision = preference?.updated_at ?? PREPARATION_PREFERENCES_ABSENT_REVISION;
+  const [state, action, pending] = useActionState(savePreparationPreferencesAction, {
+    ...initialAccountActionState,
+    revision: initialRevision,
+  });
+  const [changedSinceSubmit, setChangedSinceSubmit] = useState(false);
+  const submissionPending = useRef(false);
+  const submittedDraftSignature = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!pending) submissionPending.current = false;
+  }, [pending]);
+
+  useEffect(
+    () => () => {
+      submissionPending.current = false;
+      submittedDraftSignature.current = null;
+    },
+    [],
+  );
+
+  const draftSignature = (formData: FormData) => JSON.stringify([
+    formData.get("preferredRoleLevel"),
+    formData.get("primaryPreparationFocus"),
+    formData.get("dsaLevel"),
+  ]);
+  const updateChangedSinceSubmit = (form: HTMLFormElement) => {
+    if (submittedDraftSignature.current === null) return;
+    setChangedSinceSubmit(
+      draftSignature(new FormData(form)) !== submittedDraftSignature.current,
+    );
+  };
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submissionPending.current) return;
+    submissionPending.current = true;
+    const formData = new FormData(event.currentTarget);
+    submittedDraftSignature.current = draftSignature(formData);
+    setChangedSinceSubmit(false);
+    startTransition(() => action(formData));
+  };
+  const displayState = resolvePreparationPreferenceDisplayState(
+    state,
+    pending,
+    changedSinceSubmit,
+  );
+
+  return <form className="preparation-preferences-form" action={action} onSubmit={submit} onChange={(event) => updateChangedSinceSubmit(event.currentTarget)} aria-busy={pending}>
+    <input type="hidden" name={PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD} value={state.revision ?? initialRevision} />
     <label className="account-field"><span>Preferred role level</span><select name="preferredRoleLevel" defaultValue={preference?.preferred_role_level ?? ""}><option value="">No preference</option>{roleLevelOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><small>Used outside application-specific preparation.</small></label>
     <label className="account-field"><span>Primary preparation focus</span><select name="primaryPreparationFocus" defaultValue={preference?.primary_preparation_focus ?? ""}><option value="">No preference</option>{focusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><small>Prioritizes the first-use dashboard; it never hides other tracks.</small></label>
     <label className="account-field"><span>Preferred DSA roadmap</span><select name="dsaLevel" defaultValue={preference?.dsa_level ?? ""}><option value="">No preferred roadmap</option>{dsaLevelOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><small>An explicit roadmap choice is respected until you change it.</small></label>
-    <FormStatus state={state} />
-    <button className="button" disabled={pending}>{pending ? <><LoaderCircle className="spin" size={16} />Saving…</> : "Save preferences"}</button>
+    <p className={`account-form-status ${displayState.status}`} role="status" aria-live="polite" aria-atomic="true">
+      {displayState.message}
+      {!pending && state.conflict && <><br /><Link href="/settings/preparation" target="_blank" rel="noopener noreferrer">Review latest in a new tab</Link></>}
+    </p>
+    <button className="button" type="submit" aria-disabled={pending}>{pending ? <><LoaderCircle className="spin" size={16} />Saving…</> : "Save preferences"}</button>
   </form>;
 }
 

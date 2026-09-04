@@ -107,6 +107,28 @@ await check("repeated onboarding cannot overwrite completed private preferences"
   return "profile, preparation preferences, and reminder revision unchanged";
 });
 
+await check("legacy preparation preference snapshot saves fail safely without mutation", async () => {
+  const before = await a.client
+    .from("user_preparation_preferences")
+    .select("preferred_role_level,primary_preparation_focus,dsa_level,updated_at")
+    .single();
+  assert.ifError(before.error);
+  const legacy = await a.client.rpc("save_account_preparation_preferences", {
+    preferred_role_level_value: "staff",
+    primary_preparation_focus_value: "behavioral",
+    preferred_dsa_level_value: "sde3plus",
+  });
+  assert.equal(legacy.error?.code, "0A000");
+  assert.equal(legacy.error?.message, "Revision-checked preparation preference saving is required");
+  const after = await a.client
+    .from("user_preparation_preferences")
+    .select("preferred_role_level,primary_preparation_focus,dsa_level,updated_at")
+    .single();
+  assert.ifError(after.error);
+  assert.deepEqual(after.data, before.data);
+  return "0A000; saved values and revision unchanged";
+});
+
 await check("skip completes User B without invented preferences", async () => {
   const completion = await b.client.rpc("complete_account_onboarding", {
     preferred_role_level_value: null,
@@ -308,6 +330,7 @@ await check("privileged Auth deletion removes identity, private rows, reminders,
 await check("anonymous clients cannot invoke account lifecycle RPCs", async () => {
   assert.ok((await anon.rpc("complete_account_onboarding", { preferred_role_level_value: null, primary_preparation_focus_value: null, preferred_timezone_value: null })).error);
   assert.ok((await anon.rpc("save_account_preparation_preferences", { preferred_role_level_value: "sde1", primary_preparation_focus_value: "dsa", preferred_dsa_level_value: "sde1" })).error);
+  assert.ok((await anon.rpc("save_account_preparation_preferences_if_revision", { target_expect_absent: true, target_expected_updated_at: null, preferred_role_level_value: "sde1", primary_preparation_focus_value: "dsa", preferred_dsa_level_value: "sde1" })).error);
 });
 
   const failures = results.filter((result) => result.status === "FAIL");

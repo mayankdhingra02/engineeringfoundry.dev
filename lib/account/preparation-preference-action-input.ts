@@ -15,6 +15,19 @@ export const ONBOARDING_TIMEZONE_INVALID_ERROR =
   "Choose a valid IANA timezone, such as America/Chicago.";
 export const PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR =
   "Those preparation preferences are not valid. Review the form and try again.";
+export const PREPARATION_PREFERENCES_CONFLICT_ERROR =
+  "These preparation preferences may have changed since you opened this page. Your changes were not saved. Review the latest saved version before trying again.";
+export const PREPARATION_PREFERENCES_PERSISTENCE_ERROR =
+  "We couldn't save preparation preferences. Try again.";
+export const PREPARATION_PREFERENCES_SAVED_MESSAGE =
+  "Preparation preferences saved.";
+export const PREPARATION_PREFERENCES_PENDING_MESSAGE =
+  "Saving preparation preferences…";
+export const PREPARATION_PREFERENCES_EARLIER_SNAPSHOT_SAVED_MESSAGE =
+  "Earlier preparation preferences saved. Review your current changes and save again.";
+export const PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD =
+  "expected_updated_at";
+export const PREPARATION_PREFERENCES_ABSENT_REVISION = "absent";
 
 const onboardingFieldNames = new Set([
   "intent",
@@ -28,6 +41,7 @@ const preferenceFieldNames = new Set([
   "preferredRoleLevel",
   "primaryPreparationFocus",
   "dsaLevel",
+  PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD,
 ]);
 const preferredRoleLevels = new Set(roleLevelOptions.map((option) => option.value));
 const primaryPreparationFocuses = new Set(focusOptions.map((option) => option.value));
@@ -55,6 +69,9 @@ export type SavePreparationPreferencesActionInput = Readonly<{
   preferredRoleLevel: PreferredRoleLevel | null;
   primaryPreparationFocus: PrimaryPreparationFocus | null;
   dsaLevel: PreferredDsaLevel | null;
+  expectAbsent: boolean;
+  expectedUpdatedAt: string | null;
+  revision: string;
 }>;
 
 export type CompleteOnboardingActionInputParseResult = ParseResult<
@@ -64,6 +81,19 @@ export type CompleteOnboardingActionInputParseResult = ParseResult<
 
 export type SavePreparationPreferencesActionInputParseResult =
   ParseResult<SavePreparationPreferencesActionInput>;
+
+export type SavePreparationPreferencesResult =
+  | Readonly<{ status: "saved"; updatedAt: string }>
+  | Readonly<{ status: "conflict" }>
+  | Readonly<{ status: "invalid" }>;
+
+export type PreparationPreferenceDisplayState = Readonly<{
+  status: "idle" | "pending" | "error" | "success";
+  message: string;
+}>;
+
+const DATABASE_TIMESTAMP_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?(Z|([+-])(\d{2}):(\d{2}))$/;
 
 function isFormData(value: unknown): value is FormData {
   return typeof FormData !== "undefined" && value instanceof FormData;
@@ -109,6 +139,68 @@ function canonicalIanaTimeZone(value: string): string | null | undefined {
   } catch {
     return undefined;
   }
+}
+
+function daysInMonth(year: number, month: number) {
+  if (month === 2) {
+    const leapYear =
+      year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    return leapYear ? 29 : 28;
+  }
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+}
+
+export function isCanonicalPreparationPreferenceRevision(
+  value: unknown,
+): value is string {
+  if (typeof value !== "string") return false;
+  const match = DATABASE_TIMESTAMP_PATTERN.exec(value);
+  if (!match || !Number.isFinite(Date.parse(value))) return false;
+
+  const [
+    ,
+    yearText,
+    monthText,
+    dayText,
+    hourText,
+    minuteText,
+    secondText,
+    zone,
+    ,
+    offsetHourText,
+    offsetMinuteText,
+  ] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+  if (
+    year < 1 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > daysInMonth(year, month) ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59
+  ) {
+    return false;
+  }
+
+  if (zone !== "Z") {
+    const offsetHour = Number(offsetHourText);
+    const offsetMinute = Number(offsetMinuteText);
+    if (
+      offsetHour > 14 ||
+      offsetMinute > 59 ||
+      (offsetHour === 14 && offsetMinute !== 0)
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function parseCompleteOnboardingActionInput(
@@ -191,10 +283,17 @@ export function parseSavePreparationPreferencesActionInput(
   const preferredRoleLevelField = singleString(input, "preferredRoleLevel");
   const primaryPreparationFocusField = singleString(input, "primaryPreparationFocus");
   const dsaLevelField = singleString(input, "dsaLevel");
+  const revisionField = singleString(
+    input,
+    PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD,
+  );
   if (
     preferredRoleLevelField.status === "missing" ||
     primaryPreparationFocusField.status === "missing" ||
-    dsaLevelField.status === "missing"
+    dsaLevelField.status === "missing" ||
+    revisionField.status !== "value" ||
+    (revisionField.value !== PREPARATION_PREFERENCES_ABSENT_REVISION &&
+      !isCanonicalPreparationPreferenceRevision(revisionField.value))
   ) {
     return { ok: false, reason: "invalid-input" };
   }
@@ -213,8 +312,69 @@ export function parseSavePreparationPreferencesActionInput(
     return { ok: false, reason: "invalid-input" };
   }
 
+  const expectAbsent =
+    revisionField.value === PREPARATION_PREFERENCES_ABSENT_REVISION;
   return {
     ok: true,
-    value: { preferredRoleLevel, primaryPreparationFocus, dsaLevel },
+    value: {
+      preferredRoleLevel,
+      primaryPreparationFocus,
+      dsaLevel,
+      expectAbsent,
+      expectedUpdatedAt: expectAbsent ? null : revisionField.value,
+      revision: revisionField.value,
+    },
   };
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+export function parseSavePreparationPreferencesResult(
+  value: unknown,
+): SavePreparationPreferencesResult {
+  if (!Array.isArray(value)) return { status: "invalid" };
+  if (value.length === 0) return { status: "conflict" };
+  if (value.length !== 1 || !isPlainRecord(value[0])) {
+    return { status: "invalid" };
+  }
+
+  const keys = Reflect.ownKeys(value[0]);
+  if (
+    keys.length !== 1 ||
+    !keys.includes("updated_at") ||
+    !isCanonicalPreparationPreferenceRevision(value[0].updated_at)
+  ) {
+    return { status: "invalid" };
+  }
+
+  return { status: "saved", updatedAt: value[0].updated_at };
+}
+
+export function resolvePreparationPreferenceDisplayState(
+  actionState: Readonly<{
+    status: "idle" | "error" | "success";
+    message: string;
+  }>,
+  pending: boolean,
+  changedSinceSubmit: boolean,
+): PreparationPreferenceDisplayState {
+  if (pending) {
+    return {
+      status: "pending",
+      message: PREPARATION_PREFERENCES_PENDING_MESSAGE,
+    };
+  }
+  if (actionState.status === "success" && changedSinceSubmit) {
+    return {
+      status: "success",
+      message: PREPARATION_PREFERENCES_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+    };
+  }
+  return actionState;
 }

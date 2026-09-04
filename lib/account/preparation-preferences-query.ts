@@ -16,7 +16,7 @@ export async function getPreparationPreferences(): Promise<PreparationPreference
 
   const result = await actor.supabase
     .from("user_preparation_preferences")
-    .select("preferred_role_level,primary_preparation_focus,dsa_level")
+    .select("preferred_role_level,primary_preparation_focus,dsa_level,updated_at")
     .eq("user_id", actor.user.id)
     .maybeSingle();
 

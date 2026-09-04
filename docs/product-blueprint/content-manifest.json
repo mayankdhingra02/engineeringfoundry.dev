@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "c48ccba1185e5e6aa09f3cd5376b5df4114459b1",
-  "repository_state_sha256": "6651d7a131e4f3dfcaa4edf3017b9533e0e440a989754ada0bccf69486b57262",
+  "repository_sha": "229e4486ad5b04aad56c8b8072f90af50943529a",
+  "repository_state_sha256": "46f0750b79a02cd9acf15f0786f7ff04c00a5886c2e305c975ba2f1b08cc3db8",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -633,7 +633,7 @@
         "Dashboard first-use focus and Behavioral story count come only from complete owner-scoped query results; query errors, malformed result shapes, invalid persisted focus values, and invalid counts surface one sanitized private-data error before first-use copy instead of defaulting to unsure or zero.",
         "The preparation-settings private read renders editable defaults only after a complete owner-scoped preference result; a successful zero-row response remains a genuine blank state, while query failures, malformed result shapes, and invalid persisted enum values surface the sanitized private-data error before the form instead of presenting writable blank defaults.",
         "Onboarding renders a saved reminder timezone or a genuine blank only after an exact owner-scoped preference result; a missing database client, query failure, malformed response, or invalid persisted timezone reaches the private-data retry boundary before the form, so browser timezone detection cannot turn an unavailable private value into a writable default. Executable result and source-ordering checks run in npm run test:account-lifecycle.",
-        "Preparation-preference saves and complete-onboarding submissions parse the runtime fields they consume before actor, query, RPC, or revalidation work; intentional empty preference choices preserve null semantics, while malformed consumed fields return stable curated errors without mutation. Exact setup skips validate intent and destination, ignore inactive optional choices, and force those choices to null or false.",
+        "Preparation-preference saves parse one complete singleton role/focus/DSA-roadmap snapshot and its exact loaded revision before actor or persistence work; intentional empty choices preserve null semantics, while malformed fields fail without mutation. The owner-derived compare-and-swap accepts one coherent absent or matching-revision snapshot, advances revisions monotonically, preserves unrelated preparation fields, and makes a stale settings save conflict rather than overwrite a newer desired DSA roadmap. Legacy full-snapshot callers fail safely after migration-first deployment. Executable parser/result/display and source-integration checks run in npm run test:account-lifecycle; full/full and settings-versus-DSA concurrency, grants, legacy failure, and owner isolation run in npm run qualify:database, while hosted checks remain unchecked external-owner work. Source-integration checks cover draft-preserving manual-submit wiring, duplicate guards, post-submit edit truth, revision advancement, atomic live status, and safe conflict-link attributes; rendered draft retention, focus, and assistive-technology behavior remain browser/manual validation. Complete-onboarding submissions separately parse their exact runtime intent and destination before actor, query, RPC, or revalidation work; setup skips ignore inactive optional choices and force those choices to null or false.",
         "Display-name, email-change, password-change, and account-deletion actions strictly parse exact singleton runtime strings before actor, profile, Auth, or deletion work; non-FormData, missing, duplicate, file-valued, and unknown consumed fields fail without mutation while framework action metadata is explicitly ignored. Empty display-name removal stays intentional, deletion keeps exact confirmation and current-password proof where supported, and signup, recovery, and signed-in password change share the same 8–128-character letter-and-number policy. Executable parser and source-ordering checks run in npm run test:account-lifecycle and npm run test:production-hardening; rendered browser error announcement remains covered by the broader manual accessibility gap.",
         "Password-reset navigation and mutation require a recent verified Supabase recovery authentication-method claim correlated to the same account; caller-controlled callback labels and an ordinary authenticated session cannot create that capability, and malformed, duplicate, file-valued, unknown, weak, or mismatched password fields are rejected before Auth work without a literal application recovery cookie."
       ],
@@ -701,6 +701,7 @@
         "lib/preparation-progress/local.ts",
         "lib/preparation-progress/plan-save.ts",
         "lib/public-route-inventory.ts",
+        "scripts/qualify-account-lifecycle-local.mjs",
         "scripts/qualify-auth-local.mjs",
         "scripts/qualify-persistence-local.mjs",
         "scripts/qualify-security-local.mjs",
@@ -720,6 +721,8 @@
         "supabase/migrations/202609030003_import_preparation_activity_if_absent.sql",
         "supabase/migrations/202609040006_save_profile_if_revision.sql",
         "supabase/migrations/202609040008_delete_application_tracker_if_revision.sql",
+        "supabase/migrations/202609040014_save_account_preparation_preferences_if_revision.sql",
+        "supabase/tests/database/account_lifecycle.test.sql",
         "supabase/tests/database/application_tracker.test.sql",
         "supabase/tests/database/auth_profile_hardening.test.sql",
         "supabase/tests/database/preparation_activity_import.test.sql"
