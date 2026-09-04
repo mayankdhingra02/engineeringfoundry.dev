@@ -74,7 +74,33 @@ assert.ok((entryExperience.match(/requestId !== accountRequestIdRef\.current/g) 
 assert.match(entryExperience, /return \(\) => \{[\s\S]*mountedRef\.current = false;[\s\S]*accountRequestIdRef\.current \+= 1;[\s\S]*cancelAnimationFrame\(focusFrameRef\.current\)/, "unmount must invalidate account requests and cancel pending focus recovery");
 
 assert.match(entryExperience, /const accountCandidates = accountState\?\.status === "ready" \? accountState\.candidates : \[\];[\s\S]*choosePreparationContinuation\(accountCandidates, localCandidates\)/, "account failure must preserve independently verified browser-local continuation candidates");
-assert.match(entryExperience, /accountState\?\.status === "ready" && localCandidates\.length > 0[\s\S]*Import activity/, "browser activity import must be offered only after an explicit ready account response");
+for (const marker of [
+  "parsePreparationImportRequest",
+  "parsePreparationImportResponse",
+  "parsePreparationImportError",
+  "reconcilePreparationImport",
+  "preparationImportStatusMessage",
+  "importRequestIdRef",
+  "importPendingRef",
+  "importButtonRef",
+  "importStatusRef",
+  "recoverImportFocusRef",
+  "importFocusFrameRef",
+]) {
+  assert.ok(entryExperience.includes(marker), `browser import client contract is missing ${marker}`);
+}
+assert.match(entryExperience, /const importAvailable = accountState\?\.status === "ready" && localCandidates\.length > 0\s*&& localImportableActivityCount > 0;[\s\S]*Import activity/, "browser import must require an explicitly ready account, a browser continuation, and actual activity so saved-plan-only state cannot offer an empty import");
+assert.match(entryExperience, /if \(!mountedRef\.current \|\| importPendingRef\.current\) return;[\s\S]*const requestId = \+\+importRequestIdRef\.current/, "browser import must reject unmounted or duplicate activation and identify each request");
+assert.match(entryExperience, /const \{ progress \} = readBrowserProgressWithLegacy\(\);[\s\S]*parsePreparationImportRequest\(progress\)[\s\S]*body: JSON\.stringify\(submitted\)/, "browser import must submit one strict immutable snapshot rather than ad hoc storage fields");
+assert.match(entryExperience, /if \(!response\.ok\) throw new Error\(parsePreparationImportError\(payload\)[\s\S]*parsePreparationImportResponse\(payload, submitted\)[\s\S]*if \(!mountedRef\.current \|\| requestId !== importRequestIdRef\.current\) return;/, "non-OK, malformed, unmounted, and stale import responses must not reconcile browser storage");
+assert.ok((entryExperience.match(/requestId !== importRequestIdRef\.current/g) ?? []).length >= 2, "both successful and failed import settlement must reject stale requests");
+assert.match(entryExperience, /const current = readBrowserProgressWithLegacy\(\);[\s\S]*reconcilePreparationImport\(submitted, result, current\.current, current\.legacy\)/, "import settlement must reread current primary and legacy browser state before snapshot-equality reconciliation");
+assert.match(entryExperience, /if \(reconciliation\.primaryChanged\)[\s\S]*writeLocalPreparationProgress\(window\.localStorage, reconciliation\.progress\)[\s\S]*if \(reconciliation\.legacyChanged && reconciliation\.legacySystemDesignProgress\)[\s\S]*systemDesignProgressStorageKey/, "only reconciled primary and legacy state may be written after confirmed account outcomes");
+assert.doesNotMatch(entryExperience, /removeLocalProgressItems/, "the client must not delete browser rows by response key without snapshot equality");
+assert.match(entryExperience, /if \(localStateChanged\)[\s\S]*new CustomEvent\(preparationProgressEvent\)[\s\S]*new CustomEvent\(systemDesignProgressEvent\)/, "browser progress events must follow a successful local reconciliation write");
+assert.match(entryExperience, /preparationImportStatusMessage\(result, \{[\s\S]*changedLocallyCount: reconciliation\.changedLocallyCount,[\s\S]*localReconciliationFailed/, "final import copy must distinguish account outcomes, concurrent browser edits, and local cleanup failure");
+assert.match(entryExperience, /await loadAccountProgress\(\)/, "a confirmed import must refresh account-derived continuation instead of fabricating account state locally");
+assert.match(entryExperience, /importRequestIdRef\.current \+= 1;[\s\S]*importPendingRef\.current = false;[\s\S]*cancelAnimationFrame\(importFocusFrameRef\.current\)/, "unmount must invalidate import settlement and cancel its pending focus recovery");
 assert.match(entryExperience, /if \(!accountState \|\| accountState\.status === "unavailable"[\s\S]*track\("continuation_presented"/, "continuation presentation analytics must not label an unknown/unavailable account state as anonymous");
 assert.match(entryExperience, /onClick=\{\(\) => \{ if \(!accountState \|\| accountState\.status === "unavailable"\) return; track\("continuation_selected"/, "continuation selection analytics must not label an unknown/unavailable account state as anonymous");
 
@@ -125,5 +151,36 @@ assert.match(
 );
 assert.match(entryExperience, /ref=\{continuationHeadingRef\} tabIndex=\{-1\}/, "the continuation heading must be a programmatic focus target");
 assert.match(entryExperience, /ref=\{trackHeadingRef\} tabIndex=\{-1\}/, "the track heading must be a persistent programmatic focus target");
+
+for (const marker of [
+  'id="home-browser-import-status"',
+  'role="status"',
+  'aria-live="polite"',
+  'aria-atomic="true"',
+  "aria-busy={importing}",
+  "aria-disabled={importing}",
+  'aria-describedby="home-browser-import-status"',
+  'tabIndex={-1}',
+  "Importing browser activity…",
+  "Importing browser activity. Browser activity will remain here until each account result is confirmed.",
+]) {
+  assert.ok(entryExperience.includes(marker), `browser import status semantics are missing ${marker}`);
+}
+const importButtonStart = entryExperience.indexOf("ref={importButtonRef}");
+const importButtonEnd = entryExperience.indexOf("</button>", importButtonStart);
+const importButtonSource = importButtonStart === -1 || importButtonEnd === -1 ? "" : entryExperience.slice(importButtonStart, importButtonEnd);
+assert.ok(importButtonSource.includes("aria-disabled={importing}") && !/[\s\n]disabled=/.test(importButtonSource), "pending import must retain trigger focus while its duplicate guard prevents another activation");
+assert.match(importButtonSource, /if \(importPendingRef\.current\) return;[\s\S]*importBrowserActivity\(\)/, "the visible import trigger must enforce the synchronous duplicate guard");
+assert.match(
+  entryExperience,
+  /recoverImportFocusRef\.current = document\.activeElement === importButtonRef\.current[\s\S]*if \(!recoverImportFocusRef\.current \|\| importing \|\| !importMessage\) return;[\s\S]*if \(importButtonRef\.current\?\.isConnected\) return;/,
+  "import focus recovery must be armed only when the explicit trigger owned focus and removed browser activity removes that trigger",
+);
+assert.match(
+  entryExperience,
+  /importFocusFrameRef\.current = window\.requestAnimationFrame[\s\S]*if \(importButtonRef\.current\?\.isConnected\) return;[\s\S]*document\.activeElement && document\.activeElement !== document\.body[\s\S]*importStatusRef\.current\?\.focus\(\)/,
+  "import focus recovery must yield to a newer claim and target the persistent announced result",
+);
+assert.match(entryExperience, /return \(\) => \{[\s\S]*cancelAnimationFrame\(importFocusFrameRef\.current\)[\s\S]*importFocusFrameRef\.current = null;/, "import result focus frames must be cancelled on dependency change or unmount");
 
 console.log("Homepage entry experience tests passed.");

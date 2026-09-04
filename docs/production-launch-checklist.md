@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 29 migrations are recorded, ending at `202609030002_set_dsa_question_quick_progress`
+4. [ ] `supabase migration list --linked` — confirm all 30 migrations are recorded, ending at `202609030003_import_preparation_activity_if_absent`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -133,8 +133,9 @@ Use two disposable accounts (User A and User B) against the production origin wi
 ### Anonymous browser-progress import boundary
 
 - [ ] While signed out, record only canonical public preparation activity in the browser; no notes, answers, stories, or analytics payloads are present in browser progress
-- [ ] After sign-in, choose the explicit import action and confirm it imports only valid missing activity for User A
-- [ ] Confirm existing User A records are left unchanged, browser activity is cleared only when imported, and local saved plans are not imported automatically
+- [ ] Confirm `anon` cannot execute `import_dsa_question_progress_if_absent`, `import_system_design_item_progress_if_absent`, or `import_preparation_track_progress_if_absent`; after sign-in, choose the explicit import action and confirm those insert-only RPCs import only valid missing activity for User A
+- [ ] Seed richer existing progress in all three storage families, then confirm import reports it as existing and leaves its status, notes, confidence, bookmark, and timestamps unchanged; repeat and overlap same-key imports to confirm exactly one insert, and overlap a DSA import with a richer save to confirm the richer intent survives
+- [ ] Change a submitted browser activity while its request is in flight, and add an unrelated activity; confirm only an exact submitted browser snapshot whose account result is imported or existing is cleared from current primary and legacy storage, while changed, unrelated, and failed activity remains and local saved plans are not imported automatically
 - [ ] Confirm User B cannot read, import, overwrite, or otherwise observe User A's browser-originated or account-backed preparation activity
 
 ### Privacy

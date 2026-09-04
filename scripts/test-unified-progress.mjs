@@ -6,7 +6,6 @@ import {
   parseLocalPreparationProgress,
   preparationActivityDaysThisWeek,
   recordLocalProgress,
-  removeLocalProgressItems,
   saveLocalPlan,
 } from "../lib/preparation-progress/local.ts";
 import {
@@ -21,6 +20,16 @@ import {
   resolvePreparationActivitySaveOutcome,
 } from "../lib/preparation-progress/activity-save.ts";
 import { resolveStudyPlanSaveOutcome, studyPlanId } from "../lib/preparation-progress/plan-save.ts";
+import {
+  parsePreparationImportError,
+  parsePreparationImportRequest,
+  parsePreparationImportResponse,
+  preparationImportStatusMessage,
+  PREPARATION_IMPORT_INVALID_MESSAGE,
+  PREPARATION_IMPORT_UNAUTHENTICATED_MESSAGE,
+  PREPARATION_IMPORT_UNAVAILABLE_MESSAGE,
+  reconcilePreparationImport,
+} from "../lib/preparation-progress/import.ts";
 
 const catalog = {
   dsa: [{ id: "two-sum", title: "Two Sum", href: "/dsa/questions/two-sum" }, { id: "valid-parentheses", title: "Valid Parentheses", href: "/dsa/questions/valid-parentheses" }],
@@ -58,8 +67,127 @@ assert.equal(choosePreparationContinuation([account], candidates)?.source, "acco
 const upcomingInterview = { track: "interview", title: "Prepare for your upcoming interview", href: "/interviews/round-1/prepare", context: "Upcoming route.", source: "account", kind: "upcoming-interview", updatedAt: 1 };
 assert.equal(choosePreparationContinuation([account, upcomingInterview], candidates)?.kind, "upcoming-interview", "a real upcoming interview context should outrank all saved preparation continuation");
 assert.equal(choosePreparationContinuation([], []) , null, "new users must not receive fabricated continuation");
-assert.equal(removeLocalProgressItems(local, ["dsa:two-sum"]).items.some((item) => item.itemId === "two-sum"), false, "only confirmed imports may clear their browser activity");
 assert.equal(preparationActivityDaysThisWeek([{ updatedAt: Date.parse("2026-08-20T10:00:00Z") }, { updatedAt: Date.parse("2026-08-20T15:00:00Z") }, { updatedAt: Date.parse("2026-08-18T10:00:00Z") }], Date.parse("2026-08-21T12:00:00Z")), 2, "weekly momentum counts distinct activity days, not clicks or a streak");
+
+const importValidationInstant = new Date("2026-09-03T12:00:00.000Z");
+const importRequestFixture = {
+  version: 1,
+  items: [
+    { track: "dsa", itemId: "two-sum", status: "completed", updatedAt: 10 },
+    { track: "system-design", itemId: "introduction", status: "in-progress", updatedAt: 0 },
+    { track: "ml-design", itemId: "recommendation-system", status: "in-progress", updatedAt: 20 },
+    { track: "behavioral", itemId: "beh-conflict", status: "completed", updatedAt: 30 },
+  ],
+  plans: [{ track: "dsa", href: "/dsa/study-plans?level=sde2&duration=60", label: "60-day DSA study plan", savedAt: 40 }],
+};
+const parsedImportRequest = parsePreparationImportRequest(importRequestFixture, importValidationInstant);
+assert.deepEqual(parsedImportRequest, importRequestFixture, "a strict bounded browser snapshot must remain eligible for import");
+
+const invalidImportRequests = [
+  null,
+  [],
+  {},
+  { ...importRequestFixture, extra: true },
+  { ...importRequestFixture, version: 2 },
+  { ...importRequestFixture, items: "items" },
+  { ...importRequestFixture, plans: "plans" },
+  { ...importRequestFixture, items: Array.from({ length: 161 }, (_, index) => ({ track: "dsa", itemId: `item-${index}`, status: "completed", updatedAt: index })) },
+  { ...importRequestFixture, plans: [...importRequestFixture.plans, { ...importRequestFixture.plans[0], track: "system-design" }, { ...importRequestFixture.plans[0], href: "/another" }] },
+  { ...importRequestFixture, items: [...importRequestFixture.items, { ...importRequestFixture.items[0] }] },
+  { ...importRequestFixture, items: [{ ...importRequestFixture.items[0], extra: true }] },
+  { ...importRequestFixture, items: [{ ...importRequestFixture.items[0], track: "interview" }] },
+  { ...importRequestFixture, items: [{ ...importRequestFixture.items[0], itemId: "../private" }] },
+  { ...importRequestFixture, items: [{ ...importRequestFixture.items[0], status: "review" }] },
+  { ...importRequestFixture, items: [{ ...importRequestFixture.items[0], updatedAt: -1 }] },
+  { ...importRequestFixture, items: [{ ...importRequestFixture.items[0], updatedAt: Date.parse("2026-09-04T12:00:00.001Z") }] },
+  { ...importRequestFixture, plans: [{ ...importRequestFixture.plans[0], extra: true }] },
+  { ...importRequestFixture, plans: [{ ...importRequestFixture.plans[0], track: "ml-design" }] },
+  { ...importRequestFixture, plans: [{ ...importRequestFixture.plans[0], href: "https://evil.example/plan" }] },
+  { ...importRequestFixture, plans: [{ ...importRequestFixture.plans[0], label: "" }] },
+  { ...importRequestFixture, plans: [{ ...importRequestFixture.plans[0], savedAt: Number.NaN }] },
+  { ...importRequestFixture, plans: [importRequestFixture.plans[0], { ...importRequestFixture.plans[0], href: "/dsa/study-plans?duration=30" }] },
+];
+for (const value of invalidImportRequests) {
+  assert.equal(parsePreparationImportRequest(value, importValidationInstant), null, `malformed or over-bounded import request must fail closed: ${JSON.stringify(value)}`);
+}
+assert.equal(parsePreparationImportRequest(importRequestFixture, new Date("invalid")), null, "an invalid injected validation instant must fail closed");
+
+const importResponseFixture = {
+  results: [
+    { track: "behavioral", itemId: "beh-conflict", outcome: "failed" },
+    { track: "ml-design", itemId: "recommendation-system", outcome: "existing" },
+    { track: "system-design", itemId: "introduction", outcome: "imported" },
+    { track: "dsa", itemId: "two-sum", outcome: "imported" },
+  ],
+  plansRequireChoice: true,
+};
+const parsedImportResponse = parsePreparationImportResponse(importResponseFixture, parsedImportRequest);
+assert.deepEqual(parsedImportResponse, {
+  results: [
+    { track: "dsa", itemId: "two-sum", outcome: "imported" },
+    { track: "system-design", itemId: "introduction", outcome: "imported" },
+    { track: "ml-design", itemId: "recommendation-system", outcome: "existing" },
+    { track: "behavioral", itemId: "beh-conflict", outcome: "failed" },
+  ],
+  plansRequireChoice: true,
+}, "a complete response must correlate one exact outcome to every submitted item in submitted order");
+
+for (const value of [
+  null,
+  {},
+  { ...importResponseFixture, extra: true },
+  { ...importResponseFixture, results: importResponseFixture.results.slice(1) },
+  { ...importResponseFixture, results: [...importResponseFixture.results, importResponseFixture.results[0]] },
+  { ...importResponseFixture, results: importResponseFixture.results.map((item, index) => index === 0 ? { ...item, extra: true } : item) },
+  { ...importResponseFixture, results: importResponseFixture.results.map((item, index) => index === 0 ? { ...item, track: "dsa", itemId: "foreign-item" } : item) },
+  { ...importResponseFixture, results: importResponseFixture.results.map((item, index) => index === 0 ? { ...item, outcome: "skipped" } : item) },
+  { ...importResponseFixture, results: importResponseFixture.results.map(() => importResponseFixture.results[0]) },
+  { ...importResponseFixture, plansRequireChoice: false },
+]) {
+  assert.equal(parsePreparationImportResponse(value, parsedImportRequest), null, `uncorrelated or malformed import response must fail closed: ${JSON.stringify(value)}`);
+}
+
+for (const message of [PREPARATION_IMPORT_INVALID_MESSAGE, PREPARATION_IMPORT_UNAUTHENTICATED_MESSAGE, PREPARATION_IMPORT_UNAVAILABLE_MESSAGE]) {
+  assert.equal(parsePreparationImportError({ error: message }), message, `the client may expose only the curated import error: ${message}`);
+}
+for (const value of [null, {}, { error: "database detail" }, { error: PREPARATION_IMPORT_UNAVAILABLE_MESSAGE, detail: "private" }]) {
+  assert.equal(parsePreparationImportError(value), null, "unknown or malformed import errors must be replaced by the stable unavailable message");
+}
+
+const currentImportProgress = {
+  version: 1,
+  items: [
+    importRequestFixture.items[0],
+    { ...importRequestFixture.items[1], status: "completed", updatedAt: 999 },
+    importRequestFixture.items[2],
+    importRequestFixture.items[3],
+    { track: "dsa", itemId: "valid-parentheses", status: "in-progress", updatedAt: 50 },
+  ],
+  plans: importRequestFixture.plans,
+};
+const importReconciliation = reconcilePreparationImport(
+  parsedImportRequest,
+  parsedImportResponse,
+  currentImportProgress,
+  { "topic:introduction": "in-progress", "practice:url-shortener": "completed", malformed: "private" },
+);
+assert.deepEqual(importReconciliation.progress.items, [
+  { ...importRequestFixture.items[1], status: "completed", updatedAt: 999 },
+  importRequestFixture.items[3],
+  { track: "dsa", itemId: "valid-parentheses", status: "in-progress", updatedAt: 50 },
+], "reconciliation must remove exact imported/existing snapshots while retaining failed, concurrently changed, and unrelated primary rows");
+assert.deepEqual(importReconciliation.progress.plans, importRequestFixture.plans, "browser plan choices must survive activity import unchanged");
+assert.deepEqual(importReconciliation.legacySystemDesignProgress, { "practice:url-shortener": "completed", malformed: "private" }, "legacy reconciliation must remove only the exact confirmed submitted snapshot");
+assert.equal(importReconciliation.primaryChanged, true);
+assert.equal(importReconciliation.legacyChanged, true);
+assert.equal(importReconciliation.changedLocallyCount, 1, "a changed key present in multiple stores must be counted once");
+assert.equal(
+  preparationImportStatusMessage(parsedImportResponse, { changedLocallyCount: 1, localReconciliationFailed: false }),
+  "2 activities were imported. 1 activity was already in your account. 1 activity could not be imported and remains in this browser. 1 activity changed in this browser during the import and remains here. Saved plans remain in this browser until you choose one on its plan page.",
+  "mixed import outcomes must have exact truthful copy",
+);
+assert.match(preparationImportStatusMessage(parsedImportResponse, { changedLocallyCount: 0, localReconciliationFailed: true }), /browser activity could not be fully cleared/, "a failed local rewrite must not claim browser cleanup");
+assert.equal(preparationImportStatusMessage({ results: [], plansRequireChoice: false }, { changedLocallyCount: 0, localReconciliationFailed: false }), "No browser activity needed importing.");
 
 const anonymousContinuationState = { status: "anonymous", authenticated: false, candidates: [], weeklyActivityDays: 0 };
 const emptyReadyContinuationState = { status: "ready", authenticated: true, candidates: [], weeklyActivityDays: 0 };
@@ -206,12 +334,57 @@ const importRoute = read("app/api/preparation/import/route.ts");
 const continuationRoute = read("app/api/preparation/continuation/route.ts");
 const accountContinuationQuery = read("lib/preparation-progress/account.ts");
 const activityMigration = read("supabase/migrations/202608220002_create_preparation_track_progress.sql");
+const importMigration = read("supabase/migrations/202609030003_import_preparation_activity_if_absent.sql");
+const importDatabaseTest = read("supabase/tests/database/preparation_activity_import.test.sql");
+const unifiedProgressDocs = read("docs/unified-preparation-progress.md");
+const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
+const securityQualifier = read("scripts/qualify-security-local.mjs");
 const planControl = read("components/save-study-plan-control.tsx");
 const planAction = read("features/preparation-progress/plan-actions.ts");
 const activityControl = read("components/preparation-activity-control.tsx");
 const homeExperience = read("components/home-entry-experience.tsx");
 for (const marker of ["canonicalDsaQuestionById", "canonicalSystemDesignConceptIds", "activeMlDesignProblems", "activeBehavioralQuestions", "target_notes: null"]) assert.ok(activityAction.includes(marker), `durable activity action must preserve canonical/no-note semantics: ${marker}`);
-for (const marker of ["parseLocalPreparationProgress", "dsaKeys.has", "systemKeys.has", "trackKeys.has", "removeLocalProgressItems"]) assert.ok(importRoute.includes(marker) || read("components/home-entry-experience.tsx").includes(marker), `explicit import must validate and avoid overwrite: ${marker}`);
+assert.ok(importRoute.indexOf("parsePreparationImportRequest(payload)") < importRoute.indexOf("await getAuthenticatedActor()"), "browser import must strictly parse the untrusted snapshot before actor or RPC work");
+for (const marker of [
+  "canonicalDsaQuestionById.has(item.itemId)",
+  "canonicalSystemDesignConceptIds.has(item.itemId)",
+  "canonicalSystemDesignProblemIds.has(item.itemId)",
+  "mlIds.has(item.itemId)",
+  "behavioralIds.has(item.itemId)",
+  'rpc("import_dsa_question_progress_if_absent"',
+  'rpc("import_system_design_item_progress_if_absent"',
+  'rpc("import_preparation_track_progress_if_absent"',
+  'return data ? "imported" : "existing"',
+  'return "failed"',
+  '"Cache-Control": "private, no-store"',
+  'Pragma: "no-cache"',
+  '"X-Robots-Tag": "noindex, nofollow"',
+]) assert.ok(importRoute.includes(marker), `explicit import route is missing its strict atomic outcome contract: ${marker}`);
+for (const obsolete of [
+  'from("dsa_question_progress")',
+  'from("system_design_item_progress")',
+  'from("preparation_track_progress")',
+  'rpc("save_dsa_question_progress"',
+  'rpc("save_system_design_item_progress"',
+  'rpc("save_preparation_track_progress"',
+]) assert.ok(!importRoute.includes(obsolete), `explicit import must not pre-read progress or invoke a whole-record save boundary: ${obsolete}`);
+for (const rpc of ["import_dsa_question_progress_if_absent", "import_system_design_item_progress_if_absent", "import_preparation_track_progress_if_absent"]) {
+  const functionStart = importMigration.indexOf(`function public.${rpc}`);
+  const functionEnd = importMigration.indexOf("$$;", functionStart);
+  const functionSource = functionStart < 0 || functionEnd < 0 ? "" : importMigration.slice(functionStart, functionEnd);
+  assert.ok(functionSource.includes("security definer") && functionSource.includes("set search_path = ''") && functionSource.includes("auth.uid()"), `${rpc} must derive its owner inside a hardened security-definer boundary`);
+  assert.ok(functionSource.includes("on conflict") && functionSource.includes("do nothing") && functionSource.includes("return coalesce(inserted, false)"), `${rpc} must be one insert-if-absent statement whose boolean reports the actual insert`);
+  assert.ok(importMigration.includes(`revoke all on function public.${rpc}`) && importMigration.includes(`grant execute on function public.${rpc}`), `${rpc} must deny anonymous execution and grant only its reviewed authenticated signature`);
+}
+for (const marker of [
+  "insert-only browser import preserves rich existing progress across every storage family",
+  "concurrent same-key browser imports insert exactly once",
+  "concurrent browser import and rich DSA save preserve the full-save intent",
+  "concurrent different-key browser imports commute",
+]) assert.ok(persistenceQualifier.includes(marker), `persistence qualification must retain atomic import evidence: ${marker}`);
+for (const marker of ["anonymous callers cannot invoke insert-only browser import RPCs", "insert-only browser imports derive independent owners without exposing foreign state"]) assert.ok(securityQualifier.includes(marker), `security qualification must retain import isolation evidence: ${marker}`);
+for (const marker of ["plan(41)", "DSA import inserts an absent canonical question", "DSA import preserves every rich field and timestamp byte-for-byte", "repeated DSA import is idempotent and preserves the first result"]) assert.ok(importDatabaseTest.includes(marker), `database import regression is missing ${marker}`);
+for (const marker of ["exactly matches the submitted snapshot", "`imported` or `existing`", "Partial success", "failed, concurrently changed, and unrelated browser activity remains recoverable", "Local saved plans always stay in the browser"]) assert.ok(unifiedProgressDocs.includes(marker), `canonical import documentation is missing its snapshot-safe partial-outcome contract: ${marker}`);
 assert.match(
   accountContinuationQuery,
   /\[upcomingRoundResult, preferencesResult, dsaResult, systemProgressResult, attemptsResult, trackResult, behavioralResult\]\.some\(\(result\) => result\.error\)[\s\S]*authenticated: true, queryFailed: true/,
