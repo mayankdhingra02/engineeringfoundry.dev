@@ -122,9 +122,30 @@ await check("User B cannot read or update User A settings", async () => {
   const read = await b.client.from("user_preparation_preferences").select("preferred_role_level").eq("user_id", a.user.id);
   assert.ifError(read.error);
   assert.equal(read.data.length, 0);
-  const update = await b.client.from("profiles").update({ display_name: "Intrusion" }).eq("id", a.user.id).select("id");
-  assert.ifError(update.error);
-  assert.equal(update.data.length, 0);
+  const ownerA = await a.client.from("profiles").select("display_name,updated_at").single();
+  assert.ifError(ownerA.error);
+  const direct = await b.client.from("profiles").update({ display_name: "Intrusion" }).eq("id", a.user.id).select("id");
+  assert.equal(direct.error?.code, "42501");
+  const staleForeignRevision = await b.client.rpc("save_profile_if_revision", {
+    target_expected_updated_at: ownerA.data.updated_at,
+    target_username: "lifecycle-user-b",
+    target_display_name: "Intrusion",
+    target_bio: null,
+    target_current_company: null,
+    target_current_role: null,
+    target_years_experience: null,
+    target_update_linkedin_url: true,
+    target_linkedin_url: null,
+    target_update_github_url: true,
+    target_github_url: null,
+    target_is_public: false,
+  });
+  assert.ifError(staleForeignRevision.error);
+  assert.deepEqual(staleForeignRevision.data, []);
+  const ownerAAfter = await a.client.from("profiles").select("display_name,updated_at").single();
+  assert.ifError(ownerAAfter.error);
+  assert.deepEqual(ownerAAfter.data, ownerA.data);
+  return "direct update denied; foreign revision returned zero; User A unchanged";
 });
 
 await check("disposable account can populate every major private workspace", async () => {

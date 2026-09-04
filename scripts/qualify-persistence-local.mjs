@@ -124,6 +124,32 @@ async function saveReminderPreferences(supabase, values, expectation) {
   });
 }
 
+async function currentProfile(supabase) {
+  const result = await supabase
+    .from("profiles")
+    .select("username,display_name,bio,current_company,current_role,years_experience,linkedin_url,github_url,is_public,updated_at")
+    .single();
+  return expectSuccess(result, "profile revision lookup failed");
+}
+
+function profileSaveArgs(revision, overrides = {}) {
+  return {
+    target_expected_updated_at: revision,
+    target_username: "persistence-profile-a",
+    target_display_name: "Persistence Profile A",
+    target_bio: "Baseline private profile biography.",
+    target_current_company: "Engineering Foundry",
+    target_current_role: "Engineer",
+    target_years_experience: 7,
+    target_update_linkedin_url: true,
+    target_linkedin_url: "https://www.linkedin.com/in/persistence-profile-a",
+    target_update_github_url: true,
+    target_github_url: "https://github.com/persistence-profile-a",
+    target_is_public: true,
+    ...overrides,
+  };
+}
+
 async function getInterviewPlaybookDiagnosticSnapshot(supabase) {
   const result = await supabase.rpc("get_interview_playbook_diagnostic_inputs_snapshot");
   const rows = expectSuccess(result, "Interview Playbook diagnostic snapshot lookup failed");
@@ -400,6 +426,53 @@ const diagnosticSnapshotC = {
   behavioralStoriesCoverage: "not-started",
   projectDeepDiveCoverage: "covered",
 };
+
+await check("profile full saves serialize with one-field identity changes and reject stale snapshots", async () => {
+  const initial = await currentProfile(a.authClient);
+  const seeded = expectSuccess(await a.authClient.rpc("save_profile_if_revision", profileSaveArgs(initial.updated_at)), "profile baseline save failed");
+  expect(seeded.length === 1, `expected one seeded profile row, observed ${seeded.length}`);
+  const sharedRevision = seeded[0].updated_at;
+  const [full, quick] = await Promise.all([
+    a.authClient.rpc("save_profile_if_revision", profileSaveArgs(sharedRevision, {
+      target_display_name: "Stale full profile name",
+      target_bio: "Coherent full-save biography.",
+      target_current_company: "Coherent Full Co",
+    })),
+    a.authClient.rpc("set_profile_display_name", {
+      target_display_name: "Quick profile name wins",
+    }),
+  ]);
+  const fullRows = expectSuccess(full, "concurrent full profile save failed");
+  const quickRows = expectSuccess(quick, "concurrent quick profile save failed");
+  expect([0, 1].includes(fullRows.length), `unexpected full profile row count ${fullRows.length}`);
+  expect(quickRows.length === 1, `expected one quick profile row, observed ${quickRows.length}`);
+  const afterQuick = await currentProfile(a.authClient);
+  expect(afterQuick.display_name === "Quick profile name wins", "the quick desired display name did not survive the stale full save");
+  const expectedBio = fullRows.length === 1 ? "Coherent full-save biography." : "Baseline private profile biography.";
+  const expectedCompany = fullRows.length === 1 ? "Coherent Full Co" : "Engineering Foundry";
+  expect(afterQuick.bio === expectedBio && afterQuick.current_company === expectedCompany, "the concurrent full profile result mixed rich snapshots");
+
+  const [first, second] = await Promise.all([
+    a.authClient.rpc("save_profile_if_revision", profileSaveArgs(afterQuick.updated_at, {
+      target_display_name: "Profile snapshot one",
+      target_bio: "Profile biography one",
+    })),
+    a.authClient.rpc("save_profile_if_revision", profileSaveArgs(afterQuick.updated_at, {
+      target_display_name: "Profile snapshot two",
+      target_bio: "Profile biography two",
+    })),
+  ]);
+  const firstRows = expectSuccess(first, "first profile snapshot failed");
+  const secondRows = expectSuccess(second, "second profile snapshot failed");
+  expect(firstRows.length + secondRows.length === 1, "two profile snapshots from one revision both committed");
+  const finalProfile = await currentProfile(a.authClient);
+  const coherent = [
+    ["Profile snapshot one", "Profile biography one"],
+    ["Profile snapshot two", "Profile biography two"],
+  ].some(([displayName, bio]) => finalProfile.display_name === displayName && finalProfile.bio === bio);
+  expect(coherent, "the profile full/full race produced a mixed snapshot");
+  return `quick preserved; exactly one full/full winner at ${finalProfile.updated_at}`;
+});
 
 await check("public interview experience uses the exact anonymous nested projection", async () => {
   const experienceId = randomUUID();

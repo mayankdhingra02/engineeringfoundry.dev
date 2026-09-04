@@ -1882,6 +1882,7 @@ button.flow-card { cursor: pointer; }
 .visibility-field input:checked + span { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
 .visibility-field input:focus-visible + span { outline: 3px solid color-mix(in srgb, var(--focus) 22%, transparent); outline-offset: 2px; }
 .profile-form-actions { display: flex; align-items: center; gap: 10px; margin-top: 24px; }
+.profile-form-actions button[aria-disabled="true"] { cursor: wait; opacity: .72; }
 .profile-settings-width { max-width: 930px; }
 
 .logged-out-actions { display: flex; align-items: center; gap: 17px; min-width: 151px; justify-content: flex-end; }

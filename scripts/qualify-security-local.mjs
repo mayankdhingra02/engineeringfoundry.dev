@@ -8,7 +8,7 @@
  * Local only. This script refuses any non-local Supabase URL.
  */
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
@@ -38,7 +38,7 @@ function localServiceToken() {
 const options = { auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false } };
 const admin = createClient(apiUrl, localServiceToken(), options);
 const anon = createClient(apiUrl, publishableKey, options);
-const stamp = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const stamp = randomUUID();
 const emails = [`phase9-a-${stamp}@example.test`, `phase9-b-${stamp}@example.test`];
 const createdIds = [];
 const results = [];
@@ -119,6 +119,24 @@ function interviewPlaybookDiagnosticArgs(overrides = {}) {
   };
 }
 
+function profileArgs(revision, overrides = {}) {
+  return {
+    target_expected_updated_at: revision,
+    target_username: `security-profile-${stamp}`.slice(0, 30),
+    target_display_name: "Security Profile A",
+    target_bio: "Owner A private profile biography.",
+    target_current_company: "Engineering Foundry",
+    target_current_role: "Security Engineer",
+    target_years_experience: 8,
+    target_update_linkedin_url: true,
+    target_linkedin_url: "https://www.linkedin.com/in/security-profile-a",
+    target_update_github_url: true,
+    target_github_url: "https://github.com/security-profile-a",
+    target_is_public: false,
+    ...overrides,
+  };
+}
+
 async function check(name, work) {
   try {
     const note = await work();
@@ -148,6 +166,38 @@ let behavioralStory;
 let behavioralAnswer;
 let interviewPlaybookDiagnosticRevision;
 let interviewExperience;
+
+await check("profile revision writers derive the owner and deny anonymous or direct writes", async () => {
+  const ownerBefore = await a.client.from("profiles").select("display_name,updated_at").single();
+  assert.ifError(ownerBefore.error);
+  assert.ok(ownerBefore.data?.updated_at);
+  const anonymousCalls = await Promise.all([
+    anon.rpc("save_profile_if_revision", profileArgs(ownerBefore.data.updated_at)),
+    anon.rpc("set_profile_display_name", { target_display_name: "Anonymous profile" }),
+  ]);
+  for (const call of anonymousCalls) assert.equal(call.error?.code, "42501");
+
+  const direct = await a.client.from("profiles").update({ display_name: "Direct profile bypass" }).eq("id", a.user.id);
+  assert.equal(direct.error?.code, "42501");
+  const saved = await a.client.rpc("save_profile_if_revision", profileArgs(ownerBefore.data.updated_at));
+  assert.ifError(saved.error);
+  assert.equal(saved.data?.length, 1);
+  const ownerRevision = saved.data[0].updated_at;
+  const foreignRevision = await b.client.rpc("save_profile_if_revision", profileArgs(ownerRevision, {
+    target_username: `security-profile-b-${stamp}`.slice(0, 30),
+    target_display_name: "Foreign profile overwrite",
+  }));
+  assert.ifError(foreignRevision.error);
+  assert.deepEqual(foreignRevision.data, []);
+  const ownerAfter = await a.client.from("profiles").select("display_name,bio,updated_at").single();
+  assert.ifError(ownerAfter.error);
+  assert.deepEqual(ownerAfter.data, {
+    display_name: "Security Profile A",
+    bio: "Owner A private profile biography.",
+    updated_at: ownerRevision,
+  });
+  return "anonymous 42501; direct 42501; foreign revision zero rows; owner unchanged";
+});
 
 await check("Interview Playbook diagnostic snapshot and CAS RPCs deny anonymous callers", async () => {
   const [read, write] = await Promise.all([

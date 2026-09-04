@@ -1021,6 +1021,27 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["user_preparation_preferences"]["Row"];
       };
+      save_profile_if_revision: {
+        Args: {
+          target_expected_updated_at: string;
+          target_username: string;
+          target_display_name: string;
+          target_bio: string | null;
+          target_current_company: string | null;
+          target_current_role: string | null;
+          target_years_experience: number | null;
+          target_update_linkedin_url: boolean;
+          target_linkedin_url: string | null;
+          target_update_github_url: boolean;
+          target_github_url: string | null;
+          target_is_public: boolean;
+        };
+        Returns: { profile_id: string; updated_at: string }[];
+      };
+      set_profile_display_name: {
+        Args: { target_display_name: string | null };
+        Returns: { profile_id: string; updated_at: string }[];
+      };
       record_interview_calendar_export: {
         Args: { target_round_id: string; provider_value: string };
         Returns: boolean;

@@ -51,9 +51,9 @@ select public.save_account_preparation_preferences('staff', 'behavioral', 'sde3p
 select is((select preferred_role_level from public.user_preparation_preferences), 'staff', 'settings persist preferred role for the current actor');
 select is((select primary_preparation_focus from public.user_preparation_preferences), 'behavioral', 'settings persist primary focus for the current actor');
 select is((select dsa_level from public.user_preparation_preferences), 'sde3plus', 'settings persist an explicit preferred DSA roadmap');
-select is_empty(
+select throws_ok(
   $$update public.profiles set display_name = 'Unauthorized' where id = '81818181-8181-4818-8818-818181818181' returning id$$,
-  'User B cannot update User A profile'
+  '42501'
 );
 select is((select count(*)::integer from public.user_preparation_preferences), 1, 'User B cannot read User A preferences');
 select throws_ok(
