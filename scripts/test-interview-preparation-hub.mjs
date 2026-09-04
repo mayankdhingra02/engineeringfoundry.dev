@@ -13,6 +13,13 @@ import {
   parsePreparationTextSaveResult,
   resolvePreparationTextDisplayState,
 } from "../lib/interview-preparation/text-action-input.ts";
+import {
+  PREPARATION_TASK_INVALID_INPUT_ERROR,
+  PREPARATION_TASK_PERSISTENCE_ERROR,
+  PREPARATION_TASK_SAVED_MESSAGE,
+  parsePreparationTaskCompletionInput,
+  parsePreparationTaskCompletionResult,
+} from "../lib/interview-preparation/task-action-input.ts";
 import { ALL_CHECKLIST_IDS, checklistForRound, modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
 import { resolvePreparationCounts } from "../lib/interview-preparation/preparation-counts.ts";
 import { buildInterviewPlaybookOverview } from "../lib/interview-playbook/overview.ts";
@@ -45,11 +52,16 @@ const checklistAction = actions.slice(
   actions.indexOf("export async function togglePreparationChecklistAction"),
   actions.indexOf("export async function addPreparationTaskAction"),
 );
+const taskCompletionAction = actions.slice(
+  actions.indexOf("export async function togglePreparationTaskAction"),
+  actions.indexOf("export async function deletePreparationTaskAction"),
+);
 const mutationControls = read("features/interview-preparation/mutation-controls.tsx");
 const page = read("app/interviews/[roundId]/prepare/page.tsx");
 const migration = read("supabase/migrations/202608140011_create_interview_preparation_hub.sql");
 const atomicChecklistMigration = read("supabase/migrations/202609030001_set_interview_preparation_checklist_item.sql");
 const preparationTextRevisionMigration = read("supabase/migrations/202609040004_save_interview_preparation_text_if_revision.sql");
+const taskCompletionMigration = read("supabase/migrations/202609040005_set_interview_preparation_task_completed.sql");
 const notesRevisionFunction = preparationTextRevisionMigration.slice(
   preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation_notes_if_revision"),
   preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation_reflection_if_revision"),
@@ -73,6 +85,14 @@ const atomicChecklistFunction = atomicChecklistMigration.slice(
 const atomicChecklistClearBranch = atomicChecklistFunction.slice(
   atomicChecklistFunction.indexOf("  else\n"),
   atomicChecklistFunction.indexOf("  end if;", atomicChecklistFunction.indexOf("  else\n")),
+);
+const desiredTaskCompletionFunction = taskCompletionMigration.slice(
+  taskCompletionMigration.indexOf("create or replace function public.set_interview_preparation_task_completed"),
+  taskCompletionMigration.indexOf("create or replace function public.toggle_interview_preparation_task"),
+);
+const retiredTaskToggleFunction = taskCompletionMigration.slice(
+  taskCompletionMigration.indexOf("create or replace function public.toggle_interview_preparation_task"),
+  taskCompletionMigration.indexOf("revoke all on function public.set_interview_preparation_task_completed"),
 );
 const atomicChecklistAllowlistMatch = atomicChecklistFunction.match(
   /target_item_id\s*=\s*any\s*\(\s*array\s*\[([\s\S]*?)\]\s*::\s*text\[\]\s*\)/,
@@ -150,6 +170,124 @@ for (const [roundId, itemId, targetCompleted] of [
     parsePreparationChecklistActionInput(roundId, itemId, targetCompleted),
     { ok: false },
     "malformed, missing, case-changed, or non-scalar atomic checklist input must fail closed",
+  );
+}
+
+const preparationTaskRoundId = "abcdef12-3456-4abc-8def-1234567890ab";
+const preparationTaskId = "abcdef12-3456-4abc-9def-1234567890ab";
+const preparationTaskApplicationId = "abcdef12-3456-4abc-adef-1234567890ab";
+const preparationTaskInput = {
+  roundId: preparationTaskRoundId,
+  taskId: preparationTaskId,
+  targetCompleted: true,
+};
+assert.equal(
+  PREPARATION_TASK_INVALID_INPUT_ERROR,
+  "This task change is no longer valid. Refresh and try again.",
+  "invalid preparation-task input must return stable curated copy",
+);
+assert.equal(
+  PREPARATION_TASK_PERSISTENCE_ERROR,
+  "Task change was not saved. Try again.",
+  "failed preparation-task persistence must not claim success or absence",
+);
+assert.equal(
+  PREPARATION_TASK_SAVED_MESSAGE,
+  "Task saved.",
+  "confirmed desired-state persistence must return the stable success copy",
+);
+assert.deepEqual(
+  parsePreparationTaskCompletionInput(
+    preparationTaskRoundId.toUpperCase(),
+    preparationTaskId.toUpperCase(),
+    true,
+  ),
+  { ok: true, value: preparationTaskInput },
+  "task input parsing must normalize canonical UUIDs and retain an explicit true target",
+);
+assert.deepEqual(
+  parsePreparationTaskCompletionInput(preparationTaskRoundId, preparationTaskId, false),
+  {
+    ok: true,
+    value: {
+      roundId: preparationTaskRoundId,
+      taskId: preparationTaskId,
+      targetCompleted: false,
+    },
+  },
+  "task input parsing must retain an explicit false target",
+);
+for (const [roundId, taskId, targetCompleted] of [
+  [undefined, preparationTaskId, true],
+  ["", preparationTaskId, true],
+  ["abcdef12-3456-6abc-8def-1234567890ab", preparationTaskId, true],
+  ["abcdef12-3456-4abc-7def-1234567890ab", preparationTaskId, true],
+  [[preparationTaskRoundId], preparationTaskId, true],
+  [{ id: preparationTaskRoundId }, preparationTaskId, true],
+  [preparationTaskRoundId, undefined, true],
+  [preparationTaskRoundId, "", true],
+  [preparationTaskRoundId, "abcdef12-3456-6abc-8def-1234567890ab", true],
+  [preparationTaskRoundId, "abcdef12-3456-4abc-7def-1234567890ab", true],
+  [preparationTaskRoundId, [preparationTaskId], true],
+  [preparationTaskRoundId, { id: preparationTaskId }, true],
+  [preparationTaskRoundId, preparationTaskId, undefined],
+  [preparationTaskRoundId, preparationTaskId, null],
+  [preparationTaskRoundId, preparationTaskId, "true"],
+  [preparationTaskRoundId, preparationTaskId, 1],
+]) {
+  assert.deepEqual(
+    parsePreparationTaskCompletionInput(roundId, taskId, targetCompleted),
+    { ok: false },
+    "malformed preparation-task identity or non-boolean intent must fail closed",
+  );
+}
+
+const validPreparationTaskRow = {
+  application_id: preparationTaskApplicationId,
+  completed: true,
+  round_id: preparationTaskRoundId,
+  task_id: preparationTaskId,
+};
+assert.deepEqual(
+  parsePreparationTaskCompletionResult([validPreparationTaskRow], preparationTaskInput),
+  { status: "saved", applicationId: preparationTaskApplicationId },
+  "one exact correlated preparation-task result must confirm the save",
+);
+assert.deepEqual(
+  parsePreparationTaskCompletionResult(
+    [{
+      application_id: preparationTaskApplicationId.toUpperCase(),
+      completed: true,
+      round_id: preparationTaskRoundId.toUpperCase(),
+      task_id: preparationTaskId.toUpperCase(),
+    }],
+    preparationTaskInput,
+  ),
+  { status: "saved", applicationId: preparationTaskApplicationId },
+  "valid result UUIDs must normalize before exact context correlation",
+);
+assert.deepEqual(
+  parsePreparationTaskCompletionResult([], preparationTaskInput),
+  { status: "missing" },
+  "a missing or foreign preparation task must remain a privacy-safe zero-row result",
+);
+for (const result of [
+  null,
+  {},
+  validPreparationTaskRow,
+  [validPreparationTaskRow, validPreparationTaskRow],
+  [{ ...validPreparationTaskRow, extra: true }],
+  [{ application_id: preparationTaskApplicationId, completed: true, round_id: preparationTaskRoundId }],
+  [{ ...validPreparationTaskRow, application_id: "not-a-uuid" }],
+  [{ ...validPreparationTaskRow, completed: false }],
+  [{ ...validPreparationTaskRow, completed: "true" }],
+  [{ ...validPreparationTaskRow, round_id: preparationTaskApplicationId }],
+  [{ ...validPreparationTaskRow, task_id: preparationTaskApplicationId }],
+]) {
+  assert.deepEqual(
+    parsePreparationTaskCompletionResult(result, preparationTaskInput),
+    { status: "invalid" },
+    "malformed, uncorrelated, or contradictory preparation-task results must fail closed",
   );
 }
 
@@ -719,6 +857,21 @@ const cases = [
   ["atomic checklist RPC is authenticated-only", atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from public") && atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from anon") && atomicChecklistMigration.includes("grant execute on function public.set_interview_preparation_checklist_item(uuid,text,boolean) to authenticated")],
   ["pgTAP covers desired-state membership, idempotence, preservation, legacy rejection, and owner privacy", ["distinct desired-state updates retain both checklist items", "repeated true never creates a duplicate", "clearing one item preserves other checklist items", "rejected legacy snapshot writes leave preparation unchanged", "missing and foreign rounds are indistinguishable"].every((marker) => interviewPreparationDatabaseTest.includes(marker))],
   ["local persistence qualification exercises concurrent atomic updates and the legacy rejection", persistenceQualifier.includes('check("User A creates notes and concurrent desired-state checklist updates retain both items"') && persistenceQualifier.includes('rpc("set_interview_preparation_checklist_item"') && persistenceQualifier.includes("Promise.all") && persistenceQualifier.includes('expectSqlError(rejected, "0A000")')],
+  ["task completion parses exact bound runtime intent before actor or persistence work", taskCompletionAction.indexOf("parsePreparationTaskCompletionInput") >= 0 && taskCompletionAction.indexOf("parsePreparationTaskCompletionInput") < taskCompletionAction.indexOf("getAuthenticatedActor") && taskCompletionAction.indexOf("getAuthenticatedActor") < taskCompletionAction.indexOf('rpc("set_interview_preparation_task_completed"')],
+  ["task completion sends only the exact owner-correlated desired-state RPC arguments", ["target_round_id: parsed.value.roundId", "target_task_id: parsed.value.taskId", "target_completed: parsed.value.targetCompleted"].every((marker) => taskCompletionAction.includes(marker)) && !taskCompletionAction.includes('rpc("toggle_interview_preparation_task"')],
+  ["task completion distinguishes transport and malformed-or-missing results before success", taskCompletionAction.indexOf("if (error)") < taskCompletionAction.indexOf("parsePreparationTaskCompletionResult") && taskCompletionAction.indexOf("parsePreparationTaskCompletionResult") < taskCompletionAction.indexOf('outcome.status !== "saved"') && taskCompletionAction.indexOf('outcome.status !== "saved"') < taskCompletionAction.indexOf("refresh(parsed.value.roundId, outcome.applicationId)")],
+  ["task controls bind exact round task and explicit desired completion without trusting application identity", page.includes("togglePreparationTaskAction.bind(null, round.id, task.id, !task.completed)") && !page.includes("togglePreparationTaskAction.bind(null, round.id, applicationId")],
+  ["task completion control retains pressed-state semantics", mutationControls.includes('aria-pressed={complete}')],
+  ["desired-state task RPC is owner and exact round-task correlated under a row lock", desiredTaskCompletionFunction.includes("join public.interview_rounds as rounds") && desiredTaskCompletionFunction.includes("rounds.user_id = current_user_id") && desiredTaskCompletionFunction.includes("tasks.round_id = target_round_id") && desiredTaskCompletionFunction.includes("tasks.user_id = current_user_id") && desiredTaskCompletionFunction.includes("for update of tasks")],
+  ["desired-state task RPC validates explicit targets and returns missing or foreign rows indistinguishably", desiredTaskCompletionFunction.includes("target_round_id is null or target_task_id is null") && desiredTaskCompletionFunction.includes("target_completed is null") && desiredTaskCompletionFunction.includes("if not found then\n    return")],
+  ["desired-state task completion is idempotent and advances only changed rows monotonically", desiredTaskCompletionFunction.includes("current_completed is distinct from target_completed") && desiredTaskCompletionFunction.includes("tasks.updated_at + interval '1 microsecond'") && desiredTaskCompletionFunction.includes("pg_catalog.clock_timestamp()")],
+  ["desired-state task RPC returns one exact correlated identity and completion", ["target_task_id", "target_round_id", "owned_application_id", "target_completed"].every((marker) => desiredTaskCompletionFunction.includes(marker))],
+  ["legacy flip-current task mutation fails safely without writes", retiredTaskToggleFunction.includes("Desired-state preparation task saving is required") && retiredTaskToggleFunction.includes("errcode = '0A000'") && !retiredTaskToggleFunction.includes("update public")],
+  ["desired-state and retired task RPCs expose only authenticated execution", ["set_interview_preparation_task_completed(uuid,uuid,boolean)", "toggle_interview_preparation_task(uuid)"].every((signature) => taskCompletionMigration.includes(`revoke all on function public.${signature}\n  from public, anon, authenticated`) && taskCompletionMigration.includes(`grant execute on function public.${signature}\n  to authenticated`))],
+  ["task pgTAP covers desired state idempotence direct-write denial privacy and legacy fail-safe", ["a desired completed task returns its exact owner context", "repeating the same desired task state does not churn its timestamp", "clients cannot bypass desired-state task completion with direct updates", "missing and foreign preparation tasks are indistinguishable", "legacy task toggles fail safely without mutation", "anonymous callers cannot execute desired-state task completion"].every((marker) => interviewPreparationDatabaseTest.includes(marker))],
+  ["persistence qualification covers concurrent same-intent task completion and legacy no-mutation", ["concurrent identical preparation task intentions remain completed", "repeated desired task completion does not churn its timestamp", "legacy preparation task toggles fail safely without mutation"].every((marker) => persistenceQualifier.includes(marker))],
+  ["security qualification covers direct-write and anonymous denial plus foreign-or-missing task privacy", securityQualifier.includes("direct preparation task completion writes cannot bypass the desired-state RPC") && securityQualifier.includes("anonymous callers cannot execute desired-state or legacy preparation task mutations") && securityQualifier.includes("foreign and nonexistent preparation tasks are indistinguishable")],
+  ["account lifecycle qualification populates a task through desired-state completion", lifecycleQualifier.includes('rpc("set_interview_preparation_task_completed"') && lifecycleQualifier.includes("target_completed: true")],
   ["notes action parses strict runtime input before actor or persistence work", notesAction.indexOf("parsePreparationNotesActionInput") >= 0 && notesAction.indexOf("parsePreparationNotesActionInput") < notesAction.indexOf("getAuthenticatedActor") && notesAction.indexOf("getAuthenticatedActor") < notesAction.indexOf('rpc(\n    "save_interview_preparation_notes_if_revision"')],
   ["reflection action parses strict runtime input before actor or persistence work", reflectionAction.indexOf("parsePreparationReflectionActionInput") >= 0 && reflectionAction.indexOf("parsePreparationReflectionActionInput") < reflectionAction.indexOf("getAuthenticatedActor") && reflectionAction.indexOf("getAuthenticatedActor") < reflectionAction.indexOf('rpc(\n    "save_interview_preparation_reflection_if_revision"')],
   ["preparation text actions use no legacy snapshot RPC", !notesAction.includes('rpc("save_interview_preparation"') && !reflectionAction.includes('rpc("save_interview_preparation"')],
@@ -742,7 +895,7 @@ const cases = [
   ["persistence qualification covers absent/checklist, notes/notes, reflection/reflection, and independent text races", ["concurrent absent notes and checklist saves preserve both fields", "concurrent notes snapshots accept exactly one revision", "concurrent reflection snapshots accept exactly one coherent revision", "notes and reflection saves advance independently"].every((marker) => persistenceQualifier.includes(marker))],
   ["security qualification covers anonymous denial and foreign-or-missing text privacy", securityQualifier.includes("foreign and nonexistent preparation text targets are indistinguishable") && securityQualifier.includes("anonymous callers cannot execute preparation text or legacy snapshot RPCs")],
   ["account lifecycle qualification populates preparation through the new notes CAS", lifecycleQualifier.includes('rpc("save_interview_preparation_notes_if_revision"') && lifecycleQualifier.includes("target_expect_absent: true")],
-  ["mutation errors returned", actions.includes("Checklist change was not saved") && actions.includes("Task change was not saved") && actions.includes("Task was not removed")],
+  ["mutation errors returned", actions.includes("Checklist change was not saved") && taskCompletionAction.includes("PREPARATION_TASK_PERSISTENCE_ERROR") && actions.includes("Task was not removed")],
   ["mutation pending states announced", mutationControls.includes('aria-live="polite"') && mutationControls.includes("Saving checklist…") && mutationControls.includes("Adding task…")],
   ["dashboard Prepare", dashboard.includes(">Prepare<")],
   ["dashboard points to hub", dashboard.includes("/interviews/${round.id}/prepare")],

@@ -1203,6 +1203,10 @@ export type Database = {
         Returns: string;
       };
       add_interview_preparation_task: { Args: { target_round_id: string; title_value: string }; Returns: string };
+      set_interview_preparation_task_completed: {
+        Args: { target_round_id: string; target_task_id: string; target_completed: boolean };
+        Returns: { task_id: string; round_id: string; application_id: string; completed: boolean }[];
+      };
       toggle_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };
       delete_interview_preparation_task: { Args: { target_task_id: string }; Returns: boolean };
       create_behavioral_story_with_themes: {

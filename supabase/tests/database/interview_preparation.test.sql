@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(92);
+select plan(115);
 
 select has_table('public', 'interview_preparations', 'preparation table exists');
 select has_table('public', 'interview_preparation_custom_tasks', 'custom task table exists');
@@ -27,6 +27,7 @@ select has_function('public', 'save_interview_preparation_notes_if_revision', ar
 select has_function('public', 'save_interview_preparation_reflection_if_revision', array['uuid','boolean','timestamp with time zone','text','text','text','text'], 'revision-checked reflection RPC exists');
 select has_function('public', 'set_interview_preparation_checklist_item', array['uuid','text','boolean'], 'atomic checklist RPC exists');
 select has_function('public', 'add_interview_preparation_task', array['uuid','text'], 'task add RPC exists');
+select has_function('public', 'set_interview_preparation_task_completed', array['uuid','uuid','boolean'], 'desired-state task completion RPC exists');
 select has_function('public', 'toggle_interview_preparation_task', array['uuid'], 'task toggle RPC exists');
 select has_function('public', 'delete_interview_preparation_task', array['uuid'], 'task delete RPC exists');
 select ok(has_function_privilege('authenticated', 'public.set_interview_preparation_checklist_item(uuid,text,boolean)', 'execute'), 'authenticated can set an owned checklist item');
@@ -94,7 +95,30 @@ select is(
   'uuid',
   'atomic checklist RPC returns the owned application id'
 );
-select ok(has_function_privilege('authenticated', 'public.toggle_interview_preparation_task(uuid)', 'execute'), 'authenticated can toggle own task');
+select ok(has_function_privilege('authenticated', 'public.set_interview_preparation_task_completed(uuid,uuid,boolean)', 'execute'), 'authenticated can set an owned task to an explicit completion state');
+select ok(not has_function_privilege('anon', 'public.set_interview_preparation_task_completed(uuid,uuid,boolean)', 'execute'), 'anonymous callers cannot execute desired-state task completion');
+select ok(has_function_privilege('authenticated', 'public.toggle_interview_preparation_task(uuid)', 'execute'), 'authenticated old clients can reach the retired task-toggle fail-safe');
+select ok(not has_function_privilege('anon', 'public.toggle_interview_preparation_task(uuid)', 'execute'), 'anonymous callers cannot execute the retired task toggle');
+select ok(not has_table_privilege('authenticated', 'public.interview_preparation_custom_tasks', 'update'), 'clients cannot bypass desired-state task completion with direct updates');
+select is(
+  (select prosecdef from pg_proc where oid = 'public.set_interview_preparation_task_completed(uuid,uuid,boolean)'::regprocedure),
+  true,
+  'desired-state task completion is security definer'
+);
+select ok(
+  (select 'search_path=""' = any(proconfig) from pg_proc where oid = 'public.set_interview_preparation_task_completed(uuid,uuid,boolean)'::regprocedure),
+  'desired-state task completion has an empty search path'
+);
+select is(
+  (select provolatile from pg_proc where oid = 'public.set_interview_preparation_task_completed(uuid,uuid,boolean)'::regprocedure),
+  'v'::"char",
+  'desired-state task completion is volatile'
+);
+select is(
+  pg_get_function_result('public.set_interview_preparation_task_completed(uuid,uuid,boolean)'::regprocedure),
+  'TABLE(task_id uuid, round_id uuid, application_id uuid, completed boolean)',
+  'desired-state task completion returns only its correlated owner context'
+);
 select ok(has_function_privilege('authenticated', 'public.delete_interview_preparation_task(uuid)', 'execute'), 'authenticated can delete own task');
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -105,6 +129,8 @@ insert into public.applications (id, user_id, company_name, role_title, status)
 values ('91919191-9191-4919-8919-919191919301', '91919191-9191-4919-8919-919191919191', 'Atomic Preparation Co', 'Engineer', 'Interviewing');
 insert into public.interview_rounds (id, application_id, user_id, round_number, round_name, round_type)
 values ('91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919301', '91919191-9191-4919-8919-919191919191', 1, 'Technical screen', 'Coding');
+insert into public.interview_preparation_custom_tasks (id, round_id, user_id, title, completed, position)
+values ('91919191-9191-4919-8919-919191919303', '91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919191', 'Verify the environment', false, 0);
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '91919191-9191-4919-8919-919191919191', true);
@@ -223,6 +249,93 @@ select is(
   (select private_notes from public.interview_preparations where round_id = '91919191-9191-4919-8919-919191919302'),
   'Preserve this note',
   'checklist updates preserve notes'
+);
+
+select results_eq(
+  $$select task_id, round_id, application_id, completed from public.set_interview_preparation_task_completed('91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919303', true)$$,
+  $$values ('91919191-9191-4919-8919-919191919303'::uuid, '91919191-9191-4919-8919-919191919302'::uuid, '91919191-9191-4919-8919-919191919301'::uuid, true)$$,
+  'a desired completed task returns its exact owner context'
+);
+select ok(
+  (select completed from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  'desired-state task completion stores the explicit true target'
+);
+
+reset role;
+create temporary table test_preparation_task_revision(value timestamptz);
+insert into test_preparation_task_revision
+select updated_at from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303';
+grant select on test_preparation_task_revision to authenticated;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '91919191-9191-4919-8919-919191919191', true);
+
+select results_eq(
+  $$select task_id, round_id, application_id, completed from public.set_interview_preparation_task_completed('91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919303', true)$$,
+  $$values ('91919191-9191-4919-8919-919191919303'::uuid, '91919191-9191-4919-8919-919191919302'::uuid, '91919191-9191-4919-8919-919191919301'::uuid, true)$$,
+  'repeating an identical desired task state still returns the correlated result'
+);
+select is(
+  (select updated_at from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  (select value from test_preparation_task_revision),
+  'repeating the same desired task state does not churn its timestamp'
+);
+select results_eq(
+  $$select task_id, round_id, application_id, completed from public.set_interview_preparation_task_completed('91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919303', false)$$,
+  $$values ('91919191-9191-4919-8919-919191919303'::uuid, '91919191-9191-4919-8919-919191919302'::uuid, '91919191-9191-4919-8919-919191919301'::uuid, false)$$,
+  'an explicit incomplete target returns one exact result'
+);
+select ok(
+  (select not completed and updated_at > (select value from test_preparation_task_revision)
+   from public.interview_preparation_custom_tasks
+   where id = '91919191-9191-4919-8919-919191919303'),
+  'a changed desired task state stores false and advances its revision monotonically'
+);
+select throws_ok(
+  $$select * from public.set_interview_preparation_task_completed('91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919303', null)$$,
+  '23502',
+  'Task completion state is required',
+  'null task completion intent fails closed'
+);
+select throws_ok(
+  $$select * from public.set_interview_preparation_task_completed(null, '91919191-9191-4919-8919-919191919303', true)$$,
+  '23514',
+  'Invalid preparation task target',
+  'null task identity fails closed'
+);
+select is(
+  (select count(*)::integer from public.set_interview_preparation_task_completed('93939393-9393-4939-8939-939393939393', '91919191-9191-4919-8919-919191919303', true)),
+  0,
+  'a mismatched round and task identity returns no row'
+);
+
+select set_config('request.jwt.claim.sub', '92929292-9292-4929-8929-929292929292', true);
+select is(
+  (select count(*)::integer from public.set_interview_preparation_task_completed('91919191-9191-4919-8919-919191919302', '91919191-9191-4919-8919-919191919303', true)),
+  0,
+  'a foreign preparation task returns no row'
+);
+select is(
+  (select count(*)::integer from public.set_interview_preparation_task_completed('93939393-9393-4939-8939-939393939393', '93939393-9393-4939-8939-939393939394', true)),
+  0,
+  'missing and foreign preparation tasks are indistinguishable'
+);
+
+select set_config('request.jwt.claim.sub', '91919191-9191-4919-8919-919191919191', true);
+select is(
+  (select completed from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  false,
+  'foreign missing and mismatched calls leave the owner task unchanged'
+);
+select throws_ok(
+  $$select public.toggle_interview_preparation_task('91919191-9191-4919-8919-919191919303')$$,
+  '0A000',
+  'Desired-state preparation task saving is required',
+  'legacy task toggles fail safely without mutation'
+);
+select is(
+  (select completed from public.interview_preparation_custom_tasks where id = '91919191-9191-4919-8919-919191919303'),
+  false,
+  'a rejected legacy task toggle preserves the saved desired state'
 );
 
 reset role;
