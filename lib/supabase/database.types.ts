@@ -1156,6 +1156,44 @@ export type Database = {
         Args: { target_story_id: string };
         Returns: { story_id: string; updated_at: string }[];
       };
+      create_behavioral_answer_aggregate: {
+        Args: {
+          target_custom_question_id: string | null;
+          target_curated_question_id: string | null;
+          target_story_id: string;
+          target_company_slug: string | null;
+          target_application_id: string | null;
+          target_title: string;
+          target_answer_text: string;
+          target_opening_framing: string | null;
+          target_details_to_emphasize: string | null;
+          target_details_to_avoid: string | null;
+          target_notes: string | null;
+          target_status: string;
+          target_make_primary: boolean;
+        };
+        Returns: { answer_id: string; updated_at: string }[];
+      };
+      update_behavioral_answer_aggregate_if_revision: {
+        Args: {
+          target_answer_id: string;
+          target_expected_updated_at: string;
+          target_custom_question_id: string | null;
+          target_curated_question_id: string | null;
+          target_story_id: string;
+          target_company_slug: string | null;
+          target_application_id: string | null;
+          target_title: string;
+          target_answer_text: string;
+          target_opening_framing: string | null;
+          target_details_to_emphasize: string | null;
+          target_details_to_avoid: string | null;
+          target_notes: string | null;
+          target_status: string;
+          target_make_primary: boolean;
+        };
+        Returns: { answer_id: string; updated_at: string }[];
+      };
       replace_behavioral_story_themes: {
         Args: { target_story_id: string; theme_values: string[] };
         Returns: boolean;
