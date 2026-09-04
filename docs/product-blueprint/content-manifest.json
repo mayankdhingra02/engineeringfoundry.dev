@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "4b8c6d9eb205d079015200120020b00d5b42bdb6",
-  "repository_state_sha256": "606fc2941f63097f213abf4a844e29beab5965d1e1f2d3ae9f902c6878364a07",
+  "repository_sha": "c48ccba1185e5e6aa09f3cd5376b5df4114459b1",
+  "repository_state_sha256": "6651d7a131e4f3dfcaa4edf3017b9533e0e440a989754ada0bccf69486b57262",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -619,6 +619,7 @@
       "acceptance_criteria": [
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
         "Global account navigation uses a route-specific verified-user boundary where only Supabase's explicit missing-session error becomes anonymous; other Auth errors, profile-query errors, contradictory results, malformed runtime responses, and client transport failures become a private no-store retryable unavailable state instead of Sign in and Sign up. The client invalidates stale and unmounted responses, only an explicit SIGNED_OUT event forces anonymous navigation, re-verifies authenticated session events, preserves a last verified ready identity on refresh failure, and source-regresses compact live retry and conditional focus recovery without claiming rendered browser automation. Executable identity, profile, response, and settlement matrices run in npm run test:auth-foundation; the broader shared actor authentication-service-versus-anonymous ambiguity remains outside this route-specific boundary.",
+        "Application and interview-round full create and edit actions strictly parse one complete singleton string snapshot before actor or persistence work. Missing, duplicate, file-valued, unknown, control-bearing, and oversized fields fail without mutation; create snapshots reject edit revisions, edit snapshots bind the exact loaded timestamp, and optional clears require explicit empty fields so incomplete direct actions cannot default status or erase private tracker content. Executable parser matrices and source-ordering checks run in npm run test:application-tracker.",
         "Application full edits carry the exact loaded database revision into an owner-scoped timestamp compare-and-swap, so a newer quick status or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
         "Application and interview-round deletion strictly parse one exact loaded revision before actor work and use only owner-derived revision-checked RPCs; authenticated direct table deletes and anonymous execution are denied, while stale, foreign, and missing targets return zero rows without mutation. Source-integration checks cover exact revision binding, synchronous duplicate guards, focusable pending confirmation, atomic conflict truth, and safe latest-version links; real stale-preservation, owner isolation, and intentional application cascades run in npm run qualify:database, rendered focus and assistive-technology behavior remain browser/manual, and hosted checks remain unchecked external-owner work.",
         "Homepage account continuation distinguishes anonymous, ready (including genuinely empty), and unavailable states; authenticated continuation-data query failures plus client transport and malformed-response failures cannot masquerade as signed-out or zero activity, account import requires a ready response, browser-local continuation remains available, and retry status and guarded focus recovery are source-regressed without claiming rendered browser automation. The shared actor boundary still does not distinguish an authentication-service failure from a legitimate anonymous session.",
@@ -678,6 +679,7 @@
         "lib/account/preparation-preferences.ts",
         "lib/applications/delete-revision.ts",
         "lib/applications/edit-revision.ts",
+        "lib/applications/validation.ts",
         "lib/auth/account-deletion.ts",
         "lib/auth/account-navigation.ts",
         "lib/auth/credentials.ts",

@@ -7,7 +7,6 @@ import { APPLICATION_STATUSES } from "@/lib/applications/options";
 import {
   APPLICATION_EDIT_CONFLICT_MESSAGE,
   INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE,
-  parseTrackerEditRevision,
 } from "@/lib/applications/edit-revision";
 import {
   APPLICATION_DELETE_ERROR,
@@ -34,11 +33,11 @@ function signInAgain(next: string): never {
   redirect(`/signin?next=${encodeURIComponent(next)}`);
 }
 
-export async function createApplicationAction(_: TrackerActionState, formData: FormData): Promise<TrackerActionState> {
+export async function createApplicationAction(_: TrackerActionState, formData: unknown): Promise<TrackerActionState> {
+  const parsed = parseApplicationForm(formData, "create");
+  if (!parsed.ok) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
   const current = await getAuthenticatedActor();
   if (!current) return sessionError();
-  const parsed = parseApplicationForm(formData);
-  if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
   const { data, error } = await current.supabase.from("applications").insert({ ...parsed.data, user_id: current.user.id }).select("id").maybeSingle();
   if (error || !data) return { status: "error", message: "We couldn't add this application. Review the fields and try again." };
   revalidatePath("/applications");
@@ -46,15 +45,16 @@ export async function createApplicationAction(_: TrackerActionState, formData: F
   redirect(`/applications/${data.id}`);
 }
 
-export async function updateApplicationAction(applicationId: string, _: TrackerActionState, formData: FormData): Promise<TrackerActionState> {
-  const revision = parseTrackerEditRevision(formData);
-  if (!revision.ok) return { status: "error", conflict: true, message: APPLICATION_EDIT_CONFLICT_MESSAGE };
+export async function updateApplicationAction(applicationId: string, _: TrackerActionState, formData: unknown): Promise<TrackerActionState> {
+  const parsed = parseApplicationForm(formData, "edit");
+  if (!parsed.ok) return parsed.reason === "invalid-revision"
+    ? { status: "error", conflict: true, message: APPLICATION_EDIT_CONFLICT_MESSAGE }
+    : { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
+  if (!parsed.expectedUpdatedAt) return { status: "error", conflict: true, message: APPLICATION_EDIT_CONFLICT_MESSAGE };
+  if (!UUID_PATTERN.test(applicationId)) return { status: "error", message: "This application could not be found." };
   const current = await getAuthenticatedActor();
   if (!current) return sessionError();
-  if (!UUID_PATTERN.test(applicationId)) return { status: "error", message: "This application could not be found." };
-  const parsed = parseApplicationForm(formData);
-  if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("applications").update(parsed.data).eq("id", applicationId).eq("user_id", current.user.id).eq("updated_at", revision.expectedUpdatedAt).select("id").maybeSingle();
+  const { data, error } = await current.supabase.from("applications").update(parsed.data).eq("id", applicationId).eq("user_id", current.user.id).eq("updated_at", parsed.expectedUpdatedAt).select("id").maybeSingle();
   if (error) return { status: "error", message: "We couldn't update this application. It may no longer be available." };
   if (!data) return { status: "error", conflict: true, message: APPLICATION_EDIT_CONFLICT_MESSAGE };
   revalidatePath("/applications");
@@ -112,12 +112,12 @@ export async function deleteApplicationAction(
   redirect("/applications");
 }
 
-export async function createRoundAction(applicationId: string, _: TrackerActionState, formData: FormData): Promise<TrackerActionState> {
+export async function createRoundAction(applicationId: string, _: TrackerActionState, formData: unknown): Promise<TrackerActionState> {
+  const parsed = parseRoundForm(formData, "create");
+  if (!parsed.ok) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
+  if (!UUID_PATTERN.test(applicationId)) return { status: "error", message: "This application could not be found." };
   const current = await getAuthenticatedActor();
   if (!current) return sessionError();
-  if (!UUID_PATTERN.test(applicationId)) return { status: "error", message: "This application could not be found." };
-  const parsed = parseRoundForm(formData);
-  if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
   const { data: roundId, error } = await current.supabase.rpc("create_interview_round", {
     target_application_id: applicationId,
     round_name_value: parsed.data.round_name,
@@ -138,15 +138,16 @@ export async function createRoundAction(applicationId: string, _: TrackerActionS
   redirect(`/applications/${applicationId}`);
 }
 
-export async function updateRoundAction(applicationId: string, roundId: string, _: TrackerActionState, formData: FormData): Promise<TrackerActionState> {
-  const revision = parseTrackerEditRevision(formData);
-  if (!revision.ok) return { status: "error", conflict: true, message: INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE };
+export async function updateRoundAction(applicationId: string, roundId: string, _: TrackerActionState, formData: unknown): Promise<TrackerActionState> {
+  const parsed = parseRoundForm(formData, "edit");
+  if (!parsed.ok) return parsed.reason === "invalid-revision"
+    ? { status: "error", conflict: true, message: INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE }
+    : { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
+  if (!parsed.expectedUpdatedAt) return { status: "error", conflict: true, message: INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE };
+  if (!UUID_PATTERN.test(applicationId) || !UUID_PATTERN.test(roundId)) return { status: "error", message: "This interview round could not be found." };
   const current = await getAuthenticatedActor();
   if (!current) return sessionError();
-  if (!UUID_PATTERN.test(applicationId) || !UUID_PATTERN.test(roundId)) return { status: "error", message: "This interview round could not be found." };
-  const parsed = parseRoundForm(formData);
-  if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("interview_rounds").update(parsed.data).eq("id", roundId).eq("application_id", applicationId).eq("user_id", current.user.id).eq("updated_at", revision.expectedUpdatedAt).select("id").maybeSingle();
+  const { data, error } = await current.supabase.from("interview_rounds").update(parsed.data).eq("id", roundId).eq("application_id", applicationId).eq("user_id", current.user.id).eq("updated_at", parsed.expectedUpdatedAt).select("id").maybeSingle();
   if (error) return { status: "error", message: "We couldn't update this interview round. It may no longer be available." };
   if (!data) return { status: "error", conflict: true, message: INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE };
   revalidatePath(`/applications/${applicationId}`); revalidatePath("/applications"); revalidatePath("/dashboard");
