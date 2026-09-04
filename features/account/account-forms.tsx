@@ -14,6 +14,7 @@ import {
 } from "./actions";
 import { dsaLevelOptions, focusOptions, roleLevelOptions } from "@/lib/account/preferences";
 import type { PreparationPreferences } from "@/lib/account/preparation-preferences";
+import { PASSWORD_REQUIREMENT } from "@/lib/auth/credentials";
 import { initialAccountActionState } from "./state";
 
 function FormStatus({ state }: { state: typeof initialAccountActionState }) {
@@ -33,7 +34,7 @@ export function DisplayNameForm({ displayName }: { displayName: string | null })
 export function EmailChangeForm({ email }: { email: string }) {
   const [state, action, pending] = useActionState(requestEmailChangeAction, initialAccountActionState);
   return <form className="account-settings-form" action={action}>
-    <label className="account-field"><span>Account email</span><input type="email" name="email" defaultValue={email} required autoComplete="email" /><small>Your authentication provider remains the source of truth. Verification is required before the address changes.</small></label>
+    <label className="account-field"><span>Account email</span><input type="email" name="email" defaultValue={email} required maxLength={254} autoComplete="email" /><small>Your authentication provider remains the source of truth. Verification is required before the address changes.</small></label>
     <FormStatus state={state} />
     <button className="button button-secondary" disabled={pending}>{pending ? "Starting…" : "Change email"}</button>
   </form>;
@@ -44,10 +45,10 @@ export function PasswordChangeForm() {
   return <form className="account-settings-form" action={action}>
     <div className="account-form-grid">
       <label className="account-field"><span>Current password</span><input type="password" name="currentPassword" required autoComplete="current-password" /></label>
-      <label className="account-field"><span>New password</span><input type="password" name="newPassword" required minLength={8} autoComplete="new-password" /></label>
-      <label className="account-field"><span>Confirm new password</span><input type="password" name="confirmPassword" required minLength={8} autoComplete="new-password" /></label>
+      <label className="account-field"><span>New password</span><input type="password" name="newPassword" required minLength={8} maxLength={128} autoComplete="new-password" aria-describedby="account-password-requirement" /></label>
+      <label className="account-field"><span>Confirm new password</span><input type="password" name="confirmPassword" required minLength={8} maxLength={128} autoComplete="new-password" aria-describedby="account-password-requirement" /></label>
     </div>
-    <p className="account-form-help">OAuth-only accounts can use <Link href="/forgot-password">password recovery</Link> instead.</p>
+    <p className="account-form-help" id="account-password-requirement">{PASSWORD_REQUIREMENT} OAuth-only accounts can use <Link href="/forgot-password">password recovery</Link> instead.</p>
     <FormStatus state={state} />
     <button className="button button-secondary" disabled={pending}>{pending ? "Changing…" : "Change password"}</button>
   </form>;
