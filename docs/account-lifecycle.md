@@ -8,6 +8,8 @@ Phase 8 completes the signed-in lifecycle around onboarding, preferences, accoun
 
 The single compact form asks for a preparation role, whether an interview is scheduled, a primary focus, and the existing Phase 7 IANA timezone. `Skip for now` records completion without inventing a role, focus, roadmap, application, or reminder schedule. Completion calls `complete_account_onboarding`, an actor-derived database function that validates the shared enums, reuses `interview_reminder_preferences.preferred_timezone`, and sets the boolean/timestamp pair atomically.
 
+The saved reminder timezone is read through an exact owner-scoped projection before the onboarding form renders. Only a successful zero-row result or a saved `null` is treated as blank; a missing database client, query failure, malformed response, or invalid persisted timezone reaches the private-data retry boundary instead of becoming a browser-detected writable default. This prevents a transient read failure from being committed over an existing preference during first completion.
+
 Migration `202608150001_create_account_lifecycle.sql` marks every pre-Phase-8 profile complete with a timestamp. It deliberately does not infer preferences from applications or preparation history. The database constraint requires the completion boolean and timestamp to agree.
 
 The destination order is deterministic:
