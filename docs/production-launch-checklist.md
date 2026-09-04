@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 45 migrations are recorded, ending at `202609040011_delete_interview_preparation_task_if_revision`
+4. [ ] `supabase migration list --linked` — confirm all 46 migrations are recorded, ending at `202609040012_update_feedback_submission_if_revision`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -122,6 +122,8 @@ Apply `202609040009_delete_behavioral_records_if_revision.sql` before deploying 
 Apply `202609040010_delete_system_design_attempt_if_revision.sql` before deploying revision-aware System Design attempt deletion. Migration-first makes already-loaded clients calling the old delete RPC fail safely with `0A000`; the new save and delete paths share one owner/attempt lock and require the exact displayed revision. Application-first makes new deletes fail safely while the RPC is absent but leaves the old stale-delete path available until migration. Rolling application code back after migration is safe but degraded because legacy attempt deletion stays unavailable; keep the migration and roll forward.
 
 Apply `202609040011_delete_interview_preparation_task_if_revision.sql` before deploying revision-aware custom preparation-task deletion. Migration-first makes already-loaded clients calling the old delete RPC fail safely with `0A000`; desired completion and exact-revision deletion share one owner/task lock. Application-first makes new deletes fail safely while the RPC is absent but leaves the old stale-delete path available until migration. Rolling application code back after migration is safe but degraded because legacy task deletion stays unavailable; keep the migration and roll forward.
+
+Apply `202609040012_update_feedback_submission_if_revision.sql` before deploying revision-aware feedback triage. Migration-first makes already-loaded clients calling the old triage RPC fail safely with `0A000` and `Revision-checked feedback triage is required`; the new RPC requires the exact displayed revision for the complete status-and-private-note snapshot. Application-first makes new saves fail safely while the RPC is absent but leaves the old stale-overwrite path available until migration. Rolling application code back after migration is safe but degraded because legacy triage stays unavailable; keep the migration and roll forward.
 
 ---
 
@@ -218,6 +220,7 @@ Use two disposable accounts (User A and User B) against the production origin wi
 
 - [ ] Submit anonymous and signed-in feedback; verify the private `EF-FB-…` reference receipt, consent gate, sanitized page context, and rate limit
 - [ ] Verify anonymous and ordinary members cannot read feedback or access `/admin`; verify an explicitly bootstrapped operator can triage feedback and moderate only submitted/needs-changes experiences
+- [ ] Use an explicitly bootstrapped operator. Race two complete triage snapshots from the same displayed revision and confirm exactly one coherent status/private-note snapshot wins, advances `updated_at`, and writes one minimal audit event. Confirm the stale call returns zero rows without changing the winner, an exact no-op retry does not churn the revision or duplicate the audit, `anon` and ordinary members cannot invoke `update_feedback_submission_if_revision`, direct table updates remain denied, and authenticated legacy `update_feedback_submission` fails without mutation with SQLSTATE `0A000` and `Revision-checked feedback triage is required`. These hosted checks remain unchecked until owner-run evidence is recorded.
 - [ ] Confirm `/admin` remains noindex/no-store, renders no secrets, and company freshness remains a read-only review reminder
 
 ### Export

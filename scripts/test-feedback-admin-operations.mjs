@@ -14,15 +14,30 @@ import {
   resolveAdminFeedbackQueueResult,
   resolveAdminMembershipResult,
 } from "../lib/admin/query-results.ts";
+import {
+  ADMIN_FEEDBACK_EXPECTED_REVISION_FIELD,
+  ADMIN_FEEDBACK_TRIAGE_CONFLICT_ERROR,
+  ADMIN_FEEDBACK_TRIAGE_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  ADMIN_FEEDBACK_TRIAGE_INVALID_INPUT_ERROR,
+  ADMIN_FEEDBACK_TRIAGE_PERSISTENCE_ERROR,
+  ADMIN_FEEDBACK_TRIAGE_SAVED_MESSAGE,
+  adminFeedbackTriageDraftSignature,
+  isCanonicalAdminFeedbackRevision,
+  parseAdminFeedbackTriageInput,
+  parseAdminFeedbackTriageMutationResult,
+  resolveAdminFeedbackTriageDisplayState,
+} from "../lib/admin/feedback-triage-action-input.ts";
 import { STATIC_STEPS } from "./release-verification-manifest.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
-const [migration, revisionMigration, feedbackAction, feedbackForm, publicFeedbackPage, publicSupabase, adminAuth, adminQueryResults, adminActions, adminLayout, adminHome, errorPage, styles, feedbackPage, feedbackDetail, experiencePage, experienceQueries, experiencePrivateState, experienceActionInput, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, requirementsSource, workflow, packageJson] = await Promise.all([
+const [migration, revisionMigration, triageRevisionMigration, feedbackAction, feedbackForm, adminMutationForms, publicFeedbackPage, publicSupabase, adminAuth, adminQueryResults, adminActions, adminLayout, adminHome, errorPage, styles, feedbackPage, feedbackDetail, experiencePage, experienceQueries, experiencePrivateState, experienceActionInput, healthPage, privacyRoutes, analyticsProperties, analytics, exporter, privacyPage, contactPage, operationsDoc, requirementsSource, workflow, packageJson, feedbackPgTap, persistenceQualifier, securityQualifier] = await Promise.all([
   read("supabase/migrations/202608230001_create_feedback_admin_operations.sql"),
   read("supabase/migrations/202609040003_save_interview_experience_if_revision.sql"),
+  read("supabase/migrations/202609040012_update_feedback_submission_if_revision.sql"),
   read("features/feedback/actions.ts"),
   read("features/feedback/feedback-form.tsx"),
+  read("features/admin/mutation-forms.tsx"),
   read("app/feedback/page.tsx"),
   read("lib/supabase/public.ts"),
   read("lib/admin/auth.ts"),
@@ -49,6 +64,9 @@ const [migration, revisionMigration, feedbackAction, feedbackForm, publicFeedbac
   read("docs/product-blueprint/registry/requirements.json"),
   read(".github/workflows/ci.yml"),
   read("package.json"),
+  read("supabase/tests/database/feedback_admin_operations.test.sql"),
+  read("scripts/qualify-persistence-local.mjs"),
+  read("scripts/qualify-security-local.mjs"),
 ]);
 
 for (const marker of ["admin_memberships", "feedback_submissions", "feedback_submission_rate_limits", "admin_audit_events", "enable row level security", "is_current_admin", "submit_feedback_submission", "update_feedback_submission", "moderate_interview_experience", "admins read feedback submissions", "admins read all interview experiences", "revoke all on table", "contact_consent", "reference_id", "auth.uid()", "No raw IP addresses are stored"]) {
@@ -83,7 +101,92 @@ const validFeedbackDetail = {
   contact_consent: true,
   submitted_as_authenticated: false,
   admin_note: null,
+  updated_at: "2026-09-04T12:05:00.000Z",
 };
+
+const feedbackId = validFeedbackQueueItem.id;
+const feedbackRevision = validFeedbackDetail.updated_at;
+const feedbackTriageForm = (overrides = {}) => {
+  const values = {
+    feedback_id: feedbackId,
+    [ADMIN_FEEDBACK_EXPECTED_REVISION_FIELD]: feedbackRevision,
+    status: "triaged",
+    admin_note: "  Private operator note.  ",
+    ...overrides,
+  };
+  const form = new FormData();
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== undefined) form.append(key, value);
+  }
+  return form;
+};
+
+const parsedTriage = parseAdminFeedbackTriageInput(feedbackTriageForm());
+assert.deepEqual(parsedTriage, {
+  ok: true,
+  value: {
+    feedbackId,
+    expectedUpdatedAt: feedbackRevision,
+    status: "triaged",
+    adminNote: "Private operator note.",
+  },
+});
+for (const status of ["new", "triaged", "planned", "resolved", "closed", "spam"]) {
+  assert.equal(parseAdminFeedbackTriageInput(feedbackTriageForm({ status })).ok, true, `rejected feedback status ${status}`);
+}
+for (const revision of [
+  "2024-02-29T23:59:59Z",
+  "2026-09-04T12:05:00.123456+14:00",
+  "2026-09-04T12:05:00-05:30",
+]) {
+  assert.equal(isCanonicalAdminFeedbackRevision(revision), true, `rejected canonical feedback revision ${revision}`);
+}
+for (const revision of [null, "", "2023-02-29T00:00:00Z", "2026-13-04T00:00:00Z", "2026-09-04 12:00:00Z", "2026-09-04T24:00:00Z", "2026-09-04T12:00:00+14:01", "2026-09-04T12:00:00.1234567Z"]) {
+  assert.equal(isCanonicalAdminFeedbackRevision(revision), false, `accepted invalid feedback revision ${String(revision)}`);
+}
+for (const input of [
+  null,
+  {},
+  feedbackTriageForm({ feedback_id: feedbackId.toUpperCase() }),
+  feedbackTriageForm({ feedback_id: "not-a-uuid" }),
+  feedbackTriageForm({ expected_updated_at: "not-a-revision" }),
+  feedbackTriageForm({ status: "unknown" }),
+  feedbackTriageForm({ admin_note: "x".repeat(2_001) }),
+  feedbackTriageForm({ admin_note: "unsafe\u0001note" }),
+  feedbackTriageForm({ feedback_id: undefined }),
+  feedbackTriageForm({ expected_updated_at: undefined }),
+  feedbackTriageForm({ status: undefined }),
+  feedbackTriageForm({ admin_note: undefined }),
+]) {
+  assert.equal(parseAdminFeedbackTriageInput(input).ok, false, "accepted malformed feedback triage input");
+}
+for (const key of ["feedback_id", "expected_updated_at", "status", "admin_note"]) {
+  const duplicate = feedbackTriageForm();
+  duplicate.append(key, key === "admin_note" ? "Second note" : String(duplicate.get(key)));
+  assert.equal(parseAdminFeedbackTriageInput(duplicate).ok, false, `accepted duplicate feedback field ${key}`);
+  const fileValue = feedbackTriageForm();
+  fileValue.set(key, new File(["value"], "value.txt"));
+  assert.equal(parseAdminFeedbackTriageInput(fileValue).ok, false, `accepted File feedback field ${key}`);
+}
+const unknownTriageField = feedbackTriageForm();
+unknownTriageField.set("unexpected", "value");
+assert.equal(parseAdminFeedbackTriageInput(unknownTriageField).ok, false, "accepted unknown feedback triage field");
+const actionMetadataTriage = feedbackTriageForm();
+actionMetadataTriage.set("$ACTION_ID_example", "metadata");
+assert.equal(parseAdminFeedbackTriageInput(actionMetadataTriage).ok, true, "rejected React action metadata");
+
+const savedTriageRow = { feedback_id: feedbackId, status: "triaged", updated_at: "2026-09-04T12:06:00.000Z" };
+assert.deepEqual(parseAdminFeedbackTriageMutationResult([], { feedbackId, status: "triaged" }), { status: "conflict" });
+assert.deepEqual(parseAdminFeedbackTriageMutationResult([savedTriageRow], { feedbackId, status: "triaged" }), { status: "saved", updatedAt: savedTriageRow.updated_at });
+for (const input of [null, {}, savedTriageRow, [savedTriageRow, savedTriageRow], [{ ...savedTriageRow, feedback_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }], [{ ...savedTriageRow, status: "closed" }], [{ ...savedTriageRow, updated_at: "invalid" }], [{ ...savedTriageRow, extra: true }]]) {
+  assert.deepEqual(parseAdminFeedbackTriageMutationResult(input, { feedbackId, status: "triaged" }), { status: "invalid" }, "accepted malformed or uncorrelated feedback triage result");
+}
+assert.equal(adminFeedbackTriageDraftSignature(feedbackTriageForm()), JSON.stringify(["triaged", "  Private operator note.  "]));
+assert.deepEqual(resolveAdminFeedbackTriageDisplayState({ status: "idle" }, true, true), { status: "pending", message: "Saving triage…" });
+assert.deepEqual(resolveAdminFeedbackTriageDisplayState({ status: "success", message: ADMIN_FEEDBACK_TRIAGE_SAVED_MESSAGE }, false, true), { status: "success", message: ADMIN_FEEDBACK_TRIAGE_EARLIER_SNAPSHOT_SAVED_MESSAGE });
+assert.deepEqual(resolveAdminFeedbackTriageDisplayState({ status: "error", message: ADMIN_FEEDBACK_TRIAGE_CONFLICT_ERROR }, false, true), { status: "error", message: ADMIN_FEEDBACK_TRIAGE_CONFLICT_ERROR });
+assert.equal(ADMIN_FEEDBACK_TRIAGE_INVALID_INPUT_ERROR, "Review the feedback triage fields and try again.");
+assert.equal(ADMIN_FEEDBACK_TRIAGE_PERSISTENCE_ERROR, "The feedback item was not changed. Try again.");
 
 assert.equal(resolveAdminMembershipResult({ data: true, error: null }), true);
 assert.equal(resolveAdminMembershipResult({ data: false, error: null }), false);
@@ -338,9 +441,28 @@ for (const marker of ["getAuthenticatedActor", "is_current_admin", "resolveAdmin
 assert.ok(!adminAuth.includes("process.env.NEXT_PUBLIC") && !adminAuth.includes("email"), "admin authorization relies on a public/browser signal");
 assert.ok(adminAuth.indexOf("resolveAdminMembershipResult({ data, error })") < adminAuth.indexOf("notFound()"), "admin membership query failures are still collapsed into ordinary denial");
 for (const marker of ["AdminPrivateDataUnavailableError", "isCanonicalAdminFeedbackId", "resolveAdminFeedbackPage", "resolveAdminMembershipResult", "resolveAdminCountResult", "resolveAdminFeedbackQueueResult", "resolveAdminFeedbackDetailResult", "ADMIN_FEEDBACK_QUEUE_LIMIT"]) assert.ok(adminQueryResults.includes(marker), `admin private-read result boundary lacks ${marker}`);
-for (const marker of ["update_feedback_submission", "moderate_interview_experience_if_revision", "parseInterviewExperienceModerationInput", "parseInterviewExperienceMutationResult", "requireAdminActor", "revalidatePath"]) assert.ok(adminActions.includes(marker), `admin mutation action is missing ${marker}`);
+for (const marker of ["update_feedback_submission_if_revision", "parseAdminFeedbackTriageInput", "parseAdminFeedbackTriageMutationResult", "ADMIN_FEEDBACK_TRIAGE_CONFLICT_ERROR", "moderate_interview_experience_if_revision", "parseInterviewExperienceModerationInput", "parseInterviewExperienceMutationResult", "requireAdminActor", "revalidatePath"]) assert.ok(adminActions.includes(marker), `admin mutation action is missing ${marker}`);
+assert.ok(!adminActions.includes('rpc("update_feedback_submission"'), "admin production code still calls the retired feedback triage RPC");
 assert.ok(!adminActions.includes('rpc("moderate_interview_experience"'), "admin production code still calls the retired moderation RPC");
 assert.ok(!adminActions.includes("createSupabaseAdminClient") && !adminActions.includes("service_role"), "admin UI uses the service role as a login");
+const feedbackActionStart = adminActions.indexOf("export async function updateFeedbackAction");
+const feedbackActionEnd = adminActions.indexOf("export async function moderateInterviewExperienceAction", feedbackActionStart);
+const feedbackTriageAction = adminActions.slice(feedbackActionStart, feedbackActionEnd);
+const triageParseIndex = feedbackTriageAction.indexOf("const parsed = parseAdminFeedbackTriageInput(form);");
+const triageActorIndex = feedbackTriageAction.indexOf("const actor = await requireAdminActor", triageParseIndex);
+const triageRpcIndex = feedbackTriageAction.indexOf('actor.supabase.rpc("update_feedback_submission_if_revision"', triageActorIndex);
+const triageResultIndex = feedbackTriageAction.indexOf("parseAdminFeedbackTriageMutationResult(data, parsed.value)", triageRpcIndex);
+const triageRevalidateIndex = feedbackTriageAction.indexOf('revalidatePath("/admin")', triageResultIndex);
+assert.ok(triageParseIndex >= 0 && triageParseIndex < triageActorIndex && triageActorIndex < triageRpcIndex && triageRpcIndex < triageResultIndex && triageResultIndex < triageRevalidateIndex, "feedback triage must parse before capability work and validate the exact RPC result before revalidation");
+for (const marker of [
+  "target_feedback_id: parsed.value.feedbackId",
+  "target_expected_updated_at: parsed.value.expectedUpdatedAt",
+  "target_status: parsed.value.status",
+  "target_admin_note: parsed.value.adminNote",
+  'result.status === "conflict"',
+  "conflict: true",
+  "revision: result.updatedAt",
+]) assert.ok(feedbackTriageAction.includes(marker), `feedback triage action lacks ${marker}`);
 for (const marker of ["robots", "force-dynamic", "requireAdminActor"]) assert.ok(adminLayout.includes(marker), `admin layout is missing private-route ${marker}`);
 for (const marker of ["Feedback requiring triage", "Experiences requiring moderation", "Company guides requiring review", "Operational configuration"]) assert.ok(adminHome.includes(marker), `admin home is missing ${marker}`);
 assert.equal((adminHome.match(/resolveAdminCountResult/g) ?? []).length, 3, "admin dashboard does not resolve both private counts through the strict boundary");
@@ -354,12 +476,59 @@ const feedbackDetailNotFound = feedbackDetail.indexOf("if (!data) notFound()", f
 assert.ok(feedbackDetailResolve >= 0 && feedbackDetailNotFound > feedbackDetailResolve, "feedback detail does not distinguish query failure from a genuine missing row before notFound");
 assert.ok(feedbackDetail.indexOf("if (!isCanonicalAdminFeedbackId(id)) notFound()") < feedbackDetail.indexOf('.from("feedback_submissions")'), "malformed feedback routes do not fail as not found before the private item query");
 assert.ok(!feedbackDetail.includes("const { data } = await actor.supabase"), "feedback detail still discards its query error");
+for (const marker of ["admin_note,updated_at", "revision={data.updated_at}"]) assert.ok(feedbackDetail.includes(marker), `feedback detail does not carry its exact triage revision: ${marker}`);
+const feedbackTriageFormStart = adminMutationForms.indexOf("export function FeedbackTriageForm");
+const feedbackTriageFormEnd = adminMutationForms.indexOf("function moderationDraftSignature", feedbackTriageFormStart);
+const feedbackTriageFormSource = adminMutationForms.slice(feedbackTriageFormStart, feedbackTriageFormEnd);
+for (const marker of [
+  "ADMIN_FEEDBACK_EXPECTED_REVISION_FIELD",
+  "state.revision ?? revision",
+  "event.preventDefault()",
+  "if (submissionPending.current) return",
+  "const formData = new FormData(event.currentTarget)",
+  "submittedDraftSignature.current = adminFeedbackTriageDraftSignature(formData)",
+  "startTransition(() => action(formData))",
+  "onChange={(event) => updateChangedSinceSubmit(event.currentTarget)}",
+  "resolveAdminFeedbackTriageDisplayState",
+  "aria-busy={pending}",
+  "aria-disabled={pending}",
+  'aria-atomic="true"',
+  "Review latest in a new tab",
+  'target="_blank"',
+  'rel="noopener noreferrer"',
+]) assert.ok(feedbackTriageFormSource.includes(marker), `feedback triage form lacks ${marker}`);
+assert.ok(!/\sdisabled=\{pending\}/.test(feedbackTriageFormSource), "feedback triage pending state removes its focused submit control");
+assert.ok(!feedbackTriageFormSource.includes("reset(") && !feedbackTriageFormSource.includes("router.refresh"), "feedback triage result can erase or reload the operator draft");
+const feedbackPreventIndex = feedbackTriageFormSource.indexOf("event.preventDefault()");
+const feedbackGuardIndex = feedbackTriageFormSource.indexOf("if (submissionPending.current) return", feedbackPreventIndex);
+const feedbackSnapshotIndex = feedbackTriageFormSource.indexOf("const formData = new FormData(event.currentTarget)", feedbackGuardIndex);
+const feedbackTransitionIndex = feedbackTriageFormSource.indexOf("startTransition(() => action(formData))", feedbackSnapshotIndex);
+assert.ok(feedbackPreventIndex >= 0 && feedbackPreventIndex < feedbackGuardIndex && feedbackGuardIndex < feedbackSnapshotIndex && feedbackSnapshotIndex < feedbackTransitionIndex, "feedback triage manual submit does not synchronously guard and snapshot before dispatch");
 for (const source of [feedbackPage, feedbackDetail, experiencePage, healthPage]) assert.ok(source.includes("requireAdminActor") || source.includes("operationalHealth"), "admin surface lacks bounded operational access");
 for (const marker of ["preparation_lessons", "public_identity", "publication_consent", "interview_experience_rounds(position,round_type,topic_labels,process_notes)", 'in("status", ["submitted", "needs_changes"])', "resolveAdminInterviewExperienceQueue"]) assert.ok(experienceQueries.includes(marker), `experience moderation query must strictly project submitted public context: ${marker}`);
 for (const marker of ["Preparation lessons", "experience.preparation_lessons", "Public attribution:", "experience.public_identity", "experience.publication_consent", "Submitted round context", "round.topic_labels", "round.process_notes", "revision={experience.updated_at}"]) assert.ok(experiencePage.includes(marker), `experience moderation must expose the exact revision and every submitted public field: ${marker}`);
 for (const marker of ["INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT", 'return { status: "unavailable" }', "preparation_lessons", "public_identity"]) assert.ok(experiencePrivateState.includes(marker), `experience moderation result boundary is missing ${marker}`);
 for (const marker of ["parseInterviewExperienceModerationInput", "INTERVIEW_EXPERIENCE_MODERATION_CONFLICT_ERROR", "INTERVIEW_EXPERIENCE_MODERATION_SAVED_MESSAGE"]) assert.ok(experienceActionInput.includes(marker), `experience moderation input/result contract is missing ${marker}`);
 for (const marker of ["moderate_interview_experience_if_revision(uuid,timestamptz,text,text)", "Revision-checked interview experience moderation is required", "using errcode = '0A000'"]) assert.ok(revisionMigration.includes(marker), `revision-checked moderation migration is missing ${marker}`);
+for (const marker of [
+  "update_feedback_submission_if_revision",
+  "target_expected_updated_at timestamptz",
+  "pg_advisory_xact_lock",
+  "for update",
+  "current_updated_at is distinct from target_expected_updated_at",
+  "current_admin_note is not distinct from normalized_note",
+  "current_updated_at + interval '1 microsecond'",
+  "insert into public.admin_audit_events",
+  "Revision-checked feedback triage is required",
+  "using errcode = '0A000'",
+  "from public, anon, authenticated",
+  "to authenticated",
+]) assert.ok(triageRevisionMigration.includes(marker), `revision-checked feedback triage migration is missing ${marker}`);
+assert.match(triageRevisionMigration, /revoke all on function public\.update_feedback_submission_if_revision\(uuid,timestamptz,text,text\)[\s\S]*from public, anon, authenticated/, "new feedback triage RPC grants are not reset before allowlisting");
+assert.match(triageRevisionMigration, /grant execute on function public\.update_feedback_submission_if_revision\(uuid,timestamptz,text,text\)[\s\S]*to authenticated/, "authenticated admins cannot invoke the controlled triage RPC");
+for (const marker of ["plan(68)", "stale feedback triage returns zero rows", "exact feedback triage retry does not churn its revision", "legacy feedback triage fails safely without mutation"]) assert.ok(feedbackPgTap.includes(marker), `feedback pgTAP evidence is missing ${marker}`);
+for (const marker of ["concurrent feedback triage snapshots accept exactly one coherent operator state", "feedback triage race produced a torn operator state", "stale feedback triage did not return zero rows"]) assert.ok(persistenceQualifier.includes(marker), `feedback persistence qualification is missing ${marker}`);
+for (const marker of ["feedback triage requires an admin, a revision, and the controlled RPC", "anonymous 42501; non-admin 42501; legacy 0A000; direct update 42501"]) assert.ok(securityQualifier.includes(marker), `feedback security qualification is missing ${marker}`);
 assert.ok(privacyRoutes.includes('"/admin"'), "admin route is absent from canonical private-route protection");
 
 for (const name of ["message", "contact_email", "reference_id", "admin_note", "moderation_note"]) assert.ok(analyticsProperties.includes(`"${name}"`), `feedback/admin private field ${name} is not analytics-denied`);
@@ -367,15 +536,17 @@ assert.ok(!analytics.includes("feedback_submitted") && !analytics.includes("admi
 assert.ok(exporter.includes('EXPORT_VERSION = "1.5"') && exporter.includes('collectAccountExportRows("feedback_submissions"') && exporter.includes('feedback: { submissions: feedbackSubmissions }'), "account export does not include only owned feedback under the bumped schema");
 assert.ok(privacyPage.includes("Private feedback") && privacyPage.includes("deleting the account removes the account link"), "privacy documentation lacks feedback lifecycle semantics");
 assert.ok(contactPage.includes('href="/feedback"'), "contact page lacks a private feedback entry point");
-for (const marker of ["WAF", "admin_memberships", "not a CMS", "180-day review reminder", "never renders values for secrets", "failed or malformed counts cannot render as zero", "failed item lookup cannot become a 404", "pages through at most 100 reports at a time", "No queue result is silently truncated"]) assert.ok(operationsDoc.includes(marker), `operations documentation is missing ${marker}`);
+for (const marker of ["WAF", "admin_memberships", "not a CMS", "180-day review reminder", "never renders values for secrets", "failed or malformed counts cannot render as zero", "failed item lookup cannot become a 404", "pages through at most 100 reports at a time", "No queue result is silently truncated", "Feedback triage is revision-bound", "update_feedback_submission_if_revision", "exact no-op", "earlier submitted snapshot", "browser/manual validation"]) assert.ok(operationsDoc.includes(marker), `operations documentation is missing ${marker}`);
 const supportingRequirement = JSON.parse(requirementsSource).requirements.find((requirement) => requirement.id === "EF-SUP");
 assert.ok(supportingRequirement, "EF-SUP governance requirement is missing");
-for (const path of ["app/admin/feedback", "app/admin/page.tsx", "app/error.tsx", "lib/admin/auth.ts", "lib/admin/query-results.ts", "scripts/test-feedback-admin-operations.mjs"]) {
+for (const path of ["app/admin/feedback", "app/admin/page.tsx", "app/error.tsx", "features/admin/actions.ts", "features/admin/mutation-forms.tsx", "lib/admin/auth.ts", "lib/admin/feedback-triage-action-input.ts", "lib/admin/query-results.ts", "lib/supabase/database.types.ts", "scripts/qualify-persistence-local.mjs", "scripts/qualify-security-local.mjs", "scripts/test-feedback-admin-operations.mjs", "scripts/test-production-baseline.mjs", "supabase/migrations/202609040012_update_feedback_submission_if_revision.sql", "supabase/tests/database/feedback_admin_operations.test.sql"]) {
   assert.ok(supportingRequirement.code_paths.includes(path), `EF-SUP lacks admin read-truth path ${path}`);
 }
 assert.ok(supportingRequirement.content_paths.includes("docs/feedback-admin-operations.md"), "EF-SUP lacks admin operations documentation attribution");
 assert.ok(supportingRequirement.test_commands.includes("npm run test:feedback-admin-operations"), "EF-SUP lacks its enrolled admin regression command");
+assert.ok(supportingRequirement.test_commands.includes("npm run qualify:database") && supportingRequirement.test_commands.includes("npm run test:production-baseline"), "EF-SUP lacks executable database or rollout evidence attribution");
 assert.ok(supportingRequirement.acceptance_criteria.some((criterion) => criterion.includes("feedback queue uses an exact filtered count") && criterion.includes("shared actor authentication-service-versus-anonymous ambiguity remains outside this boundary")), "EF-SUP overclaims or omits the strict admin read-truth boundary");
+assert.ok(supportingRequirement.acceptance_criteria.some((criterion) => criterion.includes("Same-revision concurrent triage has one coherent winner") && criterion.includes("rendered draft retention and focus behavior remain browser/manual validation") && criterion.includes("hosted migration/concurrency checks remain unchecked")), "EF-SUP overclaims or omits the revision-checked feedback triage boundary");
 
 const now = new Date("2027-02-17T12:00:00Z");
 const freshness = companyGuideFreshness(priorityCompanyGuides, now);

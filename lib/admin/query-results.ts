@@ -30,6 +30,7 @@ export type AdminFeedbackDetail = AdminFeedbackQueueItem &
     contact_consent: boolean;
     submitted_as_authenticated: boolean;
     admin_note: string | null;
+    updated_at: string;
   }>;
 
 export type AdminFeedbackQueue = Readonly<{
@@ -155,6 +156,7 @@ function parseDetail(value: unknown): AdminFeedbackDetail | null {
     "submitted_as_authenticated",
     "created_at",
     "admin_note",
+    "updated_at",
   ] as const;
   if (!hasExactKeys(value, expected)) return null;
   const queueItem = parseQueueItem({
@@ -173,7 +175,8 @@ function parseDetail(value: unknown): AdminFeedbackDetail | null {
       !CONTACT_EMAIL_PATTERN.test(value.contact_email)) ||
     typeof value.contact_consent !== "boolean" ||
     typeof value.submitted_as_authenticated !== "boolean" ||
-    !isNullableBoundedText(value.admin_note, 2_000)
+    !isNullableBoundedText(value.admin_note, 2_000) ||
+    !isDatabaseTimestamp(value.updated_at)
   ) {
     return null;
   }
@@ -183,6 +186,7 @@ function parseDetail(value: unknown): AdminFeedbackDetail | null {
     contact_consent: value.contact_consent,
     submitted_as_authenticated: value.submitted_as_authenticated,
     admin_note: value.admin_note as string | null,
+    updated_at: value.updated_at,
   };
 }
 
