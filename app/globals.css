@@ -3523,6 +3523,9 @@ button.flow-card { cursor: pointer; }
 .experience-directory-entry details p { margin: 9px 0 0; white-space: pre-wrap; line-height: 1.65; }
 .experience-directory-entry footer { margin-top: 17px; padding-top: 12px; border-top: 1px solid var(--line); }
 .experience-submission { padding: clamp(20px, 3vw, 28px); border: 1px solid var(--line-strong); border-radius: 13px; background: var(--surface); }
+.experience-submission .button[aria-disabled="true"], .experience-private-unavailable .button[aria-disabled="true"], .admin-mutation-form .button[aria-disabled="true"], .admin-private-unavailable .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
+.experience-submission .button[aria-disabled="true"]:hover, .admin-mutation-form .button[aria-disabled="true"]:hover { background: var(--accent); border-color: var(--accent); transform: none; }
+.experience-submission .button-secondary[aria-disabled="true"]:hover, .experience-private-unavailable .button-secondary[aria-disabled="true"]:hover, .admin-private-unavailable .button-secondary[aria-disabled="true"]:hover { background: var(--surface-2); border-color: var(--control-border, var(--line-strong)); transform: none; }
 .experience-submission-intro { margin-bottom: 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .experience-submission-intro h2, .experience-owned h2 { margin: 0; font-size: 23px; letter-spacing: -.035em; }
 .experience-submission-intro p { max-width: 70ch; margin: 7px 0 0; color: var(--text-secondary); line-height: 1.62; }

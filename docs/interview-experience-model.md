@@ -1,23 +1,23 @@
 # Interview experience model
 
-## Current phase
+## Current product boundary
 
-Engineering Foundry provides a session-only Interview Experience Write-up Builder. Company, role, level, broad region, privacy-conscious interview period, optional result, process rounds, high-level topics, notes, and reflections remain in React memory on the current page. Refreshing or leaving clears them.
+Engineering Foundry publishes a reviewed directory of high-level contributor reports and provides an account-backed contribution flow. Public visitors can read only reports that have both an approved lifecycle status and publication consent. The public projection omits author identifiers, moderation metadata, round identifiers and positions, and private round process notes; an authenticated contributor's base rows remain private to that owner.
 
-The tool does not save, upload, submit, moderate, or publish a draft. It has no public experience records and is not an interview-question bank. The copy action writes a locally generated summary to the visitor's clipboard only after a session-only safety checklist is complete.
+Signed-in contributors can create a private draft, preview its bounded public-facing fields, submit it for review, edit a draft or a report returned for changes, withdraw an eligible report, and delete an eligible private report. A contributor can choose anonymous public presentation or their Engineering Foundry username, but that choice does not promise perfect anonymity. Reports describe one contributor's experience; they are not verified company policy, a current-process guarantee, or an interview-question bank.
 
-The six company workspace routes may prefill a company name from the public route. That context is not evidence about the company's process, round count, topics, or current policies. Contributor accounts represent personal experience, not verified company policy.
+The supported lifecycle is:
 
-## Future phase
+`Draft → Submitted → Needs changes → Approved / Rejected`
 
-A later authenticated system may support deliberate submissions, moderation, requested changes, approval or rejection, corrections, removal, structured search, freshness review, and archival. The documented lifecycle is:
+An approved report may be withdrawn. The schema reserves an archived lifecycle value, but the current contributor and moderation controls do not present an archive action. Moderators review the submitted public-facing content, including preparation lessons and round context, and can approve, reject, or request changes without rewriting it. Contributors see a private review note only when changes are requested. Correction and removal requests use the public contact path.
 
-`Draft → Submitted → Needs changes → Approved / Rejected → Archived`
+## Persistence and revision truth
 
-Future contributors may be able to choose display username or anonymous public presentation. No publishing occurs in the current browser-only tool, and a future anonymous option must not promise perfect anonymity.
+An Interview Experience save is one owner-derived aggregate operation: the parent report, its bounded round context, and the requested draft-or-submitted state commit together. Existing reports carry the exact loaded `updated_at` revision. A stale, missing, foreign, or lifecycle-ineligible target does not overwrite the current aggregate and is reported as a conflict. Withdraw, delete, and moderation decisions use the same revision boundary, so an older screen cannot silently replace a newer contributor or moderator decision.
 
-Public records will require provenance and status handling, moderation notes, privacy review, and clear boundaries between a contributor's account and company policy. A correction/removal path is required before publishing launches.
+The contribution UI distinguishes the submitted snapshot from edits made while its request is pending. A confirmed earlier snapshot must not clear or claim to include newer local edits. Query failures for the bounded recent private-history list are distinct from a genuinely empty list. The route does not claim that its bounded recent list is a complete paginated archive; broader owner-history pagination remains future work.
 
 ## Data and analytics boundaries
 
-No database table, storage bucket, authenticated write action, or moderation dashboard exists in this phase. Analytics may record fixed workspace context and coarse action metadata, but never company text entered by a visitor, role, level, region, period, result, topics, notes, reflections, generated output, checklist selections, or clipboard contents.
+Private drafts, contributor identity, review notes, and unapproved reports never enter the public directory. Public company-route context can scope or prefill a company name, but it is not evidence about that company's rounds, questions, policies, or current process. Analytics may record only allowlisted coarse lifecycle actions and fixed source context; it must not include report text, company or role text, dates, topics, revision values, report identifiers, review notes, or other private form content.

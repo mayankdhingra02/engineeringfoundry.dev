@@ -889,11 +889,38 @@ export type Database = {
       submit_interview_experience: { Args: { target_id: string }; Returns: boolean };
       withdraw_interview_experience: { Args: { target_id: string }; Returns: boolean };
       delete_interview_experience: { Args: { target_id: string }; Returns: boolean };
+      save_interview_experience_if_revision: {
+        Args: {
+          target_experience_id: string;
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          target_submit: boolean;
+          target_company_name: string;
+          target_role_title: string;
+          target_role_level: string | null;
+          target_region: string | null;
+          target_interview_date: string | null;
+          target_summary: string;
+          target_preparation_lessons: string | null;
+          target_public_identity: "anonymous" | "username";
+          target_publication_consent: boolean;
+          target_rounds: Json;
+        };
+        Returns: { experience_id: string; status: "draft" | "submitted"; updated_at: string }[];
+      };
+      manage_interview_experience_if_revision: {
+        Args: { target_experience_id: string; target_expected_updated_at: string; target_action: "withdraw" | "delete" };
+        Returns: { experience_id: string; status: "withdrawn" | "deleted"; updated_at: string }[];
+      };
       is_current_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       submit_feedback_submission: { Args: { payload: Json; anonymous_subject?: string | null }; Returns: string };
       export_own_feedback_submissions: { Args: Record<PropertyKey, never>; Returns: { reference_id: string; category: "bug" | "suggestion" | "content_source" | "accessibility" | "privacy_safety" | "other"; message: string; page_context: string | null; contact_email: string | null; contact_consent: boolean; status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; created_at: string; updated_at: string }[] };
       update_feedback_submission: { Args: { target_id: string; next_status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; next_note?: string | null }; Returns: boolean };
       moderate_interview_experience: { Args: { target_id: string; next_status: "needs_changes" | "approved" | "rejected"; moderation_note?: string | null }; Returns: boolean };
+      moderate_interview_experience_if_revision: {
+        Args: { target_experience_id: string; target_expected_updated_at: string; target_status: "needs_changes" | "approved" | "rejected"; target_moderation_note: string | null };
+        Returns: { experience_id: string; status: "needs_changes" | "approved" | "rejected"; updated_at: string }[];
+      };
       save_mock_interview_review: { Args: { target_session_id: string; target_track: "dsa" | "system-design" | "ml-design" | "behavioral"; target_mode: "solo" | "peer"; target_plan_id: string; target_prompt_id: string; target_rubric_id: string; target_started_at: string; target_elapsed_seconds: number; target_strength: string | null; target_improvement: string | null; target_follow_up_practice: string | null; target_ratings: Json }; Returns: string };
       create_interview_round: {
         Args: {

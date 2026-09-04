@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 import { queryLocalDatabase } from "./lib/local-supabase.mjs";
 
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -203,6 +204,36 @@ function behavioralAnswerArgs(overrides = {}) {
   };
 }
 
+function interviewExperienceArgs(overrides = {}) {
+  return {
+    target_experience_id: randomUUID(),
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_submit: false,
+    target_company_name: fixtureCompany,
+    target_role_title: "Software Engineer",
+    target_role_level: "Mid",
+    target_region: null,
+    target_interview_date: null,
+    target_summary: "A bounded local qualification report that exercises one coherent private aggregate snapshot.",
+    target_preparation_lessons: null,
+    target_public_identity: "anonymous",
+    target_publication_consent: false,
+    target_rounds: [{
+      round_type: "Coding",
+      topic_labels: ["Arrays"],
+      process_notes: "Private qualification process notes.",
+    }],
+    ...overrides,
+  };
+}
+
+function expectSingleExperienceResult(result, fallback) {
+  const rows = expectSuccess(result, fallback);
+  expect(Array.isArray(rows) && rows.length === 1, `${fallback}: expected one result row, observed ${rows?.length ?? "unknown"}`);
+  return rows[0];
+}
+
 function expectSqlError(result, expectedCodes) {
   const codes = Array.isArray(expectedCodes) ? expectedCodes : [expectedCodes];
   expect(result.error, `expected ${codes.join(" or ")}, observed no error`);
@@ -371,33 +402,31 @@ const diagnosticSnapshotC = {
 };
 
 await check("public interview experience uses the exact anonymous nested projection", async () => {
-  const saved = expectSuccess(await a.authClient.rpc("save_interview_experience_draft", {
-    target_id: null,
-    payload: {
-      company_name: fixtureCompany,
-      role_title: "Software Engineer",
-      role_level: "Mid",
-      summary: "A bounded local qualification report that verifies the public nested projection without exposing private moderation fields.",
-      publication_consent: true,
-      public_identity: "anonymous",
-      rounds: [{
-        round_type: "Technical",
-        topic_labels: ["Algorithms"],
-        process_notes: "Private qualification process notes.",
-      }],
-    },
-  }), "experience draft creation failed");
-  fixture.publicExperienceId = saved;
-  expectSuccess(await a.authClient.rpc("submit_interview_experience", { target_id: saved }), "experience submission failed");
-  queryLocalDatabase(
-    "update public.interview_experiences set status = 'approved', reviewed_at = transaction_timestamp(), review_note = 'Private qualification moderation note.' where id = :'experience_id'::uuid",
-    { experience_id: saved },
-  );
+  const experienceId = randomUUID();
+  const saved = expectSingleExperienceResult(await a.authClient.rpc("save_interview_experience_if_revision", interviewExperienceArgs({
+    target_experience_id: experienceId,
+    target_submit: true,
+    target_summary: "A bounded local qualification report that verifies the public nested projection without exposing private moderation fields.",
+    target_publication_consent: true,
+  })), "experience aggregate creation and submission failed");
+  fixture.publicExperienceId = saved.experience_id;
+  queryLocalDatabase("insert into public.admin_memberships(user_id) values (:'user_id'::uuid) on conflict do nothing", { user_id: a.user.id });
+  try {
+    const moderated = expectSingleExperienceResult(await a.authClient.rpc("moderate_interview_experience_if_revision", {
+      target_experience_id: saved.experience_id,
+      target_expected_updated_at: saved.updated_at,
+      target_status: "approved",
+      target_moderation_note: "Private qualification moderation note.",
+    }), "experience moderation failed");
+    expect(moderated.status === "approved", "experience moderation returned the wrong status");
+  } finally {
+    queryLocalDatabase("delete from public.admin_memberships where user_id = :'user_id'::uuid", { user_id: a.user.id });
+  }
 
   const publicRead = expectSuccess(await anonymous
     .from("interview_experiences")
     .select("id,company_name,role_title,summary,public_identity,interview_experience_rounds(round_type,topic_labels)")
-    .eq("id", saved)
+    .eq("id", saved.experience_id)
     .single(), "anonymous nested experience read failed");
   expect(
     JSON.stringify(Object.keys(publicRead).sort()) === JSON.stringify(["company_name", "id", "interview_experience_rounds", "public_identity", "role_title", "summary"]),
@@ -409,12 +438,143 @@ await check("public interview experience uses the exact anonymous nested project
     `public round returned an unexpected shape: ${Object.keys(publicRead.interview_experience_rounds[0]).sort().join(",")}`,
   );
 
-  expectSqlError(await anonymous.from("interview_experiences").select("author_id,review_note").eq("id", saved), "42501");
-  expectSqlError(await anonymous.from("interview_experiences").select("id,interview_experience_rounds(process_notes)").eq("id", saved), "42501");
-  expectInvisible(await b.authClient.from("interview_experiences").select("id,author_id,review_note").eq("id", saved), "approved report base row for a non-owner");
-  const ownerRead = expectSuccess(await a.authClient.from("interview_experiences").select("author_id,review_note,created_at").eq("id", saved).single(), "owner internal read failed");
+  expectSqlError(await anonymous.from("interview_experiences").select("author_id,review_note").eq("id", saved.experience_id), "42501");
+  expectSqlError(await anonymous.from("interview_experiences").select("id,interview_experience_rounds(process_notes)").eq("id", saved.experience_id), "42501");
+  expectInvisible(await b.authClient.from("interview_experiences").select("id,author_id,review_note").eq("id", saved.experience_id), "approved report base row for a non-owner");
+  const ownerRead = expectSuccess(await a.authClient.from("interview_experiences").select("author_id,review_note,created_at").eq("id", saved.experience_id).single(), "owner internal read failed");
   expect(ownerRead.author_id === a.user.id && ownerRead.review_note === "Private qualification moderation note.", "owner internal fields did not round-trip");
   return "safe nested fields only; anon hidden columns denied; non-owner base row invisible";
+});
+
+await check("concurrent Interview Experience full saves commit one coherent parent and round snapshot", async () => {
+  const experienceId = randomUUID();
+  const initial = expectSingleExperienceResult(await a.authClient.rpc("save_interview_experience_if_revision", interviewExperienceArgs({
+    target_experience_id: experienceId,
+  })), "concurrent experience fixture creation failed");
+  const candidates = [
+    interviewExperienceArgs({
+      target_experience_id: experienceId,
+      target_expect_absent: false,
+      target_expected_updated_at: initial.updated_at,
+      target_role_title: "Concurrency candidate A",
+      target_summary: "A bounded local qualification report for full-save concurrency candidate A.",
+      target_rounds: [{ round_type: "Coding", topic_labels: ["Arrays"], process_notes: "Candidate A round." }],
+    }),
+    interviewExperienceArgs({
+      target_experience_id: experienceId,
+      target_expect_absent: false,
+      target_expected_updated_at: initial.updated_at,
+      target_role_title: "Concurrency candidate B",
+      target_summary: "A bounded local qualification report for full-save concurrency candidate B.",
+      target_rounds: [{ round_type: "Behavioral", topic_labels: ["Leadership"], process_notes: "Candidate B round." }],
+    }),
+  ];
+  const attempts = await Promise.all(candidates.map((args) => a.authClient.rpc("save_interview_experience_if_revision", args)));
+  attempts.forEach((attempt) => expect(!attempt.error, attempt.error?.message ?? "concurrent full save failed"));
+  const winnerIndex = attempts.findIndex((attempt) => attempt.data?.length === 1);
+  expect(winnerIndex >= 0 && attempts.filter((attempt) => attempt.data?.length === 1).length === 1, "concurrent full saves did not produce exactly one revision winner");
+  const aggregate = expectSuccess(await a.authClient
+    .from("interview_experiences")
+    .select("role_title,summary,interview_experience_rounds(round_type,topic_labels,process_notes)")
+    .eq("id", experienceId)
+    .single(), "concurrent experience aggregate read failed");
+  const expected = candidates[winnerIndex];
+  expect(aggregate.role_title === expected.target_role_title && aggregate.summary === expected.target_summary, "winning parent snapshot was torn");
+  expect(aggregate.interview_experience_rounds?.length === 1
+    && aggregate.interview_experience_rounds[0].round_type === expected.target_rounds[0].round_type
+    && aggregate.interview_experience_rounds[0].process_notes === expected.target_rounds[0].process_notes,
+  "winning round snapshot did not match its parent");
+  return `candidate ${winnerIndex + 1} won; losing save returned zero rows`;
+});
+
+await check("concurrent Interview Experience save and submit preserve one desired aggregate state", async () => {
+  const experienceId = randomUUID();
+  const initial = expectSingleExperienceResult(await a.authClient.rpc("save_interview_experience_if_revision", interviewExperienceArgs({
+    target_experience_id: experienceId,
+  })), "save-versus-submit fixture creation failed");
+  const candidates = [
+    interviewExperienceArgs({
+      target_experience_id: experienceId,
+      target_expect_absent: false,
+      target_expected_updated_at: initial.updated_at,
+      target_submit: false,
+      target_summary: "A bounded local qualification report whose desired state remains a private draft.",
+      target_rounds: [{ round_type: "Coding", topic_labels: ["Arrays"], process_notes: "Private draft snapshot." }],
+    }),
+    interviewExperienceArgs({
+      target_experience_id: experienceId,
+      target_expect_absent: false,
+      target_expected_updated_at: initial.updated_at,
+      target_submit: true,
+      target_summary: "A bounded local qualification report whose desired state is an atomic submission.",
+      target_publication_consent: true,
+      target_rounds: [{ round_type: "Behavioral", topic_labels: ["Leadership"], process_notes: "Submitted snapshot." }],
+    }),
+  ];
+  const attempts = await Promise.all(candidates.map((args) => a.authClient.rpc("save_interview_experience_if_revision", args)));
+  attempts.forEach((attempt) => expect(!attempt.error, attempt.error?.message ?? "concurrent save or submit failed"));
+  const winnerIndex = attempts.findIndex((attempt) => attempt.data?.length === 1);
+  expect(winnerIndex >= 0 && attempts.filter((attempt) => attempt.data?.length === 1).length === 1, "save-versus-submit did not produce exactly one revision winner");
+  const aggregate = expectSuccess(await a.authClient
+    .from("interview_experiences")
+    .select("status,summary,publication_consent,interview_experience_rounds(process_notes)")
+    .eq("id", experienceId)
+    .single(), "save-versus-submit aggregate read failed");
+  const expected = candidates[winnerIndex];
+  expect(aggregate.status === (expected.target_submit ? "submitted" : "draft")
+    && aggregate.summary === expected.target_summary
+    && aggregate.publication_consent === expected.target_publication_consent
+    && aggregate.interview_experience_rounds?.[0]?.process_notes === expected.target_rounds[0].process_notes,
+  "save-versus-submit committed a torn or wrong desired state");
+  return `${aggregate.status} won with one matching parent and round snapshot`;
+});
+
+await check("concurrent Interview Experience resubmit and moderation cannot approve unseen content", async () => {
+  const experienceId = randomUUID();
+  const initialSummary = "A bounded local qualification report submitted before a requested moderation correction.";
+  const submitted = expectSingleExperienceResult(await a.authClient.rpc("save_interview_experience_if_revision", interviewExperienceArgs({
+    target_experience_id: experienceId,
+    target_submit: true,
+    target_publication_consent: true,
+    target_summary: initialSummary,
+  })), "resubmit-versus-moderation fixture creation failed");
+  queryLocalDatabase("insert into public.admin_memberships(user_id) values (:'user_id'::uuid) on conflict do nothing", { user_id: a.user.id });
+  try {
+    const needsChanges = expectSingleExperienceResult(await a.authClient.rpc("moderate_interview_experience_if_revision", {
+      target_experience_id: experienceId,
+      target_expected_updated_at: submitted.updated_at,
+      target_status: "needs_changes",
+      target_moderation_note: "Clarify the high-level process description.",
+    }), "needs-changes moderation failed");
+    const revisedSummary = "A bounded local qualification report resubmitted with the requested high-level clarification.";
+    const [resubmit, moderation] = await Promise.all([
+      a.authClient.rpc("save_interview_experience_if_revision", interviewExperienceArgs({
+        target_experience_id: experienceId,
+        target_expect_absent: false,
+        target_expected_updated_at: needsChanges.updated_at,
+        target_submit: true,
+        target_publication_consent: true,
+        target_summary: revisedSummary,
+      })),
+      a.authClient.rpc("moderate_interview_experience_if_revision", {
+        target_experience_id: experienceId,
+        target_expected_updated_at: needsChanges.updated_at,
+        target_status: "approved",
+        target_moderation_note: "Approved the displayed revision.",
+      }),
+    ]);
+    for (const attempt of [resubmit, moderation]) expect(!attempt.error, attempt.error?.message ?? "resubmit-versus-moderation RPC failed");
+    expect((resubmit.data?.length ?? 0) + (moderation.data?.length ?? 0) === 1, "resubmit-versus-moderation did not produce exactly one revision winner");
+    const aggregate = expectSuccess(await a.authClient.from("interview_experiences").select("status,summary,review_note").eq("id", experienceId).single(), "resubmit-versus-moderation read failed");
+    if (resubmit.data?.length === 1) {
+      expect(aggregate.status === "submitted" && aggregate.summary === revisedSummary && aggregate.review_note === null, "winning resubmit was not coherent");
+    } else {
+      expect(aggregate.status === "approved" && aggregate.summary === initialSummary && aggregate.review_note === "Approved the displayed revision.", "moderation approved content other than its displayed revision");
+    }
+    return `${aggregate.status} won; the competing stale mutation returned zero rows`;
+  } finally {
+    queryLocalDatabase("delete from public.admin_memberships where user_id = :'user_id'::uuid", { user_id: a.user.id });
+  }
 });
 
 await check("User A creates and reads an application through the public Data API", async () => {
