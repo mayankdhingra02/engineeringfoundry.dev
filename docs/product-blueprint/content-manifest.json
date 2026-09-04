@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "16bcdc91a88bb95da20c1fa3e19820a1e55e2fa0",
-  "repository_state_sha256": "4e9fdc55deb44f7f9c776c71beacfd64c87b8fb66119ff8c81a885460ec38792",
+  "repository_sha": "28a0fa56506ab5964ecfdf006423e8647beaabc4",
+  "repository_state_sha256": "0a27befcb5ae1afafbe0df1fd976733b83d8272d3b0683aefd5132f84b8d2227",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -561,6 +561,7 @@
     {
       "acceptance_criteria": [
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
+        "Application full edits carry the exact loaded database revision into an owner-scoped timestamp compare-and-swap, so a newer quick status or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
         "Homepage account continuation distinguishes anonymous, ready (including genuinely empty), and unavailable states; authenticated continuation-data query failures plus client transport and malformed-response failures cannot masquerade as signed-out or zero activity, account import requires a ready response, browser-local continuation remains available, and retry status and guarded focus recovery are source-regressed without claiming rendered browser automation. The shared actor boundary still does not distinguish an authentication-service failure from a legitimate anonymous session.",
         "Explicit browser-activity import strictly validates one bounded snapshot before actor work and uses owner-derived insert-only RPCs to report imported, existing, and failed outcomes without overwriting richer account progress. Only exact submitted snapshots confirmed imported or existing are removed from current primary and legacy browser state; concurrent edits, failed and unrelated activity, and saved plans remain. Duplicate, stale, and unmounted client settlements are guarded, while truthful live status and conditional focus recovery are source-regressed without claiming rendered browser automation; database atomicity, concurrency, and owner isolation run in npm run qualify:database, and hosted RPC checks remain an external owner gate.",
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
@@ -576,6 +577,7 @@
       "code_paths": [
         "app/api/preparation/continuation/route.ts",
         "app/api/preparation/import/route.ts",
+        "app/applications/[id]/edit/page.tsx",
         "app/auth/callback/route.ts",
         "app/dashboard/page.tsx",
         "app/error.tsx",
@@ -592,6 +594,8 @@
         "components/save-study-plan-control.tsx",
         "features/account/account-forms.tsx",
         "features/account/actions.ts",
+        "features/applications/actions.ts",
+        "features/applications/application-form.tsx",
         "features/auth/password-actions.ts",
         "features/auth/password-forms.tsx",
         "features/preparation-progress/actions.ts",
@@ -601,6 +605,7 @@
         "lib/account/preparation-preference-action-input.ts",
         "lib/account/preparation-preferences-query.ts",
         "lib/account/preparation-preferences.ts",
+        "lib/applications/edit-revision.ts",
         "lib/auth/account-deletion.ts",
         "lib/auth/credentials.ts",
         "lib/auth/password-recovery-claims.ts",
@@ -1212,11 +1217,13 @@
     {
       "acceptance_criteria": [
         "Planning and round guidance preserve existing evidence boundaries and public handoffs.",
+        "Interview-round full edits carry the exact loaded database revision into an owner- and application-scoped timestamp compare-and-swap, so a newer completion or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
         "Owner-scoped round preparation counts preserve distinct ready, genuinely untouched, and unavailable states across Dashboard, Application Detail, and Interview Playbook; empty input resolves before actor work, a nonempty request without an actor or any failed count query cannot render zero, start-plan, or not-started claims, and the shared retry exposes guarded pending, live-status, and responsive source contracts. Only an explicit successful retry announces that preparation progress loaded, and its source-regressed focus recovery targets the connected success status after a frame only when the retry trigger owned focus and no newer focus claim exists; rendered focus behavior remains browser/manual validation.",
         "Checklist mutations parse one exact round identifier, canonical item identifier, and boolean desired membership before actor or persistence work; the route submits no whole-array snapshot, and the owner-scoped database function serializes and idempotently changes only that item while preserving independent checklist progress and returning the owning application for revalidation. The legacy save RPC rejects non-null whole-array checklist writes, cross-owner changes remain forbidden, executable and source contracts run in npm run test:interview-preparation-hub, database behavior remains assigned to npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step."
       ],
       "code_paths": [
         "app/applications/[id]/page.tsx",
+        "app/applications/[id]/rounds/[roundId]/edit/page.tsx",
         "app/dashboard/page.tsx",
         "app/globals.css",
         "app/interview-playbook",
@@ -1224,7 +1231,10 @@
         "app/interviews/[roundId]/prepare/page.tsx",
         "components/interview-playbook",
         "components/preparation-counts-status.tsx",
+        "features/applications/actions.ts",
+        "features/applications/round-form.tsx",
         "features/interview-preparation/actions.ts",
+        "lib/applications/edit-revision.ts",
         "lib/interview-playbook",
         "lib/interview-preparation/checklist-action-input.ts",
         "lib/interview-preparation/preparation-counts.ts",
