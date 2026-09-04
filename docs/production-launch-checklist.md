@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 33 migrations are recorded, ending at `202609030006_save_system_design_item_progress_if_revision`
+4. [ ] `supabase migration list --linked` — confirm all 34 migrations are recorded, ending at `202609030007_save_behavioral_answer_aggregate`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -98,6 +98,8 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 Apply `202609030005_save_behavioral_story_aggregate.sql` before deploying the aggregate-writing application. Migration-first makes already-loaded split-write clients fail safely before partial mutation: direct story/theme writes fail with `42501`, while direct calls to the legacy theme RPC fail with `0A000`. App-first leaves the torn-write window open until the migration lands. Rolling application code back after the migration is safe but degraded because the old split-write path stays unavailable; keep the migration and roll forward.
 
 Apply `202609030006_save_system_design_item_progress_if_revision.sql` before deploying the revision-aware System Design application. Migration-first makes already-loaded whole-row clients fail safely with `0A000`; application-first protects only newly loaded clients and leaves the stale overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the legacy full-save path stays unavailable; keep the migration and roll forward.
+
+Apply `202609030007_save_behavioral_answer_aggregate.sql` before deploying the Behavioral answer aggregate application. Migration-first denies authenticated direct answer `INSERT`/`UPDATE` with `42501` and makes direct calls to the legacy primary-only RPC fail with `0A000`, so already-loaded split-write clients fail before partial mutation. Application-first protects only newly loaded clients and leaves the old torn-save and stale-overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the direct and primary-only write paths stay unavailable; keep the migration and roll forward.
 
 ---
 
@@ -142,6 +144,9 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Confirm `anon` cannot execute `create_behavioral_story_with_themes`, `update_behavioral_story_with_themes_if_revision`, or `duplicate_behavioral_story_with_themes`; authenticated User A can create one parent with its exact controlled theme set.
 - [ ] Race two User A aggregate story updates from the same revision and confirm exactly one coherent parent/theme snapshot wins; stale, foreign, and missing revisions return zero rows without mutation, duplication captures one complete aggregate snapshot, and invalid themes roll back both parent and theme changes.
 - [ ] Confirm authenticated direct story `INSERT`/`UPDATE` and theme `INSERT`/`UPDATE`/`DELETE` fail while owner story deletion remains available. Confirm the authenticated legacy `replace_behavioral_story_themes` call fails with SQLSTATE `0A000` and `Atomic Behavioral story saving is required`.
+- [ ] Confirm `anon` cannot execute `create_behavioral_answer_aggregate` or `update_behavioral_answer_aggregate_if_revision`. As User A, create one answer with a desired primary state, race two full edits from the same revision, and confirm exactly one complete content/primary snapshot wins while the stale call returns zero rows without mutation.
+- [ ] Race primary requests for two User A answers to the same curated or custom question and confirm exactly one requested answer remains primary. Confirm invalid aggregate input rolls back without changing the previous primary, and foreign answer targets, missing answer targets, and question-mismatched targets are indistinguishable zero-row outcomes that preserve User A's data.
+- [ ] Confirm authenticated direct answer `INSERT`/`UPDATE` fail while owner-scoped `SELECT`/`DELETE` remain available. Confirm the authenticated legacy `set_behavioral_primary_answer` call fails without mutation with SQLSTATE `0A000` and `Atomic Behavioral answer saving is required`.
 
 ### Anonymous browser-progress import boundary
 

@@ -62,6 +62,25 @@ function behavioralStoryArgs(overrides = {}) {
   };
 }
 
+function behavioralAnswerArgs(overrides = {}) {
+  return {
+    target_custom_question_id: null,
+    target_curated_question_id: "beh-lead-01",
+    target_story_id: null,
+    target_company_slug: null,
+    target_application_id: null,
+    target_title: "Phase 9 aggregate security answer",
+    target_answer_text: "Private Behavioral answer.",
+    target_opening_framing: null,
+    target_details_to_emphasize: null,
+    target_details_to_avoid: null,
+    target_notes: "Owner A private answer note.",
+    target_status: "Draft",
+    target_make_primary: false,
+    ...overrides,
+  };
+}
+
 async function check(name, work) {
   try {
     const note = await work();
@@ -88,6 +107,7 @@ const consume = (client, max = 3, window = 900) =>
   client.rpc("consume_account_action_rate_limit", { action_key: "account_export", max_requests: max, window_seconds: window });
 
 let behavioralStory;
+let behavioralAnswer;
 
 await check("Behavioral aggregate RPCs deny anonymous callers", async () => {
   const attempts = await Promise.all([
@@ -98,9 +118,15 @@ await check("Behavioral aggregate RPCs deny anonymous callers", async () => {
       ...behavioralStoryArgs(),
     }),
     anon.rpc("duplicate_behavioral_story_with_themes", { target_story_id: crypto.randomUUID() }),
+    anon.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({ target_story_id: crypto.randomUUID() })),
+    anon.rpc("update_behavioral_answer_aggregate_if_revision", {
+      target_answer_id: crypto.randomUUID(),
+      target_expected_updated_at: new Date().toISOString(),
+      ...behavioralAnswerArgs({ target_story_id: crypto.randomUUID() }),
+    }),
   ]);
   for (const attempt of attempts) assert.equal(attempt.error?.code, "42501", "anonymous Behavioral aggregate execution must fail with 42501");
-  return "create, update, and duplicate returned SQLSTATE 42501";
+  return "story and answer aggregate mutations returned SQLSTATE 42501";
 });
 
 await check("Behavioral aggregate derives its owner and closes direct mutation bypasses", async () => {
@@ -121,6 +147,40 @@ await check("Behavioral aggregate derives its owner and closes direct mutation b
   });
   assert.equal(legacy.error?.code, "0A000", "legacy theme replacement must fail safely with 0A000");
   return `owner aggregate ${behavioralStory.story_id}; direct writes denied; legacy retired`;
+});
+
+await check("Behavioral answer aggregate derives its owner and closes split-write bypasses", async () => {
+  assert.ok(behavioralStory, "owner Behavioral story fixture was unavailable");
+  const created = await a.client.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_story_id: behavioralStory.story_id,
+    target_make_primary: true,
+  }));
+  assert.ifError(created.error);
+  assert.equal(created.data?.length, 1);
+  behavioralAnswer = created.data[0];
+  const directMutations = await Promise.all([
+    a.client.from("behavioral_answers").insert({
+      user_id: a.user.id,
+      curated_question_id: "beh-lead-01",
+      story_id: behavioralStory.story_id,
+      title: "Direct answer bypass",
+    }),
+    a.client.from("behavioral_answers").update({ notes: "Direct stale overwrite" }).eq("id", behavioralAnswer.answer_id),
+  ]);
+  for (const mutation of directMutations) assert.equal(mutation.error?.code, "42501", "direct Behavioral answer mutation must fail with 42501");
+  const legacy = await a.client.rpc("set_behavioral_primary_answer", {
+    target_answer_id: behavioralAnswer.answer_id,
+    make_primary: false,
+  });
+  assert.equal(legacy.error?.code, "0A000", "legacy primary mutation must fail safely with 0A000");
+  const read = await a.client.from("behavioral_answers").select("notes,is_primary,updated_at").eq("id", behavioralAnswer.answer_id).single();
+  assert.ifError(read.error);
+  assert.deepEqual(read.data, {
+    notes: "Owner A private answer note.",
+    is_primary: true,
+    updated_at: behavioralAnswer.updated_at,
+  });
+  return `answer aggregate ${behavioralAnswer.answer_id}; direct writes denied; legacy retired`;
 });
 
 await check("foreign and missing Behavioral aggregate targets are indistinguishable", async () => {
@@ -145,6 +205,49 @@ await check("foreign and missing Behavioral aggregate targets are indistinguisha
   assert.ifError(owner.error);
   assert.deepEqual(owner.data, { title: "Phase 9 aggregate security story", notes: "Owner A private Behavioral note." });
   return "foreign and missing updates/duplicates returned zero rows; owner data unchanged";
+});
+
+await check("foreign and missing Behavioral answer targets are indistinguishable", async () => {
+  assert.ok(behavioralStory && behavioralAnswer, "owner Behavioral answer fixtures were unavailable");
+  const bStory = await b.client.rpc("create_behavioral_story_with_themes", behavioralStoryArgs({
+    target_title: "Phase 9 user B answer relationship",
+    target_notes: "User B private story note.",
+  }));
+  assert.ifError(bStory.error);
+  assert.equal(bStory.data?.length, 1);
+  const updateArgs = behavioralAnswerArgs({
+    target_story_id: bStory.data[0].story_id,
+    target_title: "Foreign or missing answer update",
+  });
+  const [foreign, missing] = await Promise.all([
+    b.client.rpc("update_behavioral_answer_aggregate_if_revision", {
+      target_answer_id: behavioralAnswer.answer_id,
+      target_expected_updated_at: behavioralAnswer.updated_at,
+      ...updateArgs,
+    }),
+    b.client.rpc("update_behavioral_answer_aggregate_if_revision", {
+      target_answer_id: crypto.randomUUID(),
+      target_expected_updated_at: behavioralAnswer.updated_at,
+      ...updateArgs,
+    }),
+  ]);
+  for (const attempt of [foreign, missing]) {
+    assert.ifError(attempt.error);
+    assert.deepEqual(attempt.data, []);
+  }
+  const foreignRelationship = await b.client.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_story_id: behavioralStory.story_id,
+  }));
+  assert.equal(foreignRelationship.error?.code, "23503", "foreign story relation must fail with 23503");
+  const owner = await a.client.from("behavioral_answers").select("title,notes,is_primary,updated_at").eq("id", behavioralAnswer.answer_id).single();
+  assert.ifError(owner.error);
+  assert.deepEqual(owner.data, {
+    title: "Phase 9 aggregate security answer",
+    notes: "Owner A private answer note.",
+    is_primary: true,
+    updated_at: behavioralAnswer.updated_at,
+  });
+  return "foreign and missing updates returned zero rows; foreign relationship rejected; owner answer unchanged";
 });
 
 // --- Export throttle -------------------------------------------------------

@@ -118,6 +118,25 @@ function behavioralStoryArgs(overrides = {}) {
   };
 }
 
+function behavioralAnswerArgs(overrides = {}) {
+  return {
+    target_custom_question_id: null,
+    target_curated_question_id: "beh-lead-01",
+    target_story_id: null,
+    target_company_slug: null,
+    target_application_id: null,
+    target_title: "Phase 5A qualification answer",
+    target_answer_text: "",
+    target_opening_framing: null,
+    target_details_to_emphasize: null,
+    target_details_to_avoid: null,
+    target_notes: null,
+    target_status: "Draft",
+    target_make_primary: false,
+    ...overrides,
+  };
+}
+
 function expectSqlError(result, expectedCodes) {
   const codes = Array.isArray(expectedCodes) ? expectedCodes : [expectedCodes];
   expect(result.error, `expected ${codes.join(" or ")}, observed no error`);
@@ -978,51 +997,180 @@ await check("answer preparation creates its canonical story mapping", async () =
     .eq("story_id", storyId)
     .eq("curated_question_id", "beh-tech-01");
   expectSuccess(removed, "preparation mapping setup failed");
-  const answer = await a.authClient.from("behavioral_answers").insert({
-    user_id: a.user.id,
-    curated_question_id: "beh-tech-01",
-    story_id: storyId,
-    title: "Phase 5A qualification automatic mapping",
-  }).select("id").single();
-  const row = expectSuccess(answer, "automatic mapping preparation failed");
+  const answer = await a.authClient.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_curated_question_id: "beh-tech-01",
+    target_story_id: storyId,
+    target_title: "Phase 5A qualification automatic mapping",
+  }));
+  const rows = expectSuccess(answer, "automatic mapping preparation failed");
+  expect(rows.length === 1, `expected one automatic mapping answer, observed ${rows.length}`);
   const mapping = await a.authClient.from("behavioral_story_question_links").select("id").eq("story_id", storyId).eq("curated_question_id", "beh-tech-01").single();
   expectSuccess(mapping, "answer preparation did not create the canonical story mapping");
-  const cleanup = await a.authClient.from("behavioral_answers").delete().eq("id", row.id);
+  const cleanup = await a.authClient.from("behavioral_answers").delete().eq("id", rows[0].answer_id);
   expectSuccess(cleanup, "automatic mapping answer cleanup failed");
 });
 
 await check("User A saves application-specific question notes without a full draft", async () => {
-  const insertion = await a.authClient
-    .from("behavioral_answers")
-    .insert({
-      user_id: a.user.id,
-      curated_question_id: "beh-lead-01",
-      story_id: requireFixture(fixture.storyId, "story"),
-      application_id: requireFixture(fixture.applicationId, "application"),
-      company_slug: "amazon",
-      title: "Phase 5A qualification primary preparation",
-      opening_framing: "Frame the ambiguous decision.",
-      details_to_emphasize: "Emphasize the reversible scope decision.",
-      details_to_avoid: "Avoid confidential launch details.",
-      notes: "Private preparation note.",
-    })
-    .select("id,answer_text,notes")
-    .single();
-  const row = expectSuccess(insertion, "question preparation insertion failed");
+  const insertion = await a.authClient.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_story_id: requireFixture(fixture.storyId, "story"),
+    target_application_id: requireFixture(fixture.applicationId, "application"),
+    target_company_slug: "amazon",
+    target_title: "Phase 5A qualification primary preparation",
+    target_opening_framing: "Frame the ambiguous decision.",
+    target_details_to_emphasize: "Emphasize the reversible scope decision.",
+    target_details_to_avoid: "Avoid confidential launch details.",
+    target_notes: "Private preparation note.",
+    target_make_primary: true,
+  }));
+  const rows = expectSuccess(insertion, "question preparation insertion failed");
+  expect(rows.length === 1, `expected one question preparation row, observed ${rows.length}`);
+  const read = await a.authClient.from("behavioral_answers").select("id,answer_text,notes,is_primary").eq("id", rows[0].answer_id).single();
+  const row = expectSuccess(read, "question preparation read failed");
   expect(row.answer_text === "" && row.notes === "Private preparation note.", "optional full draft or notes did not round-trip");
+  expect(row.is_primary === true, "aggregate create did not persist desired primary state");
   fixture.answerId = row.id;
   return row.id;
 });
 
-await check("owner-derived primary story selection works", async () => {
+await check("legacy primary-only mutation fails without changing the aggregate", async () => {
   const result = await a.authClient.rpc("set_behavioral_primary_answer", {
     target_answer_id: requireFixture(fixture.answerId, "answer"),
-    make_primary: true,
+    make_primary: false,
   });
-  expect(!result.error && result.data === true, result.error?.message ?? "primary selection returned false");
+  expectSqlError(result, "0A000");
   const read = await a.authClient.from("behavioral_answers").select("is_primary").eq("id", fixture.answerId).single();
   const row = expectSuccess(read, "primary answer lookup failed");
-  expect(row.is_primary === true, "primary designation did not persist");
+  expect(row.is_primary === true, "legacy primary mutation changed the answer");
+  return "SQLSTATE 0A000; primary unchanged";
+});
+
+await check("concurrent full Behavioral answer saves accept one revision and preserve the winner", async () => {
+  const created = expectSuccess(await a.authClient.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_curated_question_id: "beh-lead-02",
+    target_story_id: requireFixture(fixture.storyId, "story"),
+    target_title: "Phase 5A qualification concurrent answer baseline",
+    target_answer_text: "Concurrent baseline answer.",
+  })), "concurrent answer fixture failed");
+  expect(created.length === 1, `expected one concurrent answer fixture, observed ${created.length}`);
+  const answerId = created[0].answer_id;
+  const before = { updated_at: created[0].updated_at };
+  const attempts = await Promise.all(["A", "B"].map((label) => a.authClient.rpc(
+    "update_behavioral_answer_aggregate_if_revision",
+    {
+      target_answer_id: answerId,
+      target_expected_updated_at: before.updated_at,
+      ...behavioralAnswerArgs({
+        target_curated_question_id: "beh-lead-02",
+        target_story_id: requireFixture(fixture.storyId, "story"),
+        target_title: `Phase 5A qualification concurrent answer ${label}`,
+        target_answer_text: `Concurrent full answer ${label}.`,
+        target_opening_framing: `Concurrent opening ${label}.`,
+        target_details_to_emphasize: `Concurrent emphasis ${label}.`,
+        target_details_to_avoid: `Concurrent avoid ${label}.`,
+        target_notes: `Concurrent private note ${label}.`,
+        target_status: "Needs Work",
+        target_make_primary: true,
+      }),
+    },
+  )));
+  for (const attempt of attempts) expect(!attempt.error, attempt.error?.message ?? "concurrent answer update failed");
+  const winners = attempts.filter((attempt) => attempt.data?.length === 1);
+  const conflicts = attempts.filter((attempt) => attempt.data?.length === 0);
+  expect(winners.length === 1 && conflicts.length === 1, `expected one winner and one conflict, observed ${winners.length}/${conflicts.length}`);
+  const winner = winners[0].data[0];
+  const saved = expectSuccess(
+    await a.authClient.from("behavioral_answers").select("title,answer_text,opening_framing,details_to_emphasize,details_to_avoid,notes,status,is_primary,updated_at").eq("id", answerId).single(),
+    "concurrent answer winner lookup failed",
+  );
+  const label = saved.title.endsWith(" A") ? "A" : "B";
+  expect(saved.title === `Phase 5A qualification concurrent answer ${label}`, "answer title did not retain the winning snapshot");
+  expect(saved.answer_text === `Concurrent full answer ${label}.`, "answer body mixed concurrent snapshots");
+  expect(saved.opening_framing === `Concurrent opening ${label}.`, "opening framing mixed concurrent snapshots");
+  expect(saved.details_to_emphasize === `Concurrent emphasis ${label}.`, "emphasis mixed concurrent snapshots");
+  expect(saved.details_to_avoid === `Concurrent avoid ${label}.`, "avoidance notes mixed concurrent snapshots");
+  expect(saved.notes === `Concurrent private note ${label}.` && saved.status === "Needs Work" && saved.is_primary, "winner fields or primary state were not coherent");
+  expect(saved.updated_at === winner.updated_at && saved.updated_at > before.updated_at, "winning answer revision did not advance exactly");
+  return `winner ${label}; one zero-row conflict; revision ${saved.updated_at}`;
+});
+
+await check("competing Behavioral primary saves serialize to one desired primary", async () => {
+  const firstId = requireFixture(fixture.answerId, "answer");
+  const secondCreated = expectSuccess(await a.authClient.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_story_id: requireFixture(fixture.storyId, "story"),
+    target_title: "Phase 5A qualification competing primary",
+    target_answer_text: "Competing primary answer.",
+  })), "competing primary fixture failed");
+  expect(secondCreated.length === 1, `expected one competing answer, observed ${secondCreated.length}`);
+  const secondId = secondCreated[0].answer_id;
+  const [firstBefore, secondBefore] = await Promise.all([
+    a.authClient.from("behavioral_answers").select("updated_at,title,answer_text,story_id,application_id,company_slug,opening_framing,details_to_emphasize,details_to_avoid,notes,status").eq("id", firstId).single(),
+    a.authClient.from("behavioral_answers").select("updated_at,title,answer_text,story_id,application_id,company_slug,opening_framing,details_to_emphasize,details_to_avoid,notes,status").eq("id", secondId).single(),
+  ]);
+  const first = expectSuccess(firstBefore, "first competing answer lookup failed");
+  const second = expectSuccess(secondBefore, "second competing answer lookup failed");
+  const [firstSave, secondSave] = await Promise.all([
+    a.authClient.rpc("update_behavioral_answer_aggregate_if_revision", {
+      target_answer_id: firstId,
+      target_expected_updated_at: first.updated_at,
+      ...behavioralAnswerArgs({
+        target_story_id: first.story_id,
+        target_application_id: first.application_id,
+        target_company_slug: first.company_slug,
+        target_title: first.title,
+        target_answer_text: first.answer_text,
+        target_opening_framing: first.opening_framing,
+        target_details_to_emphasize: first.details_to_emphasize,
+        target_details_to_avoid: first.details_to_avoid,
+        target_notes: first.notes,
+        target_status: first.status,
+        target_make_primary: true,
+      }),
+    }),
+    a.authClient.rpc("update_behavioral_answer_aggregate_if_revision", {
+      target_answer_id: secondId,
+      target_expected_updated_at: second.updated_at,
+      ...behavioralAnswerArgs({
+        target_story_id: second.story_id,
+        target_application_id: second.application_id,
+        target_company_slug: second.company_slug,
+        target_title: second.title,
+        target_answer_text: second.answer_text,
+        target_opening_framing: second.opening_framing,
+        target_details_to_emphasize: second.details_to_emphasize,
+        target_details_to_avoid: second.details_to_avoid,
+        target_notes: second.notes,
+        target_status: second.status,
+        target_make_primary: true,
+      }),
+    }),
+  ]);
+  expect(!firstSave.error && !secondSave.error, firstSave.error?.message ?? secondSave.error?.message ?? "competing primary save failed");
+  expect(secondSave.data?.length === 1, "the serialized second primary intent did not save");
+  const primaries = expectSuccess(
+    await a.authClient.from("behavioral_answers").select("id").eq("curated_question_id", "beh-lead-01").eq("is_primary", true),
+    "primary uniqueness lookup failed",
+  );
+  expect(primaries.length === 1 && primaries[0].id === secondId, "competing primary saves did not end with one serialized desired primary");
+  return `${firstSave.data?.length ?? 0}/${secondSave.data.length} rows; final primary ${secondId}`;
+});
+
+await check("invalid Behavioral aggregate input rolls back before changing the primary", async () => {
+  const primaryBefore = expectSuccess(
+    await a.authClient.from("behavioral_answers").select("id,updated_at").eq("curated_question_id", "beh-lead-01").eq("is_primary", true).single(),
+    "primary rollback baseline failed",
+  );
+  const rejected = await a.authClient.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_story_id: requireFixture(fixture.storyId, "story"),
+    target_title: "x".repeat(201),
+    target_make_primary: true,
+  }));
+  expectSqlError(rejected, "23514");
+  const primaryAfter = expectSuccess(
+    await a.authClient.from("behavioral_answers").select("id,updated_at").eq("curated_question_id", "beh-lead-01").eq("is_primary", true).single(),
+    "primary rollback verification failed",
+  );
+  expect(JSON.stringify(primaryAfter) === JSON.stringify(primaryBefore), "rejected aggregate input changed the primary answer");
+  return "SQLSTATE 23514; primary id and revision unchanged";
 });
 
 await check("preparation-backed story mapping cannot be unlinked", async () => {
@@ -1117,7 +1265,7 @@ await check("User B cannot update or delete User A behavioral records", async ()
   return "all mutations affected 0 rows";
 });
 
-await check("User B cannot map User A story or change User A primary preparation", async () => {
+await check("User B cannot map User A story or use the retired primary-only mutation", async () => {
   const mapping = await b.authClient.from("behavioral_story_question_links").insert({
     user_id: b.user.id,
     story_id: requireFixture(fixture.storyId, "story"),
@@ -1128,8 +1276,8 @@ await check("User B cannot map User A story or change User A primary preparation
     target_answer_id: requireFixture(fixture.answerId, "answer"),
     make_primary: true,
   });
-  expect(!primary.error && primary.data === false, primary.error?.message ?? "cross-user primary change unexpectedly succeeded");
-  return "mapping rejected; primary RPC returned false";
+  expectSqlError(primary, "0A000");
+  return "mapping rejected; legacy primary RPC returned SQLSTATE 0A000";
 });
 
 await check("User B cannot attach preparation to User A application", async () => {

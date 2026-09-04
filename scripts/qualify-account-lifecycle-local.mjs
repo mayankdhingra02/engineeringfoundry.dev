@@ -127,7 +127,23 @@ await check("disposable account can populate every major private workspace", asy
   });
   assert.ifError(story.error);
   assert.equal(story.data?.length, 1);
-  assert.ifError((await a.client.from("behavioral_answers").insert({ user_id: a.user.id, curated_question_id: "beh-lead-01", story_id: story.data[0].story_id, title: "Phase 8 private answer", opening_framing: "Private opening framing", details_to_emphasize: "Private detail to emphasize", details_to_avoid: "Private detail to avoid", answer_text: "Private prepared answer" })).error);
+  const answer = await a.client.rpc("create_behavioral_answer_aggregate", {
+    target_custom_question_id: null,
+    target_curated_question_id: "beh-lead-01",
+    target_story_id: story.data[0].story_id,
+    target_company_slug: null,
+    target_application_id: null,
+    target_title: "Phase 8 private answer",
+    target_answer_text: "Private prepared answer",
+    target_opening_framing: "Private opening framing",
+    target_details_to_emphasize: "Private detail to emphasize",
+    target_details_to_avoid: "Private detail to avoid",
+    target_notes: null,
+    target_status: "Draft",
+    target_make_primary: false,
+  });
+  assert.ifError(answer.error);
+  assert.equal(answer.data?.length, 1);
   assert.ifError((await a.client.rpc("save_dsa_question_progress_if_revision", { target_question_id: "two-sum", target_expect_absent: true, target_expected_updated_at: null, target_status: "attempted", target_confidence: "medium", target_bookmarked: true, target_notes: "Private DSA note" })).error);
   assert.ifError((await a.client.rpc("save_system_design_item_progress_if_revision", { target_item_id: "introduction", target_item_type: "concept", target_expect_absent: true, target_expected_updated_at: null, target_status: "reviewed", target_confidence: "medium", target_bookmarked: true, target_notes: "Private System Design note" })).error);
   const document = { functional_requirements: [], non_functional_requirements: [], capacity: { assumptions: [], calculations: [] }, apis: [], data_models: [], high_level_design: "Private design", deep_dives: [], bottlenecks: [], failure_modes: [], tradeoffs: [], follow_ups: [], final_review_notes: "" };

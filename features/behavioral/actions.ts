@@ -2,7 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { findCuratedQuestion } from "@/lib/behavioral/catalog";
+import { CURATED_BEHAVIORAL_QUESTIONS, findCuratedQuestion } from "@/lib/behavioral/catalog";
+import {
+  BEHAVIORAL_ANSWER_CONFLICT_ERROR,
+  BEHAVIORAL_ANSWER_CREATE_ERROR,
+  BEHAVIORAL_ANSWER_INVALID_INPUT_ERROR,
+  BEHAVIORAL_ANSWER_UPDATE_ERROR,
+  parseBehavioralAnswerActionInput,
+  parseBehavioralAnswerMutationResult,
+  type BehavioralAnswerInput,
+} from "@/lib/behavioral/answer-action-input";
 import { reviewAnswerFacts } from "@/lib/behavioral/fact-integrity";
 import {
   BEHAVIORAL_STORY_CONFLICT_ERROR,
@@ -15,11 +24,12 @@ import {
   parseCanonicalBehavioralStoryId,
   type BehavioralStoryInput,
 } from "@/lib/behavioral/story-action-input";
-import { parseAnswerForm, parseQuestionForm, type BehavioralFieldErrors } from "@/lib/behavioral/validation";
+import { parseQuestionForm, type BehavioralFieldErrors } from "@/lib/behavioral/validation";
 import { getAuthenticatedActor, type AuthenticatedActor } from "@/lib/auth/actor";
 
 export interface BehavioralActionState { status: "idle" | "error"; message: string; fieldErrors?: BehavioralFieldErrors; conflict?: boolean }
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const curatedQuestionIds = new Set(CURATED_BEHAVIORAL_QUESTIONS.map((question) => question.id));
 
 const sessionError = (): BehavioralActionState => ({ status: "error", message: "Your session has expired. Sign in and try again." });
 function refreshBehavioral() { revalidatePath("/behavioral/workspace"); revalidatePath("/behavioral/questions"); revalidatePath("/behavioral/stories"); revalidatePath("/dashboard"); }
@@ -93,6 +103,31 @@ function storyRpcArgs(story: BehavioralStoryInput) {
     target_reflection: story.reflection,
     target_short_summary: story.short_summary,
     target_notes: story.notes,
+  };
+}
+
+function answerRpcArgs(
+  answer: BehavioralAnswerInput,
+  reference: {
+    curated_question_id: string | null;
+    custom_question_id: string | null;
+  },
+  isPrimary: boolean,
+) {
+  return {
+    target_custom_question_id: reference.custom_question_id,
+    target_curated_question_id: reference.curated_question_id,
+    target_story_id: answer.story_id,
+    target_company_slug: answer.company_slug,
+    target_application_id: answer.application_id,
+    target_title: answer.title,
+    target_answer_text: answer.answer_text,
+    target_opening_framing: answer.opening_framing,
+    target_details_to_emphasize: answer.details_to_emphasize,
+    target_details_to_avoid: answer.details_to_avoid,
+    target_notes: answer.notes,
+    target_status: answer.status,
+    target_make_primary: isPrimary,
   };
 }
 
@@ -197,36 +232,38 @@ export async function unlinkStoryAction(linkId: string, questionId: string) {
   refreshBehavioral(); revalidatePath(`/behavioral/questions/${questionId}`);
 }
 
-export async function createAnswerAction(questionId: string, _: BehavioralActionState, formData: FormData): Promise<BehavioralActionState> {
+export async function createAnswerAction(questionId: unknown, _: BehavioralActionState, formData: unknown): Promise<BehavioralActionState> {
+  const parsed = parseBehavioralAnswerActionInput(formData, { kind: "create", questionId }, curatedQuestionIds);
+  if (!parsed.ok) return { status: "error", message: BEHAVIORAL_ANSWER_INVALID_INPUT_ERROR, fieldErrors: parsed.fieldErrors };
   const current = await getAuthenticatedActor(); if (!current) return sessionError();
-  const reference = await ownedQuestion(current, questionId); if (!reference) return { status: "error", message: "This question could not be found." };
-  const parsed = parseAnswerForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  if (!await ownsAnswerRelationships(current, parsed.data)) return { status: "error", message: "A linked story or application is no longer available." };
-  if (!await hasConfirmedAnswerFacts(current, parsed.data.story_id, parsed.data, parsed.factIntegrityConfirmed)) return { status: "error", message: "Review the source-story consistency prompts before saving this variant.", fieldErrors: { fact_integrity_confirmed: "Confirm the source story or update it first before saving these factual changes." } };
-  const { data: answer, error } = await current.supabase.from("behavioral_answers").insert({ ...parsed.data, ...reference, user_id: current.user.id }).select("id").maybeSingle();
-  if (error || !answer) return { status: "error", message: "We couldn't save this preparation. Check linked records and try again." };
-  if (parsed.isPrimary) {
-    const { data: primarySet, error: primaryError } = await current.supabase.rpc("set_behavioral_primary_answer", { target_answer_id: answer.id, make_primary: true });
-    if (primaryError || !primarySet) {
-      await current.supabase.from("behavioral_answers").delete().eq("id", answer.id).eq("user_id", current.user.id);
-      return { status: "error", message: "We couldn't set the primary story. Check the linked story and try again." };
-    }
-  }
-  refreshBehavioral(); revalidatePath(`/behavioral/questions/${questionId}`); redirect(`/behavioral/questions/${questionId}`);
+  const reference = await ownedQuestion(current, parsed.value.questionId); if (!reference) return { status: "error", message: "This question could not be found." };
+  if (!await ownsAnswerRelationships(current, parsed.value.answer)) return { status: "error", message: "A linked story or application is no longer available." };
+  if (!await hasConfirmedAnswerFacts(current, parsed.value.answer.story_id, parsed.value.answer, parsed.value.factIntegrityConfirmed)) return { status: "error", message: "Review the source-story consistency prompts before saving this variant.", fieldErrors: { fact_integrity_confirmed: "Confirm the source story or update it first before saving these factual changes." } };
+  const { data, error } = await current.supabase.rpc("create_behavioral_answer_aggregate", answerRpcArgs(parsed.value.answer, reference, parsed.value.isPrimary));
+  if (error) return { status: "error", message: BEHAVIORAL_ANSWER_CREATE_ERROR };
+  const outcome = parseBehavioralAnswerMutationResult(data);
+  if (outcome.status !== "saved") return { status: "error", message: BEHAVIORAL_ANSWER_CREATE_ERROR };
+  refreshBehavioral(); revalidatePath(`/behavioral/questions/${parsed.value.questionId}`); redirect(`/behavioral/questions/${parsed.value.questionId}`);
 }
 
-export async function updateAnswerAction(questionId: string, answerId: string, _: BehavioralActionState, formData: FormData): Promise<BehavioralActionState> {
+export async function updateAnswerAction(questionId: unknown, answerId: unknown, _: BehavioralActionState, formData: unknown): Promise<BehavioralActionState> {
+  const parsed = parseBehavioralAnswerActionInput(formData, { kind: "edit", questionId, answerId }, curatedQuestionIds);
+  if (!parsed.ok) return { status: "error", message: BEHAVIORAL_ANSWER_INVALID_INPUT_ERROR, fieldErrors: parsed.fieldErrors };
   const current = await getAuthenticatedActor(); if (!current) return sessionError();
-  const reference = await ownedQuestion(current, questionId);
-  if (!UUID_PATTERN.test(answerId) || !reference || !await answerMatchesOwnedQuestion(current, answerId, reference)) return { status: "error", message: "This answer could not be found." };
-  const parsed = parseAnswerForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  if (!await ownsAnswerRelationships(current, parsed.data)) return { status: "error", message: "A linked story or application is no longer available." };
-  if (!await hasConfirmedAnswerFacts(current, parsed.data.story_id, parsed.data, parsed.factIntegrityConfirmed)) return { status: "error", message: "Review the source-story consistency prompts before saving this variant.", fieldErrors: { fact_integrity_confirmed: "Confirm the source story or update it first before saving these factual changes." } };
-  const { data, error } = await current.supabase.from("behavioral_answers").update(parsed.data).eq("id", answerId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) return { status: "error", message: "We couldn't update this answer." };
-  const { data: primarySet, error: primaryError } = await current.supabase.rpc("set_behavioral_primary_answer", { target_answer_id: answerId, make_primary: parsed.isPrimary });
-  if (primaryError || !primarySet) return { status: "error", message: "The notes were updated, but the primary-story setting could not be changed. Try saving again." };
-  refreshBehavioral(); revalidatePath(`/behavioral/questions/${questionId}`); redirect(`/behavioral/questions/${questionId}`);
+  const reference = await ownedQuestion(current, parsed.value.questionId);
+  if (!reference) return { status: "error", message: "This question could not be found." };
+  if (!await ownsAnswerRelationships(current, parsed.value.answer)) return { status: "error", message: "A linked story or application is no longer available." };
+  if (!await hasConfirmedAnswerFacts(current, parsed.value.answer.story_id, parsed.value.answer, parsed.value.factIntegrityConfirmed)) return { status: "error", message: "Review the source-story consistency prompts before saving this variant.", fieldErrors: { fact_integrity_confirmed: "Confirm the source story or update it first before saving these factual changes." } };
+  const { data, error } = await current.supabase.rpc("update_behavioral_answer_aggregate_if_revision", {
+    target_answer_id: parsed.value.answerId!,
+    target_expected_updated_at: parsed.value.expectedUpdatedAt!,
+    ...answerRpcArgs(parsed.value.answer, reference, parsed.value.isPrimary),
+  });
+  if (error) return { status: "error", message: BEHAVIORAL_ANSWER_UPDATE_ERROR };
+  const outcome = parseBehavioralAnswerMutationResult(data, parsed.value.answerId!);
+  if (outcome.status === "missing") return { status: "error", message: BEHAVIORAL_ANSWER_CONFLICT_ERROR, conflict: true };
+  if (outcome.status === "invalid") return { status: "error", message: BEHAVIORAL_ANSWER_UPDATE_ERROR };
+  refreshBehavioral(); revalidatePath(`/behavioral/questions/${parsed.value.questionId}`); redirect(`/behavioral/questions/${parsed.value.questionId}`);
 }
 
 export async function deleteAnswerAction(answerId: string, questionId: string) {

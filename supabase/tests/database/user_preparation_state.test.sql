@@ -30,7 +30,7 @@ select ok(not has_column_privilege('authenticated', 'public.user_preparation_pre
 select ok(not has_column_privilege('authenticated', 'public.applications', 'user_id', 'update'), 'clients cannot reassign application ownership');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_stories', 'user_id', 'update'), 'clients cannot reassign story ownership');
 select ok(has_column_privilege('authenticated', 'public.applications', 'status', 'update'), 'clients retain the application status mutation they need');
-select ok(has_column_privilege('authenticated', 'public.behavioral_answers', 'answer_text', 'update'), 'clients retain the answer text mutation they need');
+select ok(not has_column_privilege('authenticated', 'public.behavioral_answers', 'answer_text', 'update'), 'clients cannot bypass aggregate answer revision checks');
 select ok(not has_table_privilege('authenticated', 'public.behavioral_story_themes', 'update'), 'immutable story themes have no generic update privilege');
 select ok(not has_table_privilege('authenticated', 'public.behavioral_story_question_links', 'update'), 'immutable story links have no generic update privilege');
 select ok(not has_column_privilege('authenticated', 'public.applications', 'id', 'insert'), 'clients cannot assign application IDs');
