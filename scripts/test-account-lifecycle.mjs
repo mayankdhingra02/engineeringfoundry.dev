@@ -26,6 +26,10 @@ import {
   resolvePreparationPreferencesQuery,
 } from "../lib/account/preparation-preferences.ts";
 import {
+  ONBOARDING_REMINDER_PREFERENCE_PRIVATE_DATA_DOMAIN,
+  resolveOnboardingReminderPreferenceQuery,
+} from "../lib/account/onboarding-reminder-preference.ts";
+import {
   accountDeletionProofCookie,
   accountDeletionProofCookieName,
   createAccountDeletionProof,
@@ -223,6 +227,42 @@ const expectPreferenceUnavailable = (input, label) => {
     label,
   );
 };
+
+const expectedOnboardingReminderError = `Your private ${ONBOARDING_REMINDER_PREFERENCE_PRIVATE_DATA_DOMAIN} data is temporarily unavailable. Please try again.`;
+const expectOnboardingReminderUnavailable = (input, label) => {
+  assert.throws(
+    () => resolveOnboardingReminderPreferenceQuery(input),
+    (error) => error instanceof PrivateDataUnavailableError
+      && error.name === "PrivateDataUnavailableError"
+      && error.message === expectedOnboardingReminderError
+      && !error.message.includes("database detail"),
+    label,
+  );
+};
+
+assert.equal(resolveOnboardingReminderPreferenceQuery({ data: null, error: null }), null, "a successful zero-row onboarding reminder response is not preserved as a genuine blank state");
+assert.equal(resolveOnboardingReminderPreferenceQuery({ data: { preferred_timezone: null }, error: null }), null, "a saved null onboarding reminder timezone is not preserved");
+for (const timezone of ["UTC", "America/Chicago", "america/chicago", "Europe/Berlin", "Asia/Kolkata"]) {
+  assert.equal(resolveOnboardingReminderPreferenceQuery({ data: { preferred_timezone: timezone }, error: null }), timezone, `a valid saved onboarding reminder timezone was rejected: ${timezone}`);
+}
+expectOnboardingReminderUnavailable({ data: { preferred_timezone: "UTC" }, error: { message: "database detail" } }, "an onboarding reminder query error was ignored when row data was also present");
+for (const [label, input] of [
+  ["undefined root", undefined],
+  ["null root", null],
+  ["array root", []],
+  ["scalar root", "invalid"],
+  ["missing data member", { error: null }],
+  ["missing error member", { data: null }],
+  ["undefined data", { data: undefined, error: null }],
+  ["array data", { data: [], error: null }],
+  ["missing timezone", { data: {}, error: null }],
+  ["unexpected persisted field", { data: { preferred_timezone: "UTC", user_id: "private-user" }, error: null }],
+  ["numeric timezone", { data: { preferred_timezone: 1 }, error: null }],
+  ["empty timezone", { data: { preferred_timezone: "" }, error: null }],
+  ["invalid timezone", { data: { preferred_timezone: "Mars/Olympus" }, error: null }],
+]) {
+  expectOnboardingReminderUnavailable(input, `onboarding reminder resolver accepted ${label}`);
+}
 
 assert.equal(resolvePreparationPreferencesQuery({ data: null, error: null }), null, "a successful zero-row preference response is not preserved as a genuine blank state");
 let validPreferenceCases = 0;
@@ -496,6 +536,18 @@ for (const marker of ["preferredRoleLevel", "interviewScheduled", "primaryPrepar
   assert.ok(onboardingForm.includes(marker), `onboarding form is missing ${marker}`);
 }
 assert.ok(onboardingPage.includes("profile.onboarding_complete"), "established users are not redirected away from onboarding");
+const onboardingClient = onboardingPage.indexOf("createSupabaseServerClient()");
+const onboardingMissingClient = onboardingPage.indexOf("if (!supabase)", onboardingClient);
+const onboardingMissingClientError = onboardingPage.indexOf("throw new PrivateDataUnavailableError(", onboardingMissingClient);
+const onboardingReminderTable = onboardingPage.indexOf('.from("interview_reminder_preferences")', onboardingMissingClientError);
+const onboardingReminderProjection = onboardingPage.indexOf('.select("preferred_timezone")', onboardingReminderTable);
+const onboardingReminderOwner = onboardingPage.indexOf('.eq("user_id", user.id)', onboardingReminderProjection);
+const onboardingReminderResolver = onboardingPage.indexOf("resolveOnboardingReminderPreferenceQuery(", onboardingMissingClientError);
+const onboardingTimezoneForm = onboardingPage.indexOf("savedTimezone={reminderPreference}", onboardingReminderResolver);
+assert.ok(onboardingClient >= 0 && onboardingMissingClient > onboardingClient && onboardingMissingClientError > onboardingMissingClient && onboardingReminderTable > onboardingMissingClientError && onboardingReminderProjection > onboardingReminderTable && onboardingReminderOwner > onboardingReminderProjection && onboardingReminderResolver > onboardingMissingClientError && onboardingTimezoneForm > onboardingReminderResolver, "onboarding does not fail closed before resolving its exact owner-scoped reminder preference into the form");
+for (const forbidden of ["{ data: null }", "reminderPreference?.preferred_timezone", "savedTimezone={null}"]) {
+  assert.ok(!onboardingPage.includes(forbidden), `onboarding retained a fail-open reminder preference fallback: ${forbidden}`);
+}
 const availabilityCheck = preparationSettingsPage.indexOf("isAccountPlatformAvailable()");
 const memberGuard = preparationSettingsPage.indexOf('requireMemberProfile("/settings/preparation")');
 const preferenceRead = preparationSettingsPage.indexOf("getPreparationPreferences()");
