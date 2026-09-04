@@ -11,17 +11,18 @@ import {
   Settings,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { signOutAction } from "@/features/auth/sign-out-action";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { resetAnalyticsUser, track } from "@/lib/analytics";
+import {
+  ACCOUNT_NAVIGATION_UNAVAILABLE_MESSAGE,
+  parseAccountNavigationResponse,
+  resolveAccountNavigationSettlement,
+  type AccountNavigationClientState,
+  type AccountNavigationResponse,
+} from "@/lib/auth/account-navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { Profile } from "@/lib/supabase/database.types";
-
-type AccountSummary = Pick<
-  Profile,
-  "username" | "display_name" | "avatar_url" | "is_public"
-> & { email: string | null };
 
 type AccountControlProps = { mobile?: boolean; onNavigate?: () => void };
 
@@ -35,49 +36,122 @@ function AvailableAccountControl({
   onNavigate,
 }: AccountControlProps) {
   const router = useRouter();
-  const [account, setAccount] = useState<
-    AccountSummary | null | undefined
-  >(undefined);
+  const [navigation, setNavigation] = useState<AccountNavigationClientState>({
+    state: "loading",
+  });
+  const navigationRef = useRef<AccountNavigationClientState>(navigation);
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const retryTrigger = useRef<HTMLButtonElement>(null);
+  const anonymousFocusTarget = useRef<HTMLAnchorElement>(null);
+  const mobileReadyFocusTarget = useRef<HTMLAnchorElement>(null);
+  const requestEpoch = useRef(0);
+  const mounted = useRef(false);
+  const retryPending = useRef(false);
+  const focusAfterRetry = useRef(false);
 
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return;
-    const client = supabase;
+  const commitNavigation = useCallback((next: AccountNavigationClientState) => {
+    navigationRef.current = next;
+    setNavigation(next);
+  }, []);
 
-    async function load() {
+  const load = useCallback(
+    async (expectedAuthenticated = false, restoreRetryFocus = false) => {
+      const requestId = ++requestEpoch.current;
+      let incoming: AccountNavigationResponse = { state: "unavailable" };
       try {
         const response = await fetch("/api/auth/account", {
           cache: "no-store",
           credentials: "same-origin",
         });
-        if (!response.ok) throw new Error("Account request failed");
-        const result = (await response.json()) as {
-          account: AccountSummary | null;
-        };
-        setAccount(result.account);
+        incoming = parseAccountNavigationResponse(
+          response.status,
+          await response.json(),
+        );
       } catch {
-        setAccount((current) => (current === undefined ? null : current));
+        incoming = { state: "unavailable" };
       }
+      if (!mounted.current || requestId !== requestEpoch.current) return null;
+      const next = resolveAccountNavigationSettlement(
+        navigationRef.current,
+        incoming,
+        expectedAuthenticated,
+      );
+      focusAfterRetry.current =
+        restoreRetryFocus &&
+        next.state !== "loading" &&
+        next.state !== "unavailable";
+      commitNavigation(next);
+      return next;
+    },
+    [commitNavigation],
+  );
+
+  useEffect(() => {
+    mounted.current = true;
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      const unavailableTimer = window.setTimeout(() => {
+        if (mounted.current) commitNavigation({ state: "unavailable" });
+      }, 0);
+      return () => {
+        window.clearTimeout(unavailableTimer);
+        mounted.current = false;
+        requestEpoch.current += 1;
+      };
     }
+    const client = supabase;
 
     void load();
     const { data: listener } = client.auth.onAuthStateChange(
       (event, session) => {
-        if (!session?.user) setAccount(null);
-        else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        if (event === "SIGNED_OUT") {
+          requestEpoch.current += 1;
+          commitNavigation({ state: "anonymous" });
+          setOpen(false);
+        } else if (
+          session?.user &&
+          (event === "INITIAL_SESSION" ||
+            event === "PASSWORD_RECOVERY" ||
+            event === "SIGNED_IN" ||
+            event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED" ||
+            event === "MFA_CHALLENGE_VERIFIED")
+        ) {
           // Keep the last known navigation state visible while refreshing profile data.
           // Supabase may emit SIGNED_IN again when a tab regains focus.
-          window.setTimeout(load, 0);
+          if (navigationRef.current.state !== "ready") {
+            commitNavigation({ state: "loading" });
+          }
+          window.setTimeout(() => {
+            if (mounted.current) void load(true);
+          }, 0);
         }
       },
     );
-    return () => listener.subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted.current = false;
+      requestEpoch.current += 1;
+      listener.subscription.unsubscribe();
+    };
+  }, [commitNavigation, load]);
+
+  useEffect(() => {
+    if (!focusAfterRetry.current) return;
+    focusAfterRetry.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      if (navigation.state === "anonymous") {
+        anonymousFocusTarget.current?.focus();
+      } else if (navigation.state === "ready") {
+        (mobile ? mobileReadyFocusTarget.current : trigger.current)?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobile, navigation]);
 
   useEffect(() => {
     function close(event: PointerEvent) {
@@ -111,13 +185,29 @@ function AvailableAccountControl({
     track("sign_out_completed");
     resetAnalyticsUser();
     setOpen(false);
-    setAccount(null);
+    requestEpoch.current += 1;
+    commitNavigation({ state: "anonymous" });
     setSigningOut(false);
     router.replace("/");
     router.refresh();
   }
 
-  if (account === undefined) {
+  async function retry() {
+    if (retryPending.current) return;
+    retryPending.current = true;
+    setRetrying(true);
+    const restoreFocus = document.activeElement === retryTrigger.current;
+    try {
+      await load(false, restoreFocus);
+    } finally {
+      retryPending.current = false;
+      if (mounted.current) setRetrying(false);
+    }
+  }
+
+  if (navigation.state === "disabled") return null;
+
+  if (navigation.state === "loading") {
     return mobile ? null : (
       <div
         className="account-control account-control-loading"
@@ -128,10 +218,36 @@ function AvailableAccountControl({
     );
   }
 
-  if (!account) {
+  if (navigation.state === "unavailable") {
+    return (
+      <div
+        className={
+          mobile
+            ? "account-navigation-unavailable mobile-account-unavailable"
+            : "account-control account-control-unavailable"
+        }
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span>{ACCOUNT_NAVIGATION_UNAVAILABLE_MESSAGE}</span>
+        <button
+          ref={retryTrigger}
+          type="button"
+          aria-disabled={retrying}
+          onClick={() => void retry()}
+        >
+          {retrying ? "Retrying…" : "Retry"}
+        </button>
+      </div>
+    );
+  }
+
+  if (navigation.state === "anonymous") {
     return mobile ? (
       <div className="mobile-account-actions">
         <Link
+          ref={anonymousFocusTarget}
           className="button button-secondary"
           href="/signin"
           onClick={onNavigate}
@@ -144,7 +260,11 @@ function AvailableAccountControl({
       </div>
     ) : (
       <div className="logged-out-actions">
-        <Link className="text-link sign-in" href="/signin">
+        <Link
+          ref={anonymousFocusTarget}
+          className="text-link sign-in"
+          href="/signin"
+        >
           Sign in
         </Link>
         <Link className="button button-sm" href="/signup">
@@ -154,6 +274,7 @@ function AvailableAccountControl({
     );
   }
 
+  const account = navigation.account;
   const label =
     account.display_name?.trim().split(/\s+/)[0] ??
     account.username ??
@@ -174,7 +295,7 @@ function AvailableAccountControl({
           Signed in as <strong>{label}</strong>
         </span>
         <div className="mobile-account-links">
-          <Link href="/dashboard" onClick={onNavigate}>
+          <Link href="/dashboard" onClick={onNavigate} ref={mobileReadyFocusTarget}>
             Dashboard
           </Link>
           <Link href="/interview-playbook" onClick={onNavigate}>
