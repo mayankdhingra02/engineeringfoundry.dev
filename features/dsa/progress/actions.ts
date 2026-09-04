@@ -9,12 +9,24 @@ import {
   parseQuickDsaBookmarkActionInput,
   parseQuickDsaStatusActionInput,
 } from "@/lib/dsa/quick-progress-action-input";
-import type { DsaConfidence, DsaQuestionStatus } from "@/lib/dsa/progress";
+import {
+  DSA_PROGRESS_CONFLICT_ERROR,
+  DSA_PROGRESS_INVALID_INPUT_ERROR,
+  DSA_PROGRESS_PERSISTENCE_ERROR,
+  DSA_PROGRESS_SAVED_MESSAGE,
+  parseDsaQuestionProgressActionInput,
+  parseDsaQuestionProgressSaveResult,
+} from "@/lib/dsa/question-progress-action-input";
+import type { DsaQuestionStatus } from "@/lib/dsa/progress";
 import type { RoadmapLevel } from "@/data/dsa/level-roadmaps";
 
-export type DsaProgressActionState = { status: "idle" | "success" | "error"; message: string; analytics?: { questionId: string; recordedStatus: DsaQuestionStatus } };
-const statuses = new Set<DsaQuestionStatus>(["not_started", "attempted", "solved", "review"]);
-const confidences = new Set<DsaConfidence>(["low", "medium", "high"]);
+export type DsaProgressActionState = {
+  status: "idle" | "success" | "error";
+  message: string;
+  analytics?: { questionId: string; recordedStatus: DsaQuestionStatus };
+  conflict?: boolean;
+  revision?: string;
+};
 const canonicalQuestionIds = new Set(canonicalDsaQuestionById.keys());
 
 const accountUnavailable = () => ({ status: "error", message: "Account persistence is not available in this configuration." } satisfies DsaProgressActionState);
@@ -28,36 +40,71 @@ function refreshDsa(questionId?: string) {
   if (questionId) revalidatePath(`/dsa/questions/${questionId}`);
 }
 
-async function save(questionId: string, values: { status: DsaQuestionStatus; confidence: DsaConfidence | null; bookmarked: boolean; notes: string | null }) {
-  if (!isAccountPlatformAvailable()) return accountUnavailable();
-  const actor = await getAuthenticatedActor();
-  if (!actor) return { status: "error", message: "Sign in to save practice progress." } satisfies DsaProgressActionState;
-  if (!canonicalDsaQuestionById.has(questionId)) return { status: "error", message: "That question is not in the canonical catalog." } satisfies DsaProgressActionState;
-  if (!statuses.has(values.status) || (values.confidence && !confidences.has(values.confidence)) || (values.notes?.length ?? 0) > 5000) {
-    return { status: "error", message: "Review the practice values and try again." } satisfies DsaProgressActionState;
+export async function updateDsaQuestionProgressAction(
+  previousState: DsaProgressActionState,
+  formData: unknown,
+): Promise<DsaProgressActionState> {
+  const parsed = parseDsaQuestionProgressActionInput(
+    formData,
+    canonicalQuestionIds,
+  );
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: DSA_PROGRESS_INVALID_INPUT_ERROR,
+      revision: previousState.revision,
+    };
   }
-  const { error } = await actor.supabase.rpc("save_dsa_question_progress", {
-    target_question_id: questionId,
-    target_status: values.status,
-    target_confidence: values.confidence,
-    target_bookmarked: values.bookmarked,
-    target_notes: values.notes,
-  });
-  if (error) return { status: "error", message: "We couldn't save this practice update." } satisfies DsaProgressActionState;
-  refreshDsa(questionId);
-  return { status: "success", message: "Practice progress saved.", analytics: { questionId, recordedStatus: values.status } } satisfies DsaProgressActionState;
-}
 
-export async function updateDsaQuestionProgressAction(_: DsaProgressActionState, formData: FormData): Promise<DsaProgressActionState> {
-  const questionId = String(formData.get("question_id") ?? "");
-  const status = String(formData.get("status") ?? "not_started") as DsaQuestionStatus;
-  const confidenceValue = String(formData.get("confidence") ?? "");
-  return save(questionId, {
-    status,
-    confidence: confidenceValue ? confidenceValue as DsaConfidence : null,
-    bookmarked: formData.get("bookmarked") === "on",
-    notes: String(formData.get("notes") ?? "").trim() || null,
+  const input = parsed.value;
+  const failed = (message: string, conflict = false) => ({
+    status: "error" as const,
+    message,
+    conflict,
+    revision: input.revision,
   });
+  if (!isAccountPlatformAvailable()) {
+    return failed("Account persistence is not available in this configuration.");
+  }
+  const actor = await getAuthenticatedActor();
+  if (!actor) return failed("Sign in to save practice progress.");
+
+  const { data, error } = await actor.supabase.rpc(
+    "save_dsa_question_progress_if_revision",
+    {
+      target_question_id: input.questionId,
+      target_expect_absent: input.expectAbsent,
+      target_expected_updated_at: input.expectedUpdatedAt,
+      target_status: input.status,
+      target_confidence: input.confidence,
+      target_bookmarked: input.bookmarked,
+      target_notes: input.notes,
+    },
+  );
+  if (error) return failed(DSA_PROGRESS_PERSISTENCE_ERROR);
+
+  const outcome = parseDsaQuestionProgressSaveResult(
+    data,
+    input.questionId,
+    canonicalQuestionIds,
+  );
+  if (outcome.status === "conflict") {
+    return failed(DSA_PROGRESS_CONFLICT_ERROR, true);
+  }
+  if (outcome.status === "invalid") {
+    return failed(DSA_PROGRESS_PERSISTENCE_ERROR);
+  }
+
+  refreshDsa(input.questionId);
+  return {
+    status: "success",
+    message: DSA_PROGRESS_SAVED_MESSAGE,
+    revision: outcome.updatedAt,
+    analytics: {
+      questionId: input.questionId,
+      recordedStatus: input.status,
+    },
+  };
 }
 
 export async function quickDsaStatusAction(formData: unknown): Promise<DsaProgressActionState> {

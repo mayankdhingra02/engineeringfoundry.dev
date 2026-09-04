@@ -49,6 +49,30 @@ function expectSuccess(result, fallback) {
   return result.data;
 }
 
+async function currentDsaProgressRevision(supabase, questionId) {
+  const result = await supabase
+    .from("dsa_question_progress")
+    .select("updated_at")
+    .eq("question_id", questionId)
+    .maybeSingle();
+  return expectSuccess(result, `DSA revision lookup failed for ${questionId}`)?.updated_at ?? null;
+}
+
+async function saveDsaProgress(supabase, values, expectation) {
+  const expectedUpdatedAt = expectation === undefined
+    ? await currentDsaProgressRevision(supabase, values.questionId)
+    : expectation;
+  return supabase.rpc("save_dsa_question_progress_if_revision", {
+    target_question_id: values.questionId,
+    target_expect_absent: expectedUpdatedAt === null,
+    target_expected_updated_at: expectedUpdatedAt,
+    target_status: values.status,
+    target_confidence: values.confidence,
+    target_bookmarked: values.bookmarked,
+    target_notes: values.notes,
+  });
+}
+
 function expectSqlError(result, expectedCodes) {
   const codes = Array.isArray(expectedCodes) ? expectedCodes : [expectedCodes];
   expect(result.error, `expected ${codes.join(" or ")}, observed no error`);
@@ -1236,39 +1260,38 @@ await check("DSA progress insert rejects timestamp mass assignment", async () =>
 });
 
 await check("User A saves canonical question progress through the authoritative RPC", async () => {
-  const saved = await a.authClient.rpc("save_dsa_question_progress", {
-    target_question_id: "two-sum",
-    target_status: "attempted",
-    target_confidence: "medium",
-    target_bookmarked: true,
-    target_notes: "Used a hash map; explain the complement invariant.",
+  const saved = await saveDsaProgress(a.authClient, {
+    questionId: "two-sum",
+    status: "attempted",
+    confidence: "medium",
+    bookmarked: true,
+    notes: "Used a hash map; explain the complement invariant.",
   });
   const rows = expectSuccess(saved, "canonical DSA progress RPC failed");
-  expect(rows.length === 1 && rows[0].status === "attempted" && rows[0].bookmarked, "canonical DSA state did not persist");
-  expect(rows[0].first_attempted_at && rows[0].last_practiced_at && !rows[0].solved_at, "attempt timestamps are inconsistent");
+  expect(rows.length === 1 && rows[0].question_id === "two-sum" && rows[0].updated_at, "canonical DSA save did not return its bounded revision result");
+  const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,bookmarked,first_attempted_at,last_practiced_at,solved_at").eq("question_id", "two-sum").single(), "canonical DSA state lookup failed");
+  expect(row.status === "attempted" && row.bookmarked, "canonical DSA state did not persist");
+  expect(row.first_attempted_at && row.last_practiced_at && !row.solved_at, "attempt timestamps are inconsistent");
 });
 
 await check("bookmark-only DSA updates do not move last practiced", async () => {
   const before = expectSuccess(await a.authClient.from("dsa_question_progress").select("last_practiced_at").eq("question_id", "two-sum").single(), "pre-update DSA lookup failed");
-  const saved = await a.authClient.rpc("save_dsa_question_progress", {
-    target_question_id: "two-sum",
-    target_status: "attempted",
-    target_confidence: "medium",
-    target_bookmarked: false,
-    target_notes: "Used a hash map; explain the complement invariant.",
+  const saved = await saveDsaProgress(a.authClient, {
+    questionId: "two-sum",
+    status: "attempted",
+    confidence: "medium",
+    bookmarked: false,
+    notes: "Used a hash map; explain the complement invariant.",
   });
-  const rows = expectSuccess(saved, "bookmark update failed");
-  expect(rows[0].last_practiced_at === before.last_practiced_at, "bookmark-only update changed last practiced");
+  expect(expectSuccess(saved, "bookmark update failed").length === 1, "bookmark update did not return one revision result");
+  const after = expectSuccess(await a.authClient.from("dsa_question_progress").select("last_practiced_at").eq("question_id", "two-sum").single(), "post-update DSA lookup failed");
+  expect(after.last_practiced_at === before.last_practiced_at, "bookmark-only update changed last practiced");
 });
 
 await check("fake canonical DSA question IDs are rejected", async () => {
-  const saved = await a.authClient.rpc("save_dsa_question_progress", {
-    target_question_id: `${fixturePrefix}-fake`,
-    target_status: "attempted",
-    target_confidence: "low",
-    target_bookmarked: false,
-    target_notes: null,
-  });
+  const saved = await saveDsaProgress(a.authClient, {
+    questionId: `${fixturePrefix}-fake`, status: "attempted", confidence: "low", bookmarked: false, notes: null,
+  }, null);
   return expectSqlError(saved, "23503");
 });
 
@@ -1279,12 +1302,12 @@ await check("User B cannot see or delete User A canonical DSA progress", async (
 });
 
 await check("User B keeps an independent canonical DSA record", async () => {
-  const saved = await b.authClient.rpc("save_dsa_question_progress", {
-    target_question_id: "longest-substring-without-repeating-characters",
-    target_status: "attempted",
-    target_confidence: "low",
-    target_bookmarked: true,
-    target_notes: "Track the left boundary carefully.",
+  const saved = await saveDsaProgress(b.authClient, {
+    questionId: "longest-substring-without-repeating-characters",
+    status: "attempted",
+    confidence: "low",
+    bookmarked: true,
+    notes: "Track the left boundary carefully.",
   });
   const rows = expectSuccess(saved, "User B canonical DSA progress failed");
   expect(rows.length === 1 && rows[0].question_id === "longest-substring-without-repeating-characters", "User B progress did not stay independent");
@@ -1313,12 +1336,12 @@ await check("concurrent atomic DSA status and bookmark updates commute on an abs
 });
 
 await check("concurrent atomic DSA updates preserve an existing full-editor snapshot", async () => {
-  expectSuccess(await a.authClient.rpc("save_dsa_question_progress", {
-    target_question_id: "group-anagrams",
-    target_status: "attempted",
-    target_confidence: "high",
-    target_bookmarked: false,
-    target_notes: "Fresh private note from the full editor.",
+  expectSuccess(await saveDsaProgress(a.authClient, {
+    questionId: "group-anagrams",
+    status: "attempted",
+    confidence: "high",
+    bookmarked: false,
+    notes: "Fresh private note from the full editor.",
   }), "existing DSA snapshot setup failed");
   const [statusResult, bookmarkResult] = await Promise.all([
     a.authClient.rpc("set_dsa_question_quick_progress", {
@@ -1338,6 +1361,80 @@ await check("concurrent atomic DSA updates preserve an existing full-editor snap
   expect(row.status === "review" && row.bookmarked === true, "concurrent existing-row updates lost a desired state");
   expect(row.confidence === "high" && row.notes === "Fresh private note from the full editor.", "a quick update overwrote the full-editor confidence or private note");
   return "review and bookmarked; confidence and private note preserved";
+});
+
+await check("concurrent revision-checked DSA full saves accept exactly one coherent snapshot", async () => {
+  const questionId = "subarray-sum-equals-k";
+  expectSuccess(await saveDsaProgress(a.authClient, {
+    questionId, status: "attempted", confidence: "low", bookmarked: false, notes: "Original full-editor snapshot.",
+  }), "concurrent full-save setup failed");
+  const revision = await currentDsaProgressRevision(a.authClient, questionId);
+  expect(revision, "concurrent full-save setup did not expose a revision");
+  const outcomes = await Promise.all([
+    saveDsaProgress(a.authClient, {
+      questionId, status: "solved", confidence: "high", bookmarked: true, notes: "First coherent full-editor snapshot.",
+    }, revision),
+    saveDsaProgress(a.authClient, {
+      questionId, status: "review", confidence: "medium", bookmarked: false, notes: "Second coherent full-editor snapshot.",
+    }, revision),
+  ]);
+  const savedCounts = outcomes.map((result) => expectSuccess(result, "concurrent full save failed").length).sort();
+  expect(JSON.stringify(savedCounts) === JSON.stringify([0, 1]), `expected one full save and one conflict, observed ${JSON.stringify(savedCounts)}`);
+  const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,confidence,bookmarked,notes").eq("question_id", questionId).single(), "concurrent full-save result read failed");
+  const firstWon = row.status === "solved" && row.confidence === "high" && row.bookmarked === true && row.notes === "First coherent full-editor snapshot.";
+  const secondWon = row.status === "review" && row.confidence === "medium" && row.bookmarked === false && row.notes === "Second coherent full-editor snapshot.";
+  expect(firstWon || secondWon, "concurrent full saves produced a mixed snapshot");
+  return "one saved; one conflict; no mixed fields";
+});
+
+await check("concurrent full and quick DSA status writes preserve the quick desired state", async () => {
+  const questionId = "product-of-array-except-self";
+  expectSuccess(await saveDsaProgress(a.authClient, {
+    questionId, status: "attempted", confidence: "low", bookmarked: false, notes: "Original status-race note.",
+  }), "full/quick status setup failed");
+  const revision = await currentDsaProgressRevision(a.authClient, questionId);
+  const [fullResult, quickResult] = await Promise.all([
+    saveDsaProgress(a.authClient, {
+      questionId, status: "solved", confidence: "high", bookmarked: false, notes: "Fresh full status-race note.",
+    }, revision),
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: questionId, target_status: "review", target_bookmarked: null,
+    }),
+  ]);
+  const fullRows = expectSuccess(fullResult, "full side of status race failed");
+  expect([0, 1].includes(fullRows.length), "full side of status race returned an invalid cardinality");
+  expect(expectSuccess(quickResult, "quick side of status race failed") === questionId, "quick status race returned the wrong question");
+  const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,confidence,bookmarked,notes").eq("question_id", questionId).single(), "full/quick status result read failed");
+  expect(row.status === "review" && row.bookmarked === false, "a full save displaced the quick desired status");
+  const originalRich = row.confidence === "low" && row.notes === "Original status-race note.";
+  const fullRich = row.confidence === "high" && row.notes === "Fresh full status-race note.";
+  expect(originalRich || fullRich, "full/quick status race produced mixed rich fields");
+  return `full returned ${fullRows.length} row(s); quick status preserved`;
+});
+
+await check("concurrent full and quick DSA bookmark writes preserve the quick desired state", async () => {
+  const questionId = "binary-tree-maximum-path-sum";
+  expectSuccess(await saveDsaProgress(a.authClient, {
+    questionId, status: "attempted", confidence: "low", bookmarked: false, notes: "Original bookmark-race note.",
+  }), "full/quick bookmark setup failed");
+  const revision = await currentDsaProgressRevision(a.authClient, questionId);
+  const [fullResult, quickResult] = await Promise.all([
+    saveDsaProgress(a.authClient, {
+      questionId, status: "solved", confidence: "high", bookmarked: false, notes: "Fresh full bookmark-race note.",
+    }, revision),
+    a.authClient.rpc("set_dsa_question_quick_progress", {
+      target_question_id: questionId, target_status: null, target_bookmarked: true,
+    }),
+  ]);
+  const fullRows = expectSuccess(fullResult, "full side of bookmark race failed");
+  expect([0, 1].includes(fullRows.length), "full side of bookmark race returned an invalid cardinality");
+  expect(expectSuccess(quickResult, "quick side of bookmark race failed") === questionId, "quick bookmark race returned the wrong question");
+  const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,confidence,bookmarked,notes").eq("question_id", questionId).single(), "full/quick bookmark result read failed");
+  expect(row.bookmarked === true, "a full save displaced the quick desired bookmark");
+  const originalRich = row.status === "attempted" && row.confidence === "low" && row.notes === "Original bookmark-race note.";
+  const fullRich = row.status === "solved" && row.confidence === "high" && row.notes === "Fresh full bookmark-race note.";
+  expect(originalRich || fullRich, "full/quick bookmark race produced mixed rich fields");
+  return `full returned ${fullRows.length} row(s); quick bookmark preserved`;
 });
 
 await check("atomic DSA desired states are idempotent and bookmark false avoids an empty row", async () => {
@@ -1543,9 +1640,9 @@ await check("fake canonical System Design IDs are rejected", async () => {
 });
 
 await check("insert-only browser import preserves rich existing progress across every storage family", async () => {
-  expectSuccess(await a.authClient.rpc("save_dsa_question_progress", {
-    target_question_id: "valid-parentheses", target_status: "solved", target_confidence: "high",
-    target_bookmarked: true, target_notes: "Keep this DSA note and every timestamp.",
+  expectSuccess(await saveDsaProgress(a.authClient, {
+    questionId: "valid-parentheses", status: "solved", confidence: "high",
+    bookmarked: true, notes: "Keep this DSA note and every timestamp.",
   }), "DSA import-preservation setup failed");
   expectSuccess(await a.authClient.rpc("save_system_design_item_progress", {
     target_item_id: "rate-limiter", target_item_type: "design_problem", target_status: "comfortable",
@@ -1599,14 +1696,16 @@ await check("concurrent same-key browser imports insert exactly once", async () 
   return "DSA, System Design, and Behavioral races each returned one true and one false";
 });
 
-await check("concurrent browser import and rich DSA save preserve the full-save intent", async () => {
+await check("concurrent browser import and absent-revision DSA save never overwrite either winner", async () => {
   const [imported, saved] = await Promise.all([
     a.authClient.rpc("import_dsa_question_progress_if_absent", {
       target_question_id: "merge-intervals",
       target_status: "attempted",
     }),
-    a.authClient.rpc("save_dsa_question_progress", {
+    a.authClient.rpc("save_dsa_question_progress_if_revision", {
       target_question_id: "merge-intervals",
+      target_expect_absent: true,
+      target_expected_updated_at: null,
       target_status: "solved",
       target_confidence: "high",
       target_bookmarked: true,
@@ -1616,12 +1715,17 @@ await check("concurrent browser import and rich DSA save preserve the full-save 
   const importOutcome = expectSuccess(imported, "concurrent browser import failed");
   const savedRows = expectSuccess(saved, "concurrent full DSA save failed");
   expect(typeof importOutcome === "boolean", "concurrent import did not return a deterministic boolean outcome");
-  expect(savedRows.length === 1, "concurrent full save did not return its owned row");
+  expect(savedRows.length === 0 || savedRows.length === 1, "concurrent full save returned an invalid cardinality");
+  expect((importOutcome && savedRows.length === 0) || (!importOutcome && savedRows.length === 1), "import/full race did not produce exactly one insert winner");
   const row = expectSuccess(await a.authClient.from("dsa_question_progress").select("status,confidence,bookmarked,notes,first_attempted_at,last_practiced_at,solved_at").eq("question_id", "merge-intervals").single(), "concurrent import/full-save read failed");
-  expect(row.status === "solved" && row.confidence === "high" && row.bookmarked === true, "browser import displaced the full editor status, confidence, or bookmark");
-  expect(row.notes === "The full editor owns this final rich snapshot.", "browser import displaced the full editor private note");
-  expect(row.first_attempted_at && row.last_practiced_at && row.solved_at, "the final full-save timestamps are inconsistent");
-  return `import returned ${importOutcome}; rich full-save snapshot prevailed`;
+  if (savedRows.length === 1) {
+    expect(row.status === "solved" && row.confidence === "high" && row.bookmarked === true, "winning full save did not preserve its coherent rich snapshot");
+    expect(row.notes === "The full editor owns this final rich snapshot." && row.solved_at, "winning full save lost its private note or solved timestamp");
+  } else {
+    expect(row.status === "attempted" && row.confidence === null && row.bookmarked === false && row.notes === null, "winning import was overwritten by the stale absent-revision full save");
+  }
+  expect(row.first_attempted_at && row.last_practiced_at, "the winning insert produced inconsistent practice timestamps");
+  return `import returned ${importOutcome}; full returned ${savedRows.length} row(s); one coherent winner`;
 });
 
 await check("concurrent different-key browser imports commute", async () => {
@@ -1823,15 +1927,28 @@ await check("anonymous client cannot create private progress", async () => {
   return expectSqlError(insertion, "42501");
 });
 
-await check("anonymous client cannot invoke canonical DSA progress RPC", async () => {
-  const saved = await anonymous.rpc("save_dsa_question_progress", {
+await check("anonymous client cannot invoke revision-checked canonical DSA progress RPC", async () => {
+  const saved = await anonymous.rpc("save_dsa_question_progress_if_revision", {
     target_question_id: "two-sum",
+    target_expect_absent: true,
+    target_expected_updated_at: null,
     target_status: "attempted",
     target_confidence: "low",
     target_bookmarked: false,
     target_notes: null,
   });
   return expectSqlError(saved, "42501");
+});
+
+await check("authenticated legacy DSA full saves fail safely", async () => {
+  const saved = await a.authClient.rpc("save_dsa_question_progress", {
+    target_question_id: "two-sum",
+    target_status: "attempted",
+    target_confidence: "low",
+    target_bookmarked: false,
+    target_notes: null,
+  });
+  return expectSqlError(saved, "0A000");
 });
 
 await check("anonymous client cannot invoke atomic DSA quick-progress RPC", async () => {

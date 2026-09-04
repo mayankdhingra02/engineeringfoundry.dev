@@ -19,8 +19,8 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '73737373-7373-4737-8737-737373737373', true);
 
 select results_eq(
-  $$select status from public.save_dsa_question_progress('two-sum','solved','high',true,'Preserve this private note.')$$,
-  $$values ('solved'::text)$$,
+  $$select question_id from public.save_dsa_question_progress_if_revision('two-sum',true,null,'solved','high',true,'Preserve this private note.')$$,
+  $$values ('two-sum'::text)$$,
   'User A creates rich DSA progress before import'
 );
 select set_config('test.import_dsa_before', (select to_jsonb(progress)::text from public.dsa_question_progress progress where question_id = 'two-sum'), true);

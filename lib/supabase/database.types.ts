@@ -1027,6 +1027,18 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["dsa_question_progress"]["Row"][];
       };
+      save_dsa_question_progress_if_revision: {
+        Args: {
+          target_question_id: string;
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          target_status: "not_started" | "attempted" | "solved" | "review";
+          target_confidence: "low" | "medium" | "high" | null;
+          target_bookmarked: boolean;
+          target_notes: string | null;
+        };
+        Returns: { question_id: string; updated_at: string }[];
+      };
       set_dsa_question_quick_progress: {
         Args: {
           target_question_id: string;

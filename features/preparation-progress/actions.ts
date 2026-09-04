@@ -42,14 +42,12 @@ export async function recordPreparationActivityAction(input: {
 
   if (input.track === "dsa") {
     if (!canonicalDsaQuestionById.has(input.itemId)) return { saved: false, reason: "invalid-input" };
-    const { error } = await actor.supabase.rpc("save_dsa_question_progress", {
+    const { data, error } = await actor.supabase.rpc("set_dsa_question_quick_progress", {
       target_question_id: input.itemId,
       target_status: input.status === "completed" ? "review" : "attempted",
-      target_confidence: null,
-      target_bookmarked: false,
-      target_notes: null,
+      target_bookmarked: null,
     });
-    if (error) return { saved: false, reason: "persistence-failed" };
+    if (error || data !== input.itemId || !canonicalDsaQuestionById.has(data)) return { saved: false, reason: "persistence-failed" };
   } else if (input.track === "system-design") {
     const itemType = canonicalSystemDesignConceptIds.has(input.itemId)
       ? "concept"
