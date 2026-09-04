@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { queryLocalDatabase } from "./lib/local-supabase.mjs";
 
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -341,8 +342,6 @@ async function ensureConfirmedUser(email) {
 
 async function cleanOwnedFixtures(account) {
   const owned = account.authClient;
-  const attemptRows = expectSuccess(await owned.from("system_design_attempts").select("id").like("title", "Phase 5B qualification%"), "System Design attempt cleanup lookup failed");
-  for (const attempt of attemptRows) expectSuccess(await owned.rpc("delete_system_design_attempt", { target_attempt_id: attempt.id }), "System Design attempt cleanup failed");
   const cleanupOperations = [
     owned.from("behavioral_saved_questions").delete().eq("curated_question_id", "beh-conflict-01"),
     owned.from("dsa_progress").delete().like("item_id", `${fixturePrefix}:%`),
@@ -370,6 +369,10 @@ async function cleanOwnedFixtures(account) {
   );
   queryLocalDatabase(
     "delete from public.behavioral_custom_questions where user_id = :'user_id'::uuid and question_text like 'Phase 5A qualification%'",
+    { user_id: account.user.id },
+  );
+  queryLocalDatabase(
+    "delete from public.system_design_attempts where user_id = :'user_id'::uuid and title like 'Phase 5B qualification%'",
     { user_id: account.user.id },
   );
   queryLocalDatabase(
@@ -3163,11 +3166,61 @@ await check("attempt save uses optimistic concurrency and records practice", asy
   expect(stale.length === 0, "stale attempt overwrote newer work");
 });
 
+await check("concurrent System Design attempt save and revision-delete accept exactly one outcome", async () => {
+  const attemptId = expectSuccess(await a.authClient.rpc("create_system_design_attempt", {
+    target_problem_id: "url-shortener",
+    target_application_id: requireFixture(fixture.applicationId, "application"),
+    target_title: "Phase 5B qualification attempt delete race",
+    target_document: systemDesignDocument,
+  }), "attempt delete-race creation failed");
+  const before = expectSuccess(await a.authClient.from("system_design_attempts").select("revision").eq("id", attemptId).single(), "attempt delete-race revision lookup failed");
+  const [saveResult, deleteResult] = await Promise.all([
+    a.authClient.rpc("save_system_design_attempt", {
+      target_attempt_id: attemptId,
+      target_expected_revision: before.revision,
+      target_title: "Phase 5B qualification saved attempt winner",
+      target_status: "review",
+      target_confidence: "medium",
+      target_application_id: fixture.applicationId,
+      target_document: systemDesignDocument,
+    }),
+    a.authClient.rpc("delete_system_design_attempt_if_revision", {
+      target_attempt_id: attemptId,
+      target_problem_id: "url-shortener",
+      target_expected_revision: before.revision,
+    }),
+  ]);
+  const savedRows = expectSuccess(saveResult, "concurrent attempt save failed");
+  const deletedRows = expectSuccess(deleteResult, "concurrent attempt delete failed");
+  expect(savedRows.length <= 1 && deletedRows.length <= 1 && savedRows.length + deletedRows.length === 1, "attempt save/delete race did not produce exactly one winner");
+  const after = await a.authClient.from("system_design_attempts").select("title,status,confidence,revision,application_id,document").eq("id", attemptId).maybeSingle();
+  expect(!after.error, `attempt save/delete result read failed: ${after.error?.message}`);
+  if (savedRows.length === 1) {
+    expect(deletedRows.length === 0, "stale attempt delete reported success after the save won");
+    expect(after.data?.title === "Phase 5B qualification saved attempt winner" && after.data.status === "review" && after.data.confidence === "medium" && after.data.revision === before.revision + 1 && after.data.application_id === fixture.applicationId, "attempt save winner did not preserve one coherent worksheet snapshot");
+    expect(isDeepStrictEqual(after.data.document, systemDesignDocument), "attempt save winner changed the structured worksheet");
+    const cleanup = expectSuccess(await a.authClient.rpc("delete_system_design_attempt_if_revision", {
+      target_attempt_id: attemptId,
+      target_problem_id: "url-shortener",
+      target_expected_revision: after.data.revision,
+    }), "attempt save-winner cleanup failed");
+    expect(cleanup.length === 1, "attempt save-winner cleanup did not delete the exact revision");
+    return "save won; stale delete returned zero and the coherent winner was preserved";
+  }
+  expect(deletedRows[0]?.attempt_id === attemptId && after.data === null, "attempt delete winner did not remove exactly the original revision");
+  return "delete won; stale save returned zero and no newer worksheet was removed";
+});
+
 await check("User B cannot read or delete User A System Design workspace state", async () => {
   expectInvisible(await b.authClient.from("system_design_item_progress").select("item_id").eq("item_id", "estimation"), "System Design item progress read");
   expectInvisible(await b.authClient.from("system_design_attempts").select("id").eq("id", requireFixture(fixture.systemDesignAttemptId, "System Design attempt")), "System Design attempt read");
-  const deleted = expectSuccess(await b.authClient.rpc("delete_system_design_attempt", { target_attempt_id: fixture.systemDesignAttemptId }), "foreign attempt deletion call failed");
-  expect(deleted === false, "User B deleted User A attempt");
+  const revision = expectSuccess(await a.authClient.from("system_design_attempts").select("revision").eq("id", requireFixture(fixture.systemDesignAttemptId, "System Design attempt")).single(), "attempt revision lookup for foreign delete failed");
+  const deleted = expectSuccess(await b.authClient.rpc("delete_system_design_attempt_if_revision", {
+    target_attempt_id: fixture.systemDesignAttemptId,
+    target_problem_id: "url-shortener",
+    target_expected_revision: revision.revision,
+  }), "foreign attempt deletion call failed");
+  expect(deleted.length === 0, "User B deleted User A attempt");
   return "progress and attempt remain private";
 });
 

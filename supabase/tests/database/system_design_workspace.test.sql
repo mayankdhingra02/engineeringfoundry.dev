@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(85);
+select plan(98);
 
 select ok(has_table_privilege('anon', 'public.system_design_item_catalog', 'select'), 'public catalog remains readable signed out');
 select ok(not has_table_privilege('anon', 'public.system_design_item_progress', 'select'), 'anonymous users cannot read private progress');
@@ -16,6 +16,10 @@ select ok(not has_table_privilege('authenticated', 'public.system_design_attempt
 select ok(not has_table_privilege('authenticated', 'public.system_design_attempts', 'delete'), 'clients cannot directly delete attempts');
 select ok(not has_function_privilege('anon', 'public.create_system_design_attempt(text,uuid,text,jsonb)', 'execute'), 'anonymous users cannot create attempts');
 select ok(has_function_privilege('authenticated', 'public.create_system_design_attempt(text,uuid,text,jsonb)', 'execute'), 'authenticated users can create attempts through RPC');
+select ok(not has_function_privilege('anon', 'public.delete_system_design_attempt_if_revision(uuid,text,bigint)', 'execute'), 'anonymous users cannot invoke revision-checked attempt deletion');
+select ok(has_function_privilege('authenticated', 'public.delete_system_design_attempt_if_revision(uuid,text,bigint)', 'execute'), 'authenticated users can invoke revision-checked attempt deletion');
+select ok(not has_function_privilege('anon', 'public.delete_system_design_attempt(uuid)', 'execute'), 'anonymous users cannot invoke the retired attempt delete');
+select ok(has_function_privilege('authenticated', 'public.delete_system_design_attempt(uuid)', 'execute'), 'authenticated old clients reach the stable retired attempt delete');
 select ok(not has_function_privilege('anon', 'public.save_system_design_item_progress_if_revision(text,text,boolean,timestamptz,text,text,boolean,text)', 'execute'), 'anonymous users cannot invoke revision-checked System Design progress saves');
 select ok(has_function_privilege('authenticated', 'public.save_system_design_item_progress_if_revision(text,text,boolean,timestamptz,text,text,boolean,text)', 'execute'), 'authenticated users can invoke revision-checked System Design progress saves');
 select ok(not has_function_privilege('anon', 'public.set_system_design_item_quick_progress(text,text,text)', 'execute'), 'anonymous users cannot invoke quick System Design progress saves');
@@ -152,6 +156,21 @@ select is_empty(
   $$select id from public.save_system_design_attempt(current_setting('test.sd_attempt')::uuid,current_setting('test.sd_revision')::bigint,'Stale overwrite','review','low',null,current_setting('test.sd_document')::jsonb)$$,
   'stale concurrency token cannot overwrite newer work'
 );
+select set_config('test.sd_current_revision', (select revision::text from public.system_design_attempts where id = current_setting('test.sd_attempt')::uuid), true);
+select throws_ok($$select * from public.delete_system_design_attempt_if_revision(null,'url-shortener',current_setting('test.sd_current_revision')::bigint)$$, '23514', 'Expected System Design attempt revision is required', 'attempt deletion requires an exact attempt identity');
+select throws_ok($$select * from public.delete_system_design_attempt_if_revision(current_setting('test.sd_attempt')::uuid,'url-shortener',null)$$, '23514', 'Expected System Design attempt revision is required', 'attempt deletion requires an exact positive revision');
+select throws_ok($$select * from public.delete_system_design_attempt_if_revision(current_setting('test.sd_attempt')::uuid,'fabricated-problem',current_setting('test.sd_current_revision')::bigint)$$, '23503', 'Unknown canonical System Design problem', 'attempt deletion rejects fabricated problem identities');
+select throws_ok($$select public.delete_system_design_attempt(current_setting('test.sd_attempt')::uuid)$$, '0A000', 'Revision-checked System Design attempt deletion is required', 'legacy attempt deletion fails safely without mutation');
+select is_empty(
+  $$select attempt_id from public.delete_system_design_attempt_if_revision(current_setting('test.sd_attempt')::uuid,'url-shortener',current_setting('test.sd_revision')::bigint)$$,
+  'a stale attempt revision cannot delete newer saved work'
+);
+select is((select title from public.system_design_attempts where id = current_setting('test.sd_attempt')::uuid), 'Practiced URL shortener', 'stale attempt deletion preserves the newer worksheet');
+select is_empty(
+  $$select attempt_id from public.delete_system_design_attempt_if_revision(current_setting('test.sd_attempt')::uuid,'rate-limiter',current_setting('test.sd_current_revision')::bigint)$$,
+  'a mismatched canonical problem cannot delete the attempt'
+);
+select is((select title from public.system_design_attempts where id = current_setting('test.sd_attempt')::uuid), 'Practiced URL shortener', 'problem-mismatched deletion preserves the exact attempt');
 select throws_ok($$select public.create_system_design_attempt('estimation',null,'Concept spoof',current_setting('test.sd_document')::jsonb)$$, '23503', 'Unknown canonical System Design problem', 'concept IDs cannot create attempts');
 select throws_ok($$select public.create_system_design_attempt('url-shortener','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Foreign app',current_setting('test.sd_document')::jsonb)$$, '23503', 'Application is not owned by current user', 'foreign application context is rejected');
 select throws_ok($$select public.create_system_design_attempt('url-shortener',null,'Invalid document','{}'::jsonb)$$, '23514', 'Invalid attempt document', 'unvalidated JSONB is rejected');
@@ -171,12 +190,23 @@ select is_empty(
 );
 select is(public.set_system_design_item_quick_progress('estimation','concept','reviewed'), 'estimation', 'another owner can create independent progress for the same canonical item');
 select is((select count(*)::integer from public.system_design_item_progress), 1, 'another owner sees only their own quick-progress row');
-select is(public.delete_system_design_attempt(current_setting('test.sd_attempt')::uuid), false, 'User B cannot delete User A attempt');
+select is_empty(
+  $$select attempt_id from public.delete_system_design_attempt_if_revision(current_setting('test.sd_attempt')::uuid,'url-shortener',current_setting('test.sd_current_revision')::bigint)$$,
+  'User B cannot delete User A attempt'
+);
+select is_empty(
+  $$select attempt_id from public.delete_system_design_attempt_if_revision('99999999-9999-4999-8999-999999999999'::uuid,'url-shortener',current_setting('test.sd_current_revision')::bigint)$$,
+  'foreign and missing attempt deletion are indistinguishable'
+);
 
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '56565656-5656-4565-8565-565656565656', true);
-select is(public.delete_system_design_attempt(current_setting('test.sd_attempt')::uuid), true, 'User A deletes their own attempt through RPC');
+select results_eq(
+  $$select attempt_id from public.delete_system_design_attempt_if_revision(current_setting('test.sd_attempt')::uuid,'url-shortener',current_setting('test.sd_current_revision')::bigint)$$,
+  $$values (current_setting('test.sd_attempt')::uuid)$$,
+  'User A deletes their own attempt with the exact displayed revision'
+);
 select is((select count(*)::integer from public.system_design_attempts), 0, 'attempt cleanup leaves no rows');
 select results_eq($$delete from public.system_design_item_progress where item_id = 'estimation' returning 1$$, $$values (1)$$, 'User A can delete owned progress');
 

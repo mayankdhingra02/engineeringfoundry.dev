@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, History, LockKeyhole, Plus } from "lucide-react";
-import { ConfirmAction } from "@/features/applications/confirm-action";
+import { RevisionConfirmAction } from "@/features/applications/revision-confirm-action";
 import { createSystemDesignAttemptAction, deleteSystemDesignAttemptAction } from "./actions";
 import { getSystemDesignProblemAttempts } from "@/lib/system-design/queries";
 
@@ -22,7 +22,8 @@ export async function SystemDesignProblemPracticePanel({ problemId, problemTitle
     </form>
     {state.attempts.length ? <div className="sd-attempt-history"><div className="sd-attempt-history-heading"><History size={16} /><strong>Attempt history</strong><span>{state.attempts.length} saved</span></div>{state.attempts.map((attempt) => {
       const application = state.applications.find((item) => item.id === attempt.application_id);
-      return <article key={attempt.id}><div><strong>{attempt.title}</strong><span>{attempt.status}{attempt.confidence ? ` · ${attempt.confidence} confidence` : ""}{application ? ` · ${application.company_name}` : ""}</span><small>Updated {date(attempt.updated_at)}</small></div><div><Link className="button button-secondary button-sm" href={`/system-design/problems/${problemId}/practice/${attempt.id}`}>{attempt.status === "draft" ? "Continue" : "Open"}</Link><ConfirmAction action={deleteSystemDesignAttemptAction.bind(null, attempt.id, problemId)} label="Delete" confirmLabel="Delete attempt" /></div></article>;
+      const attemptHref = `/system-design/problems/${problemId}/practice/${attempt.id}`;
+      return <article key={attempt.id}><div><strong>{attempt.title}</strong><span>{attempt.status}{attempt.confidence ? ` · ${attempt.confidence} confidence` : ""}{application ? ` · ${application.company_name}` : ""}</span><small>Updated {date(attempt.updated_at)}</small></div><div><Link className="button button-secondary button-sm" href={attemptHref}>{attempt.status === "draft" ? "Continue" : "Open"}</Link><RevisionConfirmAction action={deleteSystemDesignAttemptAction.bind(null, attempt.id, problemId, attempt.revision)} label="Delete" confirmLabel="Delete attempt" latestHref={attemptHref} /></div></article>;
     })}</div> : <p className="sd-attempt-empty">No attempts yet. Your first worksheet will stay private to this account.</p>}
   </section>;
 }
