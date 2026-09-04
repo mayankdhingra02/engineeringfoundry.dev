@@ -12,13 +12,31 @@ import {
   emptySystemDesignAttemptDocument,
   systemDesignAttemptStatuses,
   systemDesignConfidences,
-  systemDesignStatuses,
   type SystemDesignAttemptStatus,
   type SystemDesignConfidence,
   type SystemDesignStatus,
 } from "@/lib/system-design/workspace";
+import {
+  SYSTEM_DESIGN_PROGRESS_CONFLICT_ERROR,
+  SYSTEM_DESIGN_PROGRESS_INVALID_INPUT_ERROR,
+  SYSTEM_DESIGN_PROGRESS_PERSISTENCE_ERROR,
+  SYSTEM_DESIGN_PROGRESS_SAVED_MESSAGE,
+  parseSystemDesignItemProgressActionInput,
+  parseSystemDesignItemProgressSaveResult,
+} from "@/lib/system-design/item-progress-action-input";
 
-export type SystemDesignActionState = { status: "idle" | "success" | "error"; message: string; conflict?: boolean; revision?: number; analytics?: { itemId: string; itemType: "concept" | "design_problem"; recordedStatus: SystemDesignStatus } };
+export type SystemDesignActionState = { status: "idle" | "success" | "error"; message: string; conflict?: boolean; revision?: number };
+export type SystemDesignProgressActionState = {
+  status: "idle" | "success" | "error";
+  message: string;
+  conflict?: boolean;
+  revision?: string;
+  analytics?: {
+    itemId: string;
+    itemType: "concept" | "design_problem";
+    recordedStatus: SystemDesignStatus;
+  };
+};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const accountUnavailable = () => ({ status: "error", message: "Account persistence is not available in this configuration." } satisfies SystemDesignActionState);
 
@@ -30,26 +48,78 @@ function refreshSystemDesign(problemId?: string, attemptId?: string) {
   if (problemId && attemptId) revalidatePath(`/system-design/problems/${problemId}/practice/${attemptId}`);
 }
 
-export async function saveSystemDesignProgressAction(_: SystemDesignActionState, formData: FormData): Promise<SystemDesignActionState> {
-  if (!isAccountPlatformAvailable()) return accountUnavailable();
-  const actor = await getAuthenticatedActor();
-  if (!actor) return { status: "error", message: "Sign in to save private System Design progress." };
-  const itemId = String(formData.get("item_id") ?? "");
-  const itemType = String(formData.get("item_type") ?? "") as "concept" | "design_problem";
-  const status = String(formData.get("status") ?? "not_started") as SystemDesignStatus;
-  const confidenceValue = String(formData.get("confidence") ?? "");
-  const confidence = confidenceValue ? confidenceValue as SystemDesignConfidence : null;
-  const notes = String(formData.get("notes") ?? "").trim() || null;
-  if (!canonicalSystemDesignItemIds.has(`${itemType}:${itemId}`) || !systemDesignStatuses.includes(status) || (confidence && !systemDesignConfidences.includes(confidence)) || (notes?.length ?? 0) > 10000) {
-    return { status: "error", message: "Review the progress fields and try again." };
+export async function saveSystemDesignProgressAction(
+  previousState: SystemDesignProgressActionState,
+  formData: unknown,
+): Promise<SystemDesignProgressActionState> {
+  const parsed = parseSystemDesignItemProgressActionInput(
+    formData,
+    canonicalSystemDesignItemIds,
+  );
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: SYSTEM_DESIGN_PROGRESS_INVALID_INPUT_ERROR,
+      revision: previousState.revision,
+    };
   }
-  const { error } = await actor.supabase.rpc("save_system_design_item_progress", {
-    target_item_id: itemId, target_item_type: itemType, target_status: status, target_confidence: confidence,
-    target_bookmarked: formData.get("bookmarked") === "on", target_notes: notes,
+
+  const input = parsed.value;
+  const failed = (message: string, conflict = false) => ({
+    status: "error" as const,
+    message,
+    conflict,
+    revision: input.revision,
   });
-  if (error) return { status: "error", message: "We couldn't save this progress update." };
-  refreshSystemDesign(canonicalSystemDesignProblemIds.has(itemId) ? itemId : undefined);
-  return { status: "success", message: "Progress saved.", analytics: { itemId, itemType, recordedStatus: status } };
+  if (!isAccountPlatformAvailable()) {
+    return failed("Account persistence is not available in this configuration.");
+  }
+  const actor = await getAuthenticatedActor();
+  if (!actor) return failed("Sign in to save private System Design progress.");
+
+  const { data, error } = await actor.supabase.rpc(
+    "save_system_design_item_progress_if_revision",
+    {
+      target_item_id: input.itemId,
+      target_item_type: input.itemType,
+      target_expect_absent: input.expectAbsent,
+      target_expected_updated_at: input.expectedUpdatedAt,
+      target_status: input.status,
+      target_confidence: input.confidence,
+      target_bookmarked: input.bookmarked,
+      target_notes: input.notes,
+    },
+  );
+  if (error) return failed(SYSTEM_DESIGN_PROGRESS_PERSISTENCE_ERROR);
+
+  const outcome = parseSystemDesignItemProgressSaveResult(
+    data,
+    input.itemId,
+    input.itemType,
+    canonicalSystemDesignItemIds,
+  );
+  if (outcome.status === "conflict") {
+    return failed(SYSTEM_DESIGN_PROGRESS_CONFLICT_ERROR, true);
+  }
+  if (outcome.status === "invalid") {
+    return failed(SYSTEM_DESIGN_PROGRESS_PERSISTENCE_ERROR);
+  }
+
+  refreshSystemDesign(
+    canonicalSystemDesignProblemIds.has(input.itemId)
+      ? input.itemId
+      : undefined,
+  );
+  return {
+    status: "success",
+    message: SYSTEM_DESIGN_PROGRESS_SAVED_MESSAGE,
+    revision: outcome.updatedAt,
+    analytics: {
+      itemId: input.itemId,
+      itemType: input.itemType,
+      recordedStatus: input.status,
+    },
+  };
 }
 
 export async function createSystemDesignAttemptAction(problemId: string, formData: FormData) {

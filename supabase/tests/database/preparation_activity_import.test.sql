@@ -39,8 +39,8 @@ select throws_ok($$select public.import_dsa_question_progress_if_absent('fabrica
 select throws_ok($$select public.import_dsa_question_progress_if_absent(null,'attempted')$$, '23503', 'Unknown canonical DSA question', 'DSA import rejects a null question ID');
 
 select results_eq(
-  $$select status from public.save_system_design_item_progress('estimation','concept','comfortable','high',true,'Preserve this private design note.')$$,
-  $$values ('comfortable'::text)$$,
+  $$select item_id from public.save_system_design_item_progress_if_revision('estimation','concept',true,null,'comfortable','high',true,'Preserve this private design note.')$$,
+  $$values ('estimation'::text)$$,
   'User A creates rich System Design progress before import'
 );
 select set_config('test.import_sd_before', (select to_jsonb(progress)::text from public.system_design_item_progress progress where item_id = 'estimation' and item_type = 'concept'), true);

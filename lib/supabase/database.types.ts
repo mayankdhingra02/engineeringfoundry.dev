@@ -1065,6 +1065,27 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["system_design_item_progress"]["Row"][];
       };
+      save_system_design_item_progress_if_revision: {
+        Args: {
+          target_item_id: string;
+          target_item_type: "concept" | "design_problem";
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          target_status: "not_started" | "reviewed" | "review" | "comfortable";
+          target_confidence: "low" | "medium" | "high" | null;
+          target_bookmarked: boolean;
+          target_notes: string | null;
+        };
+        Returns: { item_id: string; item_type: "concept" | "design_problem"; updated_at: string }[];
+      };
+      set_system_design_item_quick_progress: {
+        Args: {
+          target_item_id: string;
+          target_item_type: "concept" | "design_problem";
+          target_status: "not_started" | "reviewed" | "review" | "comfortable";
+        };
+        Returns: string;
+      };
       create_system_design_attempt: {
         Args: { target_problem_id: string; target_application_id: string | null; target_title: string; target_document: Json };
         Returns: string;

@@ -351,6 +351,13 @@ const dsaActivityBranch = activityAction.slice(
 assert.match(dsaActivityBranch, /rpc\("set_dsa_question_quick_progress", \{[\s\S]*target_question_id: input\.itemId,[\s\S]*target_status: input\.status === "completed" \? "review" : "attempted",[\s\S]*target_bookmarked: null/, "shared DSA activity must dispatch only the intended status through the atomic quick-progress RPC");
 assert.ok(dsaActivityBranch.includes("data !== input.itemId") && dsaActivityBranch.includes("!canonicalDsaQuestionById.has(data)"), "shared DSA activity must validate the returned canonical question ID before claiming persistence");
 for (const obsolete of ['rpc("save_dsa_question_progress"', "target_confidence", "target_notes"]) assert.ok(!dsaActivityBranch.includes(obsolete), `shared DSA activity must not submit a stale whole-record field: ${obsolete}`);
+const systemDesignActivityBranch = activityAction.slice(
+  activityAction.indexOf('} else if (input.track === "system-design")'),
+  activityAction.indexOf('} else if (input.track === "ml-design"'),
+);
+assert.match(systemDesignActivityBranch, /rpc\("set_system_design_item_quick_progress", \{[\s\S]*target_item_id: input\.itemId,[\s\S]*target_item_type: itemType,[\s\S]*target_status: "reviewed"/, "shared System Design activity must dispatch only the intended status through the atomic quick-progress RPC");
+assert.ok(systemDesignActivityBranch.includes("data !== input.itemId"), "shared System Design activity must validate the returned canonical item ID before claiming persistence");
+for (const obsolete of ['rpc("save_system_design_item_progress"', 'rpc("save_system_design_item_progress_if_revision"', "target_confidence", "target_bookmarked", "target_notes"]) assert.ok(!systemDesignActivityBranch.includes(obsolete), `shared System Design activity must not submit a stale whole-record field: ${obsolete}`);
 assert.ok(importRoute.indexOf("parsePreparationImportRequest(payload)") < importRoute.indexOf("await getAuthenticatedActor()"), "browser import must strictly parse the untrusted snapshot before actor or RPC work");
 for (const marker of [
   "canonicalDsaQuestionById.has(item.itemId)",
@@ -387,6 +394,7 @@ for (const marker of [
   "insert-only browser import preserves rich existing progress across every storage family",
   "concurrent same-key browser imports insert exactly once",
   "concurrent browser import and absent-revision DSA save never overwrite either winner",
+  "concurrent absent System Design import and desired status settle on the desired status",
   "concurrent different-key browser imports commute",
 ]) assert.ok(persistenceQualifier.includes(marker), `persistence qualification must retain atomic import evidence: ${marker}`);
 for (const marker of ["anonymous callers cannot invoke insert-only browser import RPCs", "insert-only browser imports derive independent owners without exposing foreign state"]) assert.ok(securityQualifier.includes(marker), `security qualification must retain import isolation evidence: ${marker}`);

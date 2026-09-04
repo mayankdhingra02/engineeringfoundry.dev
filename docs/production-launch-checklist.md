@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 32 migrations are recorded, ending at `202609030005_save_behavioral_story_aggregate`
+4. [ ] `supabase migration list --linked` — confirm all 33 migrations are recorded, ending at `202609030006_save_system_design_item_progress_if_revision`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -96,6 +96,8 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 7. [ ] Confirm the canonical catalogs seeded: 162 DSA questions, 146 System Design concepts, 27 design problems, 48 curated Behavioral questions
 
 Apply `202609030005_save_behavioral_story_aggregate.sql` before deploying the aggregate-writing application. Migration-first makes already-loaded split-write clients fail safely before partial mutation: direct story/theme writes fail with `42501`, while direct calls to the legacy theme RPC fail with `0A000`. App-first leaves the torn-write window open until the migration lands. Rolling application code back after the migration is safe but degraded because the old split-write path stays unavailable; keep the migration and roll forward.
+
+Apply `202609030006_save_system_design_item_progress_if_revision.sql` before deploying the revision-aware System Design application. Migration-first makes already-loaded whole-row clients fail safely with `0A000`; application-first protects only newly loaded clients and leaves the stale overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the legacy full-save path stays unavailable; keep the migration and roll forward.
 
 ---
 
@@ -134,6 +136,9 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Confirm `anon` cannot execute `save_dsa_question_progress_if_revision`. As User A, race two full saves from the same loaded revision and confirm exactly one coherent snapshot wins, the returned `updated_at` advances, and replaying the stale revision returns zero rows without changing the winner.
 - [ ] Race a revision-checked full save with quick status and bookmark writes for the same User A/question and confirm both quick desired values survive. Race an explicit absent-revision full save with `import_dsa_question_progress_if_absent` and confirm neither winner is overwritten; confirm User B cannot read or mutate User A's row.
 - [ ] Confirm the authenticated legacy `save_dsa_question_progress` signature fails with SQLSTATE `0A000` and `Revision-checked DSA progress saving is required`.
+- [ ] Confirm `anon` cannot execute `save_system_design_item_progress_if_revision` or `set_system_design_item_quick_progress`. As User A, create one canonical `(item_type,item_id)` row with the explicit absent revision, confirm the returned `updated_at`, race two full saves from that revision, and verify exactly one coherent status/confidence/bookmark/note snapshot wins while the stale call returns zero rows.
+- [ ] Race a User A System Design full save with `set_system_design_item_quick_progress` and confirm the desired quick status survives without clearing confidence, bookmark, or notes. Repeat the same quick status and confirm its revision stays unchanged; confirm User B cannot read or mutate User A's row.
+- [ ] Race an explicit absent System Design full save with `import_system_design_item_progress_if_absent`, then with a quick desired-status save, and confirm each race produces one coherent owner row without overwriting the winner. Confirm the authenticated legacy `save_system_design_item_progress` signature fails without mutation with SQLSTATE `0A000` and `Revision-checked System Design progress saving is required`.
 - [ ] Confirm `anon` cannot execute `create_behavioral_story_with_themes`, `update_behavioral_story_with_themes_if_revision`, or `duplicate_behavioral_story_with_themes`; authenticated User A can create one parent with its exact controlled theme set.
 - [ ] Race two User A aggregate story updates from the same revision and confirm exactly one coherent parent/theme snapshot wins; stale, foreign, and missing revisions return zero rows without mutation, duplication captures one complete aggregate snapshot, and invalid themes roll back both parent and theme changes.
 - [ ] Confirm authenticated direct story `INSERT`/`UPDATE` and theme `INSERT`/`UPDATE`/`DELETE` fail while owner story deletion remains available. Confirm the authenticated legacy `replace_behavioral_story_themes` call fails with SQLSTATE `0A000` and `Atomic Behavioral story saving is required`.

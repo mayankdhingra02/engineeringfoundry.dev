@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(44);
+select plan(85);
 
 select ok(has_table_privilege('anon', 'public.system_design_item_catalog', 'select'), 'public catalog remains readable signed out');
 select ok(not has_table_privilege('anon', 'public.system_design_item_progress', 'select'), 'anonymous users cannot read private progress');
@@ -16,6 +16,12 @@ select ok(not has_table_privilege('authenticated', 'public.system_design_attempt
 select ok(not has_table_privilege('authenticated', 'public.system_design_attempts', 'delete'), 'clients cannot directly delete attempts');
 select ok(not has_function_privilege('anon', 'public.create_system_design_attempt(text,uuid,text,jsonb)', 'execute'), 'anonymous users cannot create attempts');
 select ok(has_function_privilege('authenticated', 'public.create_system_design_attempt(text,uuid,text,jsonb)', 'execute'), 'authenticated users can create attempts through RPC');
+select ok(not has_function_privilege('anon', 'public.save_system_design_item_progress_if_revision(text,text,boolean,timestamptz,text,text,boolean,text)', 'execute'), 'anonymous users cannot invoke revision-checked System Design progress saves');
+select ok(has_function_privilege('authenticated', 'public.save_system_design_item_progress_if_revision(text,text,boolean,timestamptz,text,text,boolean,text)', 'execute'), 'authenticated users can invoke revision-checked System Design progress saves');
+select ok(not has_function_privilege('anon', 'public.set_system_design_item_quick_progress(text,text,text)', 'execute'), 'anonymous users cannot invoke quick System Design progress saves');
+select ok(has_function_privilege('authenticated', 'public.set_system_design_item_quick_progress(text,text,text)', 'execute'), 'authenticated users can invoke quick System Design progress saves');
+select ok(has_function_privilege('authenticated', 'public.save_system_design_item_progress(text,text,text,text,boolean,text)', 'execute'), 'legacy System Design progress signature remains callable for migration-first fail-safe behavior');
+select ok(not has_function_privilege('authenticated', 'public.set_system_design_item_progress_updated_at()', 'execute'), 'clients cannot execute the monotonic revision trigger directly');
 select is((select count(*)::integer from public.system_design_item_catalog), 173, 'catalog contains every published concept and problem');
 select is((select count(*)::integer from public.system_design_item_catalog where item_type = 'concept'), 146, 'catalog contains published concepts');
 select is((select count(*)::integer from public.system_design_item_catalog where item_type = 'design_problem'), 27, 'catalog contains published design problems');
@@ -34,9 +40,9 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '56565656-5656-4565-8565-565656565656', true);
 
 select results_eq(
-  $$select status from public.save_system_design_item_progress('estimation','concept','reviewed','medium',true,'State every assumption.')$$,
-  $$values ('reviewed'::text)$$,
-  'User A saves canonical concept progress'
+  $$select item_id,item_type from public.save_system_design_item_progress_if_revision('estimation','concept',true,null,'reviewed','medium',true,'State every assumption.')$$,
+  $$values ('estimation'::text,'concept'::text)$$,
+  'User A creates canonical concept progress with an explicit absent revision'
 );
 select is((select confidence from public.system_design_item_progress where item_id = 'estimation'), 'medium', 'confidence persists');
 select is((select bookmarked from public.system_design_item_progress where item_id = 'estimation'), true, 'bookmark persists');
@@ -44,16 +50,81 @@ select is((select notes from public.system_design_item_progress where item_id = 
 select ok((select first_reviewed_at is not null from public.system_design_item_progress where item_id = 'estimation'), 'first reviewed timestamp is recorded');
 select ok((select last_practiced_at is not null from public.system_design_item_progress where item_id = 'estimation'), 'last practiced timestamp is recorded');
 select set_config('test.sd_last_practiced', (select last_practiced_at::text from public.system_design_item_progress where item_id = 'estimation'), true);
+select set_config('test.sd_initial_revision', (select updated_at::text from public.system_design_item_progress where item_id = 'estimation'), true);
+select set_config('test.sd_progress_revision', (select updated_at::text from public.system_design_item_progress where item_id = 'estimation'), true);
 select results_eq(
-  $$select bookmarked from public.save_system_design_item_progress('estimation','concept','reviewed','medium',false,'State every assumption.')$$,
-  $$values (false)$$,
-  'bookmark-only update persists'
+  $$select item_id,item_type from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'reviewed','medium',false,'State every assumption.')$$,
+  $$values ('estimation'::text,'concept'::text)$$,
+  'revision-checked bookmark-only full update persists'
 );
+select is((select bookmarked from public.system_design_item_progress where item_id = 'estimation'), false, 'revision-checked bookmark value persists');
 select is((select last_practiced_at::text from public.system_design_item_progress where item_id = 'estimation'), current_setting('test.sd_last_practiced'), 'bookmark-only update does not forge practice time');
-select throws_ok($$select * from public.save_system_design_item_progress('invented-concept','concept','reviewed','low',false,null)$$, '23503', 'Unknown canonical System Design item', 'fake catalog IDs are rejected');
-select throws_ok($$select * from public.save_system_design_item_progress('estimation','concept','mastered','low',false,null)$$, '23514', 'Invalid status', 'fake readiness states are rejected');
-select throws_ok($$select * from public.save_system_design_item_progress('estimation','concept','reviewed','certain',false,null)$$, '23514', 'Invalid confidence', 'unsupported confidence is rejected');
-select throws_ok($$select * from public.save_system_design_item_progress('estimation','concept','reviewed','low',false,repeat('x',10001))$$, '22001', 'Notes are too long', 'oversized notes are rejected');
+select ok((select updated_at > current_setting('test.sd_initial_revision')::timestamptz from public.system_design_item_progress where item_id = 'estimation'), 'full saves advance the edit revision monotonically');
+select set_config('test.sd_progress_revision', (select updated_at::text from public.system_design_item_progress where item_id = 'estimation'), true);
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('invented-concept','concept',true,null,'reviewed','low',false,null)$$, '23503', 'Unknown canonical System Design item', 'fake catalog IDs are rejected');
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('estimation','lesson',true,null,'reviewed','low',false,null)$$, '23514', 'Invalid System Design item type', 'fake item types are rejected');
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('estimation','concept',true,current_setting('test.sd_progress_revision')::timestamptz,'reviewed','low',false,null)$$, '23514', 'Expected System Design progress revision is invalid', 'absence expectation rejects a supplied revision');
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('estimation','concept',false,null,'reviewed','low',false,null)$$, '23514', 'Expected System Design progress revision is invalid', 'existing expectation requires a revision');
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'mastered','low',false,null)$$, '23514', 'Invalid System Design progress status', 'fake readiness states are rejected');
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'reviewed','certain',false,null)$$, '23514', 'Invalid System Design confidence', 'unsupported confidence is rejected');
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'reviewed','low',null,null)$$, '23514', 'System Design bookmark state is required', 'full saves require an explicit bookmark state');
+select throws_ok($$select * from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'reviewed','low',false,repeat('x',10001))$$, '22001', 'System Design progress notes are too long', 'oversized notes are rejected');
+select throws_ok($$select * from public.save_system_design_item_progress('estimation','concept','reviewed','low',false,null)$$, '0A000', 'Revision-checked System Design progress saving is required', 'legacy whole-row saves fail without mutation');
+
+select set_config('test.sd_progress_revision', (select updated_at::text from public.system_design_item_progress where item_id = 'estimation'), true);
+select results_eq(
+  $$select item_id from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'comfortable','high',true,'New full-save note.')$$,
+  $$values ('estimation'::text)$$,
+  'the first full edit with an exact revision succeeds'
+);
+select is_empty(
+  $$select item_id from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'review','low',false,'Stale overwrite.')$$,
+  'a stale full edit cannot overwrite the winning save'
+);
+select set_config('test.sd_progress_revision', (select updated_at::text from public.system_design_item_progress where item_id = 'estimation'), true);
+select is(public.set_system_design_item_quick_progress('estimation','concept','review'), 'estimation', 'quick status mutation returns the exact canonical item id');
+select is((select status from public.system_design_item_progress where item_id = 'estimation' and item_type = 'concept'), 'review', 'quick status mutation persists the desired status');
+select is((select confidence from public.system_design_item_progress where item_id = 'estimation' and item_type = 'concept'), 'high', 'quick status mutation preserves confidence');
+select is((select bookmarked from public.system_design_item_progress where item_id = 'estimation' and item_type = 'concept'), true, 'quick status mutation preserves bookmark state');
+select is((select notes from public.system_design_item_progress where item_id = 'estimation' and item_type = 'concept'), 'New full-save note.', 'quick status mutation preserves private notes');
+select set_config('test.sd_quick_revision', (select updated_at::text from public.system_design_item_progress where item_id = 'estimation' and item_type = 'concept'), true);
+select ok(current_setting('test.sd_quick_revision')::timestamptz > current_setting('test.sd_progress_revision')::timestamptz, 'quick status advances the edit revision monotonically');
+select is(public.set_system_design_item_quick_progress('estimation','concept','review'), 'estimation', 'repeating a desired quick status is idempotent');
+select is((select updated_at::text from public.system_design_item_progress where item_id = 'estimation' and item_type = 'concept'), current_setting('test.sd_quick_revision'), 'a no-op quick status does not advance the edit revision');
+select is_empty(
+  $$select item_id from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_progress_revision')::timestamptz,'reviewed','medium',false,'Stale after quick update.')$$,
+  'a quick status winner invalidates a stale full edit'
+);
+
+select results_eq(
+  $$select item_id,item_type from public.save_system_design_item_progress_if_revision('vector-search','concept',true,null,'comfortable','medium',true,'Concept-specific note.')$$,
+  $$values ('vector-search'::text,'concept'::text)$$,
+  'shared catalog text creates concept progress independently'
+);
+select is(public.set_system_design_item_quick_progress('vector-search','design_problem','reviewed'), 'vector-search', 'shared catalog text creates design-problem progress independently');
+select is((select count(*)::integer from public.system_design_item_progress where item_id = 'vector-search'), 2, 'item type remains part of progress identity and lock scope');
+
+select results_eq(
+  $$select item_id from public.save_system_design_item_progress_if_revision('rate-limiter','design_problem',true,null,'comfortable','high',true,'Preserve this rich row.')$$,
+  $$values ('rate-limiter'::text)$$,
+  'full absent save wins before browser import'
+);
+select is(public.import_system_design_item_progress_if_absent('rate-limiter','design_problem'), false, 'browser import cannot overwrite an existing rich full save');
+select is((select notes from public.system_design_item_progress where item_id = 'rate-limiter' and item_type = 'design_problem'), 'Preserve this rich row.', 'failed browser import preserves rich fields');
+select is(public.import_system_design_item_progress_if_absent('notification-service','design_problem'), true, 'browser import can win an absent-row race');
+select is_empty(
+  $$select item_id from public.save_system_design_item_progress_if_revision('notification-service','design_problem',true,null,'comfortable','high',true,'Must not overwrite import winner.')$$,
+  'absent-revision full save reports conflict after import creates the row'
+);
+select is(public.set_system_design_item_quick_progress('notification-service','design_problem','comfortable'), 'notification-service', 'quick status can advance an imported row');
+select is((select status from public.system_design_item_progress where item_id = 'notification-service' and item_type = 'design_problem'), 'comfortable', 'quick status wins without replacing other imported-row fields');
+select is(public.set_system_design_item_quick_progress('job-scheduler','design_problem','reviewed'), 'job-scheduler', 'quick status creates a missing canonical row');
+select is_empty(
+  $$select item_id from public.save_system_design_item_progress_if_revision('job-scheduler','design_problem',true,null,'comfortable','high',true,'Must not overwrite quick winner.')$$,
+  'absent-revision full save reports conflict after quick status creates the row'
+);
+select throws_ok($$select public.set_system_design_item_quick_progress('estimation','concept','mastered')$$, '23514', 'Invalid System Design progress status', 'quick status rejects fake readiness states');
+select throws_ok($$select public.set_system_design_item_quick_progress('invented-concept','concept','reviewed')$$, '23503', 'Unknown canonical System Design item', 'quick status rejects fake catalog IDs');
 
 select set_config('test.sd_document', jsonb_build_object(
   'functional_requirements', jsonb_build_array('Create a short URL'),
@@ -94,6 +165,12 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '78787878-7878-4787-8787-787878787878', true);
 select is((select count(*)::integer from public.system_design_item_progress), 0, 'User B cannot read User A progress');
 select is((select count(*)::integer from public.system_design_attempts), 0, 'User B cannot read User A attempts');
+select is_empty(
+  $$select item_id from public.save_system_design_item_progress_if_revision('estimation','concept',false,current_setting('test.sd_quick_revision')::timestamptz,'comfortable','high',true,'Foreign overwrite.')$$,
+  'foreign and missing owner progress are indistinguishable revision conflicts'
+);
+select is(public.set_system_design_item_quick_progress('estimation','concept','reviewed'), 'estimation', 'another owner can create independent progress for the same canonical item');
+select is((select count(*)::integer from public.system_design_item_progress), 1, 'another owner sees only their own quick-progress row');
 select is(public.delete_system_design_attempt(current_setting('test.sd_attempt')::uuid), false, 'User B cannot delete User A attempt');
 
 reset role;

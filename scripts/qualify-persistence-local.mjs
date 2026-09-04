@@ -73,6 +73,32 @@ async function saveDsaProgress(supabase, values, expectation) {
   });
 }
 
+async function currentSystemDesignProgressRevision(supabase, itemId, itemType) {
+  const result = await supabase
+    .from("system_design_item_progress")
+    .select("updated_at")
+    .eq("item_id", itemId)
+    .eq("item_type", itemType)
+    .maybeSingle();
+  return expectSuccess(result, `System Design revision lookup failed for ${itemType}:${itemId}`)?.updated_at ?? null;
+}
+
+async function saveSystemDesignProgress(supabase, values, expectation) {
+  const expectedUpdatedAt = expectation === undefined
+    ? await currentSystemDesignProgressRevision(supabase, values.itemId, values.itemType)
+    : expectation;
+  return supabase.rpc("save_system_design_item_progress_if_revision", {
+    target_item_id: values.itemId,
+    target_item_type: values.itemType,
+    target_expect_absent: expectedUpdatedAt === null,
+    target_expected_updated_at: expectedUpdatedAt,
+    target_status: values.status,
+    target_confidence: values.confidence,
+    target_bookmarked: values.bookmarked,
+    target_notes: values.notes,
+  });
+}
+
 function behavioralStoryArgs(overrides = {}) {
   return {
     target_title: "Phase 5A qualification launch recovery",
@@ -169,7 +195,7 @@ async function cleanOwnedFixtures(account) {
     owned.from("applications").delete().like("company_name", `${fixtureCompany}%`),
     owned.from("dsa_progress").delete().like("item_id", `${fixturePrefix}:%`),
     owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters", "course-schedule", "group-anagrams", "binary-search", "valid-parentheses", "valid-anagram", "climbing-stairs", "coin-change", "merge-intervals"]),
-    owned.from("system_design_item_progress").delete().in("item_id", ["estimation", "url-shortener", "vector-search", "rate-limiter", "notification-service"]),
+    owned.from("system_design_item_progress").delete().in("item_id", ["estimation", "url-shortener", "vector-search", "rate-limiter", "notification-service", "job-scheduler", "search-autocomplete", "leaderboard"]),
     owned.from("system_design_progress").delete().like("item_id", `${fixturePrefix}:%`),
     owned.from("user_preparation_preferences").delete().eq("user_id", account.user.id),
   ];
@@ -1755,31 +1781,97 @@ const systemDesignDocument = {
 };
 
 await check("User A saves canonical System Design concept progress through the authoritative RPC", async () => {
-  const saved = await a.authClient.rpc("save_system_design_item_progress", {
-    target_item_id: "estimation", target_item_type: "concept", target_status: "reviewed",
-    target_confidence: "medium", target_bookmarked: true, target_notes: "State assumptions before arithmetic.",
+  const saved = await saveSystemDesignProgress(a.authClient, {
+    itemId: "estimation", itemType: "concept", status: "reviewed",
+    confidence: "medium", bookmarked: true, notes: "State assumptions before arithmetic.",
   });
   const rows = expectSuccess(saved, "System Design concept progress save failed");
-  expect(rows.length === 1 && rows[0].item_type === "concept" && rows[0].first_reviewed_at, "concept progress did not persist correctly");
+  expect(rows.length === 1 && rows[0].item_type === "concept" && rows[0].updated_at, "concept progress did not return its canonical identity and revision");
+  const row = expectSuccess(await a.authClient.from("system_design_item_progress").select("first_reviewed_at").eq("item_id", "estimation").eq("item_type", "concept").single(), "concept progress read failed");
+  expect(row.first_reviewed_at, "concept progress did not persist its first-review timestamp");
 });
 
 await check("shared System Design concept and problem IDs remain independent", async () => {
-  const concept = expectSuccess(await a.authClient.rpc("save_system_design_item_progress", {
-    target_item_id: "vector-search", target_item_type: "concept", target_status: "review",
-    target_confidence: "low", target_bookmarked: false, target_notes: "Review ANN index choices.",
+  const concept = expectSuccess(await saveSystemDesignProgress(a.authClient, {
+    itemId: "vector-search", itemType: "concept", status: "review",
+    confidence: "low", bookmarked: false, notes: "Review ANN index choices.",
   }), "shared concept progress failed");
-  const problem = expectSuccess(await a.authClient.rpc("save_system_design_item_progress", {
-    target_item_id: "vector-search", target_item_type: "design_problem", target_status: "reviewed",
-    target_confidence: "medium", target_bookmarked: false, target_notes: "Completed one design pass.",
+  const problem = expectSuccess(await saveSystemDesignProgress(a.authClient, {
+    itemId: "vector-search", itemType: "design_problem", status: "reviewed",
+    confidence: "medium", bookmarked: false, notes: "Completed one design pass.",
   }), "shared problem progress failed");
   expect(concept[0].item_type !== problem[0].item_type, "shared IDs collapsed into one progress item");
 });
 
 await check("fake canonical System Design IDs are rejected", async () => {
-  return expectSqlError(await a.authClient.rpc("save_system_design_item_progress", {
-    target_item_id: `${fixturePrefix}-fake`, target_item_type: "concept", target_status: "reviewed",
+  return expectSqlError(await a.authClient.rpc("save_system_design_item_progress_if_revision", {
+    target_item_id: `${fixturePrefix}-fake`, target_item_type: "concept",
+    target_expect_absent: true, target_expected_updated_at: null, target_status: "reviewed",
     target_confidence: "low", target_bookmarked: false, target_notes: null,
   }), "23503");
+});
+
+await check("legacy System Design whole-row saves fail safely", async () => {
+  const before = expectSuccess(await a.authClient.from("system_design_item_progress").select("*").eq("item_id", "estimation").eq("item_type", "concept").single(), "legacy fail-safe setup read failed");
+  const saved = await a.authClient.rpc("save_system_design_item_progress", {
+    target_item_id: "estimation", target_item_type: "concept", target_status: "not_started",
+    target_confidence: null, target_bookmarked: false, target_notes: null,
+  });
+  expectSqlError(saved, "0A000");
+  const after = expectSuccess(await a.authClient.from("system_design_item_progress").select("*").eq("item_id", "estimation").eq("item_type", "concept").single(), "legacy fail-safe result read failed");
+  expect(JSON.stringify(after) === JSON.stringify(before), "legacy failure mutated System Design progress");
+  return "SQLSTATE 0A000; complete row unchanged";
+});
+
+await check("desired System Design status updates preserve rich fields and no-op revisions", async () => {
+  const before = expectSuccess(await a.authClient.from("system_design_item_progress").select("*").eq("item_id", "estimation").eq("item_type", "concept").single(), "quick-progress setup read failed");
+  const changed = expectSuccess(await a.authClient.rpc("set_system_design_item_quick_progress", {
+    target_item_id: "estimation", target_item_type: "concept", target_status: "comfortable",
+  }), "quick status update failed");
+  expect(changed === "estimation", `quick status returned ${JSON.stringify(changed)}`);
+  const afterChange = expectSuccess(await a.authClient.from("system_design_item_progress").select("*").eq("item_id", "estimation").eq("item_type", "concept").single(), "quick-progress result read failed");
+  expect(afterChange.status === "comfortable", "desired status did not persist");
+  for (const field of ["confidence", "bookmarked", "notes"]) expect(afterChange[field] === before[field], `quick status changed ${field}`);
+  const repeated = expectSuccess(await a.authClient.rpc("set_system_design_item_quick_progress", {
+    target_item_id: "estimation", target_item_type: "concept", target_status: "comfortable",
+  }), "idempotent quick status failed");
+  expect(repeated === "estimation", "idempotent quick status returned the wrong canonical id");
+  const afterNoop = expectSuccess(await a.authClient.from("system_design_item_progress").select("updated_at").eq("item_id", "estimation").eq("item_type", "concept").single(), "quick no-op result read failed");
+  expect(afterNoop.updated_at === afterChange.updated_at, "idempotent status replay advanced the edit revision");
+  return "confidence, bookmark, and notes preserved; repeated status timestamp-stable";
+});
+
+await check("concurrent stale System Design full saves commit exactly one winner", async () => {
+  const revision = await currentSystemDesignProgressRevision(a.authClient, "estimation", "concept");
+  const [first, second] = await Promise.all([
+    saveSystemDesignProgress(a.authClient, { itemId: "estimation", itemType: "concept", status: "review", confidence: "high", bookmarked: true, notes: "Concurrent full winner A." }, revision),
+    saveSystemDesignProgress(a.authClient, { itemId: "estimation", itemType: "concept", status: "reviewed", confidence: "low", bookmarked: false, notes: "Concurrent full winner B." }, revision),
+  ]);
+  const outcomes = [expectSuccess(first, "first concurrent full save failed"), expectSuccess(second, "second concurrent full save failed")];
+  expect(outcomes.map((rows) => rows.length).sort().join(",") === "0,1", `expected one full-save winner, observed ${outcomes.map((rows) => rows.length)}`);
+  const row = expectSuccess(await a.authClient.from("system_design_item_progress").select("status,confidence,bookmarked,notes").eq("item_id", "estimation").eq("item_type", "concept").single(), "concurrent full-save read failed");
+  const coherentA = row.status === "review" && row.confidence === "high" && row.bookmarked === true && row.notes === "Concurrent full winner A.";
+  const coherentB = row.status === "reviewed" && row.confidence === "low" && row.bookmarked === false && row.notes === "Concurrent full winner B.";
+  expect(coherentA || coherentB, `concurrent save produced a torn row: ${JSON.stringify(row)}`);
+  return `one winner; coherent ${coherentA ? "A" : "B"} snapshot`;
+});
+
+await check("concurrent System Design full and desired-status saves preserve a coherent rich snapshot", async () => {
+  const setup = expectSuccess(await a.authClient.from("system_design_item_progress").select("status,confidence,bookmarked,notes,updated_at").eq("item_id", "estimation").eq("item_type", "concept").single(), "full/status setup read failed");
+  const [full, quick] = await Promise.all([
+    saveSystemDesignProgress(a.authClient, { itemId: "estimation", itemType: "concept", status: "comfortable", confidence: "medium", bookmarked: true, notes: "Concurrent full rich snapshot." }, setup.updated_at),
+    a.authClient.rpc("set_system_design_item_quick_progress", { target_item_id: "estimation", target_item_type: "concept", target_status: "review" }),
+  ]);
+  const fullRows = expectSuccess(full, "concurrent full save failed");
+  expect(expectSuccess(quick, "concurrent quick status failed") === "estimation", "quick status returned the wrong canonical id");
+  expect(fullRows.length === 0 || fullRows.length === 1, `full/status race returned ${fullRows.length} full rows`);
+  const row = expectSuccess(await a.authClient.from("system_design_item_progress").select("status,confidence,bookmarked,notes").eq("item_id", "estimation").eq("item_type", "concept").single(), "full/status race read failed");
+  expect(row.status === "review", "desired quick status was not the final status");
+  const oldRich = row.confidence === setup.confidence && row.bookmarked === setup.bookmarked && row.notes === setup.notes;
+  const newRich = row.confidence === "medium" && row.bookmarked === true && row.notes === "Concurrent full rich snapshot.";
+  expect(oldRich || newRich, `full/status race produced torn rich fields: ${JSON.stringify(row)}`);
+  expect((fullRows.length === 0 && oldRich) || (fullRows.length === 1 && newRich), "full/status outcome did not match its revision winner");
+  return `quick status won; full ${fullRows.length ? "committed before it" : "reported conflict"}`;
 });
 
 await check("insert-only browser import preserves rich existing progress across every storage family", async () => {
@@ -1787,9 +1879,9 @@ await check("insert-only browser import preserves rich existing progress across 
     questionId: "valid-parentheses", status: "solved", confidence: "high",
     bookmarked: true, notes: "Keep this DSA note and every timestamp.",
   }), "DSA import-preservation setup failed");
-  expectSuccess(await a.authClient.rpc("save_system_design_item_progress", {
-    target_item_id: "rate-limiter", target_item_type: "design_problem", target_status: "comfortable",
-    target_confidence: "high", target_bookmarked: true, target_notes: "Keep this design note and every timestamp.",
+  expectSuccess(await saveSystemDesignProgress(a.authClient, {
+    itemId: "rate-limiter", itemType: "design_problem", status: "comfortable",
+    confidence: "high", bookmarked: true, notes: "Keep this design note and every timestamp.",
   }), "System Design import-preservation setup failed");
   expectSuccess(await a.authClient.rpc("save_preparation_track_progress", {
     target_track: "ml-design", target_item_id: "ml-problem-recommendation", target_status: "completed",
@@ -1869,6 +1961,86 @@ await check("concurrent browser import and absent-revision DSA save never overwr
   }
   expect(row.first_attempted_at && row.last_practiced_at, "the winning insert produced inconsistent practice timestamps");
   return `import returned ${importOutcome}; full returned ${savedRows.length} row(s); one coherent winner`;
+});
+
+await check("concurrent browser import and absent-revision System Design save commit one coherent winner", async () => {
+  const [imported, saved] = await Promise.all([
+    a.authClient.rpc("import_system_design_item_progress_if_absent", {
+      target_item_id: "search-autocomplete",
+      target_item_type: "design_problem",
+    }),
+    saveSystemDesignProgress(a.authClient, {
+      itemId: "search-autocomplete",
+      itemType: "design_problem",
+      status: "comfortable",
+      confidence: "high",
+      bookmarked: true,
+      notes: "The full editor owns this System Design snapshot.",
+    }, null),
+  ]);
+  const importOutcome = expectSuccess(imported, "concurrent System Design browser import failed");
+  const savedRows = expectSuccess(saved, "concurrent absent-revision System Design save failed");
+  expect(typeof importOutcome === "boolean", "System Design import did not return a boolean outcome");
+  expect(savedRows.length === 0 || savedRows.length === 1, "System Design full save returned invalid cardinality");
+  expect((importOutcome && savedRows.length === 0) || (!importOutcome && savedRows.length === 1), "System Design import/full race did not produce exactly one insert winner");
+  const row = expectSuccess(await a.authClient.from("system_design_item_progress").select("status,confidence,bookmarked,notes,first_reviewed_at,last_practiced_at").eq("item_id", "search-autocomplete").eq("item_type", "design_problem").single(), "System Design import/full result read failed");
+  if (savedRows.length === 1) {
+    expect(row.status === "comfortable" && row.confidence === "high" && row.bookmarked === true, "winning System Design full save lost rich fields");
+    expect(row.notes === "The full editor owns this System Design snapshot.", "winning System Design full save lost private notes");
+  } else {
+    expect(row.status === "reviewed" && row.confidence === null && row.bookmarked === false && row.notes === null, "winning System Design import was overwritten");
+  }
+  expect(row.first_reviewed_at && row.last_practiced_at, "System Design insert winner produced inconsistent timestamps");
+  return `import returned ${importOutcome}; full returned ${savedRows.length} row(s); one coherent winner`;
+});
+
+await check("concurrent absent System Design import and desired status settle on the desired status", async () => {
+  const [imported, quick] = await Promise.all([
+    a.authClient.rpc("import_system_design_item_progress_if_absent", {
+      target_item_id: "job-scheduler",
+      target_item_type: "design_problem",
+    }),
+    a.authClient.rpc("set_system_design_item_quick_progress", {
+      target_item_id: "job-scheduler",
+      target_item_type: "design_problem",
+      target_status: "comfortable",
+    }),
+  ]);
+  const importOutcome = expectSuccess(imported, "concurrent System Design status/import failed");
+  expect(typeof importOutcome === "boolean", "System Design status/import returned an invalid import outcome");
+  expect(expectSuccess(quick, "concurrent System Design quick status failed") === "job-scheduler", "quick status returned the wrong canonical id");
+  const row = expectSuccess(await a.authClient.from("system_design_item_progress").select("status,confidence,bookmarked,notes").eq("item_id", "job-scheduler").eq("item_type", "design_problem").single(), "System Design status/import result read failed");
+  expect(row.status === "comfortable", "concurrent import replaced the desired System Design status");
+  expect(row.confidence === null && row.bookmarked === false && row.notes === null, "status/import race forged rich fields");
+  return `import returned ${importOutcome}; final status comfortable`;
+});
+
+await check("concurrent absent System Design full and desired status preserve either coherent rich outcome", async () => {
+  const [full, quick] = await Promise.all([
+    saveSystemDesignProgress(a.authClient, {
+      itemId: "leaderboard",
+      itemType: "design_problem",
+      status: "comfortable",
+      confidence: "medium",
+      bookmarked: true,
+      notes: "Absent full-save rich snapshot.",
+    }, null),
+    a.authClient.rpc("set_system_design_item_quick_progress", {
+      target_item_id: "leaderboard",
+      target_item_type: "design_problem",
+      target_status: "review",
+    }),
+  ]);
+  const fullRows = expectSuccess(full, "concurrent absent System Design full save failed");
+  expect(expectSuccess(quick, "concurrent absent System Design quick status failed") === "leaderboard", "quick status returned the wrong canonical id");
+  expect(fullRows.length === 0 || fullRows.length === 1, "absent full/status race returned invalid cardinality");
+  const row = expectSuccess(await a.authClient.from("system_design_item_progress").select("status,confidence,bookmarked,notes").eq("item_id", "leaderboard").eq("item_type", "design_problem").single(), "absent full/status result read failed");
+  expect(row.status === "review", "desired quick status did not win the absent full/status race");
+  const defaultRich = row.confidence === null && row.bookmarked === false && row.notes === null;
+  const fullRich = row.confidence === "medium" && row.bookmarked === true && row.notes === "Absent full-save rich snapshot.";
+  expect(defaultRich || fullRich, `absent full/status race produced torn rich fields: ${JSON.stringify(row)}`);
+  expect((fullRows.length === 0 && defaultRich) || (fullRows.length === 1 && fullRich), "absent full/status outcome did not match the insert winner");
+  return `full returned ${fullRows.length} row(s); quick status won without rich-field tearing`;
 });
 
 await check("concurrent different-key browser imports commute", async () => {
@@ -2118,11 +2290,22 @@ await check("anonymous client cannot invoke atomic DSA quick-progress RPC", asyn
 });
 
 await check("anonymous client cannot invoke System Design workspace RPCs", async () => {
-  const saved = await anonymous.rpc("save_system_design_item_progress", {
-    target_item_id: "estimation", target_item_type: "concept", target_status: "reviewed",
-    target_confidence: "low", target_bookmarked: false, target_notes: null,
-  });
-  return expectSqlError(saved, "42501");
+  const attempts = await Promise.all([
+    anonymous.rpc("save_system_design_item_progress_if_revision", {
+      target_item_id: "estimation", target_item_type: "concept",
+      target_expect_absent: true, target_expected_updated_at: null, target_status: "reviewed",
+      target_confidence: "low", target_bookmarked: false, target_notes: null,
+    }),
+    anonymous.rpc("set_system_design_item_quick_progress", {
+      target_item_id: "estimation", target_item_type: "concept", target_status: "reviewed",
+    }),
+    anonymous.rpc("save_system_design_item_progress", {
+      target_item_id: "estimation", target_item_type: "concept", target_status: "reviewed",
+      target_confidence: "low", target_bookmarked: false, target_notes: null,
+    }),
+  ]);
+  for (const attempt of attempts) expectSqlError(attempt, "42501");
+  return "revision, quick, and legacy RPCs returned SQLSTATE 42501";
 });
 
 await check("anonymous client cannot invoke interview preparation RPCs", async () => {

@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "93bc7bab4272503eebaf51ac6270d61f9444377d",
-  "repository_state_sha256": "b76833b77c0a50a40e42dfb12b5e6ef156b541a01dee2bbcbb990abb033af510",
+  "repository_sha": "8285738567d33a3a473f79137a9f5fddca1587ce",
+  "repository_state_sha256": "37a32afdca7c2527ab1f72175e24428dac8477718d1974d8bb727d6a35a6f86a",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -585,7 +585,7 @@
         "Application full edits carry the exact loaded database revision into an owner-scoped timestamp compare-and-swap, so a newer quick status or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
         "Homepage account continuation distinguishes anonymous, ready (including genuinely empty), and unavailable states; authenticated continuation-data query failures plus client transport and malformed-response failures cannot masquerade as signed-out or zero activity, account import requires a ready response, browser-local continuation remains available, and retry status and guarded focus recovery are source-regressed without claiming rendered browser automation. The shared actor boundary still does not distinguish an authentication-service failure from a legitimate anonymous session.",
         "Explicit browser-activity import strictly validates one bounded snapshot before actor work and uses owner-derived insert-only RPCs to report imported, existing, and failed outcomes without overwriting richer account progress. Only exact submitted snapshots confirmed imported or existing are removed from current primary and legacy browser state; concurrent edits, failed and unrelated activity, and saved plans remain. Duplicate, stale, and unmounted client settlements are guarded, while truthful live status and conditional focus recovery are source-regressed without claiming rendered browser automation; database atomicity, concurrency, and owner isolation run in npm run qualify:database, and hosted RPC checks remain an external owner gate.",
-        "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item.",
+        "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item. Account persistence from the shared activity control changes DSA and System Design status only through their owner-derived atomic quick boundaries, validates the returned canonical item ID, and cannot clear richer private progress fields.",
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
         "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values.",
         "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed.",
@@ -1492,9 +1492,11 @@
       "acceptance_criteria": [
         "Published lessons and walkthroughs remain route-valid while unpublished records stay honest and noindex.",
         "Account-disabled System Design routes remain public and useful without inoperable sign-in or persistence handoffs, while enabled signed-out and signed-in modes retain their existing behavior.",
-        "Private System Design attempt routes reject malformed canonical IDs before member or query work, preserve genuine absent and problem-mismatch not-found outcomes, and propagate owner-scoped query or persisted-document failures through one sanitized unavailable error rather than presenting them as missing attempts."
+        "Private System Design attempt routes reject malformed canonical IDs before member or query work, preserve genuine absent and problem-mismatch not-found outcomes, and propagate owner-scoped query or persisted-document failures through one sanitized unavailable error rather than presenting them as missing attempts.",
+        "Full System Design item-progress edits strictly parse one canonical item/type, complete rich-field snapshot, explicit bookmark presence, and an absent sentinel or persisted revision before account work. The owner-scoped database operation serializes the same item key as status-only quick saves and uses insert-if-absent or timestamp compare-and-swap, so stale full/full, full/quick, and absent/import races cannot silently overwrite a winner; only validated success advances the revision, refreshes, and emits account analytics. Source-integration checks cover the component's draft-preserving manual-submit wiring, duplicate guard, live-region semantics, focus-preserving pending control, and a conflict-only latest-version link whose href is correlated to the canonical public item and whose new-tab attributes are safe; rendered draft retention, conflict recovery, and focus behavior remain browser/manual validation. Executable and source coverage runs in npm run test:system-design-workspace and npm run test:unified-progress, local concurrency/privacy runs in npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step."
       ],
       "code_paths": [
+        "app/globals.css",
         "app/system-design",
         "app/system-design/problems/[slug]/practice/[attemptId]/page.tsx",
         "components/system-design-focus-planner.tsx",
@@ -1502,17 +1504,28 @@
         "components/system-design-sidebar.tsx",
         "content/system-design",
         "data/system-design/manifest.ts",
+        "features/preparation-progress/actions.ts",
         "features/system-design",
+        "lib/supabase/database.types.ts",
         "lib/system-design/attempt-query.ts",
+        "lib/system-design/item-progress-action-input.ts",
         "lib/system-design/queries.ts",
+        "scripts/qualify-account-lifecycle-local.mjs",
+        "scripts/qualify-persistence-local.mjs",
+        "scripts/qualify-security-local.mjs",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-system-design-study-plan.mjs",
-        "scripts/test-system-design-workspace.mjs"
+        "scripts/test-system-design-workspace.mjs",
+        "scripts/test-unified-progress.mjs",
+        "supabase/migrations/202609030006_save_system_design_item_progress_if_revision.sql",
+        "supabase/tests/database/preparation_activity_import.test.sql",
+        "supabase/tests/database/system_design_workspace.test.sql"
       ],
       "content_paths": [
         "docs/system-design-content-inventory.json",
-        "docs/system-design-final-audit.md"
+        "docs/system-design-final-audit.md",
+        "docs/system-design-practice-workspace.md"
       ],
       "gap_inventory_ids": [],
       "id": "EF-SD",
@@ -1543,12 +1556,14 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run qualify:database",
         "npm run test:public-route-smoke",
         "npm run test:system-design-manifest",
         "npm run test:system-design-practice",
         "npm run test:system-design-release-audit",
         "npm run test:system-design-study-plan",
-        "npm run test:system-design-workspace"
+        "npm run test:system-design-workspace",
+        "npm run test:unified-progress"
       ],
       "title": "System Design",
       "visual_ids": []
