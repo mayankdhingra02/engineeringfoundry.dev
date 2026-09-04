@@ -151,6 +151,21 @@ function profileArgs(revision, overrides = {}) {
   };
 }
 
+const systemDesignAttemptDocument = {
+  functional_requirements: ["Create a short URL"],
+  non_functional_requirements: ["p99 under 100 ms"],
+  capacity: { assumptions: [], calculations: [] },
+  apis: [],
+  data_models: [],
+  high_level_design: "Owner A private architecture.",
+  deep_dives: [],
+  bottlenecks: [],
+  failure_modes: [],
+  tradeoffs: [],
+  follow_ups: [],
+  final_review_notes: "Owner A private review notes.",
+};
+
 async function check(name, work) {
   try {
     const note = await work();
@@ -809,7 +824,7 @@ await check("atomic DSA quick progress derives the owner without exposing a fore
   return "separate owner rows; private fields preserved";
 });
 
-await check("anonymous callers cannot invoke insert-only browser import RPCs or System Design revision and quick saves", async () => {
+await check("anonymous callers cannot invoke insert-only browser import RPCs or System Design progress and attempt mutations", async () => {
   const attempts = await Promise.all([
     anon.rpc("save_system_design_item_progress_if_revision", {
       target_item_id: "estimation", target_item_type: "concept",
@@ -820,12 +835,62 @@ await check("anonymous callers cannot invoke insert-only browser import RPCs or 
     anon.rpc("set_system_design_item_quick_progress", {
       target_item_id: "estimation", target_item_type: "concept", target_status: "reviewed",
     }),
+    anon.rpc("delete_system_design_attempt_if_revision", {
+      target_attempt_id: randomUUID(), target_problem_id: "url-shortener", target_expected_revision: 1,
+    }),
+    anon.rpc("delete_system_design_attempt", { target_attempt_id: randomUUID() }),
     anon.rpc("import_dsa_question_progress_if_absent", { target_question_id: "two-sum", target_status: "attempted" }),
     anon.rpc("import_system_design_item_progress_if_absent", { target_item_id: "estimation", target_item_type: "concept" }),
     anon.rpc("import_preparation_track_progress_if_absent", { target_track: "behavioral", target_item_id: "beh-lead-01", target_status: "completed" }),
   ]);
   for (const attempt of attempts) assert.equal(attempt.error?.code, "42501", "anonymous progress execution must fail with 42501");
-  return "all five RPCs returned SQLSTATE 42501";
+  return "all seven RPCs returned SQLSTATE 42501";
+});
+
+await check("System Design attempt deletion derives the owner and requires the exact revision", async () => {
+  const created = await a.client.rpc("create_system_design_attempt", {
+    target_problem_id: "url-shortener",
+    target_application_id: null,
+    target_title: "Phase 9 revision-delete security attempt",
+    target_document: systemDesignAttemptDocument,
+  });
+  assert.ifError(created.error);
+  assert.ok(created.data, "owner attempt creation did not return an ID");
+  const attemptId = created.data;
+  const ownerBefore = await a.client.from("system_design_attempts").select("title,problem_id,revision,document").eq("id", attemptId).single();
+  assert.ifError(ownerBefore.error);
+  assert.ok(ownerBefore.data, "owner attempt was unavailable");
+  const [foreignDelete, missingDelete, directDelete, legacyDelete] = await Promise.all([
+    b.client.rpc("delete_system_design_attempt_if_revision", {
+      target_attempt_id: attemptId,
+      target_problem_id: "url-shortener",
+      target_expected_revision: ownerBefore.data.revision,
+    }),
+    b.client.rpc("delete_system_design_attempt_if_revision", {
+      target_attempt_id: randomUUID(),
+      target_problem_id: "url-shortener",
+      target_expected_revision: ownerBefore.data.revision,
+    }),
+    a.client.from("system_design_attempts").delete().eq("id", attemptId),
+    a.client.rpc("delete_system_design_attempt", { target_attempt_id: attemptId }),
+  ]);
+  assert.ifError(foreignDelete.error);
+  assert.ifError(missingDelete.error);
+  assert.deepEqual(foreignDelete.data, [], "foreign attempt deletion disclosed or changed the owner row");
+  assert.deepEqual(missingDelete.data, [], "missing attempt deletion did not match the foreign result");
+  assert.equal(directDelete.error?.code, "42501", "direct attempt deletion bypassed the revision RPC");
+  assert.equal(legacyDelete.error?.code, "0A000", "legacy attempt deletion did not fail safely");
+  const ownerAfter = await a.client.from("system_design_attempts").select("title,problem_id,revision,document").eq("id", attemptId).single();
+  assert.ifError(ownerAfter.error);
+  assert.deepEqual(ownerAfter.data, ownerBefore.data, "refused attempt deletions changed Owner A's worksheet");
+  const exactDelete = await a.client.rpc("delete_system_design_attempt_if_revision", {
+    target_attempt_id: attemptId,
+    target_problem_id: "url-shortener",
+    target_expected_revision: ownerBefore.data.revision,
+  });
+  assert.ifError(exactDelete.error);
+  assert.deepEqual(exactDelete.data, [{ attempt_id: attemptId }], "exact owner revision did not delete the intended attempt");
+  return "foreign/missing zero rows; direct 42501; legacy 0A000; exact owner delete succeeded";
 });
 
 await check("insert-only browser import RPCs reject invalid catalog and bounded values", async () => {

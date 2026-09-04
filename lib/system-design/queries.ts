@@ -10,7 +10,7 @@ import {
 } from "@/lib/system-design/attempt-query";
 import { progressBySystemDesignItem } from "@/lib/system-design/workspace";
 
-const summaryColumns = "id,problem_id,application_id,title,status,confidence,first_practiced_at,last_practiced_at,created_at,updated_at";
+const summaryColumns = "id,problem_id,application_id,title,status,confidence,revision,first_practiced_at,last_practiced_at,created_at,updated_at";
 
 export async function getSystemDesignWorkspaceState(applicationId?: string | null) {
   const accountPlatformAvailable = isAccountPlatformAvailable();

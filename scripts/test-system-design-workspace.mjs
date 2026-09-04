@@ -28,12 +28,15 @@ import {
 } from "../lib/system-design/item-progress-action-input.ts";
 import {
   SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_DELETE_ERROR,
   SYSTEM_DESIGN_ATTEMPT_EARLIER_SNAPSHOT_SAVED_MESSAGE,
   SYSTEM_DESIGN_ATTEMPT_INVALID_INPUT_ERROR,
   SYSTEM_DESIGN_ATTEMPT_PENDING_MESSAGE,
   SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR,
   SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE,
   parseSystemDesignAttemptActionInput,
+  parseSystemDesignAttemptDeleteInput,
+  parseSystemDesignAttemptDeleteResult,
   parseSystemDesignAttemptSaveResult,
   resolveSystemDesignAttemptDisplayState,
   systemDesignAttemptDraftSignature,
@@ -45,6 +48,7 @@ const check = (condition, message) => { assert.ok(condition, message); checks +=
 const migration = readFileSync(new URL("../supabase/migrations/202608140008_create_system_design_workspace.sql", import.meta.url), "utf8");
 const validationMigration = readFileSync(new URL("../supabase/migrations/202608140010_enforce_system_design_attempt_document_shape.sql", import.meta.url), "utf8");
 const progressRevisionMigration = readFileSync(new URL("../supabase/migrations/202609030006_save_system_design_item_progress_if_revision.sql", import.meta.url), "utf8");
+const attemptDeleteMigration = readFileSync(new URL("../supabase/migrations/202609040010_delete_system_design_attempt_if_revision.sql", import.meta.url), "utf8");
 const databaseTest = readFileSync(new URL("../supabase/tests/database/system_design_workspace.test.sql", import.meta.url), "utf8");
 const persistenceQualifier = readFileSync(new URL("../scripts/qualify-persistence-local.mjs", import.meta.url), "utf8");
 const securityQualifier = readFileSync(new URL("../scripts/qualify-security-local.mjs", import.meta.url), "utf8");
@@ -134,6 +138,12 @@ function attemptForm(overrides = {}) {
     }
   }
   return result;
+}
+
+function deleteActionForm(entries = []) {
+  const form = new FormData();
+  for (const [name, value] of entries) form.append(name, value);
+  return form;
 }
 
 check(canonicalSystemDesignConceptIds.size === 146, "published concept catalog stays canonical");
@@ -461,6 +471,41 @@ for (const [label, result] of [
   check(parseSystemDesignAttemptSaveResult(result, validAttemptInput.value).status === "invalid", `${label} attempt result cannot claim a save or conflict`);
 }
 
+const validAttemptDelete = parseSystemDesignAttemptDeleteInput(
+  canonicalAttemptId.toUpperCase(),
+  "url-shortener",
+  8,
+  deleteActionForm([["$ACTION_ID_delete", "framework metadata"]]),
+);
+check(validAttemptDelete?.attemptId === canonicalAttemptId && validAttemptDelete.problemId === "url-shortener" && validAttemptDelete.expectedRevision === 8, "attempt deletion canonicalizes the exact attempt identity and preserves its loaded integer revision");
+for (const [label, attemptId, problemId, revision, formInput] of [
+  ["missing attempt", undefined, "url-shortener", 8, deleteActionForm()],
+  ["malformed attempt", "not-a-uuid", "url-shortener", 8, deleteActionForm()],
+  ["unknown problem", canonicalAttemptId, "fabricated-problem", 8, deleteActionForm()],
+  ["string revision", canonicalAttemptId, "url-shortener", "8", deleteActionForm()],
+  ["zero revision", canonicalAttemptId, "url-shortener", 0, deleteActionForm()],
+  ["fractional revision", canonicalAttemptId, "url-shortener", 8.5, deleteActionForm()],
+  ["unsafe revision", canonicalAttemptId, "url-shortener", Number.MAX_SAFE_INTEGER, deleteActionForm()],
+  ["non-FormData root", canonicalAttemptId, "url-shortener", 8, {}],
+  ["unexpected form field", canonicalAttemptId, "url-shortener", 8, deleteActionForm([["attempt_id", canonicalAttemptId]])],
+]) {
+  check(parseSystemDesignAttemptDeleteInput(attemptId, problemId, revision, formInput) === null, `${label} cannot reach attempt deletion`);
+}
+check(SYSTEM_DESIGN_ATTEMPT_DELETE_ERROR === "We couldn't delete this attempt. It may have changed or no longer be available.", "attempt deletion uses stable privacy-safe failure copy");
+check(parseSystemDesignAttemptDeleteResult([], canonicalAttemptId).status === "conflict", "only an exact zero-row attempt delete is a stale, missing, foreign, or problem-mismatched conflict");
+const deletedAttempt = parseSystemDesignAttemptDeleteResult([{ attempt_id: canonicalAttemptId.toUpperCase() }], canonicalAttemptId);
+check(deletedAttempt.status === "deleted" && deletedAttempt.attemptId === canonicalAttemptId, "one exact correlated attempt-delete row is canonicalized and accepted");
+for (const [label, result] of [
+  ["null", null],
+  ["object", {}],
+  ["two rows", [{ attempt_id: canonicalAttemptId }, { attempt_id: canonicalAttemptId }]],
+  ["nonobject row", [canonicalAttemptId]],
+  ["missing id", [{}]],
+  ["extra field", [{ attempt_id: canonicalAttemptId, user_id: validPersistedAttempt.user_id }]],
+  ["malformed id", [{ attempt_id: "not-a-uuid" }]],
+  ["mismatched id", [{ attempt_id: "22222222-2222-4222-8222-222222222222" }]],
+]) check(parseSystemDesignAttemptDeleteResult(result, canonicalAttemptId).status === "invalid", `${label} attempt-delete result cannot claim a deletion or conflict`);
+
 const submittedAttemptForm = attemptForm();
 const submittedAttemptSignature = systemDesignAttemptDraftSignature(submittedAttemptForm);
 submittedAttemptForm.set("title", "A newer local title");
@@ -502,6 +547,23 @@ check(validationMigration.includes("system_design_json_string_array_valid"), "da
 check(validationMigration.includes("system_design_json_object_array_valid"), "database validates structured row keys and string values");
 check(validationMigration.includes("jsonb_object_keys(document)"), "database rejects unsupported top-level document keys");
 
+const lockedAttemptSaveFunction = sqlFunction(attemptDeleteMigration, "save_system_design_attempt");
+const revisionDeleteAttemptFunction = sqlFunction(attemptDeleteMigration, "delete_system_design_attempt_if_revision");
+const legacyDeleteAttemptFunction = sqlFunction(attemptDeleteMigration, "delete_system_design_attempt");
+for (const [name, source] of [
+  ["attempt save", lockedAttemptSaveFunction],
+  ["attempt delete", revisionDeleteAttemptFunction],
+]) {
+  check(source.includes("security definer") && source.includes("set search_path = ''") && source.includes("auth.uid()"), `${name} derives its owner inside a hardened database boundary`);
+  check(source.includes("pg_advisory_xact_lock") && source.includes("hashtext(current_user_id::text)") && source.includes("hashtext(target_attempt_id::text)"), `${name} serializes the same owner and attempt identity`);
+}
+check(lockedAttemptSaveFunction.includes("attempt.revision = target_expected_revision") && lockedAttemptSaveFunction.indexOf("pg_advisory_xact_lock") < lockedAttemptSaveFunction.indexOf("clock_timestamp()") && lockedAttemptSaveFunction.indexOf("clock_timestamp()") < lockedAttemptSaveFunction.indexOf("update public.system_design_attempts"), "attempt saves lock before recording practice time and compare the exact loaded revision");
+check(revisionDeleteAttemptFunction.includes("system_design_item_catalog") && revisionDeleteAttemptFunction.includes("catalog.item_type = 'design_problem'"), "attempt deletion validates a canonical design-problem identity inside the database");
+check(revisionDeleteAttemptFunction.includes("attempt.user_id = current_user_id") && revisionDeleteAttemptFunction.includes("attempt.problem_id = target_problem_id") && revisionDeleteAttemptFunction.includes("attempt.revision = target_expected_revision"), "attempt deletion correlates owner, attempt, displayed problem, and exact loaded revision in one statement");
+check(legacyDeleteAttemptFunction.includes("Revision-checked System Design attempt deletion is required") && legacyDeleteAttemptFunction.includes("errcode = '0A000'"), "the legacy attempt delete remains a stable migration-first fail-safe without mutation");
+check(attemptDeleteMigration.includes("revoke all on function public.delete_system_design_attempt_if_revision(uuid,text,bigint) from public, anon, authenticated") && attemptDeleteMigration.includes("grant execute on function public.delete_system_design_attempt_if_revision(uuid,text,bigint) to authenticated"), "the revision-delete RPC denies public and anonymous callers and grants only its reviewed authenticated signature");
+check(attemptDeleteMigration.includes("grant execute on function public.delete_system_design_attempt(uuid) to authenticated"), "authenticated old clients reach the stable legacy delete failure instead of an ambiguous missing-function error");
+
 const fullProgressFunction = sqlFunction(progressRevisionMigration, "save_system_design_item_progress_if_revision");
 const quickProgressFunction = sqlFunction(progressRevisionMigration, "set_system_design_item_quick_progress");
 const legacyProgressFunction = sqlFunction(progressRevisionMigration, "save_system_design_item_progress");
@@ -537,8 +599,13 @@ for (const marker of [
   "absent-revision full save reports conflict after import creates the row",
   "foreign and missing owner progress are indistinguishable revision conflicts",
   "legacy whole-row saves fail without mutation",
+  "a stale attempt revision cannot delete newer saved work",
+  "a mismatched canonical problem cannot delete the attempt",
+  "foreign and missing attempt deletion are indistinguishable",
+  "legacy attempt deletion fails safely without mutation",
+  "User A deletes their own attempt with the exact displayed revision",
 ]) check(databaseTest.includes(marker), `System Design pgTAP lacks ${marker}`);
-check(databaseTest.includes("plan(85)"), "System Design pgTAP plan covers the frozen revision, quick-save, privacy, and legacy boundary");
+check(databaseTest.includes("plan(98)"), "System Design pgTAP plan covers revision-bound progress and attempt mutation, privacy, and legacy boundaries");
 for (const marker of [
   "legacy System Design whole-row saves fail safely",
   "desired System Design status updates preserve rich fields and no-op revisions",
@@ -547,9 +614,11 @@ for (const marker of [
   "concurrent browser import and absent-revision System Design save commit one coherent winner",
   "concurrent absent System Design import and desired status settle on the desired status",
   "concurrent absent System Design full and desired status preserve either coherent rich outcome",
+  "concurrent System Design attempt save and revision-delete accept exactly one outcome",
 ]) check(persistenceQualifier.includes(marker), `persistence qualification lacks ${marker}`);
 for (const marker of [
-  "anonymous callers cannot invoke insert-only browser import RPCs or System Design revision and quick saves",
+  "anonymous callers cannot invoke insert-only browser import RPCs or System Design progress and attempt mutations",
+  "System Design attempt deletion derives the owner and requires the exact revision",
 ]) check(securityQualifier.includes(marker), `security qualification lacks ${marker}`);
 
 check(actions.includes("canonicalSystemDesignProblemIds.has"), "server action validates problem catalog");
@@ -604,6 +673,36 @@ check(attemptActionBody.includes('outcome.status === "invalid"') && attemptActio
 check(attemptActionBody.includes("revision: previousState.revision") && attemptActionBody.includes("revision: input.expectedRevision"), "input and persistence failures retain the last trustworthy revision instead of adopting unverified data");
 check(attemptActionBody.indexOf("refreshSystemDesign(input.problemId, input.attemptId)") < attemptActionBody.indexOf("revision: outcome.revision"), "only a correlated one-row result refreshes the attempt and advances its revision");
 check(!attemptActionBody.includes("formData.get") && !attemptActionBody.includes("String(formData") && !attemptActionBody.includes("attemptDocumentFromForm"), "the attempt action cannot coerce or partially parse raw FormData outside the strict helper");
+const attemptDeleteActionStart = actions.indexOf("export async function deleteSystemDesignAttemptAction");
+const attemptDeleteActionEnd = actions.indexOf("\nexport async function ", attemptDeleteActionStart + 1);
+const attemptDeleteActionBody = actions.slice(attemptDeleteActionStart, attemptDeleteActionEnd < 0 ? undefined : attemptDeleteActionEnd);
+const attemptDeleteBodyOpen = attemptDeleteActionBody.indexOf("{");
+const attemptDeleteParserIndex = attemptDeleteActionBody.indexOf("parseSystemDesignAttemptDeleteInput(");
+const attemptDeleteInvalidIndex = attemptDeleteActionBody.indexOf("if (!parsed)");
+const attemptDeleteAvailabilityIndex = attemptDeleteActionBody.indexOf("isAccountPlatformAvailable()");
+const attemptDeleteActorIndex = attemptDeleteActionBody.indexOf("getAuthenticatedActor()");
+const attemptDeleteRpcIndex = attemptDeleteActionBody.indexOf('rpc(\n    "delete_system_design_attempt_if_revision"');
+const attemptDeleteResultIndex = attemptDeleteActionBody.indexOf("parseSystemDesignAttemptDeleteResult(");
+const attemptDeleteRefreshIndex = attemptDeleteActionBody.indexOf("refreshSystemDesign(parsed.problemId, parsed.attemptId)");
+check(
+  attemptDeleteActionStart >= 0 &&
+    attemptDeleteActionBody.slice(attemptDeleteBodyOpen + 1).trimStart().startsWith("const parsed = parseSystemDesignAttemptDeleteInput(") &&
+    attemptDeleteParserIndex < attemptDeleteInvalidIndex &&
+    attemptDeleteInvalidIndex < attemptDeleteAvailabilityIndex &&
+    attemptDeleteAvailabilityIndex < attemptDeleteActorIndex &&
+    attemptDeleteActorIndex < attemptDeleteRpcIndex &&
+    attemptDeleteRpcIndex < attemptDeleteResultIndex &&
+    attemptDeleteResultIndex < attemptDeleteRefreshIndex,
+  "attempt deletion strictly parses first, then checks availability and actor, validates the exact RPC result, and refreshes only after confirmed deletion",
+);
+for (const argument of [
+  "target_attempt_id: parsed.attemptId",
+  "target_problem_id: parsed.problemId",
+  "target_expected_revision: parsed.expectedRevision",
+]) check(attemptDeleteActionBody.includes(argument), `attempt delete RPC is missing ${argument}`);
+check(attemptDeleteActionBody.indexOf("if (error)") < attemptDeleteResultIndex, "attempt delete RPC errors cannot be reclassified as zero-row conflicts");
+check(attemptDeleteActionBody.includes('outcome.status !== "deleted"') && attemptDeleteActionBody.includes('conflict: outcome.status === "conflict"'), "only exact zero-row attempt deletes expose conflict recovery while malformed results remain sanitized errors");
+check(!attemptDeleteActionBody.includes('rpc("delete_system_design_attempt"') && !attemptDeleteActionBody.includes("throw new Error"), "production attempt deletion cannot call the legacy RPC or throw persistence details through the action boundary");
 for (const actionName of ["saveSystemDesignProgressAction", "createSystemDesignAttemptAction", "saveSystemDesignAttemptAction", "deleteSystemDesignAttemptAction"]) {
   const start = actions.indexOf(`export async function ${actionName}`);
   const end = actions.indexOf("\nexport async function ", start + 1);
@@ -611,7 +710,7 @@ for (const actionName of ["saveSystemDesignProgressAction", "createSystemDesignA
   check(start >= 0 && body.indexOf("isAccountPlatformAvailable()") < body.indexOf("getAuthenticatedActor()"), `${actionName} must reject disabled account persistence before resolving an actor`);
 }
 check(actions.includes('failed("Account persistence is not available in this configuration.")'), "disabled progress and attempt saves return an explicit configuration error without actor work");
-check(actions.includes('redirect(`/signin?next=${encodeURIComponent(`/system-design/problems/${problemId}`)}`)') && actions.includes('redirect("/signin?next=/system-design/practice")'), "enabled signed-out attempt actions preserve their sign-in handoffs");
+check(actions.includes('redirect(`/signin?next=${encodeURIComponent(`/system-design/problems/${problemId}`)}`)') && attemptDeleteActionBody.includes('message: "Your session expired. Sign in and try again."'), "enabled signed-out attempt creation redirects while conflict-aware deletion returns a stable retryable session message");
 check((queries.match(/if \(!accountPlatformAvailable\) return \{ accountPlatformAvailable, signedIn: false as const/g) ?? []).length === 3, "workspace, item, and problem queries expose a distinct disabled-account state");
 check((queries.match(/if \(!actor\) return \{ accountPlatformAvailable, signedIn: false as const/g) ?? []).length === 3, "enabled signed-out queries preserve account availability separately from authentication");
 check((queries.match(/accountPlatformAvailable,/g) ?? []).length >= 9 && queries.includes("signedIn: true as const"), "authenticated query results preserve the available state alongside account-backed data");
@@ -707,7 +806,9 @@ check(editor.includes("aria-disabled={pending || Boolean(state.conflict)}") && s
 check(editor.includes("<fieldset"), "structured attempt controls have a labeled semantic group");
 check(!editor.includes("<main>"), "attempt editor does not nest a main landmark");
 check(problemPanel.includes("Each attempt remains independent"), "problem UI explains attempt independence");
-check(problemPanel.includes("ConfirmAction"), "attempt deletion requires confirmation");
+check(queries.includes('const summaryColumns = "id,problem_id,application_id,title,status,confidence,revision,'), "attempt list queries include the integer revision required by deletion without loading private worksheet content");
+check(problemPanel.includes("RevisionConfirmAction") && problemPanel.includes("const attemptHref =") && problemPanel.includes("deleteSystemDesignAttemptAction.bind(null, attempt.id, problemId, attempt.revision)"), "attempt deletion binds the displayed attempt, canonical problem, and exact loaded revision to guarded confirmation");
+check(problemPanel.includes("latestHref={attemptHref}") && problemPanel.includes("confirmLabel=\"Delete attempt\""), "a stale attempt delete offers a safe canonical same-attempt recovery path through the shared accessible confirmation UI");
 check(route.includes("attempt.problem_id !== slug"), "route prevents cross-problem attempt spoofing");
 check(route.includes("requireMemberProfile"), "attempt editor requires member auth");
 check(attemptRouteBody.indexOf("if (!isSystemDesignAttemptId(attemptId)) notFound()") >= 0 && attemptRouteBody.indexOf("if (!isSystemDesignAttemptId(attemptId)) notFound()") < attemptRouteBody.indexOf("requireMemberProfile(") && attemptRouteBody.indexOf("if (!isSystemDesignAttemptId(attemptId)) notFound()") < attemptRouteBody.indexOf("getSystemDesignAttempt(attemptId)"), "attempt route rejects malformed IDs before its member guard and private queries");

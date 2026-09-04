@@ -13,12 +13,16 @@ import {
 } from "@/lib/system-design/workspace";
 import {
   SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_DELETE_ERROR,
   SYSTEM_DESIGN_ATTEMPT_INVALID_INPUT_ERROR,
   SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR,
   SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE,
   parseSystemDesignAttemptActionInput,
+  parseSystemDesignAttemptDeleteInput,
+  parseSystemDesignAttemptDeleteResult,
   parseSystemDesignAttemptSaveResult,
 } from "@/lib/system-design/attempt-action-input";
+import type { TrackerActionState } from "@/features/applications/actions";
 import {
   SYSTEM_DESIGN_PROGRESS_CONFLICT_ERROR,
   SYSTEM_DESIGN_PROGRESS_INVALID_INPUT_ERROR,
@@ -198,13 +202,51 @@ export async function saveSystemDesignAttemptAction(
   };
 }
 
-export async function deleteSystemDesignAttemptAction(attemptId: string, problemId: string) {
-  if (!isAccountPlatformAvailable()) return;
+export async function deleteSystemDesignAttemptAction(
+  attemptIdInput: unknown,
+  problemIdInput: unknown,
+  revisionInput: unknown,
+  _: TrackerActionState,
+  formInput: unknown,
+): Promise<TrackerActionState> {
+  const parsed = parseSystemDesignAttemptDeleteInput(
+    attemptIdInput,
+    problemIdInput,
+    revisionInput,
+    formInput,
+  );
+  if (!parsed) {
+    return { status: "error", message: SYSTEM_DESIGN_ATTEMPT_DELETE_ERROR };
+  }
+  if (!isAccountPlatformAvailable()) {
+    return {
+      status: "error",
+      message: "Account persistence is not available in this configuration.",
+    };
+  }
   const actor = await getAuthenticatedActor();
-  if (!actor) redirect("/signin?next=/system-design/practice");
-  if (!UUID.test(attemptId) || !canonicalSystemDesignProblemIds.has(problemId)) return;
-  const { data, error } = await actor.supabase.rpc("delete_system_design_attempt", { target_attempt_id: attemptId });
-  if (error || !data) throw new Error("We couldn't delete this attempt.");
-  refreshSystemDesign(problemId, attemptId);
-  redirect(`/system-design/problems/${problemId}`);
+  if (!actor) {
+    return { status: "error", message: "Your session expired. Sign in and try again." };
+  }
+  const { data, error } = await actor.supabase.rpc(
+    "delete_system_design_attempt_if_revision",
+    {
+      target_attempt_id: parsed.attemptId,
+      target_problem_id: parsed.problemId,
+      target_expected_revision: parsed.expectedRevision,
+    },
+  );
+  if (error) {
+    return { status: "error", message: SYSTEM_DESIGN_ATTEMPT_DELETE_ERROR };
+  }
+  const outcome = parseSystemDesignAttemptDeleteResult(data, parsed.attemptId);
+  if (outcome.status !== "deleted") {
+    return {
+      status: "error",
+      message: SYSTEM_DESIGN_ATTEMPT_DELETE_ERROR,
+      conflict: outcome.status === "conflict",
+    };
+  }
+  refreshSystemDesign(parsed.problemId, parsed.attemptId);
+  redirect(`/system-design/problems/${parsed.problemId}`);
 }

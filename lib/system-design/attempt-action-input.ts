@@ -19,6 +19,8 @@ export const SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE = "Attempt saved.";
 export const SYSTEM_DESIGN_ATTEMPT_PENDING_MESSAGE = "Saving attempt…";
 export const SYSTEM_DESIGN_ATTEMPT_EARLIER_SNAPSHOT_SAVED_MESSAGE =
   "An earlier attempt snapshot saved. Review your current changes and save again.";
+export const SYSTEM_DESIGN_ATTEMPT_DELETE_ERROR =
+  "We couldn't delete this attempt. It may have changed or no longer be available.";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -74,6 +76,17 @@ export type SystemDesignAttemptSaveResult =
   | Readonly<{ status: "conflict" }>
   | Readonly<{ status: "invalid" }>;
 
+export type SystemDesignAttemptDeleteInput = Readonly<{
+  attemptId: string;
+  problemId: string;
+  expectedRevision: number;
+}>;
+
+export type SystemDesignAttemptDeleteResult =
+  | Readonly<{ status: "deleted"; attemptId: string }>
+  | Readonly<{ status: "conflict" }>
+  | Readonly<{ status: "invalid" }>;
+
 export type SystemDesignAttemptDisplayState = Readonly<{
   status: "idle" | "pending" | "error" | "success";
   message: string;
@@ -110,6 +123,14 @@ function hasOnlyKnownFields(formData: FormData) {
     if (!ATTEMPT_FIELD_NAMES.has(key) && !key.startsWith("$ACTION_")) {
       return false;
     }
+  }
+  return true;
+}
+
+function isActionOnlyFormData(input: unknown) {
+  if (!isFormData(input)) return false;
+  for (const key of input.keys()) {
+    if (!key.startsWith("$ACTION_")) return false;
   }
   return true;
 }
@@ -225,6 +246,55 @@ export function parseSystemDesignAttemptSaveResult(
     return { status: "invalid" };
   }
   return { status: "saved", revision: row.revision as number };
+}
+
+export function parseSystemDesignAttemptDeleteInput(
+  attemptIdInput: unknown,
+  problemIdInput: unknown,
+  revisionInput: unknown,
+  formInput: unknown,
+): SystemDesignAttemptDeleteInput | null {
+  if (
+    typeof attemptIdInput !== "string" ||
+    !UUID_PATTERN.test(attemptIdInput) ||
+    typeof problemIdInput !== "string" ||
+    !canonicalSystemDesignProblemIds.has(problemIdInput) ||
+    typeof revisionInput !== "number" ||
+    !Number.isSafeInteger(revisionInput) ||
+    revisionInput < 1 ||
+    revisionInput >= Number.MAX_SAFE_INTEGER ||
+    !isActionOnlyFormData(formInput)
+  ) {
+    return null;
+  }
+  return {
+    attemptId: attemptIdInput.toLowerCase(),
+    problemId: problemIdInput,
+    expectedRevision: revisionInput,
+  };
+}
+
+export function parseSystemDesignAttemptDeleteResult(
+  value: unknown,
+  expectedAttemptId: string,
+): SystemDesignAttemptDeleteResult {
+  if (!Array.isArray(value)) return { status: "invalid" };
+  if (value.length === 0) return { status: "conflict" };
+  if (value.length !== 1 || !isPlainRecord(value[0])) {
+    return { status: "invalid" };
+  }
+  const keys = Reflect.ownKeys(value[0]);
+  const attemptId = value[0].attempt_id;
+  if (
+    keys.length !== 1 ||
+    keys[0] !== "attempt_id" ||
+    typeof attemptId !== "string" ||
+    !UUID_PATTERN.test(attemptId) ||
+    attemptId.toLowerCase() !== expectedAttemptId
+  ) {
+    return { status: "invalid" };
+  }
+  return { status: "deleted", attemptId: attemptId.toLowerCase() };
 }
 
 export function systemDesignAttemptDraftSignature(formData: FormData) {

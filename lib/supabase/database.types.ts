@@ -1209,6 +1209,14 @@ export type Database = {
         Returns: Database["public"]["Tables"]["system_design_attempts"]["Row"][];
       };
       delete_system_design_attempt: { Args: { target_attempt_id: string }; Returns: boolean };
+      delete_system_design_attempt_if_revision: {
+        Args: {
+          target_attempt_id: string;
+          target_problem_id: string;
+          target_expected_revision: number;
+        };
+        Returns: { attempt_id: string }[];
+      };
       save_interview_preparation: {
         Args: { target_round_id: string; notes_value?: string | null; completed_ids_value?: string[] | null; topics_asked_value?: string | null; went_well_value?: string | null; needs_improvement_value?: string | null; follow_up_notes_value?: string | null };
         Returns: string;
