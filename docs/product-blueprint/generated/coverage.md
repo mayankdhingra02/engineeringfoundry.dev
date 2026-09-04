@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 28a0fa56506ab5964ecfdf006423e8647beaabc4
-repository_state_sha256: 0a27befcb5ae1afafbe0df1fd976733b83d8272d3b0683aefd5132f84b8d2227
+repository_sha: bb2c7da619aa092a7bd93f743c0a1bd2fb788882
+repository_state_sha256: 6d5bdbc2fa85ac734a1142f46aa6a1228ee766f54ffd5bf86a5f65fbb56554dc
 ---
 
 # Engineering Foundry requirement coverage

@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "28a0fa56506ab5964ecfdf006423e8647beaabc4",
-  "repository_state_sha256": "0a27befcb5ae1afafbe0df1fd976733b83d8272d3b0683aefd5132f84b8d2227",
+  "repository_sha": "bb2c7da619aa092a7bd93f743c0a1bd2fb788882",
+  "repository_state_sha256": "6d5bdbc2fa85ac734a1142f46aa6a1228ee766f54ffd5bf86a5f65fbb56554dc",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -337,8 +337,9 @@
         "The production Question Browser URL helper derives its allowlists from injected question and company catalogs, rejects malformed and duplicate scalar state, removes hidden progress filters while signed out, keeps fixed-company scope authoritative, serializes only an owner-resolved canonical application ID, and bounds search and pagination; lib/dsa/queries.ts validates application input before its owner-scoped query. The component source uses replacement history for active search and guarded canonicalization, push history for discrete changes, no-op protection, page clamping only after deferred search results match the URL-derived search, and focus recovery only after history disconnects its prior target and no newer connected target claimed focus. Executable helper and source-integration coverage is attributed to npm run test:dsa-pattern-index; rendered Back/Forward and focus behavior remains unautomated.",
         "Account-disabled and signed-out DSA workspaces resolve before private queries; signed-in progress, roadmap preference, and optional application context render only from one complete owner-scoped resolved snapshot, while query errors, error-with-data results, malformed wrappers, foreign progress, invalid persisted levels, or mismatched application data raise one sanitized private-data error instead of becoming empty progress, a default roadmap, or a missing application.",
         "Account-disabled DSA routes remain public and useful without inoperable sign-in or persistence handoffs, while browser-local activity is labeled honestly and enabled account modes retain their existing behavior.",
-        "The shared activity control requires explicit account availability, retains the bounded 160-item fallback, and never applies a stale item result to a different DSA item.",
-        "Quick status and bookmark mutations parse exact canonical FormData before availability, actor, or persistence work; bookmark controls submit an explicit desired boolean, and both actions use only the owner-resolved atomic RPC and validate its returned canonical question ID without a stale pre-read or whole-row quick save. The database operation serializes each owner/question pair, changes exactly one requested field, preserves unrelated progress, is idempotent, and treats clearing an absent bookmark as a successful no-row update; executable and source coverage is attributed to npm run test:dsa-progress, database concurrency and privacy remain assigned to npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step."
+        "The shared activity control requires explicit account availability, retains the bounded 160-item fallback, and never applies a stale item result to a different DSA item. Account persistence from that shared control changes DSA status only through the atomic quick-progress boundary, validates its returned canonical question ID, and cannot overwrite richer progress fields.",
+        "Quick status and bookmark mutations parse exact canonical FormData before availability, actor, or persistence work; bookmark controls submit an explicit desired boolean, and both actions use only the owner-resolved atomic RPC and validate its returned canonical question ID without a stale pre-read or whole-row quick save. The database operation serializes each owner/question pair, changes exactly one requested field, preserves unrelated progress, is idempotent, and treats clearing an absent bookmark as a successful no-row update; executable and source coverage is attributed to npm run test:dsa-progress, database concurrency and privacy remain assigned to npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step.",
+        "Full DSA progress edits strictly parse canonical runtime fields, explicit confidence/bookmark presence, and an absent sentinel or persisted revision before account work. The owner-scoped database operation serializes the same owner/question key as quick writes and uses insert-if-absent or timestamp compare-and-swap, so stale full/full, full/quick, and absent/import races cannot silently overwrite a winner; only validated success advances the revision, refreshes, and emits account analytics. Source-integration checks cover the component’s draft-preserving manual-submit wiring, duplicate guard, live-region semantics, and safe recovery-link attributes; rendered draft retention and focus behavior remain browser/manual validation. Executable and source coverage runs in npm run test:dsa-progress, local concurrency/privacy runs in npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step."
       ],
       "code_paths": [
         "app/dsa",
@@ -348,6 +349,7 @@
         "features/dsa",
         "features/dsa/languages/interview-template.tsx",
         "features/dsa/progress/actions.ts",
+        "features/dsa/progress/question-progress-editor.tsx",
         "features/dsa/progress/quick-progress-actions.tsx",
         "features/dsa/questions/question-browser.tsx",
         "features/dsa/strategy/pattern-reference.tsx",
@@ -356,10 +358,12 @@
         "features/preparation-progress/actions.ts",
         "lib/dsa/queries.ts",
         "lib/dsa/question-browser-url-state.ts",
+        "lib/dsa/question-progress-action-input.ts",
         "lib/dsa/quick-progress-action-input.ts",
         "lib/dsa/workspace-state.ts",
         "lib/preparation-progress/activity-save.ts",
         "lib/supabase/database.types.ts",
+        "scripts/qualify-account-lifecycle-local.mjs",
         "scripts/qualify-persistence-local.mjs",
         "scripts/qualify-security-local.mjs",
         "scripts/smoke-public-routes.mjs",
@@ -370,9 +374,12 @@
         "scripts/test-dsa-study-plans.mjs",
         "scripts/test-public-route-smoke.mjs",
         "supabase/migrations/202609030002_set_dsa_question_quick_progress.sql",
+        "supabase/migrations/202609030004_save_dsa_question_progress_if_revision.sql",
         "supabase/tests/database/dsa_question_progress.test.sql"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/dsa-progress.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-DSA",
       "kind": "requirement-family",
