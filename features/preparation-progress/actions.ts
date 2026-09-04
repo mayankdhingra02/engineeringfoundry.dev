@@ -35,8 +35,8 @@ export async function recordPreparationActivityAction(input: {
   itemId: string;
   status: LocalProgressStatus;
 }): Promise<PreparationActivityAccountResult> {
-  if (!isAccountPlatformAvailable()) return { saved: false, reason: "account-unavailable" };
   if (!input || !preparationTrackSet.has(input.track) || !preparationStatusSet.has(input.status) || typeof input.itemId !== "string") return { saved: false, reason: "invalid-input" };
+  if (!isAccountPlatformAvailable()) return { saved: false, reason: "account-unavailable" };
   const actor = await getAuthenticatedActor();
   if (!actor) return { saved: false, reason: "unauthenticated" };
 
@@ -55,15 +55,12 @@ export async function recordPreparationActivityAction(input: {
         ? "design_problem"
         : null;
     if (!itemType) return { saved: false, reason: "invalid-input" };
-    const { error } = await actor.supabase.rpc("save_system_design_item_progress", {
+    const { data, error } = await actor.supabase.rpc("set_system_design_item_quick_progress", {
       target_item_id: input.itemId,
       target_item_type: itemType,
       target_status: "reviewed",
-      target_confidence: null,
-      target_bookmarked: false,
-      target_notes: null,
     });
-    if (error) return { saved: false, reason: "persistence-failed" };
+    if (error || data !== input.itemId) return { saved: false, reason: "persistence-failed" };
   } else if (input.track === "ml-design" || input.track === "behavioral") {
     const valid = input.track === "ml-design" ? mlIds.has(input.itemId) : behavioralIds.has(input.itemId);
     if (!valid) return { saved: false, reason: "invalid-input" };

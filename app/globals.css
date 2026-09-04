@@ -387,6 +387,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .button:disabled { cursor: not-allowed; opacity: .52; transform: none; }
 .dsa-progress-editor .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
 .dsa-progress-editor .button[aria-disabled="true"]:hover { background: var(--accent); border-color: var(--accent); transform: none; }
+.sd-private-progress .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
+.sd-private-progress .button[aria-disabled="true"]:hover { background: var(--accent); border-color: var(--accent); transform: none; }
 .save-study-plan-control .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
 .button-inverse { color: #171918; background: #f3f2ec; border-color: #f3f2ec; }
 .button-inverse:hover { color: #171918; background: #fff; border-color: #fff; }
