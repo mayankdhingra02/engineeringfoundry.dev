@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(135);
+select plan(156);
 
 select is((select count(*)::integer from public.behavioral_curated_questions where is_active), 48, 'the global curated catalog is seeded once');
 select ok(has_table_privilege('anon', 'public.behavioral_curated_questions', 'select'), 'anon can read the curated catalog');
@@ -36,16 +36,20 @@ select ok(has_function_privilege('authenticated', 'public.duplicate_behavioral_s
 select ok(not has_function_privilege('anon', 'public.create_behavioral_story_with_themes(text,text,text,text,text,text,text,text,text,text,text,text,text[])', 'execute'), 'anon cannot create story aggregates');
 select ok(not has_function_privilege('anon', 'public.update_behavioral_story_with_themes_if_revision(uuid,timestamptz,text,text,text,text,text,text,text,text,text,text,text,text,text[])', 'execute'), 'anon cannot update story aggregates');
 select ok(not has_function_privilege('anon', 'public.duplicate_behavioral_story_with_themes(uuid)', 'execute'), 'anon cannot duplicate story aggregates');
+select ok(has_function_privilege('authenticated', 'public.delete_behavioral_story_if_revision(uuid,timestamptz)', 'execute'), 'authenticated can delete an exact Behavioral story revision');
+select ok(not has_function_privilege('anon', 'public.delete_behavioral_story_if_revision(uuid,timestamptz)', 'execute'), 'anon cannot delete Behavioral stories');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_stories', 'title', 'insert'), 'clients cannot bypass aggregate creation with a direct story insert');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_stories', 'title', 'update'), 'clients cannot bypass aggregate revision checks with a direct story update');
-select ok(has_table_privilege('authenticated', 'public.behavioral_stories', 'delete'), 'clients retain owner-scoped story deletion');
+select ok(not has_table_privilege('authenticated', 'public.behavioral_stories', 'delete'), 'clients cannot bypass story revision checks with a direct delete');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_story_themes', 'theme', 'insert'), 'clients cannot insert themes outside an aggregate mutation');
 select ok(not has_table_privilege('authenticated', 'public.behavioral_story_themes', 'delete'), 'clients cannot delete themes outside an aggregate mutation');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_answers', 'is_primary', 'update'), 'clients cannot directly update primary-answer state');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_answers', 'opening_framing', 'insert'), 'clients cannot bypass aggregate answer creation');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_answers', 'answer_text', 'update'), 'clients cannot bypass aggregate answer revision checks');
 select ok(has_table_privilege('authenticated', 'public.behavioral_answers', 'select'), 'clients retain owner-scoped answer reads');
-select ok(has_table_privilege('authenticated', 'public.behavioral_answers', 'delete'), 'clients retain owner-scoped answer deletion');
+select ok(not has_table_privilege('authenticated', 'public.behavioral_answers', 'delete'), 'clients cannot bypass answer revision checks with a direct delete');
+select ok(has_function_privilege('authenticated', 'public.delete_behavioral_answer_if_revision(uuid,timestamptz,uuid,text)', 'execute'), 'authenticated can delete an exact Behavioral answer revision');
+select ok(not has_function_privilege('anon', 'public.delete_behavioral_answer_if_revision(uuid,timestamptz,uuid,text)', 'execute'), 'anon cannot delete Behavioral answers');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_stories', 'status', 'insert'), 'clients cannot assign story readiness on insert');
 select ok(not has_column_privilege('authenticated', 'public.behavioral_stories', 'status', 'update'), 'clients cannot assign story readiness on update');
 
@@ -276,6 +280,11 @@ select is(
 );
 select is((select status from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid), 'Needs Work', 'database derives story readiness after STAR content changes');
 select ok((select updated_at > current_setting('test.behavioral_story_revision')::timestamptz from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid), 'an aggregate update advances the revision monotonically');
+select set_config(
+  'test.behavioral_story_current_revision',
+  (select updated_at::text from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid),
+  true
+);
 select is(
   (select array_agg(theme order by theme) from public.behavioral_story_themes where story_id = current_setting('test.behavioral_story_id')::uuid),
   array['Leadership', 'Ownership']::text[],
@@ -295,6 +304,21 @@ select is(
 );
 select is((select title from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid), 'Recovered a delayed launch', 'a stale aggregate update preserves the parent row');
 select is((select array_agg(theme order by theme) from public.behavioral_story_themes where story_id = current_setting('test.behavioral_story_id')::uuid), array['Leadership', 'Ownership']::text[], 'a stale aggregate update preserves the theme set');
+select is(
+  (
+    select count(*)::integer
+    from public.delete_behavioral_story_if_revision(
+      current_setting('test.behavioral_story_id')::uuid,
+      current_setting('test.behavioral_story_revision')::timestamptz
+    )
+  ),
+  0,
+  'a stale story delete returns no row'
+);
+select is((select count(*)::integer from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid), 1, 'a stale story delete preserves the parent');
+select is((select array_agg(theme order by theme) from public.behavioral_story_themes where story_id = current_setting('test.behavioral_story_id')::uuid), array['Leadership', 'Ownership']::text[], 'a stale story delete preserves the theme snapshot');
+select is((select count(*)::integer from public.behavioral_story_question_links where story_id = current_setting('test.behavioral_story_id')::uuid), 2, 'a stale story delete preserves question links');
+select is((select count(*)::integer from public.behavioral_answers where story_id = current_setting('test.behavioral_story_id')::uuid), 3, 'a stale story delete preserves linked answer provenance');
 select throws_ok($$update public.behavioral_stories set status = 'Ready' where id = current_setting('test.behavioral_story_id')::uuid$$, '42501');
 select set_config(
   'test.behavioral_answer_revision',
@@ -327,6 +351,11 @@ select is(
 );
 select is((select is_primary from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid), true, 'aggregate primary designation is persisted');
 select ok((select updated_at > current_setting('test.behavioral_answer_revision')::timestamptz from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid), 'an aggregate answer update advances its revision monotonically');
+select set_config(
+  'test.behavioral_answer_current_revision',
+  (select updated_at::text from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid),
+  true
+);
 select is(
   (
     select count(*)::integer
@@ -353,6 +382,21 @@ select is(
 );
 select is((select title from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid), 'General version', 'a stale aggregate update preserves the answer snapshot');
 select is((select is_primary from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid), true, 'a stale aggregate update preserves primary state');
+select is(
+  (
+    select count(*)::integer
+    from public.delete_behavioral_answer_if_revision(
+      current_setting('test.behavioral_answer_id')::uuid,
+      current_setting('test.behavioral_answer_revision')::timestamptz,
+      null,
+      'beh-lead-01'
+    )
+  ),
+  0,
+  'a stale answer delete returns no row'
+);
+select is((select title from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid), 'General version', 'a stale answer delete preserves the answer snapshot');
+select is((select is_primary from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid), true, 'a stale answer delete preserves primary state');
 select throws_ok($$select public.set_behavioral_primary_answer(current_setting('test.behavioral_answer_id')::uuid, true)$$, '0A000');
 select set_config(
   'test.behavioral_story_two_id',
@@ -540,7 +584,10 @@ select throws_ok($$insert into public.behavioral_story_themes (user_id, story_id
 select throws_ok($$insert into public.behavioral_story_question_links (user_id, story_id, curated_question_id) values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', current_setting('test.behavioral_story_id')::uuid, 'beh-lead-02')$$, '42501');
 select throws_ok($$insert into public.behavioral_answers (user_id, custom_question_id, title, answer_text) values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', current_setting('test.behavioral_custom_question_id')::uuid, 'Intrusion', 'No access')$$, '42501');
 select throws_ok($$update public.behavioral_stories set title = 'Intrusion' where id = current_setting('test.behavioral_story_id')::uuid$$, '42501');
-select results_eq($$with removed as (delete from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid returning id) select count(*)::integer from removed$$, array[0], 'another user cannot delete an owned story');
+select throws_ok($$delete from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid$$, '42501');
+select throws_ok($$delete from public.behavioral_answers where id = current_setting('test.behavioral_answer_id')::uuid$$, '42501');
+select is((select count(*)::integer from public.delete_behavioral_story_if_revision(current_setting('test.behavioral_story_id')::uuid, current_setting('test.behavioral_story_current_revision')::timestamptz)), 0, 'another user receives no story delete row');
+select is((select count(*)::integer from public.delete_behavioral_story_if_revision('99999999-9999-4999-8999-999999999999'::uuid, pg_catalog.clock_timestamp())), 0, 'a missing story delete returns the same zero-row result');
 select throws_ok($$update public.behavioral_custom_questions set notes = 'Intrusion' where id = current_setting('test.behavioral_custom_question_id')::uuid$$, '42501');
 select throws_ok($$select public.set_behavioral_primary_answer(current_setting('test.behavioral_answer_two_id')::uuid, true)$$, '0A000');
 select throws_ok($$insert into public.behavioral_answers (user_id, curated_question_id, application_id, title, answer_text) values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'beh-lead-02', current_setting('test.behavioral_application_id')::uuid, 'Foreign application', '')$$, '42501');
@@ -592,6 +639,8 @@ select is(
   0,
   'a missing answer aggregate update returns the same zero-row result'
 );
+select is((select count(*)::integer from public.delete_behavioral_answer_if_revision(current_setting('test.behavioral_answer_id')::uuid, current_setting('test.behavioral_answer_current_revision')::timestamptz, null, 'beh-lead-01')), 0, 'another user receives no answer delete row');
+select is((select count(*)::integer from public.delete_behavioral_answer_if_revision('99999999-9999-4999-8999-999999999999'::uuid, pg_catalog.clock_timestamp(), null, 'beh-lead-01')), 0, 'a missing answer delete returns the same zero-row result');
 select is((select count(*)::integer from public.duplicate_behavioral_story_with_themes(current_setting('test.behavioral_story_id')::uuid)), 0, 'another user cannot distinguish or duplicate an owned story');
 select is((select count(*)::integer from public.duplicate_behavioral_story_with_themes('99999999-9999-4999-8999-999999999999'::uuid)), 0, 'a missing story duplicate returns the same zero-row result');
 select is(
@@ -626,9 +675,9 @@ select throws_ok($$insert into public.behavioral_story_question_links (user_id, 
 select throws_ok($$insert into public.behavioral_stories (user_id, title, status) values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Spoofed readiness', 'Ready')$$, '42501');
 select throws_ok($$insert into public.behavioral_story_question_links (user_id, story_id, curated_question_id) values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', current_setting('test.behavioral_story_id')::uuid, 'beh-missing-999')$$, '23503');
 select throws_ok($$insert into public.behavioral_answers (user_id, curated_question_id, title) values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'beh-missing-999', 'Direct missing-reference bypass')$$, '42501');
-delete from public.behavioral_stories where id = current_setting('test.behavioral_story_three_id')::uuid;
-delete from public.behavioral_stories where id = current_setting('test.behavioral_duplicate_id')::uuid;
-delete from public.behavioral_stories where id = current_setting('test.behavioral_story_two_id')::uuid;
+select public.delete_behavioral_story_if_revision(id, updated_at) from public.behavioral_stories where id = current_setting('test.behavioral_story_three_id')::uuid;
+select public.delete_behavioral_story_if_revision(id, updated_at) from public.behavioral_stories where id = current_setting('test.behavioral_duplicate_id')::uuid;
+select public.delete_behavioral_story_if_revision(id, updated_at) from public.behavioral_stories where id = current_setting('test.behavioral_story_two_id')::uuid;
 select set_config(
   'test.behavioral_custom_question_current_revision',
   (select updated_at::text from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid),
@@ -641,11 +690,48 @@ select is(
 );
 select is((select count(*)::integer from public.behavioral_story_question_links where custom_question_id is not null), 0, 'an exact custom-question delete cascades its private children');
 select is((select count(*)::integer from public.behavioral_answers where custom_question_id is not null), 0, 'deleting a custom question cascades its answers');
-delete from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid;
+select is(
+  (
+    select count(*)::integer
+    from public.delete_behavioral_answer_if_revision(
+      current_setting('test.behavioral_answer_two_id')::uuid,
+      (select updated_at from public.behavioral_answers where id = current_setting('test.behavioral_answer_two_id')::uuid),
+      'c9999999-9999-4999-8999-999999999999'::uuid,
+      null
+    )
+  ),
+  0,
+  'a mismatched question identity cannot delete an answer'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.delete_behavioral_answer_if_revision(
+      current_setting('test.behavioral_answer_two_id')::uuid,
+      (select updated_at from public.behavioral_answers where id = current_setting('test.behavioral_answer_two_id')::uuid),
+      null,
+      'beh-lead-01'
+    )
+  ),
+  1,
+  'an exact answer revision deletes one owned answer'
+);
+select is((select count(*)::integer from public.behavioral_answers where id = current_setting('test.behavioral_answer_two_id')::uuid), 0, 'an exact answer delete removes its target');
+select is(
+  (
+    select count(*)::integer
+    from public.delete_behavioral_story_if_revision(
+      current_setting('test.behavioral_story_id')::uuid,
+      (select updated_at from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid)
+    )
+  ),
+  1,
+  'an exact story revision deletes one owned aggregate'
+);
 select is((select count(*)::integer from public.behavioral_story_themes), 0, 'deleting a story cascades its themes');
 select is((select count(*)::integer from public.behavioral_story_question_links), 0, 'deleting a story cascades remaining question links');
 select is((select story_id from public.behavioral_answers where title = 'General version'), null, 'deleting a story preserves answer text and clears its story link');
-select is((select count(*)::integer from public.behavioral_answers where curated_question_id = 'beh-lead-01'), 3, 'curated answer preparation survives story deletion');
+select is((select count(*)::integer from public.behavioral_answers where curated_question_id = 'beh-lead-01'), 2, 'remaining curated answer preparation survives story deletion');
 
 select * from finish();
 rollback;

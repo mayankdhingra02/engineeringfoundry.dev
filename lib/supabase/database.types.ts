@@ -1283,6 +1283,13 @@ export type Database = {
         };
         Returns: { question_id: string }[];
       };
+      delete_behavioral_story_if_revision: {
+        Args: {
+          target_story_id: string;
+          target_expected_updated_at: string;
+        };
+        Returns: { story_id: string }[];
+      };
       update_behavioral_story_with_themes_if_revision: {
         Args: {
           target_story_id: string;
@@ -1344,6 +1351,15 @@ export type Database = {
           target_make_primary: boolean;
         };
         Returns: { answer_id: string; updated_at: string }[];
+      };
+      delete_behavioral_answer_if_revision: {
+        Args: {
+          target_answer_id: string;
+          target_expected_updated_at: string;
+          target_custom_question_id: string | null;
+          target_curated_question_id: string | null;
+        };
+        Returns: { answer_id: string }[];
       };
       replace_behavioral_story_themes: {
         Args: { target_story_id: string; theme_values: string[] };

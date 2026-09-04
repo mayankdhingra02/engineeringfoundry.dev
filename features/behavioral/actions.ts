@@ -14,6 +14,13 @@ import {
 } from "@/lib/behavioral/answer-action-input";
 import { reviewAnswerFacts } from "@/lib/behavioral/fact-integrity";
 import {
+  BEHAVIORAL_ANSWER_DELETE_ERROR,
+  BEHAVIORAL_STORY_DELETE_ERROR,
+  parseBehavioralAnswerDeleteInput,
+  parseBehavioralDeleteResult,
+  parseBehavioralStoryDeleteInput,
+} from "@/lib/behavioral/delete-revision";
+import {
   BEHAVIORAL_QUESTION_CONFLICT_ERROR,
   BEHAVIORAL_QUESTION_DELETE_ERROR,
   BEHAVIORAL_QUESTION_INVALID_INPUT_ERROR,
@@ -36,6 +43,7 @@ import {
   type BehavioralStoryInput,
 } from "@/lib/behavioral/story-action-input";
 import { getAuthenticatedActor, type AuthenticatedActor } from "@/lib/auth/actor";
+import type { TrackerActionState } from "@/features/applications/actions";
 
 export interface BehavioralActionState {
   status: "idle" | "error" | "success";
@@ -91,11 +99,6 @@ async function ownsAnswerRelationships(current: AuthenticatedActor, input: { sto
       : Promise.resolve(true),
   ]);
   return story && application;
-}
-
-async function answerMatchesOwnedQuestion(current: AuthenticatedActor, answerId: string, reference: { curated_question_id: string | null; custom_question_id: string | null }) {
-  const { data, error } = await current.supabase.from("behavioral_answers").select("curated_question_id,custom_question_id").eq("id", answerId).eq("user_id", current.user.id).maybeSingle();
-  return !error && data?.curated_question_id === reference.curated_question_id && data?.custom_question_id === reference.custom_question_id;
 }
 
 function mutationFailure(message: string): never {
@@ -178,11 +181,32 @@ export async function updateStoryAction(storyId: unknown, _: BehavioralActionSta
   refreshBehavioral(); revalidatePath(`/behavioral/stories/${outcome.storyId}`); redirect(`/behavioral/stories/${outcome.storyId}`);
 }
 
-export async function deleteStoryAction(storyId: string) {
-  const current = await getAuthenticatedActor(); if (!current) signInAgain("/behavioral/stories");
-  if (!UUID_PATTERN.test(storyId)) return;
-  const { data, error } = await current.supabase.from("behavioral_stories").delete().eq("id", storyId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) mutationFailure("We couldn't delete this story. It may no longer be available.");
+export async function deleteStoryAction(
+  storyIdInput: unknown,
+  revisionInput: unknown,
+  _: TrackerActionState,
+  formInput: unknown,
+): Promise<TrackerActionState> {
+  const parsed = parseBehavioralStoryDeleteInput(storyIdInput, revisionInput, formInput);
+  if (!parsed) return { status: "error", message: BEHAVIORAL_STORY_DELETE_ERROR };
+  const current = await getAuthenticatedActor();
+  if (!current) return { status: "error", message: "Your session has expired. Sign in and try again." };
+  const { data, error } = await current.supabase.rpc(
+    "delete_behavioral_story_if_revision",
+    {
+      target_story_id: parsed.storyId,
+      target_expected_updated_at: parsed.expectedUpdatedAt,
+    },
+  );
+  if (error) return { status: "error", message: BEHAVIORAL_STORY_DELETE_ERROR };
+  const outcome = parseBehavioralDeleteResult(data, "story_id", parsed.storyId);
+  if (outcome.status !== "deleted") {
+    return {
+      status: "error",
+      message: BEHAVIORAL_STORY_DELETE_ERROR,
+      conflict: outcome.status === "conflict",
+    };
+  }
   refreshBehavioral(); redirect("/behavioral/stories");
 }
 
@@ -351,12 +375,43 @@ export async function updateAnswerAction(questionId: unknown, answerId: unknown,
   refreshBehavioral(); revalidatePath(`/behavioral/questions/${parsed.value.questionId}`); redirect(`/behavioral/questions/${parsed.value.questionId}`);
 }
 
-export async function deleteAnswerAction(answerId: string, questionId: string) {
-  const current = await getAuthenticatedActor(); if (!current) signInAgain("/behavioral/questions");
-  if (!UUID_PATTERN.test(answerId)) return;
-  const reference = await ownedQuestion(current, questionId);
-  if (!reference || !await answerMatchesOwnedQuestion(current, answerId, reference)) return;
-  const { data, error } = await current.supabase.from("behavioral_answers").delete().eq("id", answerId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) mutationFailure("We couldn't delete this answer. It may no longer be available.");
-  refreshBehavioral(); revalidatePath(`/behavioral/questions/${questionId}`);
+export async function deleteAnswerAction(
+  questionIdInput: unknown,
+  answerIdInput: unknown,
+  revisionInput: unknown,
+  _: TrackerActionState,
+  formInput: unknown,
+): Promise<TrackerActionState> {
+  const parsed = parseBehavioralAnswerDeleteInput(
+    questionIdInput,
+    answerIdInput,
+    revisionInput,
+    formInput,
+    curatedQuestionIds,
+  );
+  if (!parsed) return { status: "error", message: BEHAVIORAL_ANSWER_DELETE_ERROR };
+  const current = await getAuthenticatedActor();
+  if (!current) return { status: "error", message: "Your session has expired. Sign in and try again." };
+  const reference = await ownedQuestion(current, parsed.questionId);
+  if (!reference) return { status: "error", message: BEHAVIORAL_ANSWER_DELETE_ERROR };
+  const { data, error } = await current.supabase.rpc(
+    "delete_behavioral_answer_if_revision",
+    {
+      target_answer_id: parsed.answerId,
+      target_expected_updated_at: parsed.expectedUpdatedAt,
+      target_custom_question_id: reference.custom_question_id,
+      target_curated_question_id: reference.curated_question_id,
+    },
+  );
+  if (error) return { status: "error", message: BEHAVIORAL_ANSWER_DELETE_ERROR };
+  const outcome = parseBehavioralDeleteResult(data, "answer_id", parsed.answerId);
+  if (outcome.status !== "deleted") {
+    return {
+      status: "error",
+      message: BEHAVIORAL_ANSWER_DELETE_ERROR,
+      conflict: outcome.status === "conflict",
+    };
+  }
+  refreshBehavioral(); revalidatePath(`/behavioral/questions/${parsed.questionId}`);
+  redirect(`/behavioral/questions/${parsed.questionId}`);
 }

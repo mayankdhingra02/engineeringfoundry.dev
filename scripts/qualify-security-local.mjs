@@ -414,15 +414,25 @@ await check("Behavioral aggregate RPCs deny anonymous callers", async () => {
       ...behavioralStoryArgs(),
     }),
     anon.rpc("duplicate_behavioral_story_with_themes", { target_story_id: crypto.randomUUID() }),
+    anon.rpc("delete_behavioral_story_if_revision", {
+      target_story_id: crypto.randomUUID(),
+      target_expected_updated_at: new Date().toISOString(),
+    }),
     anon.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({ target_story_id: crypto.randomUUID() })),
     anon.rpc("update_behavioral_answer_aggregate_if_revision", {
       target_answer_id: crypto.randomUUID(),
       target_expected_updated_at: new Date().toISOString(),
       ...behavioralAnswerArgs({ target_story_id: crypto.randomUUID() }),
     }),
+    anon.rpc("delete_behavioral_answer_if_revision", {
+      target_answer_id: crypto.randomUUID(),
+      target_expected_updated_at: new Date().toISOString(),
+      target_custom_question_id: null,
+      target_curated_question_id: "beh-lead-01",
+    }),
   ]);
   for (const attempt of attempts) assert.equal(attempt.error?.code, "42501", "anonymous Behavioral aggregate execution must fail with 42501");
-  return "story and answer aggregate mutations returned SQLSTATE 42501";
+  return "story and answer aggregate saves, duplicates, and deletes returned SQLSTATE 42501";
 });
 
 await check("Behavioral custom-question RPCs deny anonymous and direct mutation", async () => {
@@ -456,6 +466,7 @@ await check("Behavioral aggregate derives its owner and closes direct mutation b
   const directMutations = await Promise.all([
     a.client.from("behavioral_stories").insert({ user_id: a.user.id, title: "Direct bypass" }),
     a.client.from("behavioral_stories").update({ title: "Direct overwrite" }).eq("id", behavioralStory.story_id),
+    a.client.from("behavioral_stories").delete().eq("id", behavioralStory.story_id),
     a.client.from("behavioral_story_themes").insert({ user_id: a.user.id, story_id: behavioralStory.story_id, theme: "Conflict" }),
     a.client.from("behavioral_story_themes").delete().eq("story_id", behavioralStory.story_id),
   ]);
@@ -485,6 +496,7 @@ await check("Behavioral answer aggregate derives its owner and closes split-writ
       title: "Direct answer bypass",
     }),
     a.client.from("behavioral_answers").update({ notes: "Direct stale overwrite" }).eq("id", behavioralAnswer.answer_id),
+    a.client.from("behavioral_answers").delete().eq("id", behavioralAnswer.answer_id),
   ]);
   for (const mutation of directMutations) assert.equal(mutation.error?.code, "42501", "direct Behavioral answer mutation must fail with 42501");
   const legacy = await a.client.rpc("set_behavioral_primary_answer", {
@@ -516,14 +528,22 @@ await check("foreign and missing Behavioral aggregate targets are indistinguisha
   });
   const foreignDuplicate = await b.client.rpc("duplicate_behavioral_story_with_themes", { target_story_id: behavioralStory.story_id });
   const missingDuplicate = await b.client.rpc("duplicate_behavioral_story_with_themes", { target_story_id: crypto.randomUUID() });
-  for (const attempt of [foreignUpdate, missingUpdate, foreignDuplicate, missingDuplicate]) {
+  const foreignDelete = await b.client.rpc("delete_behavioral_story_if_revision", {
+    target_story_id: behavioralStory.story_id,
+    target_expected_updated_at: behavioralStory.updated_at,
+  });
+  const missingDelete = await b.client.rpc("delete_behavioral_story_if_revision", {
+    target_story_id: crypto.randomUUID(),
+    target_expected_updated_at: behavioralStory.updated_at,
+  });
+  for (const attempt of [foreignUpdate, missingUpdate, foreignDuplicate, missingDuplicate, foreignDelete, missingDelete]) {
     assert.ifError(attempt.error);
     assert.deepEqual(attempt.data, []);
   }
   const owner = await a.client.from("behavioral_stories").select("title,notes").eq("id", behavioralStory.story_id).single();
   assert.ifError(owner.error);
   assert.deepEqual(owner.data, { title: "Phase 9 aggregate security story", notes: "Owner A private Behavioral note." });
-  return "foreign and missing updates/duplicates returned zero rows; owner data unchanged";
+  return "foreign and missing updates/duplicates/deletes returned zero rows; owner data unchanged";
 });
 
 await check("foreign and missing Behavioral answer targets are indistinguishable", async () => {
@@ -538,7 +558,7 @@ await check("foreign and missing Behavioral answer targets are indistinguishable
     target_story_id: bStory.data[0].story_id,
     target_title: "Foreign or missing answer update",
   });
-  const [foreign, missing] = await Promise.all([
+  const [foreign, missing, foreignDelete, missingDelete] = await Promise.all([
     b.client.rpc("update_behavioral_answer_aggregate_if_revision", {
       target_answer_id: behavioralAnswer.answer_id,
       target_expected_updated_at: behavioralAnswer.updated_at,
@@ -549,8 +569,20 @@ await check("foreign and missing Behavioral answer targets are indistinguishable
       target_expected_updated_at: behavioralAnswer.updated_at,
       ...updateArgs,
     }),
+    b.client.rpc("delete_behavioral_answer_if_revision", {
+      target_answer_id: behavioralAnswer.answer_id,
+      target_expected_updated_at: behavioralAnswer.updated_at,
+      target_custom_question_id: null,
+      target_curated_question_id: "beh-lead-01",
+    }),
+    b.client.rpc("delete_behavioral_answer_if_revision", {
+      target_answer_id: crypto.randomUUID(),
+      target_expected_updated_at: behavioralAnswer.updated_at,
+      target_custom_question_id: null,
+      target_curated_question_id: "beh-lead-01",
+    }),
   ]);
-  for (const attempt of [foreign, missing]) {
+  for (const attempt of [foreign, missing, foreignDelete, missingDelete]) {
     assert.ifError(attempt.error);
     assert.deepEqual(attempt.data, []);
   }
@@ -566,7 +598,7 @@ await check("foreign and missing Behavioral answer targets are indistinguishable
     is_primary: true,
     updated_at: behavioralAnswer.updated_at,
   });
-  return "foreign and missing updates returned zero rows; foreign relationship rejected; owner answer unchanged";
+  return "foreign and missing updates/deletes returned zero rows; foreign relationship rejected; owner answer unchanged";
 });
 
 await check("foreign and missing Behavioral custom-question targets are indistinguishable", async () => {
