@@ -45,6 +45,13 @@ const {
   parseCanonicalBehavioralStoryId,
 } = await import("../lib/behavioral/story-action-input.ts");
 const {
+  BEHAVIORAL_ANSWER_DELETE_ERROR,
+  BEHAVIORAL_STORY_DELETE_ERROR,
+  parseBehavioralAnswerDeleteInput,
+  parseBehavioralDeleteResult,
+  parseBehavioralStoryDeleteInput,
+} = await import("../lib/behavioral/delete-revision.ts");
+const {
   BEHAVIORAL_QUESTION_ABSENT_REVISION,
   BEHAVIORAL_QUESTION_CONFLICT_ERROR,
   BEHAVIORAL_QUESTION_DELETE_ERROR,
@@ -66,6 +73,25 @@ const { resolveBehavioralStoryEditSnapshot } = await import("../lib/behavioral/s
 
 const canonicalStoryId = "123e4567-e89b-42d3-a456-426614174000";
 const canonicalStoryRevision = "2026-09-03T18:15:00.123456+00:00";
+const deleteActionForm = () => {
+  const form = new FormData();
+  form.set("$ACTION_ID_test", "trusted framework metadata");
+  return form;
+};
+assert.deepEqual(
+  parseBehavioralStoryDeleteInput(canonicalStoryId.toUpperCase(), canonicalStoryRevision, deleteActionForm()),
+  { storyId: canonicalStoryId, expectedUpdatedAt: canonicalStoryRevision },
+);
+for (const [label, storyId, revision, form] of [
+  ["non-FormData input", canonicalStoryId, canonicalStoryRevision, {}],
+  ["invalid story ID", "not-a-story", canonicalStoryRevision, deleteActionForm()],
+  ["invalid revision", canonicalStoryId, "2026-02-30T00:00:00Z", deleteActionForm()],
+  ["unexpected form field", canonicalStoryId, canonicalStoryRevision, new FormData()],
+]) {
+  if (label === "unexpected form field") form.set("story_id", canonicalStoryId);
+  check(parseBehavioralStoryDeleteInput(storyId, revision, form) === null, `story delete parsing rejects ${label}`);
+}
+check(BEHAVIORAL_STORY_DELETE_ERROR.includes("may have changed") && !/postgres|sql|uuid/i.test(BEHAVIORAL_STORY_DELETE_ERROR), "story deletion uses stable conflict-safe copy");
 const storyFields = {
   title: "  Stabilized a launch  ",
   company_or_context: "Engineering Foundry",
@@ -333,6 +359,36 @@ check([BEHAVIORAL_QUESTION_INVALID_INPUT_ERROR, BEHAVIORAL_QUESTION_PERSISTENCE_
 const canonicalAnswerId = "223e4567-e89b-42d3-a456-426614174000";
 const canonicalAnswerRevision = "2026-09-03T19:45:00.654321+00:00";
 const canonicalCuratedQuestionIds = new Set(["beh-lead-01", "beh-tech-01"]);
+assert.deepEqual(
+  parseBehavioralAnswerDeleteInput("beh-lead-01", canonicalAnswerId.toUpperCase(), canonicalAnswerRevision, deleteActionForm(), canonicalCuratedQuestionIds),
+  { questionId: "beh-lead-01", answerId: canonicalAnswerId, expectedUpdatedAt: canonicalAnswerRevision },
+);
+assert.deepEqual(
+  parseBehavioralAnswerDeleteInput(canonicalStoryId.toUpperCase(), canonicalAnswerId, canonicalAnswerRevision, deleteActionForm(), canonicalCuratedQuestionIds),
+  { questionId: canonicalStoryId, answerId: canonicalAnswerId, expectedUpdatedAt: canonicalAnswerRevision },
+);
+for (const [label, questionId, answerId, revision, form] of [
+  ["unknown curated question", "beh-unknown-999", canonicalAnswerId, canonicalAnswerRevision, deleteActionForm()],
+  ["invalid custom question", "not-a-question", canonicalAnswerId, canonicalAnswerRevision, deleteActionForm()],
+  ["invalid answer ID", "beh-lead-01", "not-an-answer", canonicalAnswerRevision, deleteActionForm()],
+  ["invalid revision", "beh-lead-01", canonicalAnswerId, "2026-02-30T00:00:00Z", deleteActionForm()],
+  ["non-FormData input", "beh-lead-01", canonicalAnswerId, canonicalAnswerRevision, {}],
+]) {
+  check(parseBehavioralAnswerDeleteInput(questionId, answerId, revision, form, canonicalCuratedQuestionIds) === null, `answer delete parsing rejects ${label}`);
+}
+assert.deepEqual(parseBehavioralDeleteResult([{ story_id: canonicalStoryId.toUpperCase() }], "story_id", canonicalStoryId), { status: "deleted", recordId: canonicalStoryId });
+assert.deepEqual(parseBehavioralDeleteResult([{ answer_id: canonicalAnswerId.toUpperCase() }], "answer_id", canonicalAnswerId), { status: "deleted", recordId: canonicalAnswerId });
+assert.deepEqual(parseBehavioralDeleteResult([], "story_id", canonicalStoryId), { status: "conflict" });
+for (const [label, value, key, expectedId] of [
+  ["non-array", {}, "story_id", canonicalStoryId],
+  ["multiple rows", [{ story_id: canonicalStoryId }, { story_id: canonicalStoryId }], "story_id", canonicalStoryId],
+  ["extra key", [{ story_id: canonicalStoryId, user_id: canonicalAnswerId }], "story_id", canonicalStoryId],
+  ["wrong key", [{ answer_id: canonicalStoryId }], "story_id", canonicalStoryId],
+  ["mismatched ID", [{ answer_id: canonicalAnswerId }], "answer_id", canonicalStoryId],
+]) {
+  check(parseBehavioralDeleteResult(value, key, expectedId).status === "invalid", `Behavioral delete-result parsing rejects ${label}`);
+}
+check(BEHAVIORAL_ANSWER_DELETE_ERROR.includes("may have changed") && !/postgres|sql|uuid/i.test(BEHAVIORAL_ANSWER_DELETE_ERROR), "answer deletion uses stable conflict-safe copy");
 const answerValues = {
   title: "  General leadership framing  ",
   status: "Ready",
@@ -578,6 +634,34 @@ for (const marker of ["target_expected_updated_at is null", "for update", "if no
 check(updateAnswerAggregateSql.indexOf("for update") < updateAnswerAggregateSql.lastIndexOf("if target_make_primary") && updateAnswerAggregateSql.lastIndexOf("if target_make_primary") < updateAnswerAggregateSql.lastIndexOf("update public.behavioral_answers as answer"), "answer CAS verifies and locks the exact revision before changing sibling primary state or the target aggregate");
 check(legacyPrimarySql.includes("raise exception 'Atomic Behavioral answer saving is required' using errcode = '0A000'"), "legacy primary-only RPC must be a stable authenticated no-mutation failure");
 check(!answerAggregateMigration.includes("revoke select, delete on table public.behavioral_answers") && !answerAggregateMigration.includes("delete from public.behavioral_answers"), "answer aggregate migration preserves owner-scoped reads and deletion without destructive data changes");
+const deleteRevisionMigration = read("supabase/migrations/202609040009_delete_behavioral_records_if_revision.sql");
+for (const marker of [
+  "delete_behavioral_story_if_revision",
+  "delete_behavioral_answer_if_revision",
+  "target_expected_updated_at",
+  "pg_catalog.pg_advisory_xact_lock",
+  "security definer",
+  "set search_path = ''",
+  "auth.uid()",
+  "revoke delete on table public.behavioral_stories from authenticated",
+  "revoke delete on table public.behavioral_answers from authenticated",
+]) requireText(deleteRevisionMigration, marker, `Behavioral delete revision migration lacks ${marker}.`);
+for (const rpc of [
+  "delete_behavioral_story_if_revision(uuid,timestamptz)",
+  "delete_behavioral_answer_if_revision(uuid,timestamptz,uuid,text)",
+]) {
+  check(deleteRevisionMigration.includes(`revoke all on function public.${rpc} from public, anon, authenticated`) && deleteRevisionMigration.includes(`grant execute on function public.${rpc} to authenticated`), `${rpc} must start closed and grant only authenticated execution`);
+}
+const deleteStorySql = sqlFunctionSource(deleteRevisionMigration, "delete_behavioral_story_if_revision");
+const deleteAnswerSql = sqlFunctionSource(deleteRevisionMigration, "delete_behavioral_answer_if_revision");
+for (const [name, source, mutation] of [
+  ["story", deleteStorySql, "delete from public.behavioral_stories as story"],
+  ["answer", deleteAnswerSql, "delete from public.behavioral_answers as answer"],
+]) {
+  for (const marker of ["auth.uid()", "target_expected_updated_at", "pg_catalog.pg_advisory_xact_lock", mutation, "return query"]) requireText(source, marker, `Behavioral ${name} delete RPC lacks ${marker}.`);
+  check(source.indexOf("pg_catalog.pg_advisory_xact_lock") < source.indexOf(mutation), `Behavioral ${name} delete RPC must serialize before deleting`);
+}
+for (const marker of ["target_custom_question_id", "target_curated_question_id", "question_lock_key", "is not distinct from"]) requireText(deleteAnswerSql, marker, `Behavioral answer deletion lacks question correlation marker ${marker}.`);
 const questionRevisionMigration = read("supabase/migrations/202609040007_save_behavioral_custom_question_if_revision.sql");
 for (const marker of [
   "set_behavioral_custom_question_updated_at",
@@ -611,14 +695,16 @@ for (const [name, source, mutation] of [["save", saveQuestionSql, "update public
 }
 const aggregateDatabaseTest = read("supabase/tests/database/behavioral_workspace.test.sql");
 for (const marker of [
-  "plan(135)",
+  "plan(156)",
   "the exact aggregate revision updates the parent and themes",
   "a stale aggregate update preserves the parent row",
   "a stale aggregate update preserves the theme set",
   "duplicate copies the coherent theme snapshot",
   "invalid themes roll back aggregate creation",
   "clients cannot bypass aggregate revision checks with a direct story update",
-  "clients retain owner-scoped story deletion",
+  "clients cannot bypass story revision checks with a direct delete",
+  "a stale story delete preserves linked answer provenance",
+  "an exact story revision deletes one owned aggregate",
   "select public.replace_behavioral_story_themes",
   "deleting a story cascades its themes",
   "an exact answer revision saves content and desired primary state atomically",
@@ -627,6 +713,9 @@ for (const marker of [
   "a rejected aggregate save leaves the prior primary unchanged",
   "clients cannot bypass aggregate answer creation",
   "clients cannot bypass aggregate answer revision checks",
+  "clients cannot bypass answer revision checks with a direct delete",
+  "a stale answer delete preserves the answer snapshot",
+  "an exact answer revision deletes one owned answer",
   "another user receives no answer aggregate update row",
   "a missing answer aggregate update returns the same zero-row result",
   "authenticated can save a revision-checked custom question",
@@ -642,16 +731,19 @@ for (const marker of [
   "concurrent stale full-story saves commit exactly one coherent aggregate",
   "reversed concurrent stale saves preserve the second winner as one aggregate",
   "a concurrent Behavioral story edit read keeps the parent revision and theme snapshot coherent",
+  "concurrent Behavioral story save and revision-delete accept exactly one coherent outcome",
   "concurrent duplicate captures either complete aggregate snapshot",
   "invalid aggregate themes roll back both parent and theme changes",
   "foreign and missing story duplicates are indistinguishable",
   "authenticated legacy theme replacement fails without mutation",
   "concurrent full Behavioral answer saves accept one revision and preserve the winner",
+  "concurrent Behavioral answer save and revision-delete accept exactly one outcome",
   "competing Behavioral primary saves serialize to one desired primary",
   "invalid Behavioral aggregate input rolls back before changing the primary",
   "legacy primary-only mutation fails without changing the aggregate",
   "concurrent custom-question saves accept exactly one coherent snapshot",
   "stale parent-revision custom-question delete preserves the question and children",
+  "revision-checked story deletion cascades themes without erasing a newer aggregate",
 ]) requireText(persistenceQualifier, marker, `Behavioral persistence qualification lacks ${marker}.`);
 const securityQualifier = read("scripts/qualify-security-local.mjs");
 for (const marker of [
@@ -668,14 +760,15 @@ for (const marker of ["create_behavioral_story_with_themes", "story.data[0].stor
 const preparationDatabaseTest = read("supabase/tests/database/user_preparation_state.test.sql");
 for (const marker of ["create_behavioral_story_with_themes", "update_behavioral_story_with_themes_if_revision", "duplicate_behavioral_story_with_themes", "invalid theme replacement leaves existing themes intact"]) requireText(preparationDatabaseTest, marker, `Behavioral preparation pgTAP compatibility lacks ${marker}.`);
 const behavioralWorkspaceDoc = read("docs/behavioral-workspace.md");
-for (const marker of ["one owner-scoped nested database statement", "successful null result is a missing story", "cannot pair a newer parent revision with older theme defaults"]) requireText(behavioralWorkspaceDoc, marker, `Behavioral workspace documentation lacks coherent edit-read truth: ${marker}.`);
+for (const marker of ["one owner-scoped nested database statement", "successful null result is a missing story", "cannot pair a newer parent revision with older theme defaults", "Story deletion shares the aggregate's owner/story lock", "Answer deletion shares that owner/question lock", "202609040009_delete_behavioral_records_if_revision.sql"]) requireText(behavioralWorkspaceDoc, marker, `Behavioral workspace documentation lacks coherent edit/delete truth: ${marker}.`);
 
 const actions = read("features/behavioral/actions.ts");
 const actor = read("lib/auth/actor.ts");
-for (const marker of ["getAuthenticatedActor", 'eq("user_id", current.user.id)', "createStoryAction", "updateStoryAction", "deleteStoryAction", "duplicateStoryAction", "saveQuestionAction", "deleteQuestionAction", "linkStoryAction", "linkQuestionToStoryAction", "unlinkStoryAction", "createAnswerAction", "updateAnswerAction", "deleteAnswerAction", "create_behavioral_answer_aggregate", "update_behavioral_answer_aggregate_if_revision", "save_behavioral_custom_question_if_revision", "delete_behavioral_custom_question_if_revision"]) requireText(actions, marker, `Behavioral actions lack ${marker}.`);
+for (const marker of ["getAuthenticatedActor", 'eq("user_id", current.user.id)', "createStoryAction", "updateStoryAction", "deleteStoryAction", "duplicateStoryAction", "saveQuestionAction", "deleteQuestionAction", "linkStoryAction", "linkQuestionToStoryAction", "unlinkStoryAction", "createAnswerAction", "updateAnswerAction", "deleteAnswerAction", "create_behavioral_answer_aggregate", "update_behavioral_answer_aggregate_if_revision", "save_behavioral_custom_question_if_revision", "delete_behavioral_custom_question_if_revision", "delete_behavioral_story_if_revision", "delete_behavioral_answer_if_revision"]) requireText(actions, marker, `Behavioral actions lack ${marker}.`);
 for (const marker of ["auth.getUser", "getAuthenticatedActor", "createSupabaseServerClient"]) requireText(actor, marker, `Canonical behavioral actor lacks ${marker}.`);
 const createStoryAction = functionSource(actions, "createStoryAction");
 const updateStoryAction = functionSource(actions, "updateStoryAction");
+const deleteStoryAction = functionSource(actions, "deleteStoryAction");
 const duplicateStoryAction = functionSource(actions, "duplicateStoryAction");
 for (const [name, body, parser, rpc] of [
   ["createStoryAction", createStoryAction, "parseBehavioralStoryActionInput", "create_behavioral_story_with_themes"],
@@ -697,6 +790,9 @@ check(updateStoryAction.indexOf("if (!parsed.ok) return") < updateStoryAction.in
 check(createStoryAction.indexOf("parseBehavioralStoryMutationResult") < createStoryAction.indexOf("redirect("), "createStoryAction validates its RPC row before claiming success");
 check(updateStoryAction.includes('outcome.status === "missing"') && updateStoryAction.includes("conflict: true") && updateStoryAction.indexOf("parseBehavioralStoryMutationResult") < updateStoryAction.indexOf("refreshBehavioral"), "updateStoryAction distinguishes a zero-row conflict and validates success before refresh");
 check(duplicateStoryAction.indexOf("parseBehavioralStoryMutationResult") < duplicateStoryAction.indexOf("redirect("), "duplicateStoryAction validates its RPC row before redirecting");
+check(deleteStoryAction.indexOf("parseBehavioralStoryDeleteInput") < deleteStoryAction.indexOf("getAuthenticatedActor") && deleteStoryAction.indexOf("getAuthenticatedActor") < deleteStoryAction.indexOf('rpc(\n    "delete_behavioral_story_if_revision"'), "deleteStoryAction parses the bound revision before actor and CAS deletion work");
+check(deleteStoryAction.includes("parseBehavioralDeleteResult") && deleteStoryAction.includes("conflict: outcome.status === \"conflict\"") && deleteStoryAction.indexOf("parseBehavioralDeleteResult") < deleteStoryAction.indexOf("refreshBehavioral"), "deleteStoryAction accepts only a correlated row and returns a zero-row conflict without refresh");
+check(!deleteStoryAction.includes('.from("behavioral_stories").delete'), "deleteStoryAction cannot bypass the revision-bound story RPC");
 const saveQuestionAction = functionSource(actions, "saveQuestionAction");
 const deleteQuestionAction = functionSource(actions, "deleteQuestionAction");
 check(saveQuestionAction.indexOf("parseBehavioralQuestionActionInput(formData)") < saveQuestionAction.indexOf("getAuthenticatedActor") && saveQuestionAction.indexOf("getAuthenticatedActor") < saveQuestionAction.indexOf('rpc(\n    "save_behavioral_custom_question_if_revision"'), "saveQuestionAction parses the complete runtime snapshot before actor and revision-checked persistence work");
@@ -707,6 +803,7 @@ check(deleteQuestionAction.indexOf("parseBehavioralQuestionRevision") < deleteQu
 check(deleteQuestionAction.indexOf("parseBehavioralQuestionDeleteResult") < deleteQuestionAction.indexOf("refreshBehavioral()") && !deleteQuestionAction.includes('from("behavioral_custom_questions").delete'), "deleteQuestionAction accepts only one correlated RPC result before redirecting");
 const createAnswerAction = functionSource(actions, "createAnswerAction");
 const updateAnswerAction = functionSource(actions, "updateAnswerAction");
+const deleteAnswerAction = functionSource(actions, "deleteAnswerAction");
 for (const [name, body, rpc] of [
   ["createAnswerAction", createAnswerAction, "create_behavioral_answer_aggregate"],
   ["updateAnswerAction", updateAnswerAction, "update_behavioral_answer_aggregate_if_revision"],
@@ -719,6 +816,9 @@ for (const [name, body, rpc] of [
 check(createAnswerAction.includes("BEHAVIORAL_ANSWER_CREATE_ERROR") && createAnswerAction.indexOf("parseBehavioralAnswerMutationResult") < createAnswerAction.indexOf("refreshBehavioral"), "createAnswerAction validates its exact aggregate result before refresh or success navigation");
 check(updateAnswerAction.includes("BEHAVIORAL_ANSWER_UPDATE_ERROR") && updateAnswerAction.includes("BEHAVIORAL_ANSWER_CONFLICT_ERROR") && updateAnswerAction.includes("conflict: true"), "updateAnswerAction keeps persistence failure distinct from a stable zero-row conflict");
 check(updateAnswerAction.indexOf("parseBehavioralAnswerMutationResult") < updateAnswerAction.indexOf("refreshBehavioral") && updateAnswerAction.indexOf("refreshBehavioral") < updateAnswerAction.indexOf("redirect("), "updateAnswerAction validates one correlated saved row before refresh and redirect");
+check(deleteAnswerAction.indexOf("parseBehavioralAnswerDeleteInput") < deleteAnswerAction.indexOf("getAuthenticatedActor") && deleteAnswerAction.indexOf("getAuthenticatedActor") < deleteAnswerAction.indexOf('rpc(\n    "delete_behavioral_answer_if_revision"'), "deleteAnswerAction parses question, answer, revision, and action form before actor and CAS deletion work");
+check(deleteAnswerAction.includes("parseBehavioralDeleteResult") && deleteAnswerAction.includes("conflict: outcome.status === \"conflict\"") && deleteAnswerAction.indexOf("parseBehavioralDeleteResult") < deleteAnswerAction.indexOf("refreshBehavioral"), "deleteAnswerAction accepts only a correlated row and returns a zero-row conflict without refresh");
+check(!deleteAnswerAction.includes('.from("behavioral_answers").delete') && deleteAnswerAction.indexOf("ownedQuestion") < deleteAnswerAction.indexOf('rpc(\n    "delete_behavioral_answer_if_revision"'), "deleteAnswerAction correlates the displayed question and cannot bypass the revision-bound answer RPC");
 check(!actions.includes("parseAnswerForm") && !actions.includes('rpc("set_behavioral_primary_answer"'), "production actions remove the fail-open answer parser and legacy primary-only mutation path");
 check(!actions.includes("parseQuestionForm") && !actions.includes('from("behavioral_custom_questions").insert') && !actions.includes('from("behavioral_custom_questions").update') && !actions.includes('from("behavioral_custom_questions").delete'), "production actions remove coercive and direct custom-question mutation paths");
 
@@ -805,6 +905,13 @@ const questionDetailPage = read("app/behavioral/questions/[questionId]/page.tsx"
 check(newQuestionPage.includes("randomUUID") && newQuestionPage.includes("<QuestionForm questionId={randomUUID()}"), "New custom questions receive a stable caller-generated mutation identity");
 check(editQuestionPage.includes("<QuestionForm questionId={question.id} question={question}"), "Custom-question edits pass the exact loaded row and revision into the editor");
 check(questionDetailPage.includes("deleteQuestionAction.bind(null, question.id, question.custom.updated_at)"), "Custom-question deletion submits the exact displayed revision");
+const storyDetailPage = read("app/behavioral/stories/[id]/page.tsx");
+for (const [source, binding, href, label] of [
+  [storyDetailPage, "deleteStoryAction.bind(null, story.id, story.updated_at)", "latestHref={`/behavioral/stories/${story.id}`}", "story"],
+  [questionDetailPage, "deleteAnswerAction.bind(null, question.id, answer.id, answer.updated_at)", "latestHref={answerHref}", "answer"],
+]) {
+  check(source.includes("RevisionConfirmAction") && source.includes(binding) && source.includes(href), `Behavioral ${label} deletion binds the exact displayed revision and safe latest-record recovery`);
+}
 const globalCss = read("app/globals.css");
 check(globalCss.includes('.behavioral-form .button[aria-disabled="true"]') && globalCss.includes('.behavioral-form .button[aria-disabled="true"]:hover') && globalCss.includes(".behavioral-save-status"), "Story pending and save status styles stay scoped to the Behavioral aggregate editor");
 const readiness = read("lib/behavioral/readiness.ts");

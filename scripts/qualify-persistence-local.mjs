@@ -344,9 +344,7 @@ async function cleanOwnedFixtures(account) {
   const attemptRows = expectSuccess(await owned.from("system_design_attempts").select("id").like("title", "Phase 5B qualification%"), "System Design attempt cleanup lookup failed");
   for (const attempt of attemptRows) expectSuccess(await owned.rpc("delete_system_design_attempt", { target_attempt_id: attempt.id }), "System Design attempt cleanup failed");
   const cleanupOperations = [
-    owned.from("behavioral_answers").delete().like("title", "Phase 5A qualification%"),
     owned.from("behavioral_saved_questions").delete().eq("curated_question_id", "beh-conflict-01"),
-    owned.from("behavioral_stories").delete().like("title", "Phase 5A qualification%"),
     owned.from("dsa_progress").delete().like("item_id", `${fixturePrefix}:%`),
     owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters", "course-schedule", "group-anagrams", "binary-search", "valid-parentheses", "valid-anagram", "climbing-stairs", "coin-change", "merge-intervals"]),
     owned.from("system_design_item_progress").delete().in("item_id", ["estimation", "url-shortener", "vector-search", "rate-limiter", "notification-service", "job-scheduler", "search-autocomplete", "leaderboard"]),
@@ -358,6 +356,14 @@ async function cleanOwnedFixtures(account) {
     const result = await operation;
     expect(!result.error, `fixture cleanup failed: ${result.error?.message}`);
   }
+  queryLocalDatabase(
+    "delete from public.behavioral_answers where user_id = :'user_id'::uuid and title like 'Phase 5A qualification%'",
+    { user_id: account.user.id },
+  );
+  queryLocalDatabase(
+    "delete from public.behavioral_stories where user_id = :'user_id'::uuid and title like 'Phase 5A qualification%'",
+    { user_id: account.user.id },
+  );
   queryLocalDatabase(
     "delete from public.preparation_track_progress where user_id = :'user_id'::uuid",
     { user_id: account.user.id },
@@ -1618,6 +1624,54 @@ await check("a concurrent Behavioral story edit read keeps the parent revision a
   return `concurrent read revision ${readRow.updated_at}; saved revision ${updatedRevision}`;
 });
 
+await check("concurrent Behavioral story save and revision-delete accept exactly one coherent outcome", async () => {
+  const created = await a.authClient.rpc("create_behavioral_story_with_themes", behavioralStoryArgs({
+    target_title: "Phase 5A qualification story delete race",
+    target_notes: "Delete-race original story",
+    target_themes: ["Leadership"],
+  }));
+  const rows = expectSuccess(created, "story delete-race creation failed");
+  expect(rows.length === 1, "story delete-race creation returned no row");
+  const storyId = rows[0].story_id;
+  const revision = rows[0].updated_at;
+  const [updated, deleted] = await Promise.all([
+    a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
+      target_story_id: storyId,
+      target_expected_updated_at: revision,
+      ...behavioralStoryArgs({
+        target_title: "Phase 5A qualification story delete race",
+        target_notes: "Delete-race saved story",
+        target_themes: ["Ownership"],
+      }),
+    }),
+    a.authClient.rpc("delete_behavioral_story_if_revision", {
+      target_story_id: storyId,
+      target_expected_updated_at: revision,
+    }),
+  ]);
+  const updateRows = expectSuccess(updated, "concurrent story save failed");
+  const deleteRows = expectSuccess(deleted, "concurrent story delete failed");
+  expect(updateRows.length + deleteRows.length === 1, "concurrent story save/delete did not produce exactly one winner");
+  const [storyRead, themeRead] = await Promise.all([
+    a.authClient.from("behavioral_stories").select("notes,updated_at").eq("id", storyId),
+    a.authClient.from("behavioral_story_themes").select("theme").eq("story_id", storyId),
+  ]);
+  const storyRows = expectSuccess(storyRead, "story delete-race parent read failed");
+  const themeRows = expectSuccess(themeRead, "story delete-race theme read failed");
+  if (deleteRows.length === 1) {
+    expect(storyRows.length === 0 && themeRows.length === 0, "winning story delete left a partial aggregate");
+    return "delete won; parent and themes absent";
+  }
+  expect(storyRows.length === 1 && storyRows[0].notes === "Delete-race saved story" && storyRows[0].updated_at === updateRows[0].updated_at, "winning story save did not preserve its parent snapshot");
+  expect(themeRows.length === 1 && themeRows[0].theme === "Ownership", "winning story save did not preserve its theme snapshot");
+  const cleanup = await a.authClient.rpc("delete_behavioral_story_if_revision", {
+    target_story_id: storyId,
+    target_expected_updated_at: updateRows[0].updated_at,
+  });
+  expect(expectSuccess(cleanup, "story delete-race cleanup failed").length === 1, "story delete-race cleanup returned no row");
+  return "save won; coherent parent and themes preserved";
+});
+
 await check("concurrent duplicate captures either complete aggregate snapshot", async () => {
   const storyId = requireFixture(fixture.storyId, "story");
   const priorRevision = requireFixture(fixture.storyRevision, "story revision");
@@ -1647,7 +1701,11 @@ await check("concurrent duplicate captures either complete aggregate snapshot", 
   const copiedAfter = copyStory.notes === "Concurrent duplicate new snapshot"
     && JSON.stringify(copiedThemes) === JSON.stringify([{ theme: "Mentorship" }]);
   expect(copiedBefore || copiedAfter, "duplicate mixed the before/after parent and theme snapshots");
-  expectSuccess(await a.authClient.from("behavioral_stories").delete().eq("id", copyId), "concurrent duplicate cleanup failed");
+  const copyDeletion = await a.authClient.rpc("delete_behavioral_story_if_revision", {
+    target_story_id: copyId,
+    target_expected_updated_at: duplicateRows[0].updated_at,
+  });
+  expect(expectSuccess(copyDeletion, "concurrent duplicate cleanup failed").length === 1, "concurrent duplicate cleanup returned no row");
   return copiedBefore ? "complete pre-update snapshot" : "complete post-update snapshot";
 });
 
@@ -1686,7 +1744,11 @@ await check("atomic duplicate copies one owned parent and theme snapshot", async
   expect(title.endsWith(" (copy)"), "duplicate title lacks the copy suffix");
   expect(JSON.stringify(copyWithoutTitle) === JSON.stringify(sourceRow), "duplicate parent is not the source snapshot");
   expect(JSON.stringify(expectSuccess(copyThemes, "duplicate themes read failed")) === JSON.stringify(expectSuccess(sourceThemes, "source themes read failed")), "duplicate themes are not the source snapshot");
-  expectSuccess(await a.authClient.from("behavioral_stories").delete().eq("id", rows[0].story_id), "duplicate cleanup failed");
+  const duplicateDeletion = await a.authClient.rpc("delete_behavioral_story_if_revision", {
+    target_story_id: rows[0].story_id,
+    target_expected_updated_at: rows[0].updated_at,
+  });
+  expect(expectSuccess(duplicateDeletion, "duplicate cleanup failed").length === 1, "duplicate cleanup returned no row");
   return rows[0].story_id;
 });
 
@@ -1731,8 +1793,13 @@ await check("answer preparation creates its canonical story mapping", async () =
   expect(rows.length === 1, `expected one automatic mapping answer, observed ${rows.length}`);
   const mapping = await a.authClient.from("behavioral_story_question_links").select("id").eq("story_id", storyId).eq("curated_question_id", "beh-tech-01").single();
   expectSuccess(mapping, "answer preparation did not create the canonical story mapping");
-  const cleanup = await a.authClient.from("behavioral_answers").delete().eq("id", rows[0].answer_id);
-  expectSuccess(cleanup, "automatic mapping answer cleanup failed");
+  const cleanup = await a.authClient.rpc("delete_behavioral_answer_if_revision", {
+    target_answer_id: rows[0].answer_id,
+    target_expected_updated_at: rows[0].updated_at,
+    target_custom_question_id: null,
+    target_curated_question_id: "beh-tech-01",
+  });
+  expect(expectSuccess(cleanup, "automatic mapping answer cleanup failed").length === 1, "automatic mapping answer cleanup returned no row");
 });
 
 await check("User A saves application-specific question notes without a full draft", async () => {
@@ -1816,6 +1883,54 @@ await check("concurrent full Behavioral answer saves accept one revision and pre
   expect(saved.notes === `Concurrent private note ${label}.` && saved.status === "Needs Work" && saved.is_primary, "winner fields or primary state were not coherent");
   expect(saved.updated_at === winner.updated_at && saved.updated_at > before.updated_at, "winning answer revision did not advance exactly");
   return `winner ${label}; one zero-row conflict; revision ${saved.updated_at}`;
+});
+
+await check("concurrent Behavioral answer save and revision-delete accept exactly one outcome", async () => {
+  const created = expectSuccess(await a.authClient.rpc("create_behavioral_answer_aggregate", behavioralAnswerArgs({
+    target_curated_question_id: "beh-tech-02",
+    target_story_id: requireFixture(fixture.storyId, "story"),
+    target_title: "Phase 5A qualification answer delete race",
+    target_answer_text: "Delete-race baseline answer.",
+  })), "answer delete-race creation failed");
+  expect(created.length === 1, "answer delete-race creation returned no row");
+  const answerId = created[0].answer_id;
+  const revision = created[0].updated_at;
+  const [updated, deleted] = await Promise.all([
+    a.authClient.rpc("update_behavioral_answer_aggregate_if_revision", {
+      target_answer_id: answerId,
+      target_expected_updated_at: revision,
+      ...behavioralAnswerArgs({
+        target_curated_question_id: "beh-tech-02",
+        target_story_id: requireFixture(fixture.storyId, "story"),
+        target_title: "Phase 5A qualification answer delete race",
+        target_answer_text: "Delete-race saved answer.",
+        target_notes: "Delete-race saved private note.",
+      }),
+    }),
+    a.authClient.rpc("delete_behavioral_answer_if_revision", {
+      target_answer_id: answerId,
+      target_expected_updated_at: revision,
+      target_custom_question_id: null,
+      target_curated_question_id: "beh-tech-02",
+    }),
+  ]);
+  const updateRows = expectSuccess(updated, "concurrent answer save failed");
+  const deleteRows = expectSuccess(deleted, "concurrent answer delete failed");
+  expect(updateRows.length + deleteRows.length === 1, "concurrent answer save/delete did not produce exactly one winner");
+  const read = expectSuccess(await a.authClient.from("behavioral_answers").select("answer_text,notes,updated_at").eq("id", answerId), "answer delete-race read failed");
+  if (deleteRows.length === 1) {
+    expect(read.length === 0, "winning answer delete left its target behind");
+    return "delete won; answer absent";
+  }
+  expect(read.length === 1 && read[0].answer_text === "Delete-race saved answer." && read[0].notes === "Delete-race saved private note." && read[0].updated_at === updateRows[0].updated_at, "winning answer save did not preserve its coherent snapshot");
+  const cleanup = await a.authClient.rpc("delete_behavioral_answer_if_revision", {
+    target_answer_id: answerId,
+    target_expected_updated_at: updateRows[0].updated_at,
+    target_custom_question_id: null,
+    target_curated_question_id: "beh-tech-02",
+  });
+  expect(expectSuccess(cleanup, "answer delete-race cleanup failed").length === 1, "answer delete-race cleanup returned no row");
+  return "save won; coherent answer snapshot preserved";
 });
 
 await check("competing Behavioral primary saves serialize to one desired primary", async () => {
@@ -2058,9 +2173,9 @@ await check("User B cannot update or delete User A behavioral records", async ()
     await b.authClient.from("behavioral_stories").update({ title: "Cross-user mutation" }).eq("id", storyId).select("id"),
     "42501",
   );
-  expectInvisible(
+  expectSqlError(
     await b.authClient.from("behavioral_stories").delete().eq("id", storyId).select("id"),
-    "story deletion",
+    "42501",
   );
   const savedUpdate = await b.authClient
     .from("behavioral_saved_questions")
@@ -3373,17 +3488,36 @@ await check("deleting a custom question cascades its saved-question reference", 
   return "0 child rows";
 });
 
-await check("deleting a story cascades its themes", async () => {
+await check("revision-checked story deletion cascades themes without erasing a newer aggregate", async () => {
   const storyId = requireFixture(fixture.storyId, "story");
   const directMutations = await Promise.all([
     a.authClient.from("behavioral_stories").insert({ user_id: a.user.id, title: "Phase 5A qualification direct bypass" }),
     a.authClient.from("behavioral_stories").update({ title: "Phase 5A qualification direct overwrite" }).eq("id", storyId),
+    a.authClient.from("behavioral_stories").delete().eq("id", storyId),
     a.authClient.from("behavioral_story_themes").insert({ user_id: a.user.id, story_id: storyId, theme: "Ownership" }),
     a.authClient.from("behavioral_story_themes").delete().eq("story_id", storyId),
   ]);
   for (const mutation of directMutations) expectSqlError(mutation, "42501");
-  const deletion = await a.authClient.from("behavioral_stories").delete().eq("id", storyId).select("id").single();
-  expectSuccess(deletion, "story deletion failed");
+  const before = expectSuccess(await a.authClient.from("behavioral_stories").select("updated_at").eq("id", storyId).single(), "story deletion revision lookup failed");
+  const staleUpdate = await a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
+    target_story_id: storyId,
+    target_expected_updated_at: before.updated_at,
+    ...behavioralStoryArgs({ target_notes: "Newer aggregate before delete", target_themes: ["Ownership"] }),
+  });
+  const updateRows = expectSuccess(staleUpdate, "story pre-delete update failed");
+  expect(updateRows.length === 1, "story pre-delete update returned no row");
+  const staleDeletion = await a.authClient.rpc("delete_behavioral_story_if_revision", {
+    target_story_id: storyId,
+    target_expected_updated_at: before.updated_at,
+  });
+  expect(expectSuccess(staleDeletion, "stale story deletion failed").length === 0, "stale story deletion removed a newer aggregate");
+  const preserved = expectSuccess(await a.authClient.from("behavioral_stories").select("notes,updated_at").eq("id", storyId).single(), "stale-delete story preservation lookup failed");
+  expect(preserved.notes === "Newer aggregate before delete" && preserved.updated_at === updateRows[0].updated_at, "stale story delete did not preserve the newer parent snapshot");
+  const deletion = await a.authClient.rpc("delete_behavioral_story_if_revision", {
+    target_story_id: storyId,
+    target_expected_updated_at: updateRows[0].updated_at,
+  });
+  expect(expectSuccess(deletion, "story deletion failed").length === 1, "exact story deletion returned no row");
   const themeRead = await a.authClient.from("behavioral_story_themes").select("id").eq("story_id", storyId);
   const rows = expectSuccess(themeRead, "theme cascade lookup failed");
   expect(rows.length === 0, "story themes survived parent deletion");
