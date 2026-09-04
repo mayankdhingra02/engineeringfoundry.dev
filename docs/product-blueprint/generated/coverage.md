@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-02
-repository_sha: 93bc7bab4272503eebaf51ac6270d61f9444377d
-repository_state_sha256: b76833b77c0a50a40e42dfb12b5e6ef156b541a01dee2bbcbb990abb033af510
+repository_sha: 8285738567d33a3a473f79137a9f5fddca1587ce
+repository_state_sha256: 37a32afdca7c2527ab1f72175e24428dac8477718d1974d8bb727d6a35a6f86a
 ---
 
 # Engineering Foundry requirement coverage
@@ -138,7 +138,7 @@ repository_state_sha256: b76833b77c0a50a40e42dfb12b5e6ef156b541a01dee2bbcbb990ab
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | — | /interview-tips/rounds/[slug] | 0 | 1 | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
 | EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | placeholder | needs-research | unpublished | missing | — | — | 0 | 1 | The index honestly identifies this role-specific guide as outside current v1. |
 | EF-SAL | salary-negotiation | required | partial | needs-current-verification | stale-review | missing | /salary-negotiation | — | 0 | 1 | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
-| EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | — | 0 | 6 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
+| EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | — | 0 | 8 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
 | EF-SD-PRACTICE-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | 27 of 60 walkthroughs are published; 33 remain researched and unpublished. |
 | EF-SD-TOPIC-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/[...segments] | 0 | 2 | 32 of 178 repository topics remain unpublished.; The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking. |
 | EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 10 | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
