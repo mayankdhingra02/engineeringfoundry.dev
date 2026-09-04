@@ -2,8 +2,19 @@
 
 import Link from "next/link";
 import { Check, LoaderCircle } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import type { Application } from "@/lib/supabase/database.types";
+import {
+  resolveSystemDesignAttemptDisplayState,
+  systemDesignAttemptDraftSignature,
+} from "@/lib/system-design/attempt-action-input";
 import type { SystemDesignAttempt } from "@/lib/system-design/workspace";
 import { formatLines, formatRows } from "@/lib/system-design/workspace";
 import { saveSystemDesignAttemptAction, type SystemDesignActionState } from "./actions";
@@ -18,11 +29,32 @@ function Field({ id, title, guidance, rows = 5, defaultValue, formatHint, descri
 export function SystemDesignAttemptEditor({ attempt, problemTitle, applications }: { attempt: SystemDesignAttempt; problemTitle: string; applications: ApplicationOption[] }) {
   const action = saveSystemDesignAttemptAction.bind(null, attempt.id, attempt.problem_id);
   const [dirty, setDirty] = useState(false);
+  const [changedSinceSubmit, setChangedSinceSubmit] = useState(false);
+  const changedSinceSubmitRef = useRef(false);
   const [state, formAction, pending] = useActionState(async (previous: SystemDesignActionState, formData: FormData) => {
     const result = await action(previous, formData);
-    if (result.status === "success") setDirty(false);
+    if (result.status === "success" && !changedSinceSubmitRef.current) {
+      setDirty(false);
+    }
     return result;
-  }, initial);
+  }, {
+    ...initial,
+    revision: attempt.revision,
+  });
+  const submissionPending = useRef(false);
+  const submittedDraftSignature = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!pending) submissionPending.current = false;
+  }, [pending]);
+  useEffect(
+    () => () => {
+      submissionPending.current = false;
+      submittedDraftSignature.current = null;
+      changedSinceSubmitRef.current = false;
+    },
+    [],
+  );
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => { if (dirty) event.preventDefault(); };
     const protectNavigation = (event: MouseEvent) => {
@@ -34,9 +66,36 @@ export function SystemDesignAttemptEditor({ attempt, problemTitle, applications 
     return () => { window.removeEventListener("beforeunload", beforeUnload); document.removeEventListener("click", protectNavigation, true); };
   }, [dirty]);
 
+  const updateDraftState = (form: HTMLFormElement) => {
+    setDirty(true);
+    if (submittedDraftSignature.current === null) return;
+    const changed =
+      systemDesignAttemptDraftSignature(new FormData(form)) !==
+      submittedDraftSignature.current;
+    changedSinceSubmitRef.current = changed;
+    setChangedSinceSubmit(changed);
+  };
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submissionPending.current || state.conflict) return;
+    submissionPending.current = true;
+    const formData = new FormData(event.currentTarget);
+    submittedDraftSignature.current =
+      systemDesignAttemptDraftSignature(formData);
+    changedSinceSubmitRef.current = false;
+    setChangedSinceSubmit(false);
+    startTransition(() => formAction(formData));
+  };
+
   const attemptDocument = attempt.document;
   const errorDescription = state.status === "error" ? "attempt-save-error" : undefined;
-  return <form action={formAction} className="sd-attempt-editor" onChange={() => setDirty(true)}>
+  const displayState = resolveSystemDesignAttemptDisplayState(
+    state,
+    pending,
+    changedSinceSubmit,
+  );
+  const latestHref = `/system-design/problems/${attempt.problem_id}/practice/${attempt.id}`;
+  return <form action={formAction} className="sd-attempt-editor" onSubmit={submit} onChange={(event) => updateDraftState(event.currentTarget)} aria-busy={pending}>
     <input type="hidden" name="expected_revision" value={state.revision ?? attempt.revision} />
     <header className="sd-attempt-editor-header"><div><Link href={`/system-design/problems/${attempt.problem_id}`}>← {problemTitle}</Link><input aria-label="Attempt title" name="title" required maxLength={160} defaultValue={attempt.title} aria-describedby={errorDescription} /></div><div><label>Status<select name="status" defaultValue={attempt.status} aria-describedby={errorDescription}><option value="draft">Draft</option><option value="practiced">Practiced</option><option value="review">Needs review</option></select></label><label>Confidence<select name="confidence" defaultValue={attempt.confidence ?? ""} aria-describedby={errorDescription}><option value="">Not set</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></label><label>Application<select name="application_id" defaultValue={attempt.application_id ?? ""} aria-describedby={errorDescription}><option value="">No application</option>{applications.map((application) => <option key={application.id} value={application.id}>{application.company_name} · {application.role_title}</option>)}</select></label></div></header>
     <aside className="sd-attempt-integrity-note">This worksheet is private. The public walkthrough remains unchanged, and saving here never changes another attempt.</aside>
@@ -54,6 +113,6 @@ export function SystemDesignAttemptEditor({ attempt, problemTitle, applications 
       <Field id="follow_ups" title="Interviewer follow-ups" guidance="One follow-up question or unresolved design branch per line." defaultValue={formatLines(attemptDocument.follow_ups)} />
       <Field id="final_review_notes" title="Final review notes" guidance="After practice, capture the clearest explanation, weakest assumption, and next change." rows={8} defaultValue={attemptDocument.final_review_notes} />
     </fieldset><nav aria-label="Attempt sections"><strong>Worksheet</strong>{[["functional_requirements","Requirements"],["capacity","Capacity"],["apis","APIs"],["data_models","Data models"],["high_level_design","Architecture"],["failure_modes","Failures"],["tradeoffs","Trade-offs"],["final_review_notes","Review"]].map(([id,label]) => <a key={id} href={`#section-${id}`}>{label}</a>)}</nav></div>
-    <footer className="sd-attempt-savebar"><div role="status" aria-live="polite" aria-atomic="true">{dirty ? <><span className="sd-unsaved-dot" />Unsaved changes</> : state.status === "success" ? <><Check size={14} />Saved</> : "No unsaved changes"}{state.message && <small id={errorDescription} className={state.status === "error" ? "error" : ""}>{state.message}</small>}</div><button className="button" disabled={pending || state.conflict}>{pending ? <><LoaderCircle className="spin" size={15} />Saving…</> : "Save attempt"}</button></footer>
+    <footer className="sd-attempt-savebar"><div role={displayState.status === "error" ? "alert" : "status"} aria-live={displayState.status === "error" ? "assertive" : "polite"} aria-atomic="true">{dirty ? <><span className="sd-unsaved-dot" />Unsaved changes</> : state.status === "success" ? <><Check size={14} />Saved</> : "No unsaved changes"}{displayState.message && <small id={errorDescription} className={displayState.status === "error" ? "error" : ""}>{displayState.message}{!pending && state.conflict && <><br /><Link href={latestHref} target="_blank" rel="noopener noreferrer">Review latest in a new tab</Link></>}</small>}</div><button className="button" type="submit" aria-disabled={pending || Boolean(state.conflict)}>{pending ? <><LoaderCircle className="spin" size={15} />Saving…</> : "Save attempt"}</button></footer>
   </form>;
 }

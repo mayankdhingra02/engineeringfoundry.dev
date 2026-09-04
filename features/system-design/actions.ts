@@ -5,17 +5,20 @@ import { redirect } from "next/navigation";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 import {
-  attemptDocumentFromForm,
   attemptDocumentToJson,
   canonicalSystemDesignItemIds,
   canonicalSystemDesignProblemIds,
   emptySystemDesignAttemptDocument,
-  systemDesignAttemptStatuses,
-  systemDesignConfidences,
-  type SystemDesignAttemptStatus,
-  type SystemDesignConfidence,
   type SystemDesignStatus,
 } from "@/lib/system-design/workspace";
+import {
+  SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_INVALID_INPUT_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE,
+  parseSystemDesignAttemptActionInput,
+  parseSystemDesignAttemptSaveResult,
+} from "@/lib/system-design/attempt-action-input";
 import {
   SYSTEM_DESIGN_PROGRESS_CONFLICT_ERROR,
   SYSTEM_DESIGN_PROGRESS_INVALID_INPUT_ERROR,
@@ -38,7 +41,6 @@ export type SystemDesignProgressActionState = {
   };
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const accountUnavailable = () => ({ status: "error", message: "Account persistence is not available in this configuration." } satisfies SystemDesignActionState);
 
 function refreshSystemDesign(problemId?: string, attemptId?: string) {
   revalidatePath("/system-design/practice");
@@ -139,31 +141,61 @@ export async function createSystemDesignAttemptAction(problemId: string, formDat
   redirect(`/system-design/problems/${problemId}/practice/${data}`);
 }
 
-export async function saveSystemDesignAttemptAction(attemptId: string, problemId: string, _: SystemDesignActionState, formData: FormData): Promise<SystemDesignActionState> {
-  if (!isAccountPlatformAvailable()) return accountUnavailable();
-  const actor = await getAuthenticatedActor();
-  if (!actor) return { status: "error", message: "Your session expired. Sign in and reopen this attempt." };
-  if (!UUID.test(attemptId) || !canonicalSystemDesignProblemIds.has(problemId)) return { status: "error", message: "This attempt could not be found." };
-  const title = String(formData.get("title") ?? "").trim();
-  const status = String(formData.get("status") ?? "draft") as SystemDesignAttemptStatus;
-  const confidenceValue = String(formData.get("confidence") ?? "");
-  const confidence = confidenceValue ? confidenceValue as SystemDesignConfidence : null;
-  const applicationId = String(formData.get("application_id") ?? "") || null;
-  const expectedRevision = Number(formData.get("expected_revision"));
-  if (!title || title.length > 160 || !systemDesignAttemptStatuses.includes(status) || (confidence && !systemDesignConfidences.includes(confidence)) || (applicationId && !UUID.test(applicationId)) || !Number.isSafeInteger(expectedRevision) || expectedRevision < 1) {
-    return { status: "error", message: "Review the attempt details and try again." };
+export async function saveSystemDesignAttemptAction(
+  attemptId: unknown,
+  problemId: unknown,
+  previousState: SystemDesignActionState,
+  formData: unknown,
+): Promise<SystemDesignActionState> {
+  const parsed = parseSystemDesignAttemptActionInput(
+    attemptId,
+    problemId,
+    formData,
+  );
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: SYSTEM_DESIGN_ATTEMPT_INVALID_INPUT_ERROR,
+      revision: previousState.revision,
+    };
   }
-  const document = attemptDocumentFromForm(formData);
-  if (!document.ok) return { status: "error", message: document.message };
-  const { data, error } = await actor.supabase.rpc("save_system_design_attempt", {
-    target_attempt_id: attemptId, target_expected_revision: expectedRevision, target_title: title,
-    target_status: status, target_confidence: confidence, target_application_id: applicationId,
-    target_document: attemptDocumentToJson(document.data),
+  const input = parsed.value;
+  const failed = (message: string, conflict = false) => ({
+    status: "error" as const,
+    message,
+    conflict,
+    revision: input.expectedRevision,
   });
-  if (error) return { status: "error", message: "We couldn't save this attempt." };
-  if (!data?.length) return { status: "error", conflict: true, message: "This attempt changed in another tab. Reload before saving so you do not overwrite newer work." };
-  refreshSystemDesign(problemId, attemptId);
-  return { status: "success", message: "Attempt saved.", revision: data[0].revision };
+  if (!isAccountPlatformAvailable()) {
+    return failed("Account persistence is not available in this configuration.");
+  }
+  const actor = await getAuthenticatedActor();
+  if (!actor) {
+    return failed("Your session expired. Sign in and reopen this attempt.");
+  }
+  const { data, error } = await actor.supabase.rpc("save_system_design_attempt", {
+    target_attempt_id: input.attemptId,
+    target_expected_revision: input.expectedRevision,
+    target_title: input.title,
+    target_status: input.status,
+    target_confidence: input.confidence,
+    target_application_id: input.applicationId,
+    target_document: attemptDocumentToJson(input.document),
+  });
+  if (error) return failed(SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR);
+  const outcome = parseSystemDesignAttemptSaveResult(data, input);
+  if (outcome.status === "conflict") {
+    return failed(SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR, true);
+  }
+  if (outcome.status === "invalid") {
+    return failed(SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR);
+  }
+  refreshSystemDesign(input.problemId, input.attemptId);
+  return {
+    status: "success",
+    message: SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE,
+    revision: outcome.revision,
+  };
 }
 
 export async function deleteSystemDesignAttemptAction(attemptId: string, problemId: string) {
