@@ -161,39 +161,112 @@ const css = read("app/globals.css");
 for (const marker of [".tracker-workspace", ".tracker-table-wrap", ".tracker-mobile-list", ".tracker-timeline", "@media (max-width: 800px)"]) requireText(css, marker, `Tracker responsive styling lacks ${marker}.`);
 requireText(css, '.tracker-confirm .button[aria-disabled="true"]', "Tracker confirmation pending state lacks scoped visual feedback.");
 
-const validApplication = new FormData();
-validApplication.set("company_name", "Amazon");
-validApplication.set("role_title", "Software Development Engineer II");
-validApplication.set("status", "Interviewing");
-validApplication.set("job_url", "https://amazon.jobs/example");
-assert.equal(parseApplicationForm(validApplication).data?.company_name, "Amazon", "valid application input should parse");
+const trackerRevision = "2026-09-03T18:24:31.123456+00:00";
+const applicationFormData = (overrides = {}, mode = "create") => {
+  const fields = {
+    company_name: "Amazon",
+    role_title: "Software Development Engineer II",
+    role_level: "SDE II",
+    status: "Interviewing",
+    application_date: "2026-09-01",
+    location: "Chicago",
+    job_url: "https://amazon.jobs/example",
+    source: "Referral",
+    recruiter_name: "Recruiter",
+    recruiter_email: "recruiter@example.com",
+    notes: "Private follow-up notes",
+    ...overrides,
+  };
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined) form.set(key, value);
+  }
+  if (mode === "edit") form.set(TRACKER_EDIT_REVISION_FIELD, trackerRevision);
+  return form;
+};
+const roundFormData = (overrides = {}, mode = "create") => {
+  const fields = {
+    round_name: "System Design",
+    round_type: "System Design",
+    scheduled_local: "2026-09-18T14:00",
+    timezone: "America/Chicago",
+    duration_minutes: "60",
+    status: "Scheduled",
+    result: "Pending",
+    interviewer_name: "Interviewer",
+    interviewer_role: "Staff engineer",
+    meeting_link: "https://meet.example.com/round",
+    location: "Remote",
+    notes: "Private round notes",
+    ...overrides,
+  };
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined) form.set(key, value);
+  }
+  if (mode === "edit") form.set(TRACKER_EDIT_REVISION_FIELD, trackerRevision);
+  return form;
+};
 
-const invalidApplication = new FormData();
-invalidApplication.set("company_name", "");
-invalidApplication.set("role_title", "");
-invalidApplication.set("job_url", "javascript:alert(1)");
-const invalidApplicationResult = parseApplicationForm(invalidApplication);
-assert.ok(invalidApplicationResult.errors.company_name && invalidApplicationResult.errors.role_title && invalidApplicationResult.errors.job_url, "required fields and unsafe URLs must fail together");
+const validApplicationResult = parseApplicationForm(applicationFormData());
+assert.ok(validApplicationResult.ok && validApplicationResult.data.company_name === "Amazon", "valid complete application input should parse");
+const validApplicationEdit = parseApplicationForm(applicationFormData({}, "edit"), "edit");
+assert.ok(validApplicationEdit.ok && validApplicationEdit.expectedUpdatedAt === trackerRevision, "valid application edit did not retain its exact revision");
+const invalidApplicationResult = parseApplicationForm(applicationFormData({ company_name: "", role_title: "", job_url: "javascript:alert(1)" }));
+assert.ok(!invalidApplicationResult.ok && invalidApplicationResult.errors.company_name && invalidApplicationResult.errors.role_title && invalidApplicationResult.errors.job_url, "required fields and unsafe URLs must fail together");
 
-const validRound = new FormData();
-validRound.set("round_name", "System Design");
-validRound.set("round_type", "System Design");
-validRound.set("scheduled_local", "2026-09-18T14:00");
-validRound.set("timezone", "America/Chicago");
-validRound.set("duration_minutes", "60");
-validRound.set("status", "Scheduled");
-validRound.set("result", "Pending");
-assert.match(parseRoundForm(validRound).data?.scheduled_at ?? "", /Z$/, "valid zoned interview input should become UTC");
+const validRoundResult = parseRoundForm(roundFormData());
+assert.ok(validRoundResult.ok && /Z$/.test(validRoundResult.data.scheduled_at ?? ""), "valid complete zoned interview input should become UTC");
+const validRoundEdit = parseRoundForm(roundFormData({}, "edit"), "edit");
+assert.ok(validRoundEdit.ok && validRoundEdit.expectedUpdatedAt === trackerRevision, "valid round edit did not retain its exact revision");
+const invalidRoundResult = parseRoundForm(roundFormData({ timezone: "Not/A_Timezone", duration_minutes: "2" }));
+assert.ok(!invalidRoundResult.ok && invalidRoundResult.errors.timezone && invalidRoundResult.errors.duration_minutes, "invalid timezone and duration must be rejected");
 
-const invalidRound = new FormData();
-invalidRound.set("round_name", "Coding");
-invalidRound.set("round_type", "Coding / DSA");
-invalidRound.set("scheduled_local", "2026-09-18T14:00");
-invalidRound.set("timezone", "Not/A_Timezone");
-invalidRound.set("duration_minutes", "2");
-invalidRound.set("status", "Scheduled");
-const invalidRoundResult = parseRoundForm(invalidRound);
-assert.ok(invalidRoundResult.errors.timezone && invalidRoundResult.errors.duration_minutes, "invalid timezone and duration must be rejected");
+for (const [label, parser, build, fieldNames] of [
+  ["application", parseApplicationForm, applicationFormData, ["company_name", "role_title", "role_level", "status", "application_date", "location", "job_url", "source", "recruiter_name", "recruiter_email", "notes"]],
+  ["round", parseRoundForm, roundFormData, ["round_name", "round_type", "scheduled_local", "timezone", "duration_minutes", "status", "result", "interviewer_name", "interviewer_role", "meeting_link", "location", "notes"]],
+]) {
+  for (const field of fieldNames) {
+    assert.equal(parser(build({ [field]: undefined })).ok, false, `${label} parser accepted missing ${field}`);
+    const duplicate = build();
+    duplicate.append(field, String(duplicate.get(field)));
+    assert.equal(parser(duplicate).ok, false, `${label} parser accepted duplicate ${field}`);
+    const file = build();
+    file.set(field, new File(["value"], `${field}.txt`));
+    assert.equal(parser(file).ok, false, `${label} parser accepted File ${field}`);
+  }
+  for (const input of [null, undefined, {}, [], "invalid"]) {
+    assert.equal(parser(input).ok, false, `${label} parser accepted non-FormData ${String(input)}`);
+  }
+  const unknown = build();
+  unknown.set("user_id", "33333333-3333-4333-8333-333333333333");
+  assert.equal(parser(unknown).ok, false, `${label} parser accepted an unknown ownership field`);
+  const actionMetadata = build();
+  actionMetadata.set("$ACTION_ID_example", "opaque");
+  assert.equal(parser(actionMetadata).ok, true, `${label} parser rejected React action metadata`);
+  const unexpectedRevision = build();
+  unexpectedRevision.set(TRACKER_EDIT_REVISION_FIELD, trackerRevision);
+  assert.equal(parser(unexpectedRevision).ok, false, `${label} create parser accepted an edit revision`);
+  assert.deepEqual(parser(build(), "edit"), { ok: false, errors: {}, reason: "invalid-revision" }, `${label} edit parser accepted a missing revision`);
+}
+assert.equal(parseRoundForm(roundFormData({ scheduled_local: "", timezone: "Not/A_Timezone", status: "Planned" })).ok, false, "unscheduled round accepted an invalid persisted timezone");
+assert.equal(parseRoundForm(roundFormData({ duration_minutes: "6e1" })).ok, false, "round accepted a noncanonical exponential duration");
+for (const [label, result, field] of [
+  ["application required control", parseApplicationForm(applicationFormData({ company_name: "Acme\u0000" })), "company_name"],
+  ["application optional oversize", parseApplicationForm(applicationFormData({ role_level: "x".repeat(81) })), "role_level"],
+  ["application multiline control", parseApplicationForm(applicationFormData({ notes: "private\u0000note" })), "notes"],
+  ["application multiline oversize", parseApplicationForm(applicationFormData({ notes: "😀".repeat(10_001) })), "notes"],
+  ["round required control", parseRoundForm(roundFormData({ round_name: "Panel\u0000" })), "round_name"],
+  ["round optional oversize", parseRoundForm(roundFormData({ location: "x".repeat(201) })), "location"],
+  ["round multiline control", parseRoundForm(roundFormData({ notes: "private\u0000note" })), "notes"],
+  ["round multiline oversize", parseRoundForm(roundFormData({ notes: "😀".repeat(10_001) })), "notes"],
+]) {
+  assert.ok(!result.ok && result.errors[field], `${label} did not fail its exact field`);
+}
+const explicitApplicationClears = parseApplicationForm(applicationFormData({ role_level: "", location: "", job_url: "", source: "", recruiter_name: "", recruiter_email: "", notes: "" }));
+assert.ok(explicitApplicationClears.ok && explicitApplicationClears.data.role_level === null && explicitApplicationClears.data.notes === null, "complete application input did not retain intentional empty-field clears");
+const explicitRoundClears = parseRoundForm(roundFormData({ scheduled_local: "", timezone: "", duration_minutes: "", status: "Planned", interviewer_name: "", interviewer_role: "", meeting_link: "", location: "", notes: "" }));
+assert.ok(explicitRoundClears.ok && explicitRoundClears.data.scheduled_at === null && explicitRoundClears.data.notes === null, "complete round input did not retain intentional empty-field clears");
 
 assert.equal(TRACKER_EDIT_REVISION_FIELD, "expected_updated_at", "tracker edit revision field name changed unexpectedly");
 assert.equal(
@@ -321,9 +394,11 @@ const actionSource = (name, nextName) => {
   assert.ok(start >= 0 && end > start, `could not isolate ${name} source`);
   return actions.slice(start, end);
 };
+const applicationCreateAction = actionSource("createApplicationAction", "updateApplicationAction");
 const applicationUpdateAction = actionSource("updateApplicationAction", "updateApplicationStatusAction");
 const applicationStatusAction = actionSource("updateApplicationStatusAction", "deleteApplicationAction");
 const applicationDeleteAction = actionSource("deleteApplicationAction", "createRoundAction");
+const roundCreateAction = actionSource("createRoundAction", "updateRoundAction");
 const roundUpdateAction = actionSource("updateRoundAction", "deleteRoundAction");
 const roundDeleteAction = actionSource("deleteRoundAction", "completeRoundAction");
 const roundCompletionAction = actionSource("completeRoundAction", "moveRoundAction");
@@ -331,20 +406,32 @@ for (const [label, source, conflictMessage, ownerPredicates] of [
   ["application", applicationUpdateAction, "APPLICATION_EDIT_CONFLICT_MESSAGE", ['.eq("id", applicationId)', '.eq("user_id", current.user.id)']],
   ["round", roundUpdateAction, "INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE", ['.eq("id", roundId)', '.eq("application_id", applicationId)', '.eq("user_id", current.user.id)']],
 ]) {
-  const revisionParse = source.indexOf("parseTrackerEditRevision(formData)");
-  const invalidRevision = source.indexOf("if (!revision.ok)", revisionParse);
-  const actorLookup = source.indexOf("getAuthenticatedActor()", invalidRevision);
-  const contentParse = source.indexOf(label === "application" ? "parseApplicationForm(formData)" : "parseRoundForm(formData)", actorLookup);
-  const update = source.indexOf(".update(parsed.data)", contentParse);
-  const revisionCas = source.indexOf('.eq("updated_at", revision.expectedUpdatedAt)', update);
+  const contentParse = source.indexOf(label === "application" ? 'parseApplicationForm(formData, "edit")' : 'parseRoundForm(formData, "edit")');
+  const invalidInput = source.indexOf("if (!parsed.ok)", contentParse);
+  const expectedRevision = source.indexOf("if (!parsed.expectedUpdatedAt)", invalidInput);
+  const actorLookup = source.indexOf("getAuthenticatedActor()", expectedRevision);
+  const update = source.indexOf(".update(parsed.data)", actorLookup);
+  const revisionCas = source.indexOf('.eq("updated_at", parsed.expectedUpdatedAt)', update);
   const queryError = source.indexOf("if (error)", revisionCas);
   const missingRow = source.indexOf("if (!data)", queryError);
   const revalidation = source.indexOf("revalidatePath", missingRow);
-  assert.match(source, /\): Promise<TrackerActionState> \{\s*const revision = parseTrackerEditRevision\(formData\);/, `${label} full edit does not parse its revision as the first action-body step`);
-  assert.ok(revisionParse >= 0 && invalidRevision > revisionParse && actorLookup > invalidRevision && contentParse > actorLookup && update > contentParse && revisionCas > update && queryError > revisionCas && missingRow > queryError && revalidation > missingRow, `${label} full edit does not preserve revision parse -> actor -> content parse -> owner CAS -> error/conflict -> revalidation ordering`);
+  assert.match(source, new RegExp(`\\): Promise<TrackerActionState> \\{\\s*const parsed = ${label === "application" ? "parseApplicationForm" : "parseRoundForm"}\\(formData, \\"edit\\"\\);`), `${label} full edit does not parse its complete snapshot as the first action-body step`);
+  assert.ok(contentParse >= 0 && invalidInput > contentParse && expectedRevision > invalidInput && actorLookup > expectedRevision && update > actorLookup && revisionCas > update && queryError > revisionCas && missingRow > queryError && revalidation > missingRow, `${label} full edit does not preserve complete parse -> revision -> actor -> owner CAS -> error/conflict -> revalidation ordering`);
   for (const predicate of ownerPredicates) assert.ok(source.indexOf(predicate, update) > update && source.indexOf(predicate, update) < revisionCas, `${label} CAS is missing owner predicate ${predicate}`);
-  assert.ok(source.slice(invalidRevision, actorLookup).includes(conflictMessage), `${label} invalid revision does not fail before actor work with stable conflict copy`);
+  assert.ok(source.slice(invalidInput, actorLookup).includes(conflictMessage), `${label} invalid revision does not fail before actor work with stable conflict copy`);
   assert.ok(source.slice(missingRow, revalidation).includes(conflictMessage) && source.slice(missingRow, revalidation).includes("conflict: true"), `${label} zero-row CAS is not distinguished from a query failure as a stable conflict`);
+}
+
+for (const [label, source, parseCall, mutationMarker] of [
+  ["application", applicationCreateAction, 'parseApplicationForm(formData, "create")', '.from("applications").insert('],
+  ["round", roundCreateAction, 'parseRoundForm(formData, "create")', '.rpc("create_interview_round"'],
+]) {
+  const parse = source.indexOf(parseCall);
+  const invalid = source.indexOf("if (!parsed.ok)", parse);
+  const actorLookup = source.indexOf("getAuthenticatedActor()", invalid);
+  const mutation = source.indexOf(mutationMarker, actorLookup);
+  assert.match(source, new RegExp(`\\): Promise<TrackerActionState> \\{\\s*const parsed = ${parseCall.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`), `${label} create does not parse its complete runtime snapshot first`);
+  assert.ok(parse >= 0 && invalid > parse && actorLookup > invalid && mutation > actorLookup, `${label} create does not reject malformed input before actor and persistence work`);
 }
 
 for (const [label, source, entity, editHref] of [
