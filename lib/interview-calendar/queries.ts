@@ -4,6 +4,7 @@ import { getAuthenticatedActor } from "@/lib/auth/actor";
 import { PrivateDataUnavailableError } from "@/lib/persistence/errors";
 import type { InterviewCalendarExport, InterviewReminder, InterviewReminderPreference } from "@/lib/supabase/database.types";
 import { ACTIVE_INTERVIEW_STATUSES, monthQueryRange, parseMonth } from "./model";
+import { REMINDER_PREFERENCE_ABSENT_REVISION } from "./reminder-preference-action-input";
 
 export type CalendarInterview = {
   id: string;
@@ -70,7 +71,17 @@ export async function getInterviewCalendarData(input: { view?: string; month?: s
     if (round && reminder.schedule_revision === round.reminder_schedule_revision) state.get(reminder.round_id)?.reminders.push(reminder);
   }
   for (const item of (exportResult.data ?? []) as InterviewCalendarExport[]) state.get(item.round_id)?.exports.push(item);
-  return { view, year: parsed.year, month: parsed.month, rounds, preference: (preferenceResult.data as InterviewReminderPreference | null) ?? defaults(current.user.id), state };
+  const savedPreference = preferenceResult.data as InterviewReminderPreference | null;
+  return {
+    view,
+    year: parsed.year,
+    month: parsed.month,
+    rounds,
+    preference: savedPreference ?? defaults(current.user.id),
+    preferenceRevision:
+      savedPreference?.updated_at ?? REMINDER_PREFERENCE_ABSENT_REVISION,
+    state,
+  };
 }
 
 export async function getOwnedCalendarInterview(roundId: string): Promise<CalendarInterview | null> {
