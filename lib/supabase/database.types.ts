@@ -1040,6 +1040,16 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["user_preparation_preferences"]["Row"];
       };
+      save_account_preparation_preferences_if_revision: {
+        Args: {
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          preferred_role_level_value: "sde1" | "sde2" | "senior" | "staff" | "unsure" | null;
+          primary_preparation_focus_value: "dsa" | "system_design" | "behavioral" | "applications" | "unsure" | null;
+          preferred_dsa_level_value: "sde1" | "sde2" | "sde3plus" | null;
+        };
+        Returns: { updated_at: string }[];
+      };
       save_profile_if_revision: {
         Args: {
           target_expected_updated_at: string;

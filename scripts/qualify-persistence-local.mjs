@@ -125,6 +125,24 @@ async function saveReminderPreferences(supabase, values, expectation) {
   });
 }
 
+async function currentPreparationPreferences(supabase) {
+  const result = await supabase
+    .from("user_preparation_preferences")
+    .select("preferred_role_level,primary_preparation_focus,dsa_level,dsa_plan_id,dsa_company_slug,dsa_preferred_language_slug,dsa_interview_date,system_design_level,system_design_preparation_window,system_design_role,system_design_minutes_per_day,updated_at")
+    .single();
+  return expectSuccess(result, "Preparation preference revision lookup failed");
+}
+
+function savePreparationPreferences(supabase, values, expectation) {
+  return supabase.rpc("save_account_preparation_preferences_if_revision", {
+    target_expect_absent: expectation === null,
+    target_expected_updated_at: expectation,
+    preferred_role_level_value: values.preferredRoleLevel,
+    primary_preparation_focus_value: values.primaryPreparationFocus,
+    preferred_dsa_level_value: values.dsaLevel,
+  });
+}
+
 async function currentProfile(supabase) {
   const result = await supabase
     .from("profiles")
@@ -2440,6 +2458,70 @@ await check("User A updates their preparation preferences", async () => {
     .single();
   const row = expectSuccess(update, "preference update failed");
   expect(row.dsa_plan_id === "30d" && row.system_design_preparation_window === "1-week", "preference update did not persist");
+});
+
+await check("concurrent preparation preference snapshots accept exactly one desired state", async () => {
+  const before = await currentPreparationPreferences(a.authClient);
+  const desired = [
+    { preferredRoleLevel: "senior", primaryPreparationFocus: "system_design", dsaLevel: "sde3plus" },
+    { preferredRoleLevel: "staff", primaryPreparationFocus: "behavioral", dsaLevel: "sde1" },
+  ];
+  const attempts = await Promise.all(desired.map((value) =>
+    savePreparationPreferences(a.authClient, value, before.updated_at)));
+  attempts.forEach((attempt) => expect(!attempt.error, attempt.error?.message ?? "concurrent preparation preference save failed"));
+  expect(attempts.filter((attempt) => attempt.data?.length === 1).length === 1, "concurrent preference saves did not produce exactly one winner");
+  expect(attempts.filter((attempt) => attempt.data?.length === 0).length === 1, "concurrent preference saves did not produce exactly one conflict");
+  const winnerIndex = attempts.findIndex((attempt) => attempt.data?.length === 1);
+  const after = await currentPreparationPreferences(a.authClient);
+  const winner = desired[winnerIndex];
+  expect(
+    after.preferred_role_level === winner.preferredRoleLevel
+      && after.primary_preparation_focus === winner.primaryPreparationFocus
+      && after.dsa_level === winner.dsaLevel,
+    "persisted preparation preferences do not match the single winning snapshot",
+  );
+  for (const field of ["dsa_plan_id", "dsa_company_slug", "dsa_preferred_language_slug", "dsa_interview_date", "system_design_level", "system_design_preparation_window", "system_design_role", "system_design_minutes_per_day"]) {
+    expect(after[field] === before[field], `preference CAS changed unrelated ${field}`);
+  }
+  return "one winner, one conflict, unrelated planning fields preserved";
+});
+
+await check("preparation preference and desired DSA writes preserve the newer DSA roadmap", async () => {
+  const seeded = await a.authClient
+    .from("user_preparation_preferences")
+    .update({ dsa_level: "sde1" })
+    .eq("user_id", a.user.id)
+    .select("updated_at")
+    .single();
+  expectSuccess(seeded, "deterministic DSA preference seed failed");
+  const before = await currentPreparationPreferences(a.authClient);
+  const desiredSettings = {
+    preferredRoleLevel: "sde2",
+    primaryPreparationFocus: "applications",
+    dsaLevel: "sde2",
+  };
+  const [settings, dsa] = await Promise.all([
+    savePreparationPreferences(a.authClient, desiredSettings, before.updated_at),
+    a.authClient
+      .from("user_preparation_preferences")
+      .update({ dsa_level: "sde3plus" })
+      .eq("user_id", a.user.id)
+      .select("updated_at"),
+  ]);
+  expect(!settings.error, settings.error?.message ?? "preference CAS failed during DSA race");
+  expectSuccess(dsa, "desired DSA write failed during preference race");
+  expect(settings.data?.length === 0 || settings.data?.length === 1, "preference CAS returned a malformed cardinality");
+  const after = await currentPreparationPreferences(a.authClient);
+  expect(after.dsa_level === "sde3plus", "newer desired DSA roadmap was overwritten by a stale settings snapshot");
+  if (settings.data?.length === 1) {
+    expect(after.preferred_role_level === desiredSettings.preferredRoleLevel && after.primary_preparation_focus === desiredSettings.primaryPreparationFocus, "successful settings snapshot did not preserve its role/focus fields");
+  } else {
+    expect(after.preferred_role_level === before.preferred_role_level && after.primary_preparation_focus === before.primary_preparation_focus, "conflicted settings snapshot partially changed role/focus fields");
+  }
+  for (const field of ["dsa_plan_id", "dsa_company_slug", "dsa_preferred_language_slug", "dsa_interview_date", "system_design_level", "system_design_preparation_window", "system_design_role", "system_design_minutes_per_day"]) {
+    expect(after[field] === before[field], `preference/DSA race changed unrelated ${field}`);
+  }
+  return settings.data?.length === 1 ? "settings committed first; DSA intent won last" : "DSA committed first; stale settings conflicted";
 });
 
 await check("User B cannot read, update, or delete User A preferences", async () => {

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(51);
+select plan(61);
 
 select has_column('public', 'profiles', 'onboarding_completed_at', 'profiles store an explicit onboarding completion timestamp');
 select has_column('public', 'user_preparation_preferences', 'preferred_role_level', 'preparation preferences store preferred role level');
@@ -12,6 +12,14 @@ select ok(has_function_privilege('authenticated', 'public.complete_account_onboa
 select ok(not has_function_privilege('anon', 'public.complete_account_onboarding(text,text,text)', 'execute'), 'anonymous users cannot invoke onboarding');
 select ok(has_function_privilege('authenticated', 'public.save_account_preparation_preferences(text,text,text)', 'execute'), 'authenticated users can save actor-derived preparation preferences');
 select ok(not has_function_privilege('anon', 'public.save_account_preparation_preferences(text,text,text)', 'execute'), 'anonymous users cannot save preparation preferences');
+select has_function(
+  'public',
+  'save_account_preparation_preferences_if_revision',
+  array['boolean', 'timestamp with time zone', 'text', 'text', 'text'],
+  'revision-checked preparation preference saving exists'
+);
+select ok(has_function_privilege('authenticated', 'public.save_account_preparation_preferences_if_revision(boolean,timestamp with time zone,text,text,text)', 'execute'), 'authenticated users can invoke revision-checked preparation preference saving');
+select ok(not has_function_privilege('anon', 'public.save_account_preparation_preferences_if_revision(boolean,timestamp with time zone,text,text,text)', 'execute'), 'anonymous users cannot invoke revision-checked preparation preference saving');
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -47,17 +55,67 @@ select lives_ok(
 );
 select is((select onboarding_complete from public.profiles), true, 'skipped onboarding still persists explicit completion');
 select is((select count(*)::integer from public.user_preparation_preferences), 0, 'skip creates no inferred preparation preference row');
-select public.save_account_preparation_preferences('staff', 'behavioral', 'sde3plus');
+select is((
+  select count(*)::integer
+  from public.save_account_preparation_preferences_if_revision(
+    true, null, 'staff', 'behavioral', 'sde3plus'
+  )
+), 1, 'revision-checked settings create returns one saved revision');
 select is((select preferred_role_level from public.user_preparation_preferences), 'staff', 'settings persist preferred role for the current actor');
 select is((select primary_preparation_focus from public.user_preparation_preferences), 'behavioral', 'settings persist primary focus for the current actor');
 select is((select dsa_level from public.user_preparation_preferences), 'sde3plus', 'settings persist an explicit preferred DSA roadmap');
+select is((
+  select count(*)::integer
+  from public.save_account_preparation_preferences_if_revision(
+    false, '2000-01-01T00:00:00Z', 'sde1', 'dsa', 'sde1'
+  )
+), 0, 'a stale preparation preference revision returns no saved row');
+select is(
+  (select row(preferred_role_level, primary_preparation_focus, dsa_level)::text from public.user_preparation_preferences),
+  '(staff,behavioral,sde3plus)',
+  'a stale preparation preference save changes no desired field'
+);
+with prior as materialized (
+  select updated_at from public.user_preparation_preferences
+), saved as materialized (
+  select updated_at
+  from public.save_account_preparation_preferences_if_revision(
+    false,
+    (select updated_at from prior),
+    'senior',
+    'system_design',
+    'sde2'
+  )
+)
+select ok(
+  (select count(*) = 1 from saved)
+    and (select saved.updated_at > prior.updated_at from saved cross join prior),
+  'an exact preparation preference revision saves once and advances monotonically'
+);
+select throws_ok(
+  $$select public.save_account_preparation_preferences('sde1', 'dsa', 'sde1')$$,
+  '0A000',
+  'Revision-checked preparation preference saving is required',
+  'legacy preparation preference snapshot saving fails safely'
+);
+select is(
+  (select row(preferred_role_level, primary_preparation_focus, dsa_level)::text from public.user_preparation_preferences),
+  '(senior,system_design,sde2)',
+  'legacy preparation preference saving leaves the revision-checked snapshot unchanged'
+);
+select throws_ok(
+  $$select public.save_account_preparation_preferences_if_revision(false, null, 'senior', 'system_design', 'sde2')$$,
+  '23514',
+  'Exactly one preparation preference revision state is required',
+  'preference saving requires one correlated revision state'
+);
 select throws_ok(
   $$update public.profiles set display_name = 'Unauthorized' where id = '81818181-8181-4818-8818-818181818181' returning id$$,
   '42501'
 );
 select is((select count(*)::integer from public.user_preparation_preferences), 1, 'User B cannot read User A preferences');
 select throws_ok(
-  $$select public.save_account_preparation_preferences('invalid', 'dsa', 'sde1')$$,
+  $$select public.save_account_preparation_preferences_if_revision(false, (select updated_at from public.user_preparation_preferences), 'invalid', 'dsa', 'sde1')$$,
   '22023',
   'Invalid preferred role level',
   'preference RPC rejects values outside the shared taxonomy'

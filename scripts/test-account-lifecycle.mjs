@@ -4,8 +4,18 @@ import {
   ONBOARDING_ACTION_INVALID_INPUT_ERROR,
   ONBOARDING_TIMEZONE_INVALID_ERROR,
   PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR,
+  PREPARATION_PREFERENCES_ABSENT_REVISION,
+  PREPARATION_PREFERENCES_CONFLICT_ERROR,
+  PREPARATION_PREFERENCES_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD,
+  PREPARATION_PREFERENCES_PENDING_MESSAGE,
+  PREPARATION_PREFERENCES_PERSISTENCE_ERROR,
+  PREPARATION_PREFERENCES_SAVED_MESSAGE,
+  isCanonicalPreparationPreferenceRevision,
   parseCompleteOnboardingActionInput,
   parseSavePreparationPreferencesActionInput,
+  parseSavePreparationPreferencesResult,
+  resolvePreparationPreferenceDisplayState,
 } from "../lib/account/preparation-preference-action-input.ts";
 import {
   ACCOUNT_DELETION_CONFIRMATION_ERROR,
@@ -46,8 +56,9 @@ const functionSource = (source, name) => {
   const end = source.indexOf("\nexport async function ", start + 1);
   return start < 0 ? "" : source.slice(start, end < 0 ? undefined : end);
 };
-const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage, preparationSettingsPage, preparationPreferencesQuery, preparationPreferencesForm, preferencesSource] = await Promise.all([
+const [migration, preferenceRevisionMigration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage, preparationSettingsPage, preparationPreferencesQuery, preparationPreferencesForm, preferencesSource, persistenceQualifier, securityQualifier, lifecycleQualifier] = await Promise.all([
   read("supabase/migrations/202608150001_create_account_lifecycle.sql"),
+  read("supabase/migrations/202609040014_save_account_preparation_preferences_if_revision.sql"),
   read("features/account/actions.ts"),
   read("app/api/account/export/route.ts"),
   read("lib/account/export.ts"),
@@ -67,6 +78,9 @@ const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm
   read("lib/account/preparation-preferences-query.ts"),
   read("features/account/account-forms.tsx"),
   read("lib/account/preferences.ts"),
+  read("scripts/qualify-persistence-local.mjs"),
+  read("scripts/qualify-security-local.mjs"),
+  read("scripts/qualify-account-lifecycle-local.mjs"),
 ]);
 
 for (const marker of ["onboarding_completed_at", "preferred_role_level", "primary_preparation_focus", "complete_account_onboarding", "save_account_preparation_preferences"]) {
@@ -75,6 +89,20 @@ for (const marker of ["onboarding_completed_at", "preferred_role_level", "primar
 assert.match(migration, /update public\.profiles[\s\S]*onboarding_complete = true[\s\S]*onboarding_completed_at/, "established-profile backfill is absent");
 assert.match(migration, /revoke update \(onboarding_complete\).*authenticated/, "clients can still forge onboarding completion");
 assert.match(migration, /current_user_id uuid := auth\.uid\(\)/, "account RPCs do not derive ownership from auth.uid()");
+for (const marker of [
+  "save_account_preparation_preferences_if_revision",
+  "target_expect_absent boolean",
+  "target_expected_updated_at timestamptz",
+  "account-preparation-preference-owner:",
+  "on conflict (user_id) do nothing",
+  "preferences.updated_at = target_expected_updated_at",
+  "set_user_preparation_preference_updated_at",
+  "Revision-checked preparation preference saving is required",
+]) {
+  assert.ok(preferenceRevisionMigration.includes(marker), `preparation preference revision migration is missing ${marker}`);
+}
+assert.match(preferenceRevisionMigration, /security definer[\s\S]*set search_path = ''/, "revision-checked preference saving lacks the hardened function boundary");
+assert.match(preferenceRevisionMigration, /revoke all on function public\.save_account_preparation_preferences_if_revision\(boolean,timestamptz,text,text,text\)[\s\S]*from public, anon, authenticated;[\s\S]*grant execute[\s\S]*to authenticated;/, "revision-checked preference grants are not authenticated-only");
 
 assert.equal(onboardingDestination({ hasUpcomingInterview: true, interviewScheduled: false, focus: "dsa", requestedPath: "/dashboard" }), "/dashboard");
 assert.equal(onboardingDestination({ hasUpcomingInterview: false, interviewScheduled: true, focus: "dsa", requestedPath: "/dashboard" }), "/applications/new");
@@ -265,31 +293,55 @@ for (const [label, input] of [
 }
 
 assert.equal(resolvePreparationPreferencesQuery({ data: null, error: null }), null, "a successful zero-row preference response is not preserved as a genuine blank state");
+const preferenceRevision = "2026-09-04T12:34:56.123456+00:00";
 let validPreferenceCases = 0;
 for (const preferred_role_level of validPreferredRoleLevels) {
   for (const primary_preparation_focus of validPrimaryPreparationFocuses) {
     for (const dsa_level of validPreferredDsaLevels) {
-      const row = { preferred_role_level, primary_preparation_focus, dsa_level };
+      const row = { preferred_role_level, primary_preparation_focus, dsa_level, updated_at: preferenceRevision };
       assert.deepEqual(resolvePreparationPreferencesQuery({ data: row, error: null }), row, "a valid preparation-preference enum/null combination was rejected");
       validPreferenceCases += 1;
     }
   }
 }
 assert.equal(validPreferenceCases, 144, "the preparation-preference regression did not exercise the complete enum/null matrix");
+expectPreferenceUnavailable({ data: { preferred_role_level: "sde2", primary_preparation_focus: "dsa", dsa_level: "sde2", updated_at: preferenceRevision }, error: { message: "database detail" } }, "a preference query error was ignored when row data was also present");
+for (const [label, input] of [
+  ["missing revision", { data: { preferred_role_level: null, primary_preparation_focus: null, dsa_level: null }, error: null }],
+  ["invalid revision", { data: { preferred_role_level: null, primary_preparation_focus: null, dsa_level: null, updated_at: "not-a-revision" }, error: null }],
+  ["unexpected persisted field", { data: { preferred_role_level: null, primary_preparation_focus: null, dsa_level: null, updated_at: preferenceRevision, user_id: "private-user" }, error: null }],
+]) expectPreferenceUnavailable(input, `preparation preference resolver accepted ${label}`);
 
 assert.equal(ONBOARDING_ACTION_INVALID_INPUT_ERROR, "Those setup choices are not valid. Review the form and try again.", "onboarding malformed-input copy is not stable and curated");
 assert.equal(ONBOARDING_TIMEZONE_INVALID_ERROR, "Choose a valid IANA timezone, such as America/Chicago.", "onboarding timezone-error copy is not stable and curated");
 assert.equal(PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR, "Those preparation preferences are not valid. Review the form and try again.", "preference malformed-input copy is not stable and curated");
+assert.equal(PREPARATION_PREFERENCES_CONFLICT_ERROR, "These preparation preferences may have changed since you opened this page. Your changes were not saved. Review the latest saved version before trying again.");
+assert.equal(PREPARATION_PREFERENCES_PERSISTENCE_ERROR, "We couldn't save preparation preferences. Try again.");
+assert.equal(PREPARATION_PREFERENCES_SAVED_MESSAGE, "Preparation preferences saved.");
+assert.equal(PREPARATION_PREFERENCES_PENDING_MESSAGE, "Saving preparation preferences…");
+assert.equal(PREPARATION_PREFERENCES_EARLIER_SNAPSHOT_SAVED_MESSAGE, "Earlier preparation preferences saved. Review your current changes and save again.");
+assert.equal(PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD, "expected_updated_at");
+assert.equal(PREPARATION_PREFERENCES_ABSENT_REVISION, "absent");
+for (const validRevision of [
+  "2026-09-04T12:34:56Z",
+  "2026-09-04T12:34:56.1+00:00",
+  preferenceRevision,
+  "2024-02-29T23:59:59-14:00",
+]) assert.equal(isCanonicalPreparationPreferenceRevision(validRevision), true, `valid preference revision rejected: ${validRevision}`);
+for (const invalidRevision of [undefined, null, "", "2026-02-29T00:00:00Z", "2026-09-04T24:00:00Z", "2026-09-04T12:34:56.1234567Z", "2026-09-04T12:34:56+14:01", "2026-09-04 12:34:56+00:00"]) {
+  assert.equal(isCanonicalPreparationPreferenceRevision(invalidRevision), false, `invalid preference revision accepted: ${String(invalidRevision)}`);
+}
 
 const formData = (entries = []) => {
   const form = new FormData();
   for (const [name, value] of entries) form.append(name, value);
   return form;
 };
-const preferenceFormData = ({ preferredRoleLevel = "", primaryPreparationFocus = "", dsaLevel = "" } = {}) => formData([
+const preferenceFormData = ({ preferredRoleLevel = "", primaryPreparationFocus = "", dsaLevel = "", expectedUpdatedAt = preferenceRevision } = {}) => formData([
   ["preferredRoleLevel", preferredRoleLevel],
   ["primaryPreparationFocus", primaryPreparationFocus],
   ["dsaLevel", dsaLevel],
+  [PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD, expectedUpdatedAt],
 ]);
 const validPreferenceActionValues = [];
 for (const preferredRoleLevel of validPreferredRoleLevels) {
@@ -300,7 +352,7 @@ for (const preferredRoleLevel of validPreferredRoleLevels) {
         primaryPreparationFocus: primaryPreparationFocus ?? "",
         dsaLevel: dsaLevel ?? "",
       }));
-      assert.deepEqual(parsed, { ok: true, value: { preferredRoleLevel, primaryPreparationFocus, dsaLevel } }, "a valid preference action enum/null combination was rejected or remapped");
+      assert.deepEqual(parsed, { ok: true, value: { preferredRoleLevel, primaryPreparationFocus, dsaLevel, expectAbsent: false, expectedUpdatedAt: preferenceRevision, revision: preferenceRevision } }, "a valid preference action enum/null/revision combination was rejected or remapped");
       validPreferenceActionValues.push(parsed.value);
     }
   }
@@ -319,7 +371,7 @@ for (const [label, input] of [
   ["array", []],
   ["string", "invalid"],
 ]) expectInvalidPreferenceAction(input, `preference action accepted ${label} instead of FormData`);
-for (const name of ["preferredRoleLevel", "primaryPreparationFocus", "dsaLevel"]) {
+for (const name of ["preferredRoleLevel", "primaryPreparationFocus", "dsaLevel", PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD]) {
   const missing = preferenceFormData();
   missing.delete(name);
   expectInvalidPreferenceAction(missing, `preference action accepted missing ${name}`);
@@ -340,6 +392,7 @@ for (const [field, value] of [
   ["dsaLevel", "SDE2"],
   ["dsaLevel", " sde2 "],
   ["dsaLevel", "advanced"],
+  ["expectedUpdatedAt", "not-a-revision"],
 ]) expectInvalidPreferenceAction(preferenceFormData({ [field]: value }), `preference action accepted unknown or case-variant ${field}=${value}`);
 const unknownPreferenceField = preferenceFormData();
 unknownPreferenceField.set("user_id", "foreign-user");
@@ -350,7 +403,18 @@ wrongCasePreferenceField.set("preferredrolelevel", "senior");
 expectInvalidPreferenceAction(wrongCasePreferenceField, "preference action accepted a wrong-case field name");
 const preferenceWithActionMetadata = preferenceFormData({ preferredRoleLevel: "senior", primaryPreparationFocus: "dsa", dsaLevel: "sde2" });
 preferenceWithActionMetadata.set("$ACTION_REF_0", "opaque-next-metadata");
-assert.deepEqual(parseSavePreparationPreferencesActionInput(preferenceWithActionMetadata), { ok: true, value: { preferredRoleLevel: "senior", primaryPreparationFocus: "dsa", dsaLevel: "sde2" } }, "Next Server Action metadata broke a valid preference payload");
+assert.deepEqual(parseSavePreparationPreferencesActionInput(preferenceWithActionMetadata), { ok: true, value: { preferredRoleLevel: "senior", primaryPreparationFocus: "dsa", dsaLevel: "sde2", expectAbsent: false, expectedUpdatedAt: preferenceRevision, revision: preferenceRevision } }, "Next Server Action metadata broke a valid preference payload");
+assert.deepEqual(parseSavePreparationPreferencesActionInput(preferenceFormData({ expectedUpdatedAt: PREPARATION_PREFERENCES_ABSENT_REVISION })), { ok: true, value: { preferredRoleLevel: null, primaryPreparationFocus: null, dsaLevel: null, expectAbsent: true, expectedUpdatedAt: null, revision: PREPARATION_PREFERENCES_ABSENT_REVISION } }, "an explicit absent preference revision was not preserved");
+
+assert.deepEqual(parseSavePreparationPreferencesResult([]), { status: "conflict" });
+assert.deepEqual(parseSavePreparationPreferencesResult([{ updated_at: preferenceRevision }]), { status: "saved", updatedAt: preferenceRevision });
+for (const malformed of [undefined, null, {}, [{ updated_at: "invalid" }], [{ updated_at: preferenceRevision, user_id: "private" }], [{ updated_at: preferenceRevision }, { updated_at: preferenceRevision }]]) {
+  assert.deepEqual(parseSavePreparationPreferencesResult(malformed), { status: "invalid" }, "malformed preference save result was accepted");
+}
+const successfulPreferenceState = { status: "success", message: PREPARATION_PREFERENCES_SAVED_MESSAGE };
+assert.deepEqual(resolvePreparationPreferenceDisplayState({ status: "idle", message: "" }, true, false), { status: "pending", message: PREPARATION_PREFERENCES_PENDING_MESSAGE });
+assert.deepEqual(resolvePreparationPreferenceDisplayState(successfulPreferenceState, false, true), { status: "success", message: PREPARATION_PREFERENCES_EARLIER_SNAPSHOT_SAVED_MESSAGE });
+assert.deepEqual(resolvePreparationPreferenceDisplayState({ status: "error", message: PREPARATION_PREFERENCES_CONFLICT_ERROR }, false, true), { status: "error", message: PREPARATION_PREFERENCES_CONFLICT_ERROR });
 
 const onboardingFormData = ({
   intent = "complete",
@@ -471,7 +535,7 @@ const onboardingWithActionMetadata = onboardingFormData({ preferredRoleLevel: "s
 onboardingWithActionMetadata.set("$ACTION_ID_0", "opaque-next-metadata");
 assert.equal(parseCompleteOnboardingActionInput(onboardingWithActionMetadata).ok, true, "Next Server Action metadata broke a valid onboarding payload");
 
-const representativePreference = { preferred_role_level: "senior", primary_preparation_focus: "system_design", dsa_level: "sde3plus" };
+const representativePreference = { preferred_role_level: "senior", primary_preparation_focus: "system_design", dsa_level: "sde3plus", updated_at: preferenceRevision };
 expectPreferenceUnavailable({ data: representativePreference, error: { message: "database detail" } }, "a preference query error was ignored when row data was also present");
 for (const [label, input] of [
   ["undefined root", undefined],
@@ -482,9 +546,9 @@ for (const [label, input] of [
   ["missing error member", { data: null }],
   ["undefined data", { data: undefined, error: null }],
   ["array data", { data: [], error: null }],
-  ["missing preferred role", { data: { primary_preparation_focus: null, dsa_level: null }, error: null }],
-  ["missing preparation focus", { data: { preferred_role_level: null, dsa_level: null }, error: null }],
-  ["missing DSA level", { data: { preferred_role_level: null, primary_preparation_focus: null }, error: null }],
+  ["missing preferred role", { data: { primary_preparation_focus: null, dsa_level: null, updated_at: preferenceRevision }, error: null }],
+  ["missing preparation focus", { data: { preferred_role_level: null, dsa_level: null, updated_at: preferenceRevision }, error: null }],
+  ["missing DSA level", { data: { preferred_role_level: null, primary_preparation_focus: null, updated_at: preferenceRevision }, error: null }],
   ["unexpected persisted field", { data: { ...representativePreference, user_id: "private-user" }, error: null }],
   ["invalid preferred role", { data: { ...representativePreference, preferred_role_level: "principal" }, error: null }],
   ["wrong-case preferred role", { data: { ...representativePreference, preferred_role_level: "Senior" }, error: null }],
@@ -563,8 +627,8 @@ const preferenceTable = preparationPreferencesQuery.indexOf('.from("user_prepara
 const preferenceOwnerScope = preparationPreferencesQuery.indexOf('.eq("user_id", actor.user.id)');
 const preferenceResolver = preparationPreferencesQuery.indexOf("resolvePreparationPreferencesQuery(result)");
 assert.ok(preferenceActor >= 0 && missingPreferenceActorGuard > preferenceActor && missingPreferenceActorError > missingPreferenceActorGuard && preferenceTable > missingPreferenceActorError && preferenceOwnerScope > preferenceTable && preferenceResolver > preferenceOwnerScope, "preparation preferences do not reject a missing post-guard actor before resolving an exact owner-scoped result");
-assert.match(preparationPreferencesQuery, /\.select\("preferred_role_level,primary_preparation_focus,dsa_level"\)/, "preparation preference query no longer uses the exact editable projection");
-assert.ok(preparationPreferencesForm.includes("PreparationPreferences") && preparationPreferencesForm.includes("preference?.preferred_role_level") && preparationPreferencesForm.includes("preference?.primary_preparation_focus") && preparationPreferencesForm.includes("preference?.dsa_level"), "preparation settings form does not consume the validated preference projection");
+assert.match(preparationPreferencesQuery, /\.select\("preferred_role_level,primary_preparation_focus,dsa_level,updated_at"\)/, "preparation preference query no longer uses the exact editable projection and revision");
+assert.ok(preparationPreferencesForm.includes("PreparationPreferences") && preparationPreferencesForm.includes("preference?.preferred_role_level") && preparationPreferencesForm.includes("preference?.primary_preparation_focus") && preparationPreferencesForm.includes("preference?.dsa_level") && preparationPreferencesForm.includes("preference?.updated_at"), "preparation settings form does not consume the validated preference projection and revision");
 const completeOnboardingActionStart = actions.indexOf("export async function completeOnboardingAction");
 const completeOnboardingActionEnd = actions.indexOf("export async function updateDisplayNameAction", completeOnboardingActionStart);
 const completeOnboardingActionSource = actions.slice(completeOnboardingActionStart, completeOnboardingActionEnd);
@@ -585,14 +649,50 @@ const savePreferenceActionSource = actions.slice(savePreferenceActionStart, save
 const preferenceActionParse = savePreferenceActionSource.indexOf("parseSavePreparationPreferencesActionInput(form)");
 const preferenceActionInvalidReturn = savePreferenceActionSource.indexOf("if (!parsed.ok)", preferenceActionParse);
 const preferenceActionActor = savePreferenceActionSource.indexOf("getAuthenticatedActor()", preferenceActionInvalidReturn);
-const preferenceActionRpc = savePreferenceActionSource.indexOf('rpc("save_account_preparation_preferences"', preferenceActionActor);
+const preferenceActionRpc = savePreferenceActionSource.indexOf('rpc("save_account_preparation_preferences_if_revision"', preferenceActionActor);
+const preferenceActionResult = savePreferenceActionSource.indexOf("parseSavePreparationPreferencesResult(data)", preferenceActionRpc);
 const preferenceActionRevalidation = savePreferenceActionSource.indexOf('revalidatePath("/settings/preparation")', preferenceActionRpc);
 assert.match(savePreferenceActionSource, /form: unknown\): Promise<AccountActionState> \{\s*const parsed = parseSavePreparationPreferencesActionInput\(form\);/, "preference action does not treat its direct runtime payload as unknown and parse it first");
-assert.ok(preferenceActionParse >= 0 && preferenceActionInvalidReturn > preferenceActionParse && preferenceActionActor > preferenceActionInvalidReturn && preferenceActionRpc > preferenceActionActor && preferenceActionRevalidation > preferenceActionRpc, "preference action does not return malformed input before actor, RPC, and revalidation work");
+assert.ok(preferenceActionParse >= 0 && preferenceActionInvalidReturn > preferenceActionParse && preferenceActionActor > preferenceActionInvalidReturn && preferenceActionRpc > preferenceActionActor && preferenceActionResult > preferenceActionRpc && preferenceActionRevalidation > preferenceActionResult, "preference action does not preserve parser -> actor -> revision RPC -> exact result -> revalidation ordering");
 assert.ok(savePreferenceActionSource.slice(preferenceActionInvalidReturn, preferenceActionActor).includes("PREPARATION_PREFERENCES_ACTION_INVALID_INPUT_ERROR"), "preference parse failures do not return the stable curated error copy");
 assert.ok(!savePreferenceActionSource.includes("form.get("), "preference action bypasses its validated parsed payload");
 assert.match(completeOnboardingActionSource, /preferredRoleLevel: role[\s\S]*primaryPreparationFocus: focus[\s\S]*preferredTimezone: timezone[\s\S]*requestedPath[\s\S]*interviewScheduled[\s\S]*preferred_role_level_value: role[\s\S]*primary_preparation_focus_value: focus[\s\S]*preferred_timezone_value: timezone/, "validated onboarding values no longer preserve established query/RPC/destination mapping");
-assert.match(actions, /save_account_preparation_preferences[\s\S]*preferred_role_level_value: role[\s\S]*primary_preparation_focus_value: focus[\s\S]*preferred_dsa_level_value: dsaLevel/, "preparation preference saving no longer uses the established authenticated RPC contract");
+assert.match(savePreferenceActionSource, /save_account_preparation_preferences_if_revision[\s\S]*target_expect_absent: input\.expectAbsent[\s\S]*target_expected_updated_at: input\.expectedUpdatedAt[\s\S]*preferred_role_level_value: role[\s\S]*primary_preparation_focus_value: focus[\s\S]*preferred_dsa_level_value: dsaLevel/, "preparation preference saving no longer binds the validated revision and desired snapshot");
+assert.ok(!savePreferenceActionSource.includes('rpc("save_account_preparation_preferences"'), "preparation preference action still calls the unsafe legacy snapshot RPC");
+
+const preferenceFormStart = preparationPreferencesForm.indexOf("export function PreparationPreferencesForm");
+const preferenceFormEnd = preparationPreferencesForm.indexOf("export function ExportAccountData", preferenceFormStart);
+const preferenceFormSource = preparationPreferencesForm.slice(preferenceFormStart, preferenceFormEnd);
+for (const marker of [
+  "PREPARATION_PREFERENCES_EXPECTED_REVISION_FIELD",
+  "preference?.updated_at ?? PREPARATION_PREFERENCES_ABSENT_REVISION",
+  "event.preventDefault()",
+  "if (submissionPending.current) return",
+  "const formData = new FormData(event.currentTarget)",
+  "startTransition(() => action(formData))",
+  "submittedDraftSignature.current = draftSignature(formData)",
+  "resolvePreparationPreferenceDisplayState(",
+  'aria-busy={pending}',
+  'aria-disabled={pending}',
+  'aria-live="polite"',
+  'aria-atomic="true"',
+  'target="_blank"',
+  'rel="noopener noreferrer"',
+]) assert.ok(preferenceFormSource.includes(marker), `preparation preference form is missing ${marker}`);
+const preventDefault = preferenceFormSource.indexOf("event.preventDefault()");
+const duplicateGuard = preferenceFormSource.indexOf("if (submissionPending.current) return", preventDefault);
+const setPending = preferenceFormSource.indexOf("submissionPending.current = true", duplicateGuard);
+const captureForm = preferenceFormSource.indexOf("const formData = new FormData(event.currentTarget)", setPending);
+const dispatch = preferenceFormSource.indexOf("startTransition(() => action(formData))", captureForm);
+assert.ok(preventDefault >= 0 && duplicateGuard > preventDefault && setPending > duplicateGuard && captureForm > setPending && dispatch > captureForm, "preparation preference manual submit does not synchronously guard, snapshot, then dispatch");
+assert.ok(preferenceFormSource.includes("draftSignature(new FormData(form)) !== submittedDraftSignature.current"), "preparation preference form cannot detect edits made after submission");
+assert.ok(!preferenceFormSource.includes(" disabled={pending}"), "preparation preference pending state removes its focused submit button from activation semantics");
+assert.match(styles, /\.preparation-preferences-form \.button\[aria-disabled="true"\][\s\S]*cursor: wait;[\s\S]*opacity: \.52;/, "preparation preference pending affordance is not scoped to the form");
+for (const marker of ["concurrent preparation preference snapshots accept exactly one desired state", "preparation preference and desired DSA writes preserve the newer DSA roadmap"]) {
+  assert.ok(persistenceQualifier.includes(marker), `persistence qualification lacks ${marker}`);
+}
+assert.ok(securityQualifier.includes("revision-checked preparation preferences derive the owner and deny anonymous callers"), "security qualification lacks preparation preference owner/anonymous coverage");
+assert.ok(lifecycleQualifier.includes("legacy preparation preference snapshot saves fail safely without mutation"), "account lifecycle qualification lacks legacy preference fail-safe coverage");
 for (const obsolete of ["parsePreferredRoleLevel", "parsePreparationFocus", "parseDsaLevel"]) {
   assert.ok(!actions.includes(obsolete) && !preferencesSource.includes(obsolete), `obsolete fail-open account parser remains reachable: ${obsolete}`);
 }

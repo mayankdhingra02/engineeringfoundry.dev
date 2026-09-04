@@ -259,6 +259,57 @@ await check("profile revision writers derive the owner and deny anonymous or dir
   return "anonymous 42501; direct 42501; foreign revision zero rows; owner unchanged";
 });
 
+await check("revision-checked preparation preferences derive the owner and deny anonymous callers", async () => {
+  const created = await a.client.rpc("save_account_preparation_preferences_if_revision", {
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    preferred_role_level_value: "senior",
+    primary_preparation_focus_value: "system_design",
+    preferred_dsa_level_value: "sde3plus",
+  });
+  assert.ifError(created.error);
+  assert.equal(created.data?.length, 1, "owner preparation preference create did not return one revision");
+  const ownerRevision = created.data[0].updated_at;
+
+  const [anonymous, foreign, legacy] = await Promise.all([
+    anon.rpc("save_account_preparation_preferences_if_revision", {
+      target_expect_absent: true,
+      target_expected_updated_at: null,
+      preferred_role_level_value: "sde1",
+      primary_preparation_focus_value: "dsa",
+      preferred_dsa_level_value: "sde1",
+    }),
+    b.client.rpc("save_account_preparation_preferences_if_revision", {
+      target_expect_absent: false,
+      target_expected_updated_at: ownerRevision,
+      preferred_role_level_value: "sde1",
+      primary_preparation_focus_value: "dsa",
+      preferred_dsa_level_value: "sde1",
+    }),
+    a.client.rpc("save_account_preparation_preferences", {
+      preferred_role_level_value: "sde1",
+      primary_preparation_focus_value: "dsa",
+      preferred_dsa_level_value: "sde1",
+    }),
+  ]);
+  assert.equal(anonymous.error?.code, "42501");
+  assert.ifError(foreign.error);
+  assert.deepEqual(foreign.data, [], "a foreign revision was accepted for User B");
+  assert.equal(legacy.error?.code, "0A000");
+  const owner = await a.client
+    .from("user_preparation_preferences")
+    .select("preferred_role_level,primary_preparation_focus,dsa_level,updated_at")
+    .single();
+  assert.ifError(owner.error);
+  assert.deepEqual(owner.data, {
+    preferred_role_level: "senior",
+    primary_preparation_focus: "system_design",
+    dsa_level: "sde3plus",
+    updated_at: ownerRevision,
+  });
+  return "owner row created; anonymous 42501; foreign zero rows; legacy 0A000";
+});
+
 await check("Interview Playbook diagnostic snapshot and CAS RPCs deny anonymous callers", async () => {
   const [read, write] = await Promise.all([
     anon.rpc("get_interview_playbook_diagnostic_inputs_snapshot"),
