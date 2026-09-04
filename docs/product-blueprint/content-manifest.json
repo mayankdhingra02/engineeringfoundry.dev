@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "8a39f6b92bf088c67cc807c1eb2d45b66f78f922",
-  "repository_state_sha256": "645db2580f946435c3bafa8f6b448de513c5efbb4255a711afaf2d29dedd1569",
+  "repository_sha": "6450d75f22ea38d1aad0f9c4f75c024d5254e5cd",
+  "repository_state_sha256": "f4dd0832c3961751076b4f56f4952d02b9e9b6d2831c65c6a6a68c304277edcb",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -617,6 +617,7 @@
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
         "Global account navigation uses a route-specific verified-user boundary where only Supabase's explicit missing-session error becomes anonymous; other Auth errors, profile-query errors, contradictory results, malformed runtime responses, and client transport failures become a private no-store retryable unavailable state instead of Sign in and Sign up. The client invalidates stale and unmounted responses, only an explicit SIGNED_OUT event forces anonymous navigation, re-verifies authenticated session events, preserves a last verified ready identity on refresh failure, and source-regresses compact live retry and conditional focus recovery without claiming rendered browser automation. Executable identity, profile, response, and settlement matrices run in npm run test:auth-foundation; the broader shared actor authentication-service-versus-anonymous ambiguity remains outside this route-specific boundary.",
         "Application full edits carry the exact loaded database revision into an owner-scoped timestamp compare-and-swap, so a newer quick status or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
+        "Application and interview-round deletion strictly parse one exact loaded revision before actor work and use only owner-derived revision-checked RPCs; authenticated direct table deletes and anonymous execution are denied, while stale, foreign, and missing targets return zero rows without mutation. Source-integration checks cover exact revision binding, synchronous duplicate guards, focusable pending confirmation, atomic conflict truth, and safe latest-version links; real stale-preservation, owner isolation, and intentional application cascades run in npm run qualify:database, rendered focus and assistive-technology behavior remain browser/manual, and hosted checks remain unchecked external-owner work.",
         "Homepage account continuation distinguishes anonymous, ready (including genuinely empty), and unavailable states; authenticated continuation-data query failures plus client transport and malformed-response failures cannot masquerade as signed-out or zero activity, account import requires a ready response, browser-local continuation remains available, and retry status and guarded focus recovery are source-regressed without claiming rendered browser automation. The shared actor boundary still does not distinguish an authentication-service failure from a legitimate anonymous session.",
         "Explicit browser-activity import strictly validates one bounded snapshot before actor work and uses owner-derived insert-only RPCs to report imported, existing, and failed outcomes without overwriting richer account progress. Only exact submitted snapshots confirmed imported or existing are removed from current primary and legacy browser state; concurrent edits, failed and unrelated activity, and saved plans remain. Duplicate, stale, and unmounted client settlements are guarded, while truthful live status and conditional focus recovery are source-regressed without claiming rendered browser automation; database atomicity, concurrency, and owner isolation run in npm run qualify:database, and hosted RPC checks remain an external owner gate.",
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item. Account persistence from the shared activity control changes DSA and System Design status only through their owner-derived atomic quick boundaries, validates the returned canonical item ID, and cannot clear richer private progress fields.",
@@ -636,6 +637,8 @@
         "app/api/preparation/continuation/route.ts",
         "app/api/preparation/import/route.ts",
         "app/applications/[id]/edit/page.tsx",
+        "app/applications/[id]/page.tsx",
+        "app/applications/page.tsx",
         "app/auth/callback/route.ts",
         "app/dashboard/page.tsx",
         "app/error.tsx",
@@ -656,6 +659,7 @@
         "features/account/actions.ts",
         "features/applications/actions.ts",
         "features/applications/application-form.tsx",
+        "features/applications/revision-confirm-action.tsx",
         "features/auth/password-actions.ts",
         "features/auth/password-forms.tsx",
         "features/preparation-progress/actions.ts",
@@ -666,6 +670,7 @@
         "lib/account/preparation-preference-action-input.ts",
         "lib/account/preparation-preferences-query.ts",
         "lib/account/preparation-preferences.ts",
+        "lib/applications/delete-revision.ts",
         "lib/applications/edit-revision.ts",
         "lib/auth/account-deletion.ts",
         "lib/auth/account-navigation.ts",
@@ -706,11 +711,14 @@
         "supabase/migrations/202608240001_harden_profile_professional_links.sql",
         "supabase/migrations/202609030003_import_preparation_activity_if_absent.sql",
         "supabase/migrations/202609040006_save_profile_if_revision.sql",
+        "supabase/migrations/202609040008_delete_application_tracker_if_revision.sql",
+        "supabase/tests/database/application_tracker.test.sql",
         "supabase/tests/database/auth_profile_hardening.test.sql",
         "supabase/tests/database/preparation_activity_import.test.sql"
       ],
       "content_paths": [
         "docs/account-lifecycle.md",
+        "docs/application-tracker.md",
         "docs/auth-security.md",
         "docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md",
         "docs/unified-preparation-progress.md"
