@@ -9,6 +9,13 @@ import {
   INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE,
   parseTrackerEditRevision,
 } from "@/lib/applications/edit-revision";
+import {
+  APPLICATION_DELETE_ERROR,
+  INTERVIEW_ROUND_DELETE_ERROR,
+  parseApplicationDeleteInput,
+  parseRoundDeleteInput,
+  parseTrackerDeleteResult,
+} from "@/lib/applications/delete-revision";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 
 export interface TrackerActionState { status: "idle" | "error"; message: string; fieldErrors?: FieldErrors; conflict?: boolean }
@@ -67,12 +74,40 @@ export async function updateApplicationStatusAction(applicationId: string, formD
   revalidatePath("/applications"); revalidatePath(`/applications/${applicationId}`); revalidatePath("/dashboard");
 }
 
-export async function deleteApplicationAction(applicationId: string) {
+export async function deleteApplicationAction(
+  applicationIdInput: unknown,
+  revisionInput: unknown,
+  _: TrackerActionState,
+  formData: unknown,
+): Promise<TrackerActionState> {
+  const parsed = parseApplicationDeleteInput(
+    applicationIdInput,
+    revisionInput,
+    formData,
+  );
+  if (!parsed) return { status: "error", message: APPLICATION_DELETE_ERROR };
   const current = await getAuthenticatedActor();
-  if (!current) signInAgain("/applications");
-  if (!UUID_PATTERN.test(applicationId)) return;
-  const { data, error } = await current.supabase.from("applications").delete().eq("id", applicationId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) mutationFailure("We couldn't delete this application. It may no longer be available.");
+  if (!current) return sessionError();
+  const { data, error } = await current.supabase.rpc(
+    "delete_application_if_revision",
+    {
+      target_application_id: parsed.applicationId,
+      target_expected_updated_at: parsed.expectedUpdatedAt,
+    },
+  );
+  if (error) return { status: "error", message: APPLICATION_DELETE_ERROR };
+  const outcome = parseTrackerDeleteResult(
+    data,
+    "application_id",
+    parsed.applicationId,
+  );
+  if (outcome.status !== "deleted") {
+    return {
+      status: "error",
+      message: APPLICATION_DELETE_ERROR,
+      conflict: outcome.status === "conflict",
+    };
+  }
   revalidatePath("/applications"); revalidatePath("/dashboard");
   redirect("/applications");
 }
@@ -118,13 +153,45 @@ export async function updateRoundAction(applicationId: string, roundId: string, 
   redirect(`/applications/${applicationId}`);
 }
 
-export async function deleteRoundAction(applicationId: string, roundId: string) {
+export async function deleteRoundAction(
+  applicationIdInput: unknown,
+  roundIdInput: unknown,
+  revisionInput: unknown,
+  _: TrackerActionState,
+  formData: unknown,
+): Promise<TrackerActionState> {
+  const parsed = parseRoundDeleteInput(
+    applicationIdInput,
+    roundIdInput,
+    revisionInput,
+    formData,
+  );
+  if (!parsed) return { status: "error", message: INTERVIEW_ROUND_DELETE_ERROR };
   const current = await getAuthenticatedActor();
-  if (!current) signInAgain(`/applications/${applicationId}`);
-  if (!UUID_PATTERN.test(applicationId) || !UUID_PATTERN.test(roundId)) return;
-  const { data, error } = await current.supabase.from("interview_rounds").delete().eq("id", roundId).eq("application_id", applicationId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) mutationFailure("We couldn't delete this interview round. It may no longer be available.");
-  revalidatePath(`/applications/${applicationId}`); revalidatePath("/applications"); revalidatePath("/dashboard");
+  if (!current) return sessionError();
+  const { data, error } = await current.supabase.rpc(
+    "delete_interview_round_if_revision",
+    {
+      target_application_id: parsed.applicationId,
+      target_round_id: parsed.roundId,
+      target_expected_updated_at: parsed.expectedUpdatedAt,
+    },
+  );
+  if (error) return { status: "error", message: INTERVIEW_ROUND_DELETE_ERROR };
+  const outcome = parseTrackerDeleteResult(
+    data,
+    "round_id",
+    parsed.roundId,
+  );
+  if (outcome.status !== "deleted") {
+    return {
+      status: "error",
+      message: INTERVIEW_ROUND_DELETE_ERROR,
+      conflict: outcome.status === "conflict",
+    };
+  }
+  revalidatePath(`/applications/${parsed.applicationId}`); revalidatePath("/applications"); revalidatePath("/dashboard");
+  redirect(`/applications/${parsed.applicationId}`);
 }
 
 export async function completeRoundAction(applicationId: string, roundId: string) {

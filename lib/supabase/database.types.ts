@@ -944,6 +944,21 @@ export type Database = {
         };
         Returns: string | null;
       };
+      delete_application_if_revision: {
+        Args: {
+          target_application_id: string;
+          target_expected_updated_at: string;
+        };
+        Returns: { application_id: string }[];
+      };
+      delete_interview_round_if_revision: {
+        Args: {
+          target_application_id: string;
+          target_round_id: string;
+          target_expected_updated_at: string;
+        };
+        Returns: { round_id: string }[];
+      };
       save_interview_playbook_diagnostic_inputs: {
         Args: {
           available_hours_per_week_value: number | null;

@@ -878,6 +878,7 @@ await check("a fabricated System Design concept cannot be persisted", async () =
 });
 
 // --- Cross-user isolation for later-phase surfaces -------------------------
+let applicationId;
 let roundId;
 let preparationTaskId;
 await check("User A creates an application and interview round", async () => {
@@ -885,8 +886,9 @@ await check("User A creates an application and interview round", async () => {
   // server never accepts it from a browser payload.
   const application = await a.client.from("applications").insert({ user_id: a.user.id, company_name: "Phase 9 Co", role_title: "SDE II", status: "Applied" }).select("id").single();
   assert.ifError(application.error);
+  applicationId = application.data.id;
   const round = await a.client.rpc("create_interview_round", {
-    target_application_id: application.data.id,
+    target_application_id: applicationId,
     round_name_value: "System Design",
     round_type_value: "System Design",
     scheduled_at_value: new Date(Date.now() + 86_400_000).toISOString(),
@@ -902,6 +904,69 @@ await check("User B cannot read User A interview round", async () => {
   const { data, error } = await b.client.from("interview_rounds").select("*").eq("id", roundId);
   assert.ifError(error);
   assert.equal(data.length, 0);
+});
+
+await check("application and round deletion is revision-checked, owner-derived, and anonymous-denied", async () => {
+  const [application, round] = await Promise.all([
+    a.client.from("applications").select("updated_at").eq("id", applicationId).single(),
+    a.client.from("interview_rounds").select("updated_at").eq("id", roundId).single(),
+  ]);
+  assert.ifError(application.error);
+  assert.ifError(round.error);
+
+  const anonymousCalls = await Promise.all([
+    anon.rpc("delete_application_if_revision", {
+      target_application_id: applicationId,
+      target_expected_updated_at: application.data.updated_at,
+    }),
+    anon.rpc("delete_interview_round_if_revision", {
+      target_application_id: applicationId,
+      target_round_id: roundId,
+      target_expected_updated_at: round.data.updated_at,
+    }),
+  ]);
+  for (const call of anonymousCalls) assert.equal(call.error?.code, "42501", "anonymous tracker deletion must fail with 42501");
+
+  const directCalls = await Promise.all([
+    a.client.from("applications").delete().eq("id", applicationId),
+    a.client.from("interview_rounds").delete().eq("id", roundId),
+  ]);
+  for (const call of directCalls) assert.equal(call.error?.code, "42501", "direct authenticated tracker deletion must fail with 42501");
+
+  const missingApplicationId = "81818181-8181-4818-8818-818181818181";
+  const missingRoundId = "82828282-8282-4828-8828-828282828282";
+  const foreignAndMissing = await Promise.all([
+    b.client.rpc("delete_application_if_revision", {
+      target_application_id: applicationId,
+      target_expected_updated_at: application.data.updated_at,
+    }),
+    b.client.rpc("delete_application_if_revision", {
+      target_application_id: missingApplicationId,
+      target_expected_updated_at: application.data.updated_at,
+    }),
+    b.client.rpc("delete_interview_round_if_revision", {
+      target_application_id: applicationId,
+      target_round_id: roundId,
+      target_expected_updated_at: round.data.updated_at,
+    }),
+    b.client.rpc("delete_interview_round_if_revision", {
+      target_application_id: missingApplicationId,
+      target_round_id: missingRoundId,
+      target_expected_updated_at: round.data.updated_at,
+    }),
+  ]);
+  for (const call of foreignAndMissing) {
+    assert.ifError(call.error);
+    assert.deepEqual(call.data, [], "foreign and missing tracker deletes must be indistinguishable");
+  }
+
+  const [preservedApplication, preservedRound] = await Promise.all([
+    a.client.from("applications").select("id").eq("id", applicationId).single(),
+    a.client.from("interview_rounds").select("id").eq("id", roundId).single(),
+  ]);
+  assert.ifError(preservedApplication.error);
+  assert.ifError(preservedRound.error);
+  return "anonymous/direct 42501; foreign/missing zero rows; owner records unchanged";
 });
 
 await check("User A creates note-only preparation before checklist isolation checks", async () => {

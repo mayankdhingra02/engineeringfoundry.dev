@@ -24,7 +24,8 @@ function daysInMonth(year: number, month: number) {
   return [4, 6, 9, 11].includes(month) ? 30 : 31;
 }
 
-function isDatabaseTimestamp(value: string) {
+export function isTrackerDatabaseRevision(value: unknown): value is string {
+  if (typeof value !== "string") return false;
   const match = DATABASE_TIMESTAMP_PATTERN.exec(value);
   if (!match || !Number.isFinite(Date.parse(value))) return false;
 
@@ -66,7 +67,7 @@ export function parseTrackerEditRevision(input: unknown): TrackerEditRevisionPar
   if (
     revisions.length !== 1 ||
     typeof revisions[0] !== "string" ||
-    !isDatabaseTimestamp(revisions[0])
+    !isTrackerDatabaseRevision(revisions[0])
   ) {
     return { ok: false, reason: "invalid-input" };
   }

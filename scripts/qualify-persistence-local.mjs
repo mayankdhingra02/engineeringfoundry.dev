@@ -347,7 +347,6 @@ async function cleanOwnedFixtures(account) {
     owned.from("behavioral_answers").delete().like("title", "Phase 5A qualification%"),
     owned.from("behavioral_saved_questions").delete().eq("curated_question_id", "beh-conflict-01"),
     owned.from("behavioral_stories").delete().like("title", "Phase 5A qualification%"),
-    owned.from("applications").delete().like("company_name", `${fixtureCompany}%`),
     owned.from("dsa_progress").delete().like("item_id", `${fixturePrefix}:%`),
     owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters", "course-schedule", "group-anagrams", "binary-search", "valid-parentheses", "valid-anagram", "climbing-stairs", "coin-change", "merge-intervals"]),
     owned.from("system_design_item_progress").delete().in("item_id", ["estimation", "url-shortener", "vector-search", "rate-limiter", "notification-service", "job-scheduler", "search-autocomplete", "leaderboard"]),
@@ -366,6 +365,10 @@ async function cleanOwnedFixtures(account) {
   queryLocalDatabase(
     "delete from public.behavioral_custom_questions where user_id = :'user_id'::uuid and question_text like 'Phase 5A qualification%'",
     { user_id: account.user.id },
+  );
+  queryLocalDatabase(
+    "delete from public.applications where user_id = :'user_id'::uuid and company_name like :'company_pattern'",
+    { user_id: account.user.id, company_pattern: `${fixtureCompany}%` },
   );
   queryLocalDatabase(
     `delete from public.interview_playbook_constraints where user_id = :'user_id'::uuid;
@@ -699,6 +702,31 @@ await check("User A updates their application", async () => {
   expect(row.status === "Interviewing" && row.notes === "Owner update persisted.", "application update did not persist");
 });
 
+await check("stale application deletion preserves the newer application", async () => {
+  const applicationId = requireFixture(fixture.applicationId, "application");
+  const before = expectSuccess(await a.authClient
+    .from("applications")
+    .select("updated_at")
+    .eq("id", applicationId)
+    .single(), "application delete revision lookup failed");
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  const newer = expectSuccess(await a.authClient
+    .from("applications")
+    .update({ notes: "Owner revision advanced before stale deletion." })
+    .eq("id", applicationId)
+    .select("updated_at")
+    .single(), "application delete revision setup failed");
+  expect(newer.updated_at !== before.updated_at, "application delete setup did not advance the revision");
+  const deletion = expectSuccess(await a.authClient.rpc("delete_application_if_revision", {
+    target_application_id: applicationId,
+    target_expected_updated_at: before.updated_at,
+  }), "stale application delete call failed");
+  expect(deletion.length === 0, `stale application deletion affected ${deletion.length} row(s)`);
+  const preserved = expectSuccess(await a.authClient.from("applications").select("notes,updated_at").eq("id", applicationId).single(), "stale application preservation read failed");
+  expect(preserved.notes === "Owner revision advanced before stale deletion." && preserved.updated_at === newer.updated_at, "stale application deletion changed the newer record");
+  return "0 rows; newer application preserved";
+});
+
 await check("stale full application edit cannot overwrite a newer quick status", async () => {
   const created = expectSuccess(await a.authClient
     .from("applications")
@@ -781,6 +809,29 @@ await check("User A creates two owned interview rounds", async () => {
   expect(rows.length === 2, `expected 2 rounds, observed ${rows.length}`);
   fixture.firstRoundId = rows[0].id;
   fixture.secondRoundId = rows[1].id;
+});
+
+await check("stale round deletion preserves the newer round", async () => {
+  const applicationId = requireFixture(fixture.applicationId, "application");
+  const roundId = requireFixture(fixture.firstRoundId, "first round");
+  const before = expectSuccess(await a.authClient.from("interview_rounds").select("updated_at").eq("id", roundId).single(), "round delete revision lookup failed");
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  const newer = expectSuccess(await a.authClient
+    .from("interview_rounds")
+    .update({ notes: "Owner revision advanced before stale round deletion." })
+    .eq("id", roundId)
+    .select("updated_at")
+    .single(), "round delete revision setup failed");
+  expect(newer.updated_at !== before.updated_at, "round delete setup did not advance the revision");
+  const deletion = expectSuccess(await a.authClient.rpc("delete_interview_round_if_revision", {
+    target_application_id: applicationId,
+    target_round_id: roundId,
+    target_expected_updated_at: before.updated_at,
+  }), "stale round delete call failed");
+  expect(deletion.length === 0, `stale round deletion affected ${deletion.length} row(s)`);
+  const preserved = expectSuccess(await a.authClient.from("interview_rounds").select("notes,updated_at").eq("id", roundId).single(), "stale round preservation read failed");
+  expect(preserved.notes === "Owner revision advanced before stale round deletion." && preserved.updated_at === newer.updated_at, "stale round deletion changed the newer record");
+  return "0 rows; newer round preserved";
 });
 
 await check("stale full round edit cannot overwrite a newer completion", async () => {
@@ -898,22 +949,33 @@ await check("User B cannot read User A application or rounds", async () => {
   return "0 application rows; 0 round rows";
 });
 
-await check("User B cannot update or delete User A application", async () => {
+await check("User B cannot update or revision-delete User A application", async () => {
   const applicationId = requireFixture(fixture.applicationId, "application");
   const update = await b.authClient.from("applications").update({ role_title: "Intrusion" }).eq("id", applicationId).select("id");
   expectInvisible(update, "application update");
-  const deletion = await b.authClient.from("applications").delete().eq("id", applicationId).select("id");
-  expectInvisible(deletion, "application deletion");
-  return "both mutations affected 0 rows";
+  expectSqlError(await b.authClient.from("applications").delete().eq("id", applicationId).select("id"), "42501");
+  const revision = expectSuccess(await a.authClient.from("applications").select("updated_at").eq("id", applicationId).single(), "application revision lookup failed");
+  const deletion = expectSuccess(await b.authClient.rpc("delete_application_if_revision", {
+    target_application_id: applicationId,
+    target_expected_updated_at: revision.updated_at,
+  }), "foreign application delete call failed");
+  expect(deletion.length === 0, "User B revision-deleted User A application");
+  return "update and RPC affected 0 rows; direct delete 42501";
 });
 
-await check("User B cannot update or delete User A interview round", async () => {
+await check("User B cannot update or revision-delete User A interview round", async () => {
   const roundId = requireFixture(fixture.firstRoundId, "first round");
   const update = await b.authClient.from("interview_rounds").update({ status: "Completed" }).eq("id", roundId).select("id");
   expectInvisible(update, "round update");
-  const deletion = await b.authClient.from("interview_rounds").delete().eq("id", roundId).select("id");
-  expectInvisible(deletion, "round deletion");
-  return "both mutations affected 0 rows";
+  expectSqlError(await b.authClient.from("interview_rounds").delete().eq("id", roundId).select("id"), "42501");
+  const revision = expectSuccess(await a.authClient.from("interview_rounds").select("updated_at").eq("id", roundId).single(), "round revision lookup failed");
+  const deletion = expectSuccess(await b.authClient.rpc("delete_interview_round_if_revision", {
+    target_application_id: requireFixture(fixture.applicationId, "application"),
+    target_round_id: roundId,
+    target_expected_updated_at: revision.updated_at,
+  }), "foreign round delete call failed");
+  expect(deletion.length === 0, "User B revision-deleted User A round");
+  return "update and RPC affected 0 rows; direct delete 42501";
 });
 
 await check("clearing a missing checklist item is idempotent without creating preparation", async () => {
@@ -3341,8 +3403,13 @@ await check("User A explicitly deletes their curated saved question", async () =
 
 await check("deleting an application cascades rounds and round preparation while detaching private design attempts", async () => {
   const applicationId = requireFixture(fixture.applicationId, "application");
-  const deletion = await a.authClient.from("applications").delete().eq("id", applicationId).select("id").single();
-  expectSuccess(deletion, "application deletion failed");
+  expectSqlError(await a.authClient.from("applications").delete().eq("id", applicationId).select("id"), "42501");
+  const revision = expectSuccess(await a.authClient.from("applications").select("updated_at").eq("id", applicationId).single(), "application deletion revision lookup failed");
+  const deletion = expectSuccess(await a.authClient.rpc("delete_application_if_revision", {
+    target_application_id: applicationId,
+    target_expected_updated_at: revision.updated_at,
+  }), "application deletion failed");
+  expect(deletion.length === 1 && deletion[0].application_id === applicationId, "application deletion returned an uncorrelated result");
   const roundRead = await a.authClient.from("interview_rounds").select("id").eq("application_id", applicationId);
   const rows = expectSuccess(roundRead, "round cascade lookup failed");
   expect(rows.length === 0, "interview rounds survived application deletion");
