@@ -12,6 +12,19 @@ import {
   parseCompleteOnboardingActionInput,
   parseSavePreparationPreferencesActionInput,
 } from "@/lib/account/preparation-preference-action-input";
+import {
+  ACCOUNT_DELETION_CONFIRMATION_ERROR,
+  ACCOUNT_DISPLAY_NAME_INVALID_ERROR,
+  ACCOUNT_EMAIL_INVALID_ERROR,
+  ACCOUNT_PASSWORD_CONFIRMATION_ERROR,
+  ACCOUNT_PASSWORD_INVALID_INPUT_ERROR,
+  ACCOUNT_SETTINGS_INVALID_INPUT_ERROR,
+  PASSWORD_REQUIREMENT,
+  parseDeleteAccountActionInput,
+  parseDisplayNameActionInput,
+  parseEmailChangeActionInput,
+  parsePasswordChangeActionInput,
+} from "@/lib/account/account-action-input";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { logServerOperationalFailure, logServerOperationalWarning } from "@/lib/observability/log";
 import { supportsPasswordReauthentication, verifyPasswordForSensitiveAction } from "@/lib/auth/reauthentication";
@@ -65,43 +78,63 @@ export async function completeOnboardingAction(_: AccountActionState, form: unkn
   }));
 }
 
-export async function updateDisplayNameAction(_: AccountActionState, form: FormData): Promise<AccountActionState> {
+export async function updateDisplayNameAction(_: AccountActionState, form: unknown): Promise<AccountActionState> {
+  const parsed = parseDisplayNameActionInput(form);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: parsed.reason === "invalid-display-name"
+        ? ACCOUNT_DISPLAY_NAME_INVALID_ERROR
+        : ACCOUNT_SETTINGS_INVALID_INPUT_ERROR,
+    };
+  }
   const actor = await getAuthenticatedActor();
   if (!actor) return expired();
-  const value = String(form.get("displayName") ?? "").trim();
-  if (value.length > 80) return { status: "error", message: "Display name must be 80 characters or fewer." };
   const { error } = await actor.supabase
     .from("profiles")
-    .update({ display_name: value || null })
+    .update({ display_name: parsed.value.displayName })
     .eq("id", actor.user.id);
   if (error) return { status: "error", message: "We couldn’t update your display name. Try again." };
   revalidatePath("/settings/account");
   revalidatePath("/dashboard");
-  return { status: "success", message: value ? "Display name updated." : "Display name removed." };
+  return { status: "success", message: parsed.value.displayName ? "Display name updated." : "Display name removed." };
 }
 
-export async function requestEmailChangeAction(_: AccountActionState, form: FormData): Promise<AccountActionState> {
+export async function requestEmailChangeAction(_: AccountActionState, form: unknown): Promise<AccountActionState> {
+  const parsed = parseEmailChangeActionInput(form);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: parsed.reason === "invalid-email"
+        ? ACCOUNT_EMAIL_INVALID_ERROR
+        : ACCOUNT_SETTINGS_INVALID_INPUT_ERROR,
+    };
+  }
   const actor = await getAuthenticatedActor();
   if (!actor) return expired();
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-    return { status: "error", message: "Enter a valid email address." };
-  }
+  const { email } = parsed.value;
   if (email === actor.user.email?.toLowerCase()) return { status: "error", message: "That is already your account email." };
   const { error } = await actor.supabase.auth.updateUser({ email });
   if (error) return { status: "error", message: "We couldn’t start the email change. Try again or keep your current address." };
   return { status: "success", message: "Email change started. Complete the verification steps sent by your authentication provider before the address changes." };
 }
 
-export async function changePasswordAction(_: AccountActionState, form: FormData): Promise<AccountActionState> {
+export async function changePasswordAction(_: AccountActionState, form: unknown): Promise<AccountActionState> {
+  const parsed = parsePasswordChangeActionInput(form);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: parsed.reason === "weak-password"
+        ? PASSWORD_REQUIREMENT
+        : parsed.reason === "password-mismatch"
+          ? ACCOUNT_PASSWORD_CONFIRMATION_ERROR
+          : ACCOUNT_PASSWORD_INVALID_INPUT_ERROR,
+    };
+  }
   const actor = await getAuthenticatedActor();
   if (!actor) return expired();
-  const currentPassword = String(form.get("currentPassword") ?? "");
-  const newPassword = String(form.get("newPassword") ?? "");
-  const confirmPassword = String(form.get("confirmPassword") ?? "");
+  const { currentPassword, newPassword } = parsed.value;
   if (!actor.user.email) return { status: "error", message: "This account does not have a password email. Use password recovery to add or reset a password." };
-  if (newPassword.length < 8) return { status: "error", message: "New password must be at least 8 characters." };
-  if (newPassword !== confirmPassword) return { status: "error", message: "New passwords do not match." };
   // Verified through an isolated client so confirming the current password does
   // not rotate the caller's active cookie session as a side effect.
   const verified = await verifyPasswordForSensitiveAction(actor.user, currentPassword);
@@ -147,18 +180,24 @@ export async function signOutEverywhereAction(previousState: AccountActionState,
   return { status: "success", message: "All sessions have been signed out. This browser will return to the home page." };
 }
 
-export async function deleteAccountAction(_: AccountActionState, form: FormData): Promise<AccountActionState> {
+export async function deleteAccountAction(_: AccountActionState, form: unknown): Promise<AccountActionState> {
+  const parsed = parseDeleteAccountActionInput(form);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: parsed.reason === "invalid-confirmation"
+        ? ACCOUNT_DELETION_CONFIRMATION_ERROR
+        : ACCOUNT_SETTINGS_INVALID_INPUT_ERROR,
+    };
+  }
   const actor = await getAuthenticatedActor();
   if (!actor) return expired();
-  if (String(form.get("confirmation") ?? "") !== "DELETE") {
-    return { status: "error", message: "Type DELETE exactly to confirm permanent account deletion." };
-  }
 
   // Password-capable accounts must prove the credential now, not merely hold an
   // unlocked session. OAuth-only accounts have no password to confirm, so they
   // keep the explicit confirmation rather than a prompt that verifies nothing.
   if (supportsPasswordReauthentication(actor.user)) {
-    const reauthenticated = await verifyPasswordForSensitiveAction(actor.user, String(form.get("currentPassword") ?? ""));
+    const reauthenticated = await verifyPasswordForSensitiveAction(actor.user, parsed.value.currentPassword ?? "");
     if (reauthenticated.status === "unavailable") {
       return { status: "error", message: "Account deletion is unavailable in this environment." };
     }

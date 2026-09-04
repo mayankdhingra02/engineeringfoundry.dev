@@ -130,8 +130,8 @@ check("reauthentication uses an isolated, cookie-free client", reauth.includes("
 check("reauthentication discards its throwaway session", reauth.includes('signOut({ scope: "local" })'));
 check("reauthentication confirms the same account", reauth.includes("data.user.id !== user.id"));
 check("OAuth-only accounts are not given a fake password prompt", reauth.includes('status: "unsupported"') && accountActions.includes("supportsPasswordReauthentication(actor.user)"));
-check("deletion reauthenticates password-capable accounts", accountActions.includes("verifyPasswordForSensitiveAction(actor.user, String(form.get(\"currentPassword\") ?? \"\"))"));
-check("deletion still requires the explicit confirmation", accountActions.includes('!== "DELETE"'));
+check("deletion reauthenticates password-capable accounts", accountActions.includes('verifyPasswordForSensitiveAction(actor.user, parsed.value.currentPassword ?? "")'));
+check("deletion strictly parses the explicit confirmation before account work", accountActions.includes("parseDeleteAccountActionInput(form)") && read("lib/account/account-action-input.ts").includes('confirmation.value !== "DELETE"'));
 check("deletion accepts no user identifier", accountActions.includes("admin.auth.admin.deleteUser(actor.user.id, false)"));
 check("password change no longer rotates the caller's session", !accountActions.includes("actor.supabase.auth.signInWithPassword"));
 check("password change verifies through the isolated client", accountActions.includes("verifyPasswordForSensitiveAction(actor.user, currentPassword)"));

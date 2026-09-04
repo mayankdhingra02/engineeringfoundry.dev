@@ -1,4 +1,7 @@
-import { PASSWORD_REQUIREMENT } from "./credentials.ts";
+import {
+  meetsPasswordRequirement,
+  PASSWORD_REQUIREMENT,
+} from "./credentials.ts";
 
 export const PASSWORD_RECOVERY_MAX_AGE_SECONDS = 600;
 export const PASSWORD_RECOVERY_FUTURE_SKEW_SECONDS = 60;
@@ -109,12 +112,7 @@ export function parsePasswordRecoveryActionInput(
   }
 
   const password = passwords[0];
-  if (
-    password.length < 8 ||
-    password.length > 128 ||
-    !/[A-Za-z]/.test(password) ||
-    !/\d/.test(password)
-  ) {
+  if (!meetsPasswordRequirement(password)) {
     return { ok: false, error: PASSWORD_REQUIREMENT };
   }
   if (confirmations[0] !== password) {

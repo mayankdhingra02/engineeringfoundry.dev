@@ -7,6 +7,19 @@ import {
   parseCompleteOnboardingActionInput,
   parseSavePreparationPreferencesActionInput,
 } from "../lib/account/preparation-preference-action-input.ts";
+import {
+  ACCOUNT_DELETION_CONFIRMATION_ERROR,
+  ACCOUNT_DISPLAY_NAME_INVALID_ERROR,
+  ACCOUNT_EMAIL_INVALID_ERROR,
+  ACCOUNT_PASSWORD_CONFIRMATION_ERROR,
+  ACCOUNT_PASSWORD_INVALID_INPUT_ERROR,
+  ACCOUNT_SETTINGS_INVALID_INPUT_ERROR,
+  PASSWORD_REQUIREMENT,
+  parseDeleteAccountActionInput,
+  parseDisplayNameActionInput,
+  parseEmailChangeActionInput,
+  parsePasswordChangeActionInput,
+} from "../lib/account/account-action-input.ts";
 import { onboardingDestination } from "../lib/account/preferences.ts";
 import {
   PREPARATION_PREFERENCES_PRIVATE_DATA_DOMAIN,
@@ -24,6 +37,11 @@ import { PrivateDataUnavailableError } from "../lib/persistence/errors.ts";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
+const functionSource = (source, name) => {
+  const start = source.indexOf(`export async function ${name}`);
+  const end = source.indexOf("\nexport async function ", start + 1);
+  return start < 0 ? "" : source.slice(start, end < 0 ? undefined : end);
+};
 const [migration, actions, exportRoute, exporter, onboardingPage, onboardingForm, dashboard, dashboardPrivateState, dashboardQueries, accountControl, authForm, passwordForms, styles, packageJson, homepage, privacyPage, preparationSettingsPage, preparationPreferencesQuery, preparationPreferencesForm, preferencesSource] = await Promise.all([
   read("supabase/migrations/202608150001_create_account_lifecycle.sql"),
   read("features/account/actions.ts"),
@@ -63,6 +81,133 @@ assert.equal(onboardingDestination({ hasUpcomingInterview: false, interviewSched
 assert.equal(onboardingDestination({ hasUpcomingInterview: false, interviewScheduled: false, focus: null, requestedPath: "/applications" }), "/applications");
 assert.equal(safeInternalPath("//evil.example/account"), "/dashboard");
 assert.equal(safeInternalPath("https://evil.example/account"), "/dashboard");
+
+const actionForm = (entries) => {
+  const form = new FormData();
+  for (const [name, value] of entries) form.append(name, value);
+  return form;
+};
+const displayNameForm = (value = "Ada Lovelace") => actionForm([["displayName", value]]);
+const emailChangeForm = (value = "Ada@Example.com") => actionForm([["email", value]]);
+const passwordChangeForm = (
+  currentPassword = "Current123",
+  newPassword = "Replacement123",
+  confirmation = newPassword,
+) => actionForm([
+  ["currentPassword", currentPassword],
+  ["newPassword", newPassword],
+  ["confirmPassword", confirmation],
+]);
+const deleteAccountForm = (confirmation = "DELETE", currentPassword) => {
+  const entries = [["confirmation", confirmation]];
+  if (currentPassword !== undefined) entries.push(["currentPassword", currentPassword]);
+  return actionForm(entries);
+};
+
+assert.deepEqual(parseDisplayNameActionInput(displayNameForm("  Ada Lovelace  ")), { ok: true, value: { displayName: "Ada Lovelace" } });
+assert.deepEqual(parseDisplayNameActionInput(displayNameForm("  ")), { ok: true, value: { displayName: null } });
+assert.deepEqual(parseEmailChangeActionInput(emailChangeForm()), { ok: true, value: { email: "ada@example.com" } });
+assert.deepEqual(parsePasswordChangeActionInput(passwordChangeForm()), { ok: true, value: { currentPassword: "Current123", newPassword: "Replacement123" } });
+const maximumAccountPassword = `A1${"x".repeat(126)}`;
+assert.deepEqual(parsePasswordChangeActionInput(passwordChangeForm("Current123", maximumAccountPassword)), { ok: true, value: { currentPassword: "Current123", newPassword: maximumAccountPassword } });
+assert.deepEqual(parseDeleteAccountActionInput(deleteAccountForm()), { ok: true, value: { currentPassword: null } });
+assert.deepEqual(parseDeleteAccountActionInput(deleteAccountForm("DELETE", "Current123")), { ok: true, value: { currentPassword: "Current123" } });
+
+for (const [parser, label] of [
+  [parseDisplayNameActionInput, "display-name"],
+  [parseEmailChangeActionInput, "email-change"],
+  [parsePasswordChangeActionInput, "password-change"],
+  [parseDeleteAccountActionInput, "account-deletion"],
+]) {
+  for (const input of [null, undefined, "form", [], {}, new URLSearchParams()]) {
+    assert.deepEqual(parser(input), { ok: false, reason: "invalid-input" }, `${label} accepted non-FormData input ${String(input)}`);
+  }
+}
+
+for (const [form, parser, label] of [
+  [displayNameForm(), parseDisplayNameActionInput, "display-name"],
+  [emailChangeForm(), parseEmailChangeActionInput, "email-change"],
+  [passwordChangeForm(), parsePasswordChangeActionInput, "password-change"],
+  [deleteAccountForm(), parseDeleteAccountActionInput, "account-deletion"],
+]) {
+  form.append("unexpected", "value");
+  assert.deepEqual(parser(form), { ok: false, reason: "invalid-input" }, `${label} accepted an unknown field`);
+}
+
+for (const [form, parser, name, label] of [
+  [displayNameForm(), parseDisplayNameActionInput, "displayName", "display-name"],
+  [emailChangeForm(), parseEmailChangeActionInput, "email", "email-change"],
+  [passwordChangeForm(), parsePasswordChangeActionInput, "newPassword", "password-change"],
+  [deleteAccountForm(), parseDeleteAccountActionInput, "confirmation", "account-deletion"],
+]) {
+  form.append(name, "duplicate");
+  assert.deepEqual(parser(form), { ok: false, reason: "invalid-input" }, `${label} accepted a duplicate field`);
+}
+
+for (const [form, parser, name, label] of [
+  [displayNameForm(), parseDisplayNameActionInput, "displayName", "display-name"],
+  [emailChangeForm(), parseEmailChangeActionInput, "email", "email-change"],
+  [passwordChangeForm(), parsePasswordChangeActionInput, "newPassword", "password-change"],
+  [deleteAccountForm(), parseDeleteAccountActionInput, "confirmation", "account-deletion"],
+]) {
+  form.delete(name);
+  form.append(name, new Blob(["not text"], { type: "text/plain" }));
+  assert.deepEqual(parser(form), { ok: false, reason: "invalid-input" }, `${label} accepted a file-valued field`);
+}
+
+for (const [form, parser, expected, label] of [
+  [displayNameForm(), parseDisplayNameActionInput, { ok: true, value: { displayName: "Ada Lovelace" } }, "display-name"],
+  [emailChangeForm(), parseEmailChangeActionInput, { ok: true, value: { email: "ada@example.com" } }, "email-change"],
+  [passwordChangeForm(), parsePasswordChangeActionInput, { ok: true, value: { currentPassword: "Current123", newPassword: "Replacement123" } }, "password-change"],
+  [deleteAccountForm(), parseDeleteAccountActionInput, { ok: true, value: { currentPassword: null } }, "account-deletion"],
+]) {
+  form.append("$ACTION_ID_account", "framework metadata");
+  assert.deepEqual(parser(form), expected, `${label} did not safely ignore framework action metadata`);
+}
+
+assert.deepEqual(parseDisplayNameActionInput(new FormData()), { ok: false, reason: "invalid-input" });
+assert.deepEqual(parseEmailChangeActionInput(new FormData()), { ok: false, reason: "invalid-input" });
+assert.deepEqual(parseDeleteAccountActionInput(new FormData()), { ok: false, reason: "invalid-input" });
+assert.deepEqual(parseDisplayNameActionInput(displayNameForm("x".repeat(80))), { ok: true, value: { displayName: "x".repeat(80) } });
+assert.deepEqual(parseDisplayNameActionInput(displayNameForm("x".repeat(81))), { ok: false, reason: "invalid-display-name" });
+assert.deepEqual(parseDisplayNameActionInput(displayNameForm("Ada\u0000Lovelace")), { ok: false, reason: "invalid-display-name" });
+for (const value of ["ada", "ada@example", `${"a".repeat(244)}@example.com`]) {
+  assert.deepEqual(parseEmailChangeActionInput(emailChangeForm(value)), { ok: false, reason: "invalid-email" }, `invalid email ${value.length} was accepted`);
+}
+assert.deepEqual(parsePasswordChangeActionInput(passwordChangeForm("", "Replacement123")), { ok: false, reason: "invalid-input" });
+for (const name of ["currentPassword", "newPassword", "confirmPassword"]) {
+  const missing = passwordChangeForm();
+  missing.delete(name);
+  assert.deepEqual(parsePasswordChangeActionInput(missing), { ok: false, reason: "invalid-input" }, `password change accepted a missing ${name}`);
+  const duplicate = passwordChangeForm();
+  duplicate.append(name, "duplicate");
+  assert.deepEqual(parsePasswordChangeActionInput(duplicate), { ok: false, reason: "invalid-input" }, `password change accepted a duplicate ${name}`);
+  const file = passwordChangeForm();
+  file.delete(name);
+  file.append(name, new Blob(["not text"], { type: "text/plain" }));
+  assert.deepEqual(parsePasswordChangeActionInput(file), { ok: false, reason: "invalid-input" }, `password change accepted a file-valued ${name}`);
+}
+for (const value of ["Short1", "a".repeat(8), "1".repeat(8), `A1${"x".repeat(127)}`]) {
+  assert.deepEqual(parsePasswordChangeActionInput(passwordChangeForm("Current123", value)), { ok: false, reason: "weak-password" }, `weak password ${value.length} was accepted`);
+}
+assert.deepEqual(parsePasswordChangeActionInput(passwordChangeForm("Current123", "Replacement123", "Replacement124")), { ok: false, reason: "password-mismatch" });
+assert.deepEqual(parseDeleteAccountActionInput(deleteAccountForm("delete")), { ok: false, reason: "invalid-confirmation" });
+for (const mutation of ["duplicate", "file"]) {
+  const form = deleteAccountForm("DELETE", "Current123");
+  if (mutation === "duplicate") form.append("currentPassword", "duplicate");
+  else {
+    form.delete("currentPassword");
+    form.append("currentPassword", new Blob(["not text"], { type: "text/plain" }));
+  }
+  assert.deepEqual(parseDeleteAccountActionInput(form), { ok: false, reason: "invalid-input" }, `account deletion accepted a ${mutation} currentPassword`);
+}
+assert.equal(ACCOUNT_SETTINGS_INVALID_INPUT_ERROR, "Review the account fields and try again.");
+assert.equal(ACCOUNT_DISPLAY_NAME_INVALID_ERROR, "Display name must be 80 characters or fewer.");
+assert.equal(ACCOUNT_EMAIL_INVALID_ERROR, "Enter a valid email address.");
+assert.equal(ACCOUNT_PASSWORD_INVALID_INPUT_ERROR, "Review the password fields and try again.");
+assert.equal(ACCOUNT_PASSWORD_CONFIRMATION_ERROR, "New passwords do not match.");
+assert.equal(ACCOUNT_DELETION_CONFIRMATION_ERROR, "Type DELETE exactly to confirm permanent account deletion.");
+assert.equal(PASSWORD_REQUIREMENT, "Use at least 8 characters with at least one letter and one number.");
 
 const validPreferredRoleLevels = [null, "sde1", "sde2", "senior", "staff", "unsure"];
 const validPrimaryPreparationFocuses = [null, "dsa", "system_design", "behavioral", "applications", "unsure"];
@@ -404,9 +549,40 @@ assert.ok(dashboardPrivateState.includes("resolveDashboardPrivateStartState") &&
 assert.match(dashboardQueries, /getAuthenticatedActor\(\)[\s\S]*\.from\("user_preparation_preferences"\)[\s\S]*\.eq\("user_id", actor\.user\.id\)[\s\S]*resolveDashboardPrivateStartState/, "dashboard first-use preferences no longer flow through the owner-scoped resolver");
 assert.ok(dashboard.indexOf('!preparationHasStarted') < dashboard.indexOf('className="pipeline-summary"'), "new users see zero-value summaries before the first-use action");
 
-assert.match(actions, /String\(form\.get\("confirmation"\)[\s\S]*!== "DELETE"/, "deletion lacks exact confirmation");
+const accountActionInputSource = await read("lib/account/account-action-input.ts");
+const credentialsSource = await read("lib/auth/credentials.ts");
+const passwordRecoverySource = await read("lib/auth/password-recovery-claims.ts");
+const accountLifecycleDoc = await read("docs/account-lifecycle.md");
+const authSecurityDoc = await read("docs/auth-security.md");
+for (const [name, parser] of [
+  ["updateDisplayNameAction", "parseDisplayNameActionInput"],
+  ["requestEmailChangeAction", "parseEmailChangeActionInput"],
+  ["changePasswordAction", "parsePasswordChangeActionInput"],
+  ["deleteAccountAction", "parseDeleteAccountActionInput"],
+]) {
+  const body = functionSource(actions, name);
+  const parseIndex = body.indexOf(`const parsed = ${parser}(form)`);
+  const invalidReturn = body.indexOf("if (!parsed.ok)", parseIndex);
+  const actorIndex = body.indexOf("getAuthenticatedActor()", invalidReturn);
+  assert.match(body, new RegExp(`form: unknown\\): Promise<AccountActionState> \\{\\s*const parsed = ${parser}\\(form\\);`), `${name} does not treat its runtime payload as unknown and parse it first`);
+  assert.ok(parseIndex >= 0 && invalidReturn > parseIndex && actorIndex > invalidReturn, `${name} does not reject malformed runtime input before actor work`);
+  assert.ok(!body.includes("form.get(") && !body.includes("String(form"), `${name} bypasses its parsed account input`);
+}
+for (const marker of ["instanceof FormData", "getAll(name)", "values.length !== 1", 'key.startsWith("$ACTION_")', "meetsPasswordRequirement", 'confirmation.value !== "DELETE"']) {
+  assert.ok(accountActionInputSource.includes(marker), `strict account-action parser lacks ${marker}`);
+}
+assert.ok(credentialsSource.includes("export function meetsPasswordRequirement") && passwordRecoverySource.includes("meetsPasswordRequirement(password)"), "signup, recovery, and account password changes do not share one credential policy predicate");
+assert.ok(preparationPreferencesForm.includes("PASSWORD_REQUIREMENT") && preparationPreferencesForm.includes('maxLength={128}') && preparationPreferencesForm.includes('aria-describedby="account-password-requirement"') && preparationPreferencesForm.includes('maxLength={254}'), "account forms do not expose the shared password policy and matching client bounds");
+for (const [source, marker] of [
+  [accountLifecycleDoc, "strictly parse exact singleton string fields before authentication"],
+  [accountLifecycleDoc, "same 8–128-character, letter-and-number policy as signup and recovery"],
+  [authSecurityDoc, "Duplicate, file-valued, missing, unknown, and non-`FormData` inputs"],
+  [authSecurityDoc, "Signup, password recovery, and signed-in password change share one policy predicate"],
+]) assert.ok(source.includes(marker), `account credential documentation lacks ${marker}`);
 assert.match(actions, /admin\.auth\.admin\.deleteUser\(actor\.user\.id, false\)/, "deletion is not bound to the authenticated actor");
 const deletionStart = actions.indexOf("export async function deleteAccountAction");
+const deletionParse = actions.indexOf("parseDeleteAccountActionInput(form)", deletionStart);
+const deletionActor = actions.indexOf("getAuthenticatedActor()", deletionParse);
 const adminDelete = actions.indexOf("admin.auth.admin.deleteUser(actor.user.id, false)", deletionStart);
 const deletionFailure = actions.indexOf("if (error)", adminDelete);
 const cookieStoreRead = actions.indexOf("const cookieStore = await cookies()", deletionFailure);
@@ -415,6 +591,8 @@ const proofWrite = actions.indexOf("cookieStore.set(accountDeletionProofCookie",
 const homeRedirect = actions.indexOf('redirect("/")', proofWrite);
 assert.ok(
   deletionStart >= 0
+    && deletionParse > deletionStart
+    && deletionActor > deletionParse
     && adminDelete > deletionStart
     && deletionFailure > adminDelete
     && cookieStoreRead > deletionFailure
@@ -432,7 +610,7 @@ assert.match(actions, /signOut\(\{ scope: "global" \}\)/, "global session signou
 // Phase 9 moved credential verification to an isolated, cookie-free client so a
 // verification step cannot rotate the caller's session. See
 // lib/auth/reauthentication.ts.
-assert.match(actions, /verifyPasswordForSensitiveAction\(actor\.user, currentPassword\)[\s\S]*updateUser\(\{ password: newPassword \}\)/, "password change does not verify the current password first");
+assert.match(actions, /parsePasswordChangeActionInput\(form\)[\s\S]*verifyPasswordForSensitiveAction\(actor\.user, currentPassword\)[\s\S]*updateUser\(\{ password: newPassword \}\)/, "password change does not parse first and verify the current password before updating to the validated credential");
 assert.ok(!actions.includes("actor.supabase.auth.signInWithPassword"), "credential verification must not run on the cookie-backed session client");
 assert.match(actions, /supportsPasswordReauthentication\(actor\.user\)/, "deletion does not reauthenticate password-capable accounts");
 

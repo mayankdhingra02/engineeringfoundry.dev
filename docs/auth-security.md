@@ -85,6 +85,8 @@ Holding an unlocked session is not the same as proving current credentials. Phas
 
 Verification runs against an **isolated Supabase client** created with `persistSession: false`. That client keeps its session in memory and never touches cookie storage, so confirming a password cannot rewrite or invalidate the caller's active session. The throwaway session is signed out locally afterwards, and the verified identity is compared against the caller's user ID so valid credentials for a different account are rejected.
 
+Account credential and deletion actions strictly parse their exact runtime fields before resolving the actor or calling Auth. Duplicate, file-valued, missing, unknown, and non-`FormData` inputs cannot be coerced into credentials or confirmations. Signup, password recovery, and signed-in password change share one policy predicate: 8–128 characters with at least one ASCII letter and one number. Client `minLength`/`maxLength` constraints and associated help expose that same policy, but the server parser remains authoritative.
+
 | Action | Password-capable account | OAuth-only account |
 | --- | --- | --- |
 | Password change | Current password verified through the isolated client | Directed to password recovery |

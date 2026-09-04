@@ -1,6 +1,16 @@
 export const PASSWORD_REQUIREMENT =
   "Use at least 8 characters with at least one letter and one number.";
 
+export function meetsPasswordRequirement(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.length >= 8 &&
+    value.length <= 128 &&
+    /[A-Za-z]/.test(value) &&
+    /\d/.test(value)
+  );
+}
+
 export type AuthField =
   | "full_name"
   | "email"
@@ -37,12 +47,7 @@ export function validateSignUpCredentials({
   if (fullName.length < 2 || fullName.length > 80) {
     errors.full_name = "Enter your name using 2–80 characters.";
   }
-  if (
-    password.length < 8 ||
-    password.length > 128 ||
-    !/[A-Za-z]/.test(password) ||
-    !/\d/.test(password)
-  ) {
+  if (!meetsPasswordRequirement(password)) {
     errors.password = PASSWORD_REQUIREMENT;
   }
   if (confirmation !== password) {
