@@ -1227,6 +1227,37 @@ await check("User A adds a bounded custom preparation task", async () => {
   expect(task.title === "Test the interview meeting link" && task.completed === false, "custom task did not round-trip");
 });
 
+await check("concurrent preparation task additions enforce one cap and distinct positions", async () => {
+  const roundId = requireFixture(fixture.firstRoundId, "first round");
+  for (let index = 0; index < 11; index += 1) {
+    expectSuccess(await a.authClient.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: `Serialized preparation task ${index + 1}`,
+    }), `preparation task cap setup ${index + 1} failed`);
+  }
+  const results = await Promise.all([
+    a.authClient.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: "Concurrent cap candidate A",
+    }),
+    a.authClient.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: "Concurrent cap candidate B",
+    }),
+  ]);
+  const successes = results.filter((result) => !result.error && typeof result.data === "string");
+  const failures = results.filter((result) => result.error?.code === "P0001");
+  expect(successes.length === 1 && failures.length === 1, "concurrent cap-edge additions did not produce exactly one insert and one bounded failure");
+  const rows = expectSuccess(await a.authClient
+    .from("interview_preparation_custom_tasks")
+    .select("id,position")
+    .eq("round_id", roundId)
+    .order("position"), "serialized task list read failed");
+  expect(rows.length === 12, "concurrent task additions exceeded or undershot the twelve-task cap");
+  expect(rows.every((row, index) => row.position === index), "serialized task additions produced a duplicate or missing position");
+  return "one cap-edge insert, one P0001 refusal, positions 0 through 11";
+});
+
 await check("concurrent identical preparation task intentions remain completed", async () => {
   const roundId = requireFixture(fixture.secondRoundId, "second round");
   const taskId = requireFixture(fixture.preparationTaskId, "preparation task");

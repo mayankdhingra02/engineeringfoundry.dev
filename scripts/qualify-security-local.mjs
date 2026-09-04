@@ -1117,6 +1117,56 @@ await check("User A creates an owner-scoped preparation task security fixture", 
   preparationTaskId = created.data;
 });
 
+await check("preparation task additions reject anonymous foreign and malformed writes", async () => {
+  const [anonymous, foreign, missing, blank, control, oversized, direct] = await Promise.all([
+    anon.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: "Anonymous task",
+    }),
+    b.client.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: "Foreign task",
+    }),
+    b.client.rpc("add_interview_preparation_task", {
+      target_round_id: "93939393-9393-4939-8939-939393939393",
+      title_value: "Missing task",
+    }),
+    a.client.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: "   ",
+    }),
+    a.client.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: "line\nbreak",
+    }),
+    a.client.rpc("add_interview_preparation_task", {
+      target_round_id: roundId,
+      title_value: "x".repeat(161),
+    }),
+    a.client.from("interview_preparation_custom_tasks").insert({
+      id: randomUUID(),
+      round_id: roundId,
+      user_id: a.user.id,
+      title: "Direct task",
+      position: 1,
+    }),
+  ]);
+  assert.equal(anonymous.error?.code, "42501");
+  assert.equal(foreign.error?.code, "P0002");
+  assert.equal(missing.error?.code, "P0002");
+  for (const invalid of [blank, control, oversized]) {
+    assert.equal(invalid.error?.code, "23514");
+  }
+  assert.equal(direct.error?.code, "42501");
+  const ownerRows = await a.client
+    .from("interview_preparation_custom_tasks")
+    .select("id")
+    .eq("round_id", roundId);
+  assert.ifError(ownerRows.error);
+  assert.deepEqual(ownerRows.data.map((row) => row.id), [preparationTaskId]);
+  return "anonymous/direct 42501; foreign/missing P0002; malformed 23514; owner row unchanged";
+});
+
 await check("direct preparation task writes cannot bypass the desired-state or revision-delete RPCs", async () => {
   const [directUpdate, directDelete] = await Promise.all([
     a.client

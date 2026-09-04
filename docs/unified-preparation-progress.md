@@ -31,6 +31,8 @@ DSA and System Design each have one active plan in the existing owner-scoped pre
 
 All new durable activity is included in account export schema `1.5` and is removed by the existing account-deletion cascade.
 
+Custom interview-preparation tasks accept one strict, bounded single-line title. The owner-derived add operation serializes each interview round before enforcing the 12-task cap and assigning the next position, so concurrent additions cannot exceed the cap or create duplicate positions. The application form remains only a convenience boundary; the database enforces the owner, cap, and ordering contract for every authenticated caller.
+
 ## Momentum and Playbook links
 
 The homepage can show a quiet count of distinct days with recorded activity in the last seven days. This is not a streak, score, reward, readiness signal, or missed-day penalty.

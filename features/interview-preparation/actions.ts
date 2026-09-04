@@ -22,6 +22,9 @@ import {
 } from "@/lib/interview-preparation/text-action-input";
 import {
   PREPARATION_TASK_DELETED_MESSAGE,
+  PREPARATION_TASK_ADDED_MESSAGE,
+  PREPARATION_TASK_ADD_INVALID_INPUT_ERROR,
+  PREPARATION_TASK_ADD_PERSISTENCE_ERROR,
   PREPARATION_TASK_DELETE_CONFLICT_ERROR,
   PREPARATION_TASK_DELETE_INVALID_INPUT_ERROR,
   PREPARATION_TASK_DELETE_PERSISTENCE_ERROR,
@@ -30,6 +33,8 @@ import {
   PREPARATION_TASK_SAVED_MESSAGE,
   parsePreparationTaskCompletionInput,
   parsePreparationTaskCompletionResult,
+  parsePreparationTaskAddInput,
+  parsePreparationTaskAddResult,
   parsePreparationTaskDeleteInput,
   parsePreparationTaskDeleteResult,
 } from "@/lib/interview-preparation/task-action-input";
@@ -113,16 +118,20 @@ export async function togglePreparationChecklistAction(roundId: unknown, itemId:
   return { status: "success", message: "Checklist saved." };
 }
 
-export async function addPreparationTaskAction(roundId: string, applicationId: string, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+export async function addPreparationTaskAction(roundId: unknown, applicationId: unknown, previousState: PreparationActionState, formData: unknown): Promise<PreparationActionState> {
+  const parsed = parsePreparationTaskAddInput(roundId, applicationId, formData);
   void previousState;
+  if (!parsed.ok) return { status: "error", message: PREPARATION_TASK_ADD_INVALID_INPUT_ERROR };
   const actor = await getAuthenticatedActor();
-  const title = String(formData.get("title") ?? "").trim().slice(0, 160);
   if (!actor) return { status: "error", message: "Your session expired. Sign in and try again." };
-  if (!title) return { status: "error", message: "Enter a task before adding it." };
-  const { error } = await actor.supabase.rpc("add_interview_preparation_task", { target_round_id: roundId, title_value: title });
-  if (error) return { status: "error", message: "Task was not added. Try again." };
-  refresh(roundId, applicationId);
-  return { status: "success", message: "Private task added." };
+  const { data, error } = await actor.supabase.rpc("add_interview_preparation_task", {
+    target_round_id: parsed.value.roundId,
+    title_value: parsed.value.title,
+  });
+  const taskId = parsePreparationTaskAddResult(data);
+  if (error || taskId === null) return { status: "error", message: PREPARATION_TASK_ADD_PERSISTENCE_ERROR };
+  refresh(parsed.value.roundId, parsed.value.applicationId);
+  return { status: "success", message: PREPARATION_TASK_ADDED_MESSAGE };
 }
 
 export async function togglePreparationTaskAction(roundId: unknown, taskId: unknown, targetCompleted: unknown, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
