@@ -5,7 +5,7 @@ import {
   consumeAccountActionRateLimit,
   describeRetryAfter,
 } from "@/lib/account/rate-limit";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import { logServerOperationalFailure } from "@/lib/observability/log";
 
 export const dynamic = "force-dynamic";
@@ -18,8 +18,10 @@ const privateHeaders = {
 };
 
 export async function GET() {
-  const actor = await getAuthenticatedActor();
-  if (!actor) return NextResponse.json({ error: "Authentication required." }, { status: 401, headers: privateHeaders });
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state === "unavailable") return NextResponse.json({ error: "Account session unavailable. Try again." }, { status: 503, headers: privateHeaders });
+  if (actorState.state === "anonymous") return NextResponse.json({ error: "Authentication required." }, { status: 401, headers: privateHeaders });
+  const actor = actorState.actor;
 
   // Server-authoritative throttle. The budget is owned by the authenticated
   // actor in Postgres, so it cannot be reset by clearing a cookie.

@@ -15,7 +15,14 @@ const privateHeaders = {
 
 export async function GET(request: Request, { params }: { params: Promise<{ roundId: string }> }) {
   const { roundId } = await params;
-  const [current, round] = await Promise.all([getAuthenticatedActor(), getOwnedCalendarInterview(roundId)]);
+  let current: Awaited<ReturnType<typeof getAuthenticatedActor>>;
+  let round: Awaited<ReturnType<typeof getOwnedCalendarInterview>>;
+  try {
+    [current, round] = await Promise.all([getAuthenticatedActor(), getOwnedCalendarInterview(roundId)]);
+  } catch (cause) {
+    logServerOperationalFailure("calendar_export_session_unavailable", cause, { provider: "google" });
+    return NextResponse.json({ error: "Calendar export unavailable" }, { status: 503, headers: privateHeaders });
+  }
   if (!current) return NextResponse.json({ error: "Authentication required" }, { status: 401, headers: privateHeaders });
   if (!round) return NextResponse.json({ error: "Interview not found" }, { status: 404, headers: privateHeaders });
   const recorded = await current.supabase.rpc("record_interview_calendar_export", { target_round_id: round.id, provider_value: "google" });

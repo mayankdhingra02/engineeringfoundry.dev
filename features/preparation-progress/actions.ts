@@ -5,7 +5,7 @@ import { activeBehavioralQuestions } from "@/data/behavioral";
 import { activeMlDesignProblems } from "@/data/ml-design";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { canonicalDsaQuestionById } from "@/lib/dsa/catalog";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import {
   canonicalSystemDesignConceptIds,
   canonicalSystemDesignProblemIds,
@@ -37,8 +37,10 @@ export async function recordPreparationActivityAction(input: {
 }): Promise<PreparationActivityAccountResult> {
   if (!input || !preparationTrackSet.has(input.track) || !preparationStatusSet.has(input.status) || typeof input.itemId !== "string") return { saved: false, reason: "invalid-input" };
   if (!isAccountPlatformAvailable()) return { saved: false, reason: "account-unavailable" };
-  const actor = await getAuthenticatedActor();
-  if (!actor) return { saved: false, reason: "unauthenticated" };
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state === "unavailable") return { saved: false, reason: "account-unavailable" };
+  if (actorState.state === "anonymous") return { saved: false, reason: "unauthenticated" };
+  const actor = actorState.actor;
 
   if (input.track === "dsa") {
     if (!canonicalDsaQuestionById.has(input.itemId)) return { saved: false, reason: "invalid-input" };

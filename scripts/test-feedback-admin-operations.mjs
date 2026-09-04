@@ -458,8 +458,9 @@ for (const marker of ["randomUUID", "createHash", "httpOnly: true", "submit_feed
 for (const marker of ["contact_consent", "5_000", "sanitizedFeedbackPageContext", "FEEDBACK_CONTACT_CONSENT_PRESENT_FIELD", "containsUnsafeControl"]) assert.ok(feedbackSubmissionInput.includes(marker), `feedback submission runtime boundary is missing ${marker}`);
 assert.ok(!feedbackAction.includes("SUPABASE_SERVICE_ROLE_KEY") && !feedbackAction.includes("createSupabaseAdminClient"), "feedback action exposes an admin credential boundary");
 assert.ok(!feedbackAction.includes("createSupabaseServerClient"), "actorless feedback still depends on the account-gated session client");
-assert.match(feedbackAction, /const supabase = actor\?\.supabase \?\? createSupabasePublicClient\(\);/, "feedback must preserve the actor-bound client and use the sessionless public client only as the actorless fallback");
-const actorResolutionIndex = feedbackAction.indexOf("const actor = await getAuthenticatedActor();");
+assert.match(feedbackAction, /const actor = actorState\.state === "authenticated" \? actorState\.actor : null;/, "feedback must use an actor only after explicit shared-actor authentication");
+assert.match(feedbackAction, /const supabase = actor\?\.supabase \?\? createSupabasePublicClient\(\);/, "feedback must preserve the actor-bound client and use the sessionless public client for unverified account-optional feedback");
+const actorResolutionIndex = feedbackAction.indexOf("const actorState = await getAuthenticatedActorState();");
 const clientResolutionIndex = feedbackAction.indexOf("const supabase = actor?.supabase ?? createSupabasePublicClient();");
 const unavailableReturnIndex = feedbackAction.indexOf('if (!supabase) return { status: "error", message: "Feedback is unavailable in this environment. Please try again later." };');
 const anonymousSubjectIndex = feedbackAction.indexOf("const anonymousSubjectHash = actor ? null : await anonymousSubject();");
@@ -567,7 +568,7 @@ for (const forbidden of ["form.reset()", "requestFormReset", "key={state", "onSu
 const submissionActionStart = feedbackAction.indexOf("export async function submitFeedbackAction");
 const feedbackParse = feedbackAction.indexOf("parseFeedbackSubmissionActionInput(form)", submissionActionStart);
 const feedbackInvalidReturn = feedbackAction.indexOf("if (!parsed.ok)", feedbackParse);
-const feedbackActor = feedbackAction.indexOf("getAuthenticatedActor()", feedbackInvalidReturn);
+const feedbackActor = feedbackAction.indexOf("getAuthenticatedActorState()", feedbackInvalidReturn);
 const feedbackCookies = feedbackAction.indexOf("anonymousSubject()", feedbackActor);
 const feedbackRpc = feedbackAction.indexOf('rpc("submit_feedback_submission"', feedbackActor);
 const feedbackResult = feedbackAction.indexOf("parseFeedbackSubmissionResult(data)", feedbackRpc);
@@ -687,7 +688,7 @@ for (const path of ["app/admin/feedback", "app/admin/page.tsx", "app/error.tsx",
 assert.ok(supportingRequirement.content_paths.includes("docs/feedback-admin-operations.md"), "EF-SUP lacks admin operations documentation attribution");
 assert.ok(supportingRequirement.test_commands.includes("npm run test:feedback-admin-operations"), "EF-SUP lacks its enrolled admin regression command");
 assert.ok(supportingRequirement.test_commands.includes("npm run qualify:database") && supportingRequirement.test_commands.includes("npm run test:production-baseline"), "EF-SUP lacks executable database or rollout evidence attribution");
-assert.ok(supportingRequirement.acceptance_criteria.some((criterion) => criterion.includes("feedback queue uses an exact filtered count") && criterion.includes("shared actor authentication-service-versus-anonymous ambiguity remains outside this boundary")), "EF-SUP overclaims or omits the strict admin read-truth boundary");
+assert.ok(supportingRequirement.acceptance_criteria.some((criterion) => criterion.includes("feedback queue uses an exact filtered count") && criterion.includes("shared actor failures fail closed before the admin membership query")), "EF-SUP overclaims or omits the strict admin and shared-actor read-truth boundary");
 assert.ok(supportingRequirement.acceptance_criteria.some((criterion) => criterion.includes("Same-revision concurrent triage has one coherent winner") && criterion.includes("rendered draft retention and focus behavior remain browser/manual validation") && criterion.includes("hosted migration/concurrency checks remain unchecked")), "EF-SUP overclaims or omits the revision-checked feedback triage boundary");
 
 const now = new Date("2027-02-17T12:00:00Z");

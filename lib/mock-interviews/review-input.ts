@@ -4,7 +4,7 @@ import type { MockPracticeMode, MockTrack } from "@/types";
 export const MOCK_REVIEW_INVALID_INPUT_ERROR =
   "This review no longer matches the selected canonical practice session.";
 export const MOCK_REVIEW_ACCOUNT_UNAVAILABLE_ERROR =
-  "Private review saving is unavailable in this configuration.";
+  "Private review saving is unavailable right now.";
 export const MOCK_REVIEW_UNAUTHENTICATED_ERROR =
   "Sign in to save this private practice review.";
 export const MOCK_REVIEW_PERSISTENCE_ERROR =

@@ -1,7 +1,7 @@
 "use server";
 
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import {
   MOCK_REVIEW_ACCOUNT_UNAVAILABLE_ERROR,
   MOCK_REVIEW_INVALID_INPUT_ERROR,
@@ -34,14 +34,22 @@ export async function saveMockInterviewReview(
     };
   }
 
-  const actor = await getAuthenticatedActor();
-  if (!actor) {
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state === "unavailable") {
+    return {
+      ok: false,
+      reason: "account-unavailable",
+      error: MOCK_REVIEW_ACCOUNT_UNAVAILABLE_ERROR,
+    };
+  }
+  if (actorState.state === "anonymous") {
     return {
       ok: false,
       reason: "unauthenticated",
       error: MOCK_REVIEW_UNAUTHENTICATED_ERROR,
     };
   }
+  const actor = actorState.actor;
 
   const validated = parsed.value;
   const result = await actor.supabase.rpc("save_mock_interview_review", {

@@ -20,13 +20,13 @@ export const DISABLED_ACCOUNT_DSA_EXPECTATIONS = [
   { route: "/dsa/practice", marker: "Public practice remains available" },
   { route: "/dsa/companies/amazon", marker: "Account progress unavailable" },
   { route: "/dsa/roadmap?level=sde2", marker: "Account progress unavailable · public roadmap" },
-  { route: "/dsa/questions/two-sum", marker: "Private notes are unavailable in this configuration" },
+  { route: "/dsa/questions/two-sum", marker: "Private notes are unavailable right now" },
 ];
 
 export const DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS = [
   { route: "/system-design/start-here/introduction", marker: "Account progress unavailable" },
   { route: "/system-design/problems", marker: "Public practice remains available" },
-  { route: "/system-design/problems/url-shortener", marker: "Private design attempts are unavailable in this configuration" },
+  { route: "/system-design/problems/url-shortener", marker: "Private design attempts are unavailable right now" },
   { route: "/system-design/plan", marker: "Account saving is unavailable" },
   { route: "/system-design/practice", marker: "Public System Design practice remains available" },
 ];

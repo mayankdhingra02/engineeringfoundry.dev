@@ -2,7 +2,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import {
   FEEDBACK_SUBMISSION_INVALID_INPUT_ERROR,
   FEEDBACK_SUBMISSION_PERSISTENCE_ERROR,
@@ -43,7 +43,8 @@ export async function submitFeedbackAction(_: FeedbackActionState, form: unknown
     };
   }
 
-  const actor = await getAuthenticatedActor();
+  const actorState = await getAuthenticatedActorState();
+  const actor = actorState.state === "authenticated" ? actorState.actor : null;
   const input = parsed.value;
   const payload = {
     category: input.category,

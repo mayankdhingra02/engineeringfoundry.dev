@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
-import { getAuthenticatedActor, type AuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState, type AuthenticatedActor } from "@/lib/auth/actor";
 import type {
   Database,
   DsaProgressRow,
@@ -57,9 +57,10 @@ function failure<T>(code: PreparationStateErrorCode, fieldErrors?: Readonly<Reco
 
 async function getCurrentActor(): Promise<PreparationStateResult<AuthenticatedActor>> {
   if (!isAccountPlatformAvailable()) return failure("account-unavailable");
-  const actor = await getAuthenticatedActor();
-  if (!actor) return failure("unauthenticated");
-  return { ok: true, data: actor };
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state === "unavailable") return failure("account-unavailable");
+  if (actorState.state === "anonymous") return failure("unauthenticated");
+  return { ok: true, data: actorState.actor };
 }
 
 function mapPreferences(row: UserPreparationPreferenceRow): UserPreparationPreferences {

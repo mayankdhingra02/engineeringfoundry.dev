@@ -766,7 +766,8 @@ assert.match(actions, /parsePasswordChangeActionInput\(form\)[\s\S]*verifyPasswo
 assert.ok(!actions.includes("actor.supabase.auth.signInWithPassword"), "credential verification must not run on the cookie-backed session client");
 assert.match(actions, /supportsPasswordReauthentication\(actor\.user\)/, "deletion does not reauthenticate password-capable accounts");
 
-assert.match(exportRoute, /getAuthenticatedActor\(\)/, "export route does not resolve an authenticated actor");
+assert.match(exportRoute, /getAuthenticatedActorState\(\)/, "export route does not resolve authenticated actor state");
+assert.match(exportRoute, /actorState\.state === "unavailable"[\s\S]*status: 503[\s\S]*actorState\.state === "anonymous"[\s\S]*status: 401[\s\S]*const actor = actorState\.actor/, "export route does not distinguish unavailable actor verification from a verified anonymous session before using the actor");
 assert.match(exportRoute, /Content-Disposition/, "export is not delivered as an attachment");
 assert.match(exportRoute, /private, no-store/, "export response is not private/no-store");
 assert.ok(!exportRoute.includes("searchParams") && !exportRoute.includes("userId"), "export accepts a target account parameter");

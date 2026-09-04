@@ -63,7 +63,7 @@ export function LevelRoadmapModule({ module, level, index, expanded, onToggle, v
         {Object.entries(priorityCounts).filter(([, count]) => count > 0).map(([priority, count]) => <span key={priority} className={`dsa-level-priority ${priority}`}><Circle size={8} fill="currentColor" aria-hidden="true" />{count} {priorityLabels[priority as TopicPriority]}</span>)}
       </div>
       <div className="dsa-level-roadmap-topic-list">{module.topics.map((roadmapTopic, topicIndex) => <TopicCard key={roadmapTopic.id} topic={roadmapTopic} level={level} defaultOpen={index === 0 && topicIndex === 0} visibleClassifications={visibleClassifications} visibleProblemIds={visibleProblemIds} assignments={assignments} progress={progress} signedIn={signedIn} skipped={skippedTopicIds?.has(roadmapTopic.id)} onToggleSkipped={onToggleSkipped ? () => onToggleSkipped(roadmapTopic.id) : undefined} />)}</div>
-      <p className="dsa-level-roadmap-progress-note"><Clock3 size={15} aria-hidden="true" />{signedIn ? "Problem state is shared with My Practice. Session-only skips never change completion." : accountPlatformAvailable ? "Sign in to persist problem state across this roadmap and the question library." : "Roadmap planning remains public. Account-backed problem progress is unavailable in this configuration."}</p>
+      <p className="dsa-level-roadmap-progress-note"><Clock3 size={15} aria-hidden="true" />{signedIn ? "Problem state is shared with My Practice. Session-only skips never change completion." : accountPlatformAvailable ? "Sign in to persist problem state across this roadmap and the question library." : "Roadmap planning remains public. Account-backed problem progress is unavailable right now."}</p>
     </div>}
   </article>;
 }

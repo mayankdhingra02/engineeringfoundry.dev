@@ -164,7 +164,7 @@ for (const [field, value] of [
 mustReject(validInput(), "An invalid injected validation clock must fail closed.", new Date("invalid"));
 
 assert.equal(MOCK_REVIEW_INVALID_INPUT_ERROR, "This review no longer matches the selected canonical practice session.");
-assert.equal(MOCK_REVIEW_ACCOUNT_UNAVAILABLE_ERROR, "Private review saving is unavailable in this configuration.");
+assert.equal(MOCK_REVIEW_ACCOUNT_UNAVAILABLE_ERROR, "Private review saving is unavailable right now.");
 assert.equal(MOCK_REVIEW_UNAUTHENTICATED_ERROR, "Sign in to save this private practice review.");
 assert.equal(MOCK_REVIEW_PERSISTENCE_ERROR, "Could not save your practice review. Please try again.");
 assert.equal(MOCK_REVIEW_SAVED_MESSAGE, "Practice review saved privately.");
@@ -175,9 +175,10 @@ const actionBody = actions.slice(actionStart);
 const parseIndex = actionBody.indexOf("const parsed = parseMockInterviewReviewInput(input);");
 const invalidIndex = actionBody.indexOf("if (!parsed.ok)");
 const availabilityIndex = actionBody.indexOf("if (!isAccountPlatformAvailable())");
-const actorIndex = actionBody.indexOf("getAuthenticatedActor()", availabilityIndex);
+const actorIndex = actionBody.indexOf("getAuthenticatedActorState()", availabilityIndex);
 const rpcIndex = actionBody.indexOf('actor.supabase.rpc("save_mock_interview_review"');
 assert.ok(actionStart >= 0 && parseIndex >= 0 && parseIndex < invalidIndex && invalidIndex < availabilityIndex && availabilityIndex < actorIndex && actorIndex < rpcIndex, "The action must parse before account availability, actor lookup, and RPC persistence.");
+assert.ok(actionBody.includes('actorState.state === "unavailable"') && actionBody.includes('reason: "account-unavailable"') && actionBody.includes('actorState.state === "anonymous"') && actionBody.includes('reason: "unauthenticated"'), "The action must distinguish unavailable actor verification from a verified anonymous session.");
 assert.match(actionBody, /saveMockInterviewReview\(\s*input: unknown/, "The server action must treat its boundary input as unknown.");
 assert.ok(actionBody.includes("const validated = parsed.value;"), "The RPC payload must derive from validated parser output.");
 assert.ok(!actionBody.slice(rpcIndex).includes("input."), "The RPC path must not read unvalidated input after parsing.");

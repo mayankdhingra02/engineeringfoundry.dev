@@ -15,7 +15,14 @@ const privateHeaders = {
 
 export async function GET(request: Request, { params }: { params: Promise<{ roundId: string }> }) {
   const { roundId } = await params;
-  const [current, round] = await Promise.all([getAuthenticatedActor(), getOwnedCalendarInterview(roundId)]);
+  let current: Awaited<ReturnType<typeof getAuthenticatedActor>>;
+  let round: Awaited<ReturnType<typeof getOwnedCalendarInterview>>;
+  try {
+    [current, round] = await Promise.all([getAuthenticatedActor(), getOwnedCalendarInterview(roundId)]);
+  } catch (cause) {
+    logServerOperationalFailure("calendar_export_session_unavailable", cause, { provider: "ics" });
+    return NextResponse.json({ error: "Calendar export unavailable" }, { status: 503, headers: privateHeaders });
+  }
   // Ownership resolves through the authenticated actor and RLS. An unowned or
   // unknown round is indistinguishable from a missing one.
   if (!current) return NextResponse.json({ error: "Authentication required" }, { status: 401, headers: privateHeaders });

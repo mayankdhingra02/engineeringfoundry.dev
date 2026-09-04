@@ -82,9 +82,11 @@ for (const [name, source] of Object.entries(routes)) {
   check(`${name} route leaks no stack trace`, !source.includes("error.stack") && !source.includes("String(cause)"));
 }
 for (const name of ["export", "ics", "google"]) {
-  check(`${name} route derives identity from the authenticated actor`, routes[name].includes("getAuthenticatedActor()"));
+  check(`${name} route derives identity from the authenticated actor`, routes[name].includes(name === "export" ? "getAuthenticatedActorState()" : "getAuthenticatedActor()"));
   check(`${name} route accepts no user selector`, !/searchParams\.get\(["'](user|user_id|userId|account)["']\)/.test(routes[name]));
 }
+check("export distinguishes unavailable actor verification from signed-out", routes.export.includes('actorState.state === "unavailable"') && routes.export.includes("status: 503") && routes.export.includes('actorState.state === "anonymous"') && routes.export.includes("status: 401"));
+for (const name of ["ics", "google"]) check(`${name} turns actor or owner-query failures into private unavailable responses`, routes[name].includes("calendar_export_session_unavailable") && routes[name].includes("status: 503"));
 check("export sends the attachment disposition", routes.export.includes('Content-Disposition'));
 check("export stays out of search indexes", routes.export.includes('"X-Robots-Tag": "noindex, nofollow"'));
 // Compare positions in the handler body, not the import block.

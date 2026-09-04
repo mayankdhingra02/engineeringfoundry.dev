@@ -450,9 +450,10 @@ check("quick mutations expose pending and accessible error feedback", read("feat
 const canonicalApplicationIndex = querySource.indexOf("parseDsaQuestionBrowserApplicationId(applicationId)");
 const availabilityIndex = querySource.indexOf("isAccountPlatformAvailable()", canonicalApplicationIndex);
 const disabledReturnIndex = querySource.indexOf("if (!accountPlatformAvailable) return", availabilityIndex);
-const actorIndex = querySource.indexOf("await getAuthenticatedActor()", disabledReturnIndex);
-const signedOutReturnIndex = querySource.indexOf("if (!actor) return", actorIndex);
-const progressQueryIndex = querySource.indexOf('.from("dsa_question_progress")', signedOutReturnIndex);
+const actorIndex = querySource.indexOf("await getAuthenticatedActorState()", disabledReturnIndex);
+const signedOutReturnIndex = querySource.indexOf('if (actorState.state !== "authenticated") return', actorIndex);
+const actorReadyIndex = querySource.indexOf("const actor = actorState.actor", signedOutReturnIndex);
+const progressQueryIndex = querySource.indexOf('.from("dsa_question_progress")', actorReadyIndex);
 const preferenceQueryIndex = querySource.indexOf('.from("user_preparation_preferences")', progressQueryIndex);
 const applicationQueryIndex = querySource.indexOf('.from("applications")', preferenceQueryIndex);
 const resolverIndex = querySource.indexOf("resolveDsaWorkspacePrivateState(", applicationQueryIndex);
@@ -461,7 +462,9 @@ check("workspace state validates application context then distinguishes disabled
   && disabledReturnIndex > availabilityIndex
   && actorIndex > disabledReturnIndex
   && signedOutReturnIndex > actorIndex
-  && progressQueryIndex > signedOutReturnIndex);
+  && actorReadyIndex > signedOutReturnIndex
+  && progressQueryIndex > actorReadyIndex
+  && querySource.includes('accountPlatformAvailable: actorState.state === "anonymous"'));
 const progressQuerySource = querySource.slice(progressQueryIndex, preferenceQueryIndex);
 const preferenceQuerySource = querySource.slice(preferenceQueryIndex, applicationQueryIndex);
 const applicationQuerySource = querySource.slice(applicationQueryIndex, resolverIndex);
@@ -478,12 +481,14 @@ check("DSA workspace query results delegate together to the strict owner-context
   && !querySource.includes("preferenceResult.data?.dsa_level"));
 check("DSA routes propagate account availability through every public progress surface", routes.includes("accountPlatformAvailable={state.accountPlatformAvailable}") && read("app/dsa/page.tsx").includes("accountPlatformAvailable={accountPlatformAvailable}") && read("features/dsa/question-browser-preview.tsx").includes("accountPlatformAvailable={accountPlatformAvailable}"));
 check("enabled signed-out DSA surfaces retain intentional sign-in handoffs without account-state contradictions", practice.includes("accountPlatformAvailable ? <aside") && practice.includes('href={`/signin?next=') && questionTable.includes("accountPlatformAvailable ? <Link") && questionDetail.includes("accountPlatformAvailable ? <aside") && questionDetail.includes("Browser-local completion is recorded separately.") && questionDetail.includes("{signedIn ? <><h2>Current state</h2>") && roadmapModule.includes('accountPlatformAvailable ? "Sign in to persist'));
-check("disabled DSA surfaces render honest public and local states", practice.includes("Public practice remains available") && routes.includes("Account progress unavailable · demo associations") && routes.includes("Account progress unavailable · public roadmap") && questionTable.includes("Account progress unavailable") && !questionTable.includes('<span className="dsa-signin-progress">Account progress unavailable</span>') && questionDetail.includes("Browser-local practice") && questionDetail.includes("Private notes are unavailable in this configuration") && roadmapExperience.includes("accountPlatformAvailable={accountPlatformAvailable}") && roadmapModule.includes("Account-backed problem progress is unavailable in this configuration"));
+check("unavailable DSA surfaces render honest public and local states", practice.includes("Public practice remains available") && practice.includes("Account-backed progress is unavailable right now") && routes.includes("Account progress unavailable · demo associations") && routes.includes("Account progress unavailable · public roadmap") && questionTable.includes("Account progress unavailable") && !questionTable.includes('<span className="dsa-signin-progress">Account progress unavailable</span>') && questionDetail.includes("Browser-local practice") && questionDetail.includes("Private notes are unavailable right now") && roadmapExperience.includes("accountPlatformAvailable={accountPlatformAvailable}") && roadmapModule.includes("Account-backed problem progress is unavailable right now"));
 check("disabled DSA local activity skips its Server Action and reports persistence honestly", activityControl.includes("accountPlatformAvailable: boolean;") && !activityControl.includes("accountPlatformAvailable = true") && activityControl.indexOf("if (accountPlatformAvailable)") > -1 && activityControl.indexOf("if (accountPlatformAvailable)") < activityControl.indexOf("recordPreparationActivityAction({ track, itemId, status: next })") && activityControl.includes("resolvePreparationActivitySaveOutcome") && activityControl.includes("next === \"completed\" && outcome.persisted") && activityControl.includes("Account saving is unavailable"));
 check("direct progress actions parse full untrusted input before availability and actor resolution", progressActions.includes("if (!isAccountPlatformAvailable()) return accountUnavailable()")
   && progressActions.indexOf("parseDsaQuestionProgressActionInput(") < progressActions.indexOf("isAccountPlatformAvailable()")
   && progressActions.indexOf("if (!parsed.ok)") < progressActions.indexOf("await getAuthenticatedActor()")
-  && preparationActions.indexOf("if (!isAccountPlatformAvailable()) return") < preparationActions.indexOf("await getAuthenticatedActor()"));
+  && preparationActions.indexOf("if (!isAccountPlatformAvailable()) return") < preparationActions.indexOf("await getAuthenticatedActorState()")
+  && preparationActions.includes('actorState.state === "unavailable"')
+  && preparationActions.includes('actorState.state === "anonymous"'));
 const fullProgressActionSource = progressActions.slice(
   progressActions.indexOf("export async function updateDsaQuestionProgressAction"),
   progressActions.indexOf("export async function quickDsaStatusAction"),

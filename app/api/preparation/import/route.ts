@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { activeBehavioralQuestions } from "@/data/behavioral";
 import { activeMlDesignProblems } from "@/data/ml-design";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import { canonicalDsaQuestionById } from "@/lib/dsa/catalog";
 import {
   parsePreparationImportRequest,
   PREPARATION_IMPORT_INVALID_MESSAGE,
   PREPARATION_IMPORT_UNAUTHENTICATED_MESSAGE,
+  PREPARATION_IMPORT_UNAVAILABLE_MESSAGE,
   type PreparationImportItemResult,
   type PreparationImportOutcome,
 } from "@/lib/preparation-progress/import";
@@ -45,13 +46,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const actor = await getAuthenticatedActor();
-  if (!actor) {
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state === "unavailable") {
+    return NextResponse.json(
+      { error: PREPARATION_IMPORT_UNAVAILABLE_MESSAGE },
+      { status: 503, headers: privateResponseHeaders },
+    );
+  }
+  if (actorState.state === "anonymous") {
     return NextResponse.json(
       { error: PREPARATION_IMPORT_UNAUTHENTICATED_MESSAGE },
       { status: 401, headers: privateResponseHeaders },
     );
   }
+  const actor = actorState.actor;
 
   const results: PreparationImportItemResult[] = [];
   for (const item of parsed.items) {

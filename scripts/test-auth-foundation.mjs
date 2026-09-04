@@ -27,6 +27,11 @@ import {
   resolveAccountNavigationUserResult,
 } from "../lib/auth/account-navigation.ts";
 import {
+  AUTHENTICATED_ACTOR_UNAVAILABLE_MESSAGE,
+  AuthenticatedActorUnavailableError,
+  resolveAuthenticatedActorUserResult,
+} from "../lib/auth/actor-state.ts";
+import {
   PROFILE_LINK_MAX_LENGTH,
   canonicalizeProfileLinkUrl,
   parseOptionalProfileLink,
@@ -208,6 +213,58 @@ try {
   assert.equal(new AccountNavigationUnavailableError().message, ACCOUNT_NAVIGATION_UNAVAILABLE_MESSAGE);
 } catch (error) {
   failures.push(`Account-navigation identity, profile, response, or settlement validation failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+try {
+  const userId = "123e4567-e89b-42d3-a456-426614174000";
+  const missingSession = { name: "AuthSessionMissingError" };
+  const retryableAuthError = { name: "AuthRetryableFetchError" };
+  const isMissingSession = (error) => error === missingSession;
+
+  assert.deepEqual(resolveAuthenticatedActorUserResult({
+    data: { user: { id: userId, email: "member@example.com", app_metadata: {} } },
+    error: null,
+  }, isMissingSession), { state: "authenticated", userId });
+  assert.deepEqual(resolveAuthenticatedActorUserResult({
+    data: { user: null },
+    error: missingSession,
+  }, isMissingSession), { state: "anonymous" });
+
+  for (const input of [
+    null,
+    {},
+    { data: { user: null } },
+    { data: { user: null }, error: null },
+    { data: { user: null }, error: retryableAuthError },
+    { data: { user: { id: userId } }, error: missingSession },
+    { data: { user: { id: "not-a-user" } }, error: null },
+    { data: { user: { id: userId.toUpperCase() } }, error: null },
+    { data: { user: { id: userId } }, error: null, extra: true },
+  ]) {
+    assert.throws(
+      () => resolveAuthenticatedActorUserResult(input, isMissingSession),
+      AuthenticatedActorUnavailableError,
+      "A failed, contradictory, or malformed shared actor result became anonymous or authenticated.",
+    );
+  }
+  assert.throws(
+    () => resolveAuthenticatedActorUserResult(
+      { data: { user: null }, error: missingSession },
+      () => { throw new Error("bad discriminator"); },
+    ),
+    AuthenticatedActorUnavailableError,
+    "A failing shared-actor missing-session discriminator became anonymous.",
+  );
+  assert.equal(
+    AUTHENTICATED_ACTOR_UNAVAILABLE_MESSAGE,
+    "Your account session is temporarily unavailable. Please try again.",
+  );
+  assert.equal(
+    new AuthenticatedActorUnavailableError().message,
+    AUTHENTICATED_ACTOR_UNAVAILABLE_MESSAGE,
+  );
+} catch (error) {
+  failures.push(`Shared authenticated-actor resolution failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 try {
@@ -525,7 +582,12 @@ for (const marker of ["requireAuthenticatedUser", "requireMemberProfile", "/sign
 requireText(read("app/dashboard/page.tsx"), 'requireMemberProfile("/dashboard")', "Dashboard does not use the reusable member guard.");
 
 const actor = read("lib/auth/actor.ts");
-for (const marker of ["getAuthenticatedActor", "auth.getUser", "createSupabaseServerClient", "user: data.user"]) requireText(actor, marker, `Canonical authenticated actor lacks ${marker}.`);
+const actorState = read("lib/auth/actor-state.ts");
+for (const marker of ["getAuthenticatedActor", "getAuthenticatedActorState", "auth.getUser", "createSupabaseServerClient", "resolveAuthenticatedActorUserResult", "isAuthSessionMissingError", 'state: "unavailable"', "result.data.user"]) requireText(actor, marker, `Canonical authenticated actor lacks ${marker}.`);
+for (const marker of ["AuthenticatedActorUnavailableError", "resolveAuthenticatedActorUserResult", 'state: "anonymous"', 'state: "authenticated"', "isSessionMissingError"]) requireText(actorState, marker, `Shared actor result boundary lacks ${marker}.`);
+assert.ok(actor.indexOf("resolveAuthenticatedActorUserResult") < actor.indexOf('state: "authenticated"'), "The shared actor returns an authenticated owner before resolving the getUser result.");
+assert.ok(actor.indexOf('result.state === "anonymous"') < actor.indexOf("return null"), "The shared actor returns null without proving an explicit missing session.");
+assert.ok(actor.indexOf('result.state === "anonymous"') < actor.indexOf("throw new AuthenticatedActorUnavailableError"), "The shared actor does not keep unavailable distinct from anonymous.");
 prohibit(actor, /(?:userId|user_id)\s*:/, "Canonical actor accepts a client-supplied user identifier.");
 
 const dashboard = read("app/dashboard/page.tsx");
@@ -564,16 +626,16 @@ const routeProfile = accountRouteBody.indexOf('.from("profiles")', routeIdentity
 const routeReady = accountRouteBody.indexOf("resolveAccountNavigationProfileResult", routeProfile);
 assert.ok(routeClient >= 0 && routeUser > routeClient && routeIdentity > routeUser && routeProfile > routeIdentity && routeReady > routeProfile, "Account navigation does not distinguish verified absence before its profile read and ready response.");
 const authSecurity = read("docs/auth-security.md");
-for (const marker of ["Global account-navigation truth", "only Supabase's explicit `AuthSessionMissingError`", "private, no-store, noindex `503` unavailable response", "Network, non-OK, JSON, and malformed-body failures", "shared `getAuthenticatedActor()` helper still maps", "Rendered browser timing, focus, and assistive-technology behavior remain manual validation"]) requireText(authSecurity, marker, `Authentication documentation omits account-navigation boundary: ${marker}.`);
+for (const marker of ["Global account-navigation truth", "only Supabase's explicit `AuthSessionMissingError`", "private, no-store, noindex `503` unavailable response", "Network, non-OK, JSON, and malformed-body failures", "Shared authenticated-actor truth", "never becomes a signed-out identity", "Public account-optional surfaces", "Rendered browser timing, focus, and assistive-technology behavior remain manual validation"]) requireText(authSecurity, marker, `Authentication documentation omits account-navigation or shared-actor boundary: ${marker}.`);
 const globalRequirement = JSON.parse(read("docs/product-blueprint/registry/requirements.json")).requirements.find((requirement) => requirement.id === "EF-GLOBAL");
 if (!globalRequirement) failures.push("EF-GLOBAL governance requirement is missing.");
 else {
-  for (const path of ["app/api/auth/account/route.ts", "components/account-control.tsx", "lib/auth/account-navigation.ts", "scripts/test-auth-foundation.mjs"]) {
+  for (const path of ["app/api/auth/account/route.ts", "components/account-control.tsx", "lib/auth/account-navigation.ts", "lib/auth/actor.ts", "lib/auth/actor-state.ts", "scripts/test-auth-foundation.mjs"]) {
     if (!globalRequirement.code_paths.includes(path)) failures.push(`EF-GLOBAL lacks account-navigation path ${path}.`);
   }
   if (!globalRequirement.content_paths.includes("docs/auth-security.md")) failures.push("EF-GLOBAL lacks account-navigation documentation attribution.");
   if (!globalRequirement.test_commands.includes("npm run test:auth-foundation")) failures.push("EF-GLOBAL lacks its account-navigation regression command.");
-  if (!globalRequirement.acceptance_criteria.some((criterion) => criterion.includes("only Supabase's explicit missing-session error becomes anonymous") && criterion.includes("broader shared actor authentication-service-versus-anonymous ambiguity remains outside"))) failures.push("EF-GLOBAL overclaims or omits the route-specific account-navigation truth boundary.");
+  if (!globalRequirement.acceptance_criteria.some((criterion) => criterion.includes("only Supabase's explicit missing-session error becomes anonymous") && criterion.includes("shared actor boundary"))) failures.push("EF-GLOBAL overclaims or omits the account-navigation and shared-actor truth boundary.");
   for (const path of ["app/settings/profile/page.tsx", "features/profile/actions.ts", "features/profile/profile-form.tsx", "lib/auth/profile-action-input.ts", "supabase/migrations/202609040006_save_profile_if_revision.sql", "supabase/tests/database/auth_profile_hardening.test.sql"]) {
     if (!globalRequirement.code_paths.includes(path)) failures.push(`EF-GLOBAL lacks profile revision path ${path}.`);
   }
