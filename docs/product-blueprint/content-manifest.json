@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "1cad0e52b551ee85b7b8e6408c2a6106f31ab9a3",
-  "repository_state_sha256": "8eed0228e9835a3808aafe5292a83fddfed23e7d69ec17a58e4ee5d7a2b5870b",
+  "repository_sha": "51a0c25f816ea262bb522225d2e816c41cf889ff",
+  "repository_state_sha256": "c584314499719d91089ca8c92acd76a0264103c9b6ac2a728f345eaa059c9bdb",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1716,13 +1716,17 @@
         "Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior.",
         "When public Supabase intake is configured, anonymous feedback remains available through the controlled submission boundary even while accounts are disabled; when it is unconfigured, Feedback renders a server-rendered unavailable state and public-channel warning without a form, submit control, or account-free intake promise, and Contact removes its private-feedback handoff.",
         "The Feedback form conditionally links controls to present help and error descriptions, focuses the first invalid field after a returned server error only when the user has not resumed editing and made a newer focus claim, and moves focus to a polite atomic success receipt; this source-level contract is attributed to features/feedback/feedback-form.tsx and npm run test:feedback-admin-operations, while actual browser focus remains future rendered coverage.",
+        "After an authenticated actor is resolved, admin membership false remains an indistinguishable not-found response, while membership-query failures and failed or malformed dashboard-count, feedback-list, and feedback-detail results surface the sanitized retryable application error before zero, honest-empty, or not-found rendering. Exact successful zero, empty, and missing results retain those meanings; the feedback queue uses an exact filtered count plus deterministic 100-item pages, retains filters in previous and next links, discloses the visible range, and redirects an out-of-range page to the last real page. Executable resolver matrices and source-integration checks run in npm run test:feedback-admin-operations; the broader shared actor authentication-service-versus-anonymous ambiguity remains outside this boundary.",
         "Referral mode is derived from a validated URL value; explicit mode switches create traversable history, Back and Forward restore mode without persisting or exposing draft fields or emitting navigation-only analytics, invalid mode URLs canonicalize to the default, and focus recovery runs only when previously focused mode content becomes hidden and focus remains unclaimed, targeting a connected persistent mode selector.",
         "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes.",
         "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed."
       ],
       "code_paths": [
+        "app/admin/feedback",
+        "app/admin/page.tsx",
         "app/challenges",
         "app/contact/page.tsx",
+        "app/error.tsx",
         "app/feedback",
         "app/prepare",
         "app/referrals",
@@ -1733,6 +1737,8 @@
         "features/referrals/referral-workspace.tsx",
         "features/resources/resource-directory.tsx",
         "lib/account-platform.ts",
+        "lib/admin/auth.ts",
+        "lib/admin/query-results.ts",
         "lib/global-search.ts",
         "lib/public-route-inventory.ts",
         "lib/referrals/url-state.ts",
@@ -1748,7 +1754,9 @@
         "scripts/test-resource-directory.mjs",
         "scripts/validate-public-links.mjs"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/feedback-admin-operations.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-SUP",
       "kind": "requirement-family",
