@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "dece163a8c6c8cd3140ee55322dc4c97ef0da816",
-  "repository_state_sha256": "69d05216d6dfaa9397e4237360dcc577e83a1d9e7b7e7730055406da3ac2dc4c",
+  "repository_sha": "632d0624215da46765a9c8aaf412ab33e0816005",
+  "repository_state_sha256": "4d6cc9571b1b7d24001357faff506dc28850187012b134b131f4c18674d98deb",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1555,6 +1555,7 @@
         "Published lessons and walkthroughs remain route-valid while unpublished records stay honest and noindex.",
         "Account-disabled System Design routes remain public and useful without inoperable sign-in or persistence handoffs, while enabled signed-out and signed-in modes retain their existing behavior.",
         "Private System Design attempt routes reject malformed canonical IDs before member or query work, preserve genuine absent and problem-mismatch not-found outcomes, and propagate owner-scoped query or persisted-document failures through one sanitized unavailable error rather than presenting them as missing attempts.",
+        "System Design attempt edits strictly parse one complete canonical runtime worksheet and its loaded integer revision before account work, then accept only an exact correlated one-row result whose revision advances by one; errors, malformed results, and stale zero-row conflicts preserve the current revision and cannot claim a save. Executable parser, result, and pending-edit display-state matrices plus source-integration checks cover draft-preserving manual-submit wiring, synchronous duplicate protection, exact-snapshot truth, atomic live-region semantics, focus-preserving pending/conflict controls, and the conflict-only safe same-attempt recovery link in npm run test:system-design-workspace; rendered draft retention, conflict recovery, focus, and assistive-technology behavior remain browser/manual validation.",
         "Full System Design item-progress edits strictly parse one canonical item/type, complete rich-field snapshot, explicit bookmark presence, and an absent sentinel or persisted revision before account work. The owner-scoped database operation serializes the same item key as status-only quick saves and uses insert-if-absent or timestamp compare-and-swap, so stale full/full, full/quick, and absent/import races cannot silently overwrite a winner; only validated success advances the revision, refreshes, and emits account analytics. Source-integration checks cover the component's draft-preserving manual-submit wiring, duplicate guard, live-region semantics, focus-preserving pending control, and a conflict-only latest-version link whose href is correlated to the canonical public item and whose new-tab attributes are safe; rendered draft retention, conflict recovery, and focus behavior remain browser/manual validation. Executable and source coverage runs in npm run test:system-design-workspace and npm run test:unified-progress, local concurrency/privacy runs in npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step."
       ],
       "code_paths": [
@@ -1569,6 +1570,7 @@
         "features/preparation-progress/actions.ts",
         "features/system-design",
         "lib/supabase/database.types.ts",
+        "lib/system-design/attempt-action-input.ts",
         "lib/system-design/attempt-query.ts",
         "lib/system-design/item-progress-action-input.ts",
         "lib/system-design/queries.ts",
