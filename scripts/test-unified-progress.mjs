@@ -343,7 +343,14 @@ const planControl = read("components/save-study-plan-control.tsx");
 const planAction = read("features/preparation-progress/plan-actions.ts");
 const activityControl = read("components/preparation-activity-control.tsx");
 const homeExperience = read("components/home-entry-experience.tsx");
-for (const marker of ["canonicalDsaQuestionById", "canonicalSystemDesignConceptIds", "activeMlDesignProblems", "activeBehavioralQuestions", "target_notes: null"]) assert.ok(activityAction.includes(marker), `durable activity action must preserve canonical/no-note semantics: ${marker}`);
+for (const marker of ["canonicalDsaQuestionById", "canonicalSystemDesignConceptIds", "activeMlDesignProblems", "activeBehavioralQuestions"]) assert.ok(activityAction.includes(marker), `durable activity action must preserve canonical catalog semantics: ${marker}`);
+const dsaActivityBranch = activityAction.slice(
+  activityAction.indexOf('if (input.track === "dsa")'),
+  activityAction.indexOf('} else if (input.track === "system-design")'),
+);
+assert.match(dsaActivityBranch, /rpc\("set_dsa_question_quick_progress", \{[\s\S]*target_question_id: input\.itemId,[\s\S]*target_status: input\.status === "completed" \? "review" : "attempted",[\s\S]*target_bookmarked: null/, "shared DSA activity must dispatch only the intended status through the atomic quick-progress RPC");
+assert.ok(dsaActivityBranch.includes("data !== input.itemId") && dsaActivityBranch.includes("!canonicalDsaQuestionById.has(data)"), "shared DSA activity must validate the returned canonical question ID before claiming persistence");
+for (const obsolete of ['rpc("save_dsa_question_progress"', "target_confidence", "target_notes"]) assert.ok(!dsaActivityBranch.includes(obsolete), `shared DSA activity must not submit a stale whole-record field: ${obsolete}`);
 assert.ok(importRoute.indexOf("parsePreparationImportRequest(payload)") < importRoute.indexOf("await getAuthenticatedActor()"), "browser import must strictly parse the untrusted snapshot before actor or RPC work");
 for (const marker of [
   "canonicalDsaQuestionById.has(item.itemId)",
@@ -379,7 +386,7 @@ for (const rpc of ["import_dsa_question_progress_if_absent", "import_system_desi
 for (const marker of [
   "insert-only browser import preserves rich existing progress across every storage family",
   "concurrent same-key browser imports insert exactly once",
-  "concurrent browser import and rich DSA save preserve the full-save intent",
+  "concurrent browser import and absent-revision DSA save never overwrite either winner",
   "concurrent different-key browser imports commute",
 ]) assert.ok(persistenceQualifier.includes(marker), `persistence qualification must retain atomic import evidence: ${marker}`);
 for (const marker of ["anonymous callers cannot invoke insert-only browser import RPCs", "insert-only browser imports derive independent owners without exposing foreign state"]) assert.ok(securityQualifier.includes(marker), `security qualification must retain import isolation evidence: ${marker}`);

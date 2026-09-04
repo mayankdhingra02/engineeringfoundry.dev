@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 30 migrations are recorded, ending at `202609030003_import_preparation_activity_if_absent`
+4. [ ] `supabase migration list --linked` — confirm all 31 migrations are recorded, ending at `202609030004_save_dsa_question_progress_if_revision`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -129,6 +129,9 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] As User B, confirm `set_interview_preparation_checklist_item` cannot change User A's round. As User A, confirm a legacy `save_interview_preparation` call with non-null `completed_ids_value` fails with SQLSTATE `0A000`, while notes-only and reflection-only calls remain compatible.
 - [ ] Confirm `anon` cannot execute `set_dsa_question_quick_progress` and an authenticated disposable User A can. For one canonical question with existing confidence and notes, issue overlapping desired-status and desired-bookmark calls; confirm both requested values persist while confidence and notes remain unchanged, then repeat both desired values to confirm idempotence.
 - [ ] As User A, send a `target_bookmarked=false` quick-progress request for an untouched canonical question and confirm the RPC returns its question ID without creating a progress row. Confirm User B cannot read or mutate User A's state, and confirm calls with both quick values null or both non-null fail with SQLSTATE `23514` and `Exactly one quick progress value is required`.
+- [ ] Confirm `anon` cannot execute `save_dsa_question_progress_if_revision`. As User A, race two full saves from the same loaded revision and confirm exactly one coherent snapshot wins, the returned `updated_at` advances, and replaying the stale revision returns zero rows without changing the winner.
+- [ ] Race a revision-checked full save with quick status and bookmark writes for the same User A/question and confirm both quick desired values survive. Race an explicit absent-revision full save with `import_dsa_question_progress_if_absent` and confirm neither winner is overwritten; confirm User B cannot read or mutate User A's row.
+- [ ] Confirm the authenticated legacy `save_dsa_question_progress` signature fails with SQLSTATE `0A000` and `Revision-checked DSA progress saving is required`.
 
 ### Anonymous browser-progress import boundary
 

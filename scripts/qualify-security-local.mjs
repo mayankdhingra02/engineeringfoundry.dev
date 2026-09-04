@@ -128,14 +128,42 @@ await check("an unrecognized throttle action is rejected", async () => {
 
 // --- Canonical identifier forgery ------------------------------------------
 await check("a fabricated DSA question cannot be persisted", async () => {
-  const { error } = await a.client.rpc("save_dsa_question_progress", {
+  const { error } = await a.client.rpc("save_dsa_question_progress_if_revision", {
     target_question_id: "totally-invented-question",
-    status_value: "solved",
-    confidence_value: "high",
-    bookmarked_value: false,
-    notes_value: null,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_status: "solved",
+    target_confidence: "high",
+    target_bookmarked: false,
+    target_notes: null,
   });
-  assert.ok(error, "an unknown canonical DSA id must be refused");
+  assert.equal(error?.code, "23503", "an unknown canonical DSA id must fail with 23503");
+});
+
+await check("anonymous callers cannot invoke revision-checked DSA full progress", async () => {
+  const attempted = await anon.rpc("save_dsa_question_progress_if_revision", {
+    target_question_id: "two-sum",
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_status: "attempted",
+    target_confidence: null,
+    target_bookmarked: false,
+    target_notes: null,
+  });
+  assert.equal(attempted.error?.code, "42501", "anonymous full progress must fail with 42501");
+  return "SQLSTATE 42501";
+});
+
+await check("the authenticated legacy DSA full RPC is a no-mutation compatibility failure", async () => {
+  const attempted = await a.client.rpc("save_dsa_question_progress", {
+    target_question_id: "two-sum",
+    target_status: "attempted",
+    target_confidence: null,
+    target_bookmarked: false,
+    target_notes: null,
+  });
+  assert.equal(attempted.error?.code, "0A000", "legacy DSA full progress must fail with 0A000");
+  return "SQLSTATE 0A000";
 });
 
 await check("atomic DSA quick progress rejects fabricated and ambiguous mutations", async () => {
@@ -165,14 +193,28 @@ await check("anonymous callers cannot invoke atomic DSA quick progress", async (
 });
 
 await check("atomic DSA quick progress derives the owner without exposing a foreign row", async () => {
-  const ownerSeed = await a.client.rpc("save_dsa_question_progress", {
+  const ownerSeed = await a.client.rpc("save_dsa_question_progress_if_revision", {
     target_question_id: "two-sum",
+    target_expect_absent: true,
+    target_expected_updated_at: null,
     target_status: "attempted",
     target_confidence: "high",
     target_bookmarked: true,
     target_notes: "Owner A private quick-progress fixture.",
   });
   assert.ifError(ownerSeed.error);
+  assert.equal(ownerSeed.data?.length, 1, "owner revision seed did not return one row");
+  const foreignRevisionAttempt = await b.client.rpc("save_dsa_question_progress_if_revision", {
+    target_question_id: "two-sum",
+    target_expect_absent: false,
+    target_expected_updated_at: ownerSeed.data[0].updated_at,
+    target_status: "review",
+    target_confidence: "low",
+    target_bookmarked: false,
+    target_notes: "Foreign revision must not identify or change the owner row.",
+  });
+  assert.ifError(foreignRevisionAttempt.error);
+  assert.deepEqual(foreignRevisionAttempt.data, [], "a foreign revision was distinguishable from a missing owner row");
   const foreignAttempt = await b.client.rpc("set_dsa_question_quick_progress", {
     target_question_id: "two-sum",
     target_status: "solved",
@@ -219,8 +261,9 @@ await check("insert-only browser import RPCs reject invalid catalog and bounded 
 
 await check("insert-only browser imports derive independent owners without exposing foreign state", async () => {
   const seeded = await Promise.all([
-    a.client.rpc("save_dsa_question_progress", {
+    a.client.rpc("save_dsa_question_progress_if_revision", {
       target_question_id: "valid-palindrome", target_status: "solved", target_confidence: "high",
+      target_expect_absent: true, target_expected_updated_at: null,
       target_bookmarked: true, target_notes: "Owner A import-isolation note.",
     }),
     a.client.rpc("save_system_design_item_progress", {
