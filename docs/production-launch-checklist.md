@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 41 migrations are recorded, ending at `202609040007_save_behavioral_custom_question_if_revision`
+4. [ ] `supabase migration list --linked` — confirm all 42 migrations are recorded, ending at `202609040008_delete_application_tracker_if_revision`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -115,6 +115,8 @@ Apply `202609040006_save_profile_if_revision.sql` before deploying revision-awar
 
 Apply `202609040007_save_behavioral_custom_question_if_revision.sql` before deploying revision-aware custom Behavioral questions. Migration-first makes already-loaded direct question `INSERT`, `UPDATE`, and `DELETE` fail safely with `42501`; the new owner-derived save and delete RPCs then serialize under one per-question lock. Application-first makes new mutations fail safely while the RPCs are absent but leaves the old stale-write path available until migration. Rolling application code back after migration is safe but degraded because direct question mutations stay unavailable; keep the migration and roll forward.
 
+Apply `202609040008_delete_application_tracker_if_revision.sql` before deploying revision-aware Application tracker deletion. Migration-first makes already-loaded direct application and round deletes fail safely with `42501`; the new owner-derived RPCs require the exact displayed revision. Application-first makes new deletes fail safely while the RPCs are absent but leaves the old destructive path available until migration. Rolling application code back after migration is safe but degraded because direct application and round deletes stay unavailable; keep the migration and roll forward.
+
 ---
 
 ## Hosted qualification
@@ -139,6 +141,7 @@ Use two disposable accounts (User A and User B) against the production origin wi
 ### Ownership isolation (two users)
 
 - [ ] User A cannot read or mutate User B's applications, rounds, preparation, stories, answers, saved questions, progress, attempts, preferences, ML Design/Behavioral `preparation_track_progress`, DSA/System Design active-plan preferences, reminders, mock reviews, Interview Experience drafts, or throttle state
+- [ ] Confirm `anon` cannot execute `delete_application_if_revision` or `delete_interview_round_if_revision`, authenticated direct application/round `DELETE` statements fail with `42501`, and foreign and missing targets return the same zero-row result. Advance a disposable application and round after loading their delete confirmations and confirm both stale deletes preserve the newer rows. Delete a separate disposable round and application with their exact revisions and confirm only the intended owner rows and documented cascades are removed. These hosted checks remain unchecked until owner-run evidence is recorded.
 - [ ] User A cannot attach a child record to User B's parent
 - [ ] User A cannot open `/interviews/<User B round id>/prepare`
 - [ ] User A cannot fetch User B's `.ics` or Google export
