@@ -81,6 +81,31 @@ await check("onboarding persists role, focus, DSA suggestion, and Phase 7 timezo
   assert.equal(reminder.data?.preferred_timezone, "America/Chicago");
 });
 
+await check("repeated onboarding cannot overwrite completed private preferences", async () => {
+  const before = await Promise.all([
+    a.client.from("profiles").select("onboarding_complete,onboarding_completed_at,updated_at").single(),
+    a.client.from("user_preparation_preferences").select("preferred_role_level,primary_preparation_focus,dsa_level").single(),
+    a.client.from("interview_reminder_preferences").select("preferred_timezone,updated_at").single(),
+  ]);
+  for (const result of before) assert.ifError(result.error);
+
+  const repeated = await a.client.rpc("complete_account_onboarding", {
+    preferred_role_level_value: "staff",
+    primary_preparation_focus_value: "system_design",
+    preferred_timezone_value: "Europe/Berlin",
+  });
+  assert.ifError(repeated.error);
+
+  const after = await Promise.all([
+    a.client.from("profiles").select("onboarding_complete,onboarding_completed_at,updated_at").single(),
+    a.client.from("user_preparation_preferences").select("preferred_role_level,primary_preparation_focus,dsa_level").single(),
+    a.client.from("interview_reminder_preferences").select("preferred_timezone,updated_at").single(),
+  ]);
+  for (const result of after) assert.ifError(result.error);
+  assert.deepEqual(after.map((result) => result.data), before.map((result) => result.data));
+  return "profile, preparation preferences, and reminder revision unchanged";
+});
+
 await check("skip completes User B without invented preferences", async () => {
   const completion = await b.client.rpc("complete_account_onboarding", {
     preferred_role_level_value: null,

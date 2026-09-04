@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 34 migrations are recorded, ending at `202609030007_save_behavioral_answer_aggregate`
+4. [ ] `supabase migration list --linked` — confirm all 35 migrations are recorded, ending at `202609040001_save_interview_reminder_preferences_if_revision`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -100,6 +100,8 @@ Apply `202609030005_save_behavioral_story_aggregate.sql` before deploying the ag
 Apply `202609030006_save_system_design_item_progress_if_revision.sql` before deploying the revision-aware System Design application. Migration-first makes already-loaded whole-row clients fail safely with `0A000`; application-first protects only newly loaded clients and leaves the stale overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the legacy full-save path stays unavailable; keep the migration and roll forward.
 
 Apply `202609030007_save_behavioral_answer_aggregate.sql` before deploying the Behavioral answer aggregate application. Migration-first denies authenticated direct answer `INSERT`/`UPDATE` with `42501` and makes direct calls to the legacy primary-only RPC fail with `0A000`, so already-loaded split-write clients fail before partial mutation. Application-first protects only newly loaded clients and leaves the old torn-save and stale-overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the direct and primary-only write paths stay unavailable; keep the migration and roll forward.
+
+Apply `202609040001_save_interview_reminder_preferences_if_revision.sql` before deploying the revision-aware reminder-settings application. Migration-first makes already-loaded full-snapshot clients fail safely with `0A000` and makes repeated completed-onboarding requests no-ops for reminder and preparation preferences. Application-first protects only newly loaded settings clients and leaves the stale overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the legacy preference-save path stays unavailable; keep the migration and roll forward.
 
 ---
 
@@ -147,6 +149,10 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Confirm `anon` cannot execute `create_behavioral_answer_aggregate` or `update_behavioral_answer_aggregate_if_revision`. As User A, create one answer with a desired primary state, race two full edits from the same revision, and confirm exactly one complete content/primary snapshot wins while the stale call returns zero rows without mutation.
 - [ ] Race primary requests for two User A answers to the same curated or custom question and confirm exactly one requested answer remains primary. Confirm invalid aggregate input rolls back without changing the previous primary, and foreign answer targets, missing answer targets, and question-mismatched targets are indistinguishable zero-row outcomes that preserve User A's data.
 - [ ] Confirm authenticated direct answer `INSERT`/`UPDATE` fail while owner-scoped `SELECT`/`DELETE` remain available. Confirm the authenticated legacy `set_behavioral_primary_answer` call fails without mutation with SQLSTATE `0A000` and `Atomic Behavioral answer saving is required`.
+- [ ] Confirm `anon` cannot execute `save_interview_reminder_preferences_if_revision`. As User A, save an exact absent preference snapshot, confirm one returned `updated_at`, then replay the absent revision and confirm zero rows without mutation. Race two complete saves from one loaded revision and confirm exactly one complete preference/reminder snapshot wins and advances its revision.
+- [ ] Race a User A reminder-preference save with a future-round schedule change and confirm the shared owner lock leaves reminder rows matching the final committed settings and schedule. Confirm User B cannot read or mutate User A's preference row.
+- [ ] Review the candidate's local pgTAP/database evidence that an injected reminder-resync failure rolls the preference snapshot back; do not inject a failure into the hosted project.
+- [ ] After User A has completed onboarding, make a repeated onboarding submission with different timezone and preparation choices and confirm neither preference family nor the reminder revision changes. Confirm the authenticated legacy `save_interview_reminder_preferences` call fails without mutation with SQLSTATE `0A000` and `Revision-checked reminder preference saving is required`.
 
 ### Anonymous browser-progress import boundary
 

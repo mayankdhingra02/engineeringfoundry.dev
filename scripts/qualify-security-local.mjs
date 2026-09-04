@@ -593,6 +593,52 @@ await check("User B cannot change User A reminder preferences", async () => {
   assert.equal(enabled, "f", "User A preferences must be unchanged");
 });
 
+await check("revision-checked reminder preferences derive the owner and deny anonymous callers", async () => {
+  const before = await b.client
+    .from("interview_reminder_preferences")
+    .select("updated_at")
+    .single();
+  assert.ifError(before.error);
+  assert.ok(before.data?.updated_at);
+
+  const saved = await b.client.rpc("save_interview_reminder_preferences_if_revision", {
+    target_expect_absent: false,
+    target_expected_updated_at: before.data.updated_at,
+    preferred_timezone_value: "UTC",
+    in_app_enabled_value: false,
+    prep_3_days_enabled_value: false,
+    interview_1_day_enabled_value: false,
+    interview_1_hour_enabled_value: false,
+    email_enabled_value: false,
+  });
+  assert.ifError(saved.error);
+  assert.equal(saved.data?.length, 1, "User B reminder save did not return one revision");
+
+  const anonymous = await anon.rpc("save_interview_reminder_preferences_if_revision", {
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    preferred_timezone_value: "UTC",
+    in_app_enabled_value: true,
+    prep_3_days_enabled_value: true,
+    interview_1_day_enabled_value: true,
+    interview_1_hour_enabled_value: true,
+    email_enabled_value: false,
+  });
+  assert.ok(anonymous.error, "anonymous reminder preference save unexpectedly succeeded");
+
+  const [ownerA, ownerB] = [a.user.id, b.user.id].map((userId) => {
+    assert.match(userId, /^[0-9a-f-]{36}$/i);
+    return execFileSync(
+      "docker",
+      ["exec", "supabase_db_Engineeringfoundry", "psql", "-At", "-U", "postgres", "-d", "postgres", "-c", `select coalesce(preferred_timezone, 'null') || ':' || in_app_enabled::text from public.interview_reminder_preferences where user_id = '${userId}'::uuid`],
+      { encoding: "utf8" },
+    ).trim();
+  });
+  assert.equal(ownerA, "null:true", "User B reminder save changed User A preferences");
+  assert.equal(ownerB, "UTC:false", "User B reminder save did not target User B");
+  return "one owner-derived row; anonymous denied; foreign owner unchanged";
+});
+
 // --- Post-deletion access --------------------------------------------------
 await check("deleting an account removes its private rows and throttle state", async () => {
   const deleted = await admin.auth.admin.deleteUser(a.user.id, false);

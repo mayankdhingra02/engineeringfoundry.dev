@@ -99,6 +99,39 @@ async function saveSystemDesignProgress(supabase, values, expectation) {
   });
 }
 
+async function currentReminderPreferences(supabase) {
+  const result = await supabase
+    .from("interview_reminder_preferences")
+    .select("preferred_timezone,in_app_enabled,prep_3_days_enabled,interview_1_day_enabled,interview_1_hour_enabled,email_enabled,updated_at")
+    .single();
+  return expectSuccess(result, "Reminder preference revision lookup failed");
+}
+
+async function saveReminderPreferences(supabase, values, expectation) {
+  const expectedUpdatedAt = expectation === undefined
+    ? (await currentReminderPreferences(supabase)).updated_at
+    : expectation;
+  return supabase.rpc("save_interview_reminder_preferences_if_revision", {
+    target_expect_absent: expectedUpdatedAt === null,
+    target_expected_updated_at: expectedUpdatedAt,
+    preferred_timezone_value: values.preferredTimezone,
+    in_app_enabled_value: values.inAppEnabled,
+    prep_3_days_enabled_value: values.prep3DaysEnabled,
+    interview_1_day_enabled_value: values.interview1DayEnabled,
+    interview_1_hour_enabled_value: values.interview1HourEnabled,
+    email_enabled_value: values.emailEnabled,
+  });
+}
+
+const enabledReminderPreferences = {
+  preferredTimezone: "America/Chicago",
+  inAppEnabled: true,
+  prep3DaysEnabled: true,
+  interview1DayEnabled: true,
+  interview1HourEnabled: true,
+  emailEnabled: false,
+};
+
 function behavioralStoryArgs(overrides = {}) {
   return {
     target_title: "Phase 5A qualification launch recovery",
@@ -2005,7 +2038,14 @@ await check("concurrent stale System Design full saves commit exactly one winner
 });
 
 await check("concurrent System Design full and desired-status saves preserve a coherent rich snapshot", async () => {
+  const seeded = expectSuccess(await a.authClient.rpc("set_system_design_item_quick_progress", {
+    target_item_id: "estimation",
+    target_item_type: "concept",
+    target_status: "reviewed",
+  }), "full/status seed failed");
+  expect(seeded === "estimation", "full/status seed returned the wrong canonical id");
   const setup = expectSuccess(await a.authClient.from("system_design_item_progress").select("status,confidence,bookmarked,notes,updated_at").eq("item_id", "estimation").eq("item_type", "concept").single(), "full/status setup read failed");
+  expect(setup.status === "reviewed", `full/status seed did not establish the distinct initial status: ${setup.status}`);
   const [full, quick] = await Promise.all([
     saveSystemDesignProgress(a.authClient, { itemId: "estimation", itemType: "concept", status: "comfortable", confidence: "medium", bookmarked: true, notes: "Concurrent full rich snapshot." }, setup.updated_at),
     a.authClient.rpc("set_system_design_item_quick_progress", { target_item_id: "estimation", target_item_type: "concept", target_status: "review" }),
@@ -2255,22 +2295,42 @@ await check("attempt RPC rejects unvalidated JSONB documents", async () => {
 });
 
 await check("Phase 7 saves an owner-derived IANA timezone and sparse reminder preferences", async () => {
-  const saved = expectSuccess(await a.authClient.rpc("save_interview_reminder_preferences", {
-    preferred_timezone_value: "America/Chicago", in_app_enabled_value: true,
-    prep_3_days_enabled_value: true, interview_1_day_enabled_value: true,
-    interview_1_hour_enabled_value: true, email_enabled_value: false,
-  }), "Phase 7 preference save failed");
-  expect(saved.user_id === a.user.id && saved.preferred_timezone === "America/Chicago", "preferences were not owned by the authenticated actor");
+  const saved = expectSuccess(
+    await saveReminderPreferences(a.authClient, enabledReminderPreferences),
+    "Phase 7 preference save failed",
+  );
+  expect(saved.length === 1 && saved[0].updated_at, "preference save did not return one new revision");
+  const stored = await currentReminderPreferences(a.authClient);
+  expect(
+    stored.preferred_timezone === "America/Chicago" && stored.updated_at === saved[0].updated_at,
+    "preferences were not stored for the authenticated actor at the returned revision",
+  );
 });
 
 await check("Phase 7 rejects an invalid timezone", async () => {
-  const result = await a.authClient.rpc("save_interview_reminder_preferences", {
-    preferred_timezone_value: "Central Time", in_app_enabled_value: true,
-    prep_3_days_enabled_value: true, interview_1_day_enabled_value: true,
-    interview_1_hour_enabled_value: true, email_enabled_value: false,
+  const result = await saveReminderPreferences(a.authClient, {
+    ...enabledReminderPreferences,
+    preferredTimezone: "Central Time",
   });
   expect(result.error, "invalid timezone unexpectedly saved");
-  return result.error.message;
+  expect(result.error.code === "23514", `expected 23514, observed ${result.error.code ?? "no SQLSTATE"}`);
+  return `SQLSTATE ${result.error.code}`;
+});
+
+await check("legacy reminder snapshot saves fail safely without mutation", async () => {
+  const before = await currentReminderPreferences(a.authClient);
+  const result = await a.authClient.rpc("save_interview_reminder_preferences", {
+    preferred_timezone_value: "UTC",
+    in_app_enabled_value: false,
+    prep_3_days_enabled_value: false,
+    interview_1_day_enabled_value: false,
+    interview_1_hour_enabled_value: false,
+    email_enabled_value: false,
+  });
+  expectSqlError(result, "0A000");
+  const after = await currentReminderPreferences(a.authClient);
+  expect(JSON.stringify(after) === JSON.stringify(before), "legacy reminder save mutated the stored snapshot");
+  return "SQLSTATE 0A000; snapshot unchanged";
 });
 
 await check("scheduling a future interview creates exactly three in-app reminders", async () => {
@@ -2288,22 +2348,71 @@ await check("scheduling a future interview creates exactly three in-app reminder
   return "3 deterministic reminder times";
 });
 
+await check("concurrent reminder snapshots accept exactly one desired state without torn reminders", async () => {
+  const roundId = requireFixture(fixture.firstRoundId, "first round");
+  const before = await currentReminderPreferences(a.authClient);
+  const desiredStates = [
+    { ...enabledReminderPreferences, prep3DaysEnabled: false },
+    { ...enabledReminderPreferences, interview1DayEnabled: false },
+  ];
+  const results = await Promise.all(
+    desiredStates.map((values) => saveReminderPreferences(a.authClient, values, before.updated_at)),
+  );
+  for (const result of results) expect(!result.error, result.error?.message ?? "concurrent reminder save failed");
+  const winnerIndex = results.findIndex((result) => result.data?.length === 1);
+  expect(winnerIndex !== -1, "neither concurrent reminder save committed");
+  expect(results.filter((result) => result.data?.length === 1).length === 1, "both stale reminder snapshots committed");
+  expect(results.filter((result) => result.data?.length === 0).length === 1, "losing reminder snapshot did not return a conflict");
+
+  const winner = desiredStates[winnerIndex];
+  const stored = await currentReminderPreferences(a.authClient);
+  expect(
+    stored.prep_3_days_enabled === winner.prep3DaysEnabled
+      && stored.interview_1_day_enabled === winner.interview1DayEnabled
+      && stored.interview_1_hour_enabled === winner.interview1HourEnabled
+      && stored.updated_at === results[winnerIndex].data[0].updated_at,
+    "stored reminder preferences do not match the single winning snapshot",
+  );
+  const pending = expectSuccess(
+    await a.authClient
+      .from("interview_reminders")
+      .select("reminder_type,status")
+      .eq("round_id", roundId)
+      .eq("status", "pending"),
+    "concurrent reminder resync lookup failed",
+  );
+  const expectedPending = ["prep_3_days", "interview_1_day", "interview_1_hour"]
+    .filter((type) => type !== (winner.prep3DaysEnabled ? "interview_1_day" : "prep_3_days"))
+    .sort();
+  expect(
+    JSON.stringify(pending.map((row) => row.reminder_type).sort()) === JSON.stringify(expectedPending),
+    `reminders did not match the winning snapshot: ${pending.map((row) => row.reminder_type).sort().join(",")}`,
+  );
+
+  const restored = expectSuccess(
+    await saveReminderPreferences(a.authClient, enabledReminderPreferences, stored.updated_at),
+    "restoring reminder preferences after the concurrency probe failed",
+  );
+  expect(restored.length === 1, "restoring reminder preferences returned a conflict");
+  return "one committed snapshot, one conflict, matching reminder rows";
+});
+
 await check("disabling and re-enabling a reminder preference suppresses and revives one logical row", async () => {
   const roundId = requireFixture(fixture.firstRoundId, "first round");
-  expectSuccess(await a.authClient.rpc("save_interview_reminder_preferences", {
-    preferred_timezone_value: "America/Chicago", in_app_enabled_value: true,
-    prep_3_days_enabled_value: true, interview_1_day_enabled_value: true,
-    interview_1_hour_enabled_value: false, email_enabled_value: false,
+  const disabled = expectSuccess(await saveReminderPreferences(a.authClient, {
+    ...enabledReminderPreferences,
+    interview1HourEnabled: false,
   }), "disabling the one-hour reminder failed");
+  expect(disabled.length === 1, "disabling the one-hour reminder returned a conflict");
   let rows = expectSuccess(await a.authClient.from("interview_reminders").select("id,status,reminder_type").eq("round_id", roundId), "disabled reminder read failed");
   expect(rows.length === 3, `preference disable created or removed rows; observed ${rows.length}`);
   expect(rows.find((row) => row.reminder_type === "interview_1_hour")?.status === "cancelled", "one-hour reminder remained active");
 
-  expectSuccess(await a.authClient.rpc("save_interview_reminder_preferences", {
-    preferred_timezone_value: "America/Chicago", in_app_enabled_value: true,
-    prep_3_days_enabled_value: true, interview_1_day_enabled_value: true,
-    interview_1_hour_enabled_value: true, email_enabled_value: false,
-  }), "re-enabling the one-hour reminder failed");
+  const reenabled = expectSuccess(
+    await saveReminderPreferences(a.authClient, enabledReminderPreferences),
+    "re-enabling the one-hour reminder failed",
+  );
+  expect(reenabled.length === 1, "re-enabling the one-hour reminder returned a conflict");
   rows = expectSuccess(await a.authClient.from("interview_reminders").select("id,status,reminder_type").eq("round_id", roundId), "re-enabled reminder read failed");
   expect(rows.length === 3 && rows.every((row) => row.status === "pending"), "re-enable did not restore exactly three pending logical rows");
   return "3 rows; no duplicate logical reminder";

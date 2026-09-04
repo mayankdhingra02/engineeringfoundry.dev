@@ -14,7 +14,9 @@ The authenticated `.ics` endpoint emits UTC start/end values, a stable round-der
 
 ## Reminder lifecycle
 
-`interview_reminder_preferences` has one owner row. In-app delivery and three sparse windows (preparation at three days, interview at one day, interview at one hour) default on; email defaults off. The actor-derived preference RPC validates IANA timezone names and resynchronizes future active rounds.
+`interview_reminder_preferences` has one owner row. In-app delivery and three sparse windows (preparation at three days, interview at one day, interview at one hour) default on; email defaults off. The strict action parser requires one exact timezone, explicit presence markers for every checkbox, and either the `absent` sentinel or the loaded canonical `updated_at`. The actor-derived `save_interview_reminder_preferences_if_revision` RPC compares that revision, stores the complete desired snapshot, advances `updated_at` monotonically, and resynchronizes future active rounds in the same transaction. A stale or mismatched absence expectation returns zero rows without changing the preference or its reminder rows.
+
+Preference saves and round schedule changes share an owner advisory lock so concurrent resynchronization observes a committed settings and schedule state. Repeated calls to `complete_account_onboarding` after onboarding is complete also leave reminder and preparation preferences unchanged. The settings form keeps its server-action fallback; its source-integrated manual-submit path retains the browser-owned draft during a pending or conflicting save, blocks duplicate submissions, reports one atomic live status, advances the next submitted revision only after success, and offers a safe new-tab latest-settings link on conflict. Rendered draft retention and assistive-technology behavior remain browser/manual qualification.
 
 `interview_reminders` is unique by `(owner, round, type, channel, schedule revision)`. Only future windows are inserted. Clients have owner-only select and no direct writes.
 
@@ -42,6 +44,8 @@ Messages contain only company, role, round, schedule/timezone, preparation/setti
 
 ## Qualification
 
+Apply `202609040001_save_interview_reminder_preferences_if_revision.sql` before deploying the revision-aware settings application. Migration-first makes already-loaded legacy snapshot clients fail safely with SQLSTATE `0A000` and closes the completed-onboarding bypass before new code is served. Application-first protects only newly loaded settings clients and leaves the stale overwrite window open until the migration lands. A code rollback after migration is safe but degraded because legacy preference saves remain unavailable; keep the migration and roll forward.
+
 ```bash
 npm run test:interview-calendar-reminders
 npm run test:interview-reminder-worker
@@ -50,4 +54,4 @@ supabase test db
 npm run qualify:persistence-local
 ```
 
-The suites cover event serialization, timezones, authorization/cache boundaries, no-fake-provider behavior, exact reminder times, expired windows, preference disable/re-enable, completion, schema/RLS/grants, duplicate prevention, rescheduling, cancellation, provider failure/retry state, operational log privacy, two-user isolation, export auditing, anonymous denial, and cascade cleanup. The completed local run passed 66 calendar/model checks, 11 injected worker-outcome checks, 383 pgTAP assertions, and 116 two-user Data API checks. Local success does not qualify a hosted scheduler, provider, secret store, or production delivery.
+The suites cover event serialization, strict action parsing and result correlation, timezones, revision-checked preference saves, authorization/cache boundaries, no-fake-provider behavior, exact reminder times, expired windows, preference disable/re-enable, atomic resynchronization and rollback, full/full concurrency, repeated-onboarding protection, schema/RLS/grants, duplicate prevention, rescheduling, cancellation, provider failure/retry state, operational log privacy, two-user isolation, export auditing, anonymous denial, and cascade cleanup. Local success does not qualify a hosted database, scheduler, provider, secret store, production delivery, or rendered browser behavior; those remain explicit owner-run checks.

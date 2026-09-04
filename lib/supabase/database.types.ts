@@ -935,6 +935,19 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["interview_reminder_preferences"]["Row"];
       };
+      save_interview_reminder_preferences_if_revision: {
+        Args: {
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          preferred_timezone_value: string | null;
+          in_app_enabled_value: boolean;
+          prep_3_days_enabled_value: boolean;
+          interview_1_day_enabled_value: boolean;
+          interview_1_hour_enabled_value: boolean;
+          email_enabled_value: boolean;
+        };
+        Returns: { updated_at: string }[];
+      };
       complete_account_onboarding: {
         Args: {
           preferred_role_level_value?: "sde1" | "sde2" | "senior" | "staff" | "unsure" | null;
