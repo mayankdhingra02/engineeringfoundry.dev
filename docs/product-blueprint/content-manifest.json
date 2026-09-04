@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "56ec68ab85c184900127ba70312d43d6e1689a1f",
-  "repository_state_sha256": "e19b32a87cb0e6fefbe6768a8df672a749f4b9c4e664bfb640c906c59825b54e",
+  "repository_sha": "f4076951d305c1a960fa63743f6d24a21c78d51e",
+  "repository_state_sha256": "0e332852065accc096bc59775972dcbd74f6f02d72fabedea5d9672ee27a4a57",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1296,6 +1296,7 @@
     {
       "acceptance_criteria": [
         "Planning and round guidance preserve existing evidence boundaries and public handoffs.",
+        "Custom preparation-task creation strictly parses one exact bounded single-line title and bound round/application identities before actor or persistence work, then validates the returned task identity. The owner-derived database RPC serializes each owner/round before checking the 12-task cap and assigning the next position, so concurrent additions cannot exceed the cap or create duplicate positions; direct inserts, anonymous callers, malformed titles, and foreign or missing rounds fail without changing the owner list. Executable parser/result and source-integration checks run in npm run test:interview-preparation-hub; database cap-edge concurrency, grants, validation, and owner isolation run in npm run qualify:database, while hosted verification remains an unchecked external-owner step.",
         "Interview-round full edits carry the exact loaded database revision into an owner- and application-scoped timestamp compare-and-swap, so a newer completion or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
         "Owner-scoped round preparation counts preserve distinct ready, genuinely untouched, and unavailable states across Dashboard, Application Detail, and Interview Playbook; empty input resolves before actor work, a nonempty request without an actor or any failed count query cannot render zero, start-plan, or not-started claims, and the shared retry exposes guarded pending, live-status, and responsive source contracts. Only an explicit successful retry announces that preparation progress loaded, and its source-regressed focus recovery targets the connected success status after a frame only when the retry trigger owned focus and no newer focus claim exists; rendered focus behavior remains browser/manual validation.",
         "Checklist mutations parse one exact round identifier, canonical item identifier, and boolean desired membership before actor or persistence work; the route submits no whole-array snapshot, and the owner-scoped database function serializes and idempotently changes only that item while preserving independent checklist progress and returning the owning application for revalidation. The retired legacy snapshot RPC fails safely before any checklist or text mutation, cross-owner changes remain forbidden, executable and source contracts run in npm run test:interview-preparation-hub, database behavior remains assigned to npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step.",
@@ -1316,6 +1317,7 @@
         "components/interview-playbook",
         "components/preparation-counts-status.tsx",
         "docs/authenticated-workspace.md",
+        "docs/unified-preparation-progress.md",
         "features/applications/actions.ts",
         "features/applications/round-form.tsx",
         "features/interview-calendar/actions.ts",
@@ -1347,6 +1349,7 @@
         "supabase/migrations/202609040004_save_interview_preparation_text_if_revision.sql",
         "supabase/migrations/202609040005_set_interview_preparation_task_completed.sql",
         "supabase/migrations/202609040011_delete_interview_preparation_task_if_revision.sql",
+        "supabase/migrations/202609040013_harden_interview_preparation_task_add.sql",
         "supabase/tests/database/account_lifecycle.test.sql",
         "supabase/tests/database/interview_calendar_reminders.test.sql",
         "supabase/tests/database/interview_playbook_diagnostic_inputs.test.sql",
