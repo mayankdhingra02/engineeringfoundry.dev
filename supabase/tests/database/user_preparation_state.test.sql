@@ -83,12 +83,20 @@ select set_config(
   true
 );
 
-insert into public.behavioral_custom_questions (user_id, question_text, category)
-values ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 'Tell me about a difficult technical decision?', 'Leadership');
 select set_config(
   'test.preparation_custom_question_id',
-  (select id::text from public.behavioral_custom_questions where question_text = 'Tell me about a difficult technical decision?'),
+  'e1111111-1111-4111-8111-111111111111',
   true
+);
+select public.save_behavioral_custom_question_if_revision(
+  current_setting('test.preparation_custom_question_id')::uuid,
+  true,
+  null,
+  'Tell me about a difficult technical decision?',
+  null,
+  'Leadership',
+  null,
+  null
 );
 
 select set_config(
@@ -444,8 +452,10 @@ select throws_ok(
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', true);
 
-delete from public.behavioral_custom_questions
-where id = current_setting('test.preparation_custom_question_id')::uuid;
+select public.delete_behavioral_custom_question_if_revision(
+  current_setting('test.preparation_custom_question_id')::uuid,
+  (select updated_at from public.behavioral_custom_questions where id = current_setting('test.preparation_custom_question_id')::uuid)
+);
 select is((select count(*)::integer from public.behavioral_saved_questions where custom_question_id is not null), 0, 'deleting a custom question cascades its saved-question reference');
 delete from public.behavioral_saved_questions where curated_question_id = 'beh-lead-01';
 select is((select count(*)::integer from public.behavioral_saved_questions), 0, 'owner can delete a saved behavioral question');

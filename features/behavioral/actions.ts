@@ -14,6 +14,17 @@ import {
 } from "@/lib/behavioral/answer-action-input";
 import { reviewAnswerFacts } from "@/lib/behavioral/fact-integrity";
 import {
+  BEHAVIORAL_QUESTION_CONFLICT_ERROR,
+  BEHAVIORAL_QUESTION_DELETE_ERROR,
+  BEHAVIORAL_QUESTION_INVALID_INPUT_ERROR,
+  BEHAVIORAL_QUESTION_PERSISTENCE_ERROR,
+  BEHAVIORAL_QUESTION_SAVED_MESSAGE,
+  parseBehavioralQuestionActionInput,
+  parseBehavioralQuestionDeleteResult,
+  parseBehavioralQuestionMutationResult,
+  parseBehavioralQuestionRevision,
+} from "@/lib/behavioral/question-action-input";
+import {
   BEHAVIORAL_STORY_CONFLICT_ERROR,
   BEHAVIORAL_STORY_CREATE_ERROR,
   BEHAVIORAL_STORY_DUPLICATE_ERROR,
@@ -24,10 +35,16 @@ import {
   parseCanonicalBehavioralStoryId,
   type BehavioralStoryInput,
 } from "@/lib/behavioral/story-action-input";
-import { parseQuestionForm, type BehavioralFieldErrors } from "@/lib/behavioral/validation";
 import { getAuthenticatedActor, type AuthenticatedActor } from "@/lib/auth/actor";
 
-export interface BehavioralActionState { status: "idle" | "error"; message: string; fieldErrors?: BehavioralFieldErrors; conflict?: boolean }
+export interface BehavioralActionState {
+  status: "idle" | "error" | "success";
+  message: string;
+  fieldErrors?: Record<string, string>;
+  conflict?: boolean;
+  questionId?: string;
+  revision?: string;
+}
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const curatedQuestionIds = new Set(CURATED_BEHAVIORAL_QUESTIONS.map((question) => question.id));
 
@@ -180,29 +197,97 @@ export async function duplicateStoryAction(storyId: unknown) {
   refreshBehavioral(); redirect(`/behavioral/stories/${outcome.storyId}/edit`);
 }
 
-export async function createQuestionAction(_: BehavioralActionState, formData: FormData): Promise<BehavioralActionState> {
-  const current = await getAuthenticatedActor(); if (!current) return sessionError();
-  const parsed = parseQuestionForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("behavioral_custom_questions").insert({ ...parsed.data, user_id: current.user.id }).select("id").maybeSingle();
-  if (error || !data) return { status: "error", message: "We couldn't save this question." };
-  refreshBehavioral(); redirect(`/behavioral/questions/${data.id}`);
+export async function saveQuestionAction(previousState: BehavioralActionState, formData: unknown): Promise<BehavioralActionState> {
+  const parsed = parseBehavioralQuestionActionInput(formData);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: BEHAVIORAL_QUESTION_INVALID_INPUT_ERROR,
+      fieldErrors: parsed.fieldErrors,
+      questionId: previousState.questionId,
+      revision: previousState.revision,
+    };
+  }
+  const current = await getAuthenticatedActor();
+  if (!current) {
+    return {
+      ...sessionError(),
+      questionId: parsed.value.questionId,
+      revision: parsed.value.expectedUpdatedAt ?? previousState.revision,
+    };
+  }
+  const { question } = parsed.value;
+  const { data, error } = await current.supabase.rpc(
+    "save_behavioral_custom_question_if_revision",
+    {
+      target_question_id: parsed.value.questionId,
+      target_expect_absent: parsed.value.expectAbsent,
+      target_expected_updated_at: parsed.value.expectedUpdatedAt,
+      target_question_text: question.question_text,
+      target_description: question.description,
+      target_category: question.category,
+      target_company_slug: question.company_slug,
+      target_notes: question.notes,
+    },
+  );
+  if (error) {
+    return {
+      status: "error",
+      message: BEHAVIORAL_QUESTION_PERSISTENCE_ERROR,
+      questionId: parsed.value.questionId,
+      revision: parsed.value.expectedUpdatedAt ?? previousState.revision,
+    };
+  }
+  const outcome = parseBehavioralQuestionMutationResult(
+    data,
+    parsed.value.questionId,
+  );
+  if (outcome.status === "conflict") {
+    return {
+      status: "error",
+      message: BEHAVIORAL_QUESTION_CONFLICT_ERROR,
+      conflict: true,
+      questionId: parsed.value.questionId,
+      revision: parsed.value.expectedUpdatedAt ?? previousState.revision,
+    };
+  }
+  if (outcome.status !== "saved") {
+    return {
+      status: "error",
+      message: BEHAVIORAL_QUESTION_PERSISTENCE_ERROR,
+      questionId: parsed.value.questionId,
+      revision: parsed.value.expectedUpdatedAt ?? previousState.revision,
+    };
+  }
+  refreshBehavioral();
+  revalidatePath(`/behavioral/questions/${outcome.questionId}`);
+  return {
+    status: "success",
+    message: BEHAVIORAL_QUESTION_SAVED_MESSAGE,
+    questionId: outcome.questionId,
+    revision: outcome.updatedAt,
+  };
 }
 
-export async function updateQuestionAction(questionId: string, _: BehavioralActionState, formData: FormData): Promise<BehavioralActionState> {
-  const current = await getAuthenticatedActor(); if (!current) return sessionError();
-  if (!UUID_PATTERN.test(questionId)) return { status: "error", message: "Curated questions cannot be edited." };
-  const parsed = parseQuestionForm(formData); if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("behavioral_custom_questions").update(parsed.data).eq("id", questionId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) return { status: "error", message: "We couldn't update this question." };
-  refreshBehavioral(); revalidatePath(`/behavioral/questions/${questionId}`); redirect(`/behavioral/questions/${questionId}`);
-}
-
-export async function deleteQuestionAction(questionId: string) {
-  const current = await getAuthenticatedActor(); if (!current) signInAgain("/behavioral/questions");
-  if (!UUID_PATTERN.test(questionId)) return;
-  const { data, error } = await current.supabase.from("behavioral_custom_questions").delete().eq("id", questionId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) mutationFailure("We couldn't delete this question. It may no longer be available.");
-  refreshBehavioral(); redirect("/behavioral/questions");
+export async function deleteQuestionAction(questionIdInput: unknown, revisionInput: unknown) {
+  const parsed = parseBehavioralQuestionRevision(questionIdInput, revisionInput);
+  if (!parsed) mutationFailure(BEHAVIORAL_QUESTION_DELETE_ERROR);
+  const current = await getAuthenticatedActor();
+  if (!current) signInAgain("/behavioral/questions");
+  const { data, error } = await current.supabase.rpc(
+    "delete_behavioral_custom_question_if_revision",
+    {
+      target_question_id: parsed.questionId,
+      target_expected_updated_at: parsed.expectedUpdatedAt,
+    },
+  );
+  if (error) mutationFailure(BEHAVIORAL_QUESTION_DELETE_ERROR);
+  const outcome = parseBehavioralQuestionDeleteResult(data, parsed.questionId);
+  if (outcome.status !== "deleted") {
+    mutationFailure(BEHAVIORAL_QUESTION_DELETE_ERROR);
+  }
+  refreshBehavioral();
+  redirect("/behavioral/questions");
 }
 
 export async function linkStoryAction(questionId: string, formData: FormData) {

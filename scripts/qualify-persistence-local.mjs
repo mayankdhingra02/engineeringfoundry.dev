@@ -211,6 +211,20 @@ function behavioralStoryArgs(overrides = {}) {
   };
 }
 
+function behavioralQuestionArgs(questionId, overrides = {}) {
+  return {
+    target_question_id: questionId,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_question_text: "Phase 5A qualification: tell me about an ambiguous technical decision?",
+    target_description: "Private local qualification context.",
+    target_category: "Leadership",
+    target_company_slug: null,
+    target_notes: "Local qualification fixture.",
+    ...overrides,
+  };
+}
+
 function behavioralAnswerArgs(overrides = {}) {
   return {
     target_custom_question_id: null,
@@ -333,7 +347,6 @@ async function cleanOwnedFixtures(account) {
     owned.from("behavioral_answers").delete().like("title", "Phase 5A qualification%"),
     owned.from("behavioral_saved_questions").delete().eq("curated_question_id", "beh-conflict-01"),
     owned.from("behavioral_stories").delete().like("title", "Phase 5A qualification%"),
-    owned.from("behavioral_custom_questions").delete().like("question_text", "Phase 5A qualification%"),
     owned.from("applications").delete().like("company_name", `${fixtureCompany}%`),
     owned.from("dsa_progress").delete().like("item_id", `${fixturePrefix}:%`),
     owned.from("dsa_question_progress").delete().in("question_id", ["two-sum", "longest-substring-without-repeating-characters", "course-schedule", "group-anagrams", "binary-search", "valid-parentheses", "valid-anagram", "climbing-stairs", "coin-change", "merge-intervals"]),
@@ -348,6 +361,10 @@ async function cleanOwnedFixtures(account) {
   }
   queryLocalDatabase(
     "delete from public.preparation_track_progress where user_id = :'user_id'::uuid",
+    { user_id: account.user.id },
+  );
+  queryLocalDatabase(
+    "delete from public.behavioral_custom_questions where user_id = :'user_id'::uuid and question_text like 'Phase 5A qualification%'",
     { user_id: account.user.id },
   );
   queryLocalDatabase(
@@ -379,6 +396,7 @@ const fixture = {
   firstRoundId: null,
   secondRoundId: null,
   customQuestionId: null,
+  customQuestionRevision: null,
   storyId: null,
   storyRevision: null,
   storyLinkId: null,
@@ -1392,19 +1410,16 @@ await check("legacy Interview Playbook diagnostic save fails before mutating the
 });
 
 await check("User A creates a custom behavioral question", async () => {
-  const insertion = await a.authClient
-    .from("behavioral_custom_questions")
-    .insert({
-      user_id: a.user.id,
-      question_text: "Phase 5A qualification: tell me about an ambiguous technical decision?",
-      category: "Leadership",
-      notes: "Local qualification fixture.",
-    })
-    .select("id,question_text")
-    .single();
-  const row = expectSuccess(insertion, "custom question insertion failed");
-  fixture.customQuestionId = row.id;
-  return row.id;
+  const questionId = randomUUID();
+  const created = await a.authClient.rpc(
+    "save_behavioral_custom_question_if_revision",
+    behavioralQuestionArgs(questionId),
+  );
+  const rows = expectSuccess(created, "custom question creation failed");
+  expect(rows.length === 1 && rows[0].question_id === questionId, "custom question create did not return one correlated row");
+  fixture.customQuestionId = rows[0].question_id;
+  fixture.customQuestionRevision = rows[0].updated_at;
+  return questionId;
 });
 
 await check("User A atomically creates a behavioral story and theme set", async () => {
@@ -1848,18 +1863,102 @@ await check("User A saves curated and custom behavioral questions", async () => 
 
 await check("User A reads and updates their custom behavioral question", async () => {
   const customQuestionId = requireFixture(fixture.customQuestionId, "custom question");
-  const update = await a.authClient
-    .from("behavioral_custom_questions")
-    .update({ notes: "Owner-edited qualification note." })
-    .eq("id", customQuestionId)
-    .select("id,notes")
-    .single();
-  const row = expectSuccess(update, "custom question update failed");
-  expect(row.notes === "Owner-edited qualification note.", "custom question update did not persist");
+  const revision = requireFixture(fixture.customQuestionRevision, "custom question revision");
+  const updated = await a.authClient.rpc(
+    "save_behavioral_custom_question_if_revision",
+    behavioralQuestionArgs(customQuestionId, {
+      target_expect_absent: false,
+      target_expected_updated_at: revision,
+      target_notes: "Owner-edited qualification note.",
+    }),
+  );
+  const rows = expectSuccess(updated, "custom question update failed");
+  expect(rows.length === 1 && rows[0].question_id === customQuestionId, "custom question update did not return one correlated row");
+  fixture.customQuestionRevision = rows[0].updated_at;
+  const read = await a.authClient.from("behavioral_custom_questions").select("notes").eq("id", customQuestionId).single();
+  expect(expectSuccess(read, "custom question read failed").notes === "Owner-edited qualification note.", "custom question update did not persist");
 
   const savedRead = await a.authClient.from("behavioral_saved_questions").select("id");
   const savedRows = expectSuccess(savedRead, "saved-question read failed");
   expect(savedRows.length === 2, `expected 2 owned saved questions, observed ${savedRows.length}`);
+});
+
+await check("concurrent custom-question saves accept exactly one coherent snapshot", async () => {
+  const questionId = requireFixture(fixture.customQuestionId, "custom question");
+  const revision = requireFixture(fixture.customQuestionRevision, "custom question revision");
+  const [first, second] = await Promise.all([
+    a.authClient.rpc("save_behavioral_custom_question_if_revision", behavioralQuestionArgs(questionId, {
+      target_expect_absent: false,
+      target_expected_updated_at: revision,
+      target_question_text: "Phase 5A qualification: coherent custom question A?",
+      target_description: "Coherent context A.",
+      target_category: "Leadership",
+      target_company_slug: "company-a",
+      target_notes: "Coherent private notes A.",
+    })),
+    a.authClient.rpc("save_behavioral_custom_question_if_revision", behavioralQuestionArgs(questionId, {
+      target_expect_absent: false,
+      target_expected_updated_at: revision,
+      target_question_text: "Phase 5A qualification: coherent custom question B?",
+      target_description: "Coherent context B.",
+      target_category: "Conflict",
+      target_company_slug: "company-b",
+      target_notes: "Coherent private notes B.",
+    })),
+  ]);
+  const rows = [
+    ...expectSuccess(first, "first concurrent custom-question save failed"),
+    ...expectSuccess(second, "second concurrent custom-question save failed"),
+  ];
+  expect(rows.length === 1, `expected one custom-question winner, observed ${rows.length}`);
+  const final = expectSuccess(
+    await a.authClient.from("behavioral_custom_questions").select("question_text,description,category,company_slug,notes,updated_at").eq("id", questionId).single(),
+    "custom question concurrency read failed",
+  );
+  const snapshotA = {
+    question_text: "Phase 5A qualification: coherent custom question A?",
+    description: "Coherent context A.",
+    category: "Leadership",
+    company_slug: "company-a",
+    notes: "Coherent private notes A.",
+  };
+  const snapshotB = {
+    question_text: "Phase 5A qualification: coherent custom question B?",
+    description: "Coherent context B.",
+    category: "Conflict",
+    company_slug: "company-b",
+    notes: "Coherent private notes B.",
+  };
+  const content = { question_text: final.question_text, description: final.description, category: final.category, company_slug: final.company_slug, notes: final.notes };
+  expect(JSON.stringify(content) === JSON.stringify(snapshotA) || JSON.stringify(content) === JSON.stringify(snapshotB), "concurrent saves produced a torn custom-question snapshot");
+  expect(final.updated_at === rows[0].updated_at, "custom-question winner returned the wrong revision");
+  fixture.customQuestionRevision = final.updated_at;
+  return `one winner at ${final.updated_at}`;
+});
+
+await check("stale parent-revision custom-question delete preserves the question and children", async () => {
+  const questionId = requireFixture(fixture.customQuestionId, "custom question");
+  const staleRevision = requireFixture(fixture.customQuestionRevision, "custom question revision");
+  const updated = await a.authClient.rpc("save_behavioral_custom_question_if_revision", behavioralQuestionArgs(questionId, {
+    target_expect_absent: false,
+    target_expected_updated_at: staleRevision,
+    target_notes: "Latest private question notes.",
+  }));
+  const rows = expectSuccess(updated, "latest custom-question save failed");
+  expect(rows.length === 1, "latest custom-question save returned no row");
+  fixture.customQuestionRevision = rows[0].updated_at;
+  const staleDelete = await a.authClient.rpc("delete_behavioral_custom_question_if_revision", {
+    target_question_id: questionId,
+    target_expected_updated_at: staleRevision,
+  });
+  expect(expectSuccess(staleDelete, "stale custom-question delete failed").length === 0, "stale custom-question delete unexpectedly removed a row");
+  const [question, saved] = await Promise.all([
+    a.authClient.from("behavioral_custom_questions").select("notes").eq("id", questionId).single(),
+    a.authClient.from("behavioral_saved_questions").select("id").eq("custom_question_id", questionId),
+  ]);
+  expect(expectSuccess(question, "custom question preservation read failed").notes === "Latest private question notes.", "stale delete changed the custom question");
+  expect(expectSuccess(saved, "custom question child preservation read failed").length === 1, "stale delete removed a custom-question child");
+  return "question and child preserved";
 });
 
 await check("User B cannot read User A behavioral records", async () => {
@@ -1885,13 +1984,13 @@ await check("User B cannot update or delete User A behavioral records", async ()
   const customQuestionId = requireFixture(fixture.customQuestionId, "custom question");
   const storyId = requireFixture(fixture.storyId, "story");
   const savedId = requireFixture(fixture.curatedSavedQuestionId, "curated saved question");
-  expectInvisible(
+  expectSqlError(
     await b.authClient.from("behavioral_custom_questions").update({ notes: "Intrusion" }).eq("id", customQuestionId).select("id"),
-    "custom-question update",
+    "42501",
   );
-  expectInvisible(
+  expectSqlError(
     await b.authClient.from("behavioral_custom_questions").delete().eq("id", customQuestionId).select("id"),
-    "custom-question deletion",
+    "42501",
   );
   expectSqlError(
     await b.authClient.from("behavioral_stories").update({ title: "Cross-user mutation" }).eq("id", storyId).select("id"),
@@ -3196,8 +3295,12 @@ await check("anonymous client cannot invoke interview preparation RPCs", async (
 
 await check("deleting a custom question cascades its saved-question reference", async () => {
   const customQuestionId = requireFixture(fixture.customQuestionId, "custom question");
-  const deletion = await a.authClient.from("behavioral_custom_questions").delete().eq("id", customQuestionId).select("id").single();
-  expectSuccess(deletion, "custom question deletion failed");
+  const deletion = await a.authClient.rpc("delete_behavioral_custom_question_if_revision", {
+    target_question_id: customQuestionId,
+    target_expected_updated_at: requireFixture(fixture.customQuestionRevision, "custom question revision"),
+  });
+  const deletionRows = expectSuccess(deletion, "custom question deletion failed");
+  expect(deletionRows.length === 1 && deletionRows[0].question_id === customQuestionId, "custom question delete did not return one correlated row");
   const savedRead = await a.authClient
     .from("behavioral_saved_questions")
     .select("id")

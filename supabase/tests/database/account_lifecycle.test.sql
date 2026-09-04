@@ -78,8 +78,16 @@ select public.save_interview_preparation_notes_if_revision('83838383-8383-4838-8
 select public.set_interview_preparation_checklist_item('83838383-8383-4838-8838-838383838302', 'dsa-review-queue', true);
 select public.add_interview_preparation_task('83838383-8383-4838-8838-838383838302', 'Review two sum');
 
-insert into public.behavioral_custom_questions (id, user_id, question_text, category)
-values ('83838383-8383-4838-8838-838383838303', '83838383-8383-4838-8838-838383838383', 'Tell me about a disposable lifecycle test?', 'Other');
+select public.save_behavioral_custom_question_if_revision(
+  '83838383-8383-4838-8838-838383838303',
+  true,
+  null,
+  'Tell me about a disposable lifecycle test?',
+  null,
+  'Other',
+  null,
+  null
+);
 insert into public.behavioral_stories (id, user_id, title, situation)
 values ('83838383-8383-4838-8838-838383838304', '83838383-8383-4838-8838-838383838383', 'Disposable story', 'Private situation');
 insert into public.behavioral_story_themes (id, user_id, story_id, theme)

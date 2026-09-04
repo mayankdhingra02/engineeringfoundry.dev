@@ -178,6 +178,18 @@ await check("disposable account can populate every major private workspace", asy
   assert.ifError(completedPreparationTask.error);
   assert.equal(completedPreparationTask.data?.length, 1);
   assert.equal(completedPreparationTask.data?.[0]?.completed, true);
+  const customQuestion = await a.client.rpc("save_behavioral_custom_question_if_revision", {
+    target_question_id: randomUUID(),
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_question_text: "Tell me about a disposable private lifecycle decision?",
+    target_description: "Private disposable question context.",
+    target_category: "Leadership",
+    target_company_slug: null,
+    target_notes: "Private disposable custom-question note.",
+  });
+  assert.ifError(customQuestion.error);
+  assert.equal(customQuestion.data?.length, 1);
   const story = await a.client.rpc("create_behavioral_story_with_themes", {
     target_title: "Phase 8 disposable story",
     target_company_or_context: null,
@@ -248,6 +260,7 @@ await check("private JSON export contains owned Phase 1–7 data and excludes se
   assert.equal(exportPayload.applications.length, 1);
   assert.equal(exportPayload.interview_rounds.length, 1);
   assert.equal(exportPayload.interview_preparation.records[0].private_notes, "Private preparation note");
+  assert.equal(exportPayload.behavioral.custom_questions[0].notes, "Private disposable custom-question note.");
   assert.equal(exportPayload.behavioral.stories[0].notes, "Private behavioral note");
   assert.equal(exportPayload.behavioral.answers[0].opening_framing, "Private opening framing");
   assert.equal(exportPayload.behavioral.answers[0].details_to_emphasize, "Private detail to emphasize");
@@ -276,7 +289,7 @@ await check("privileged Auth deletion removes identity, private rows, reminders,
   assert.equal(removeTrackedId(createdIds, a.user.id), true, "deleted account was not tracked for cleanup");
   const authLookup = await admin.auth.admin.getUserById(a.user.id);
   assert.ok(authLookup.error || !authLookup.data.user);
-  const tables = ["applications", "interview_rounds", "interview_preparations", "behavioral_stories", "dsa_question_progress", "system_design_item_progress", "system_design_attempts", "user_preparation_preferences", "interview_reminder_preferences", "interview_reminders"];
+  const tables = ["applications", "interview_rounds", "interview_preparations", "behavioral_custom_questions", "behavioral_stories", "dsa_question_progress", "system_design_item_progress", "system_design_attempts", "user_preparation_preferences", "interview_reminder_preferences", "interview_reminders"];
   for (const table of tables) {
     assert.match(table, /^[a-z_]+$/, "cascade check contains an unsafe table identifier");
     const count = queryLocalDatabase(`select count(*) from public.${table} where user_id = :'user_id'::uuid`, { user_id: a.user.id });
