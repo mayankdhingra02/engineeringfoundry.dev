@@ -19,6 +19,14 @@ import {
   resolvePublicProfileQuery,
 } from "../lib/auth/public-profile-query.ts";
 import {
+  ACCOUNT_NAVIGATION_UNAVAILABLE_MESSAGE,
+  AccountNavigationUnavailableError,
+  parseAccountNavigationResponse,
+  resolveAccountNavigationProfileResult,
+  resolveAccountNavigationSettlement,
+  resolveAccountNavigationUserResult,
+} from "../lib/auth/account-navigation.ts";
+import {
   PROFILE_LINK_MAX_LENGTH,
   canonicalizeProfileLinkUrl,
   parseOptionalProfileLink,
@@ -78,6 +86,117 @@ try {
   );
 } catch (error) {
   failures.push(`Credential, redirect, or public-profile query validation failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+try {
+  const userId = "123e4567-e89b-42d3-a456-426614174000";
+  const missingSession = { name: "AuthSessionMissingError" };
+  const retryableAuthError = { name: "AuthRetryableFetchError" };
+  const isMissingSession = (error) => error === missingSession;
+  const authenticated = resolveAccountNavigationUserResult({
+    data: { user: { id: userId, email: "member@example.com", role: "authenticated" } },
+    error: null,
+  }, isMissingSession);
+  assert.deepEqual(authenticated, {
+    state: "authenticated",
+    user: { id: userId, email: "member@example.com" },
+  });
+  assert.deepEqual(resolveAccountNavigationUserResult({
+    data: { user: null },
+    error: missingSession,
+  }, isMissingSession), { state: "anonymous" });
+
+  for (const input of [
+    null,
+    {},
+    { data: { user: null } },
+    { data: { user: null }, error: null },
+    { data: { user: null }, error: retryableAuthError },
+    { data: { user: { id: userId } }, error: missingSession },
+    { data: { user: { id: "not-a-user", email: null } }, error: null },
+    { data: { user: { id: userId, email: "" } }, error: null },
+    { data: { user: { id: userId, email: "not-an-email" } }, error: null },
+    { data: { user: { id: userId, email: "x".repeat(255) } }, error: null },
+    { data: { user: { id: userId, email: null } }, error: null, extra: true },
+  ]) {
+    assert.throws(
+      () => resolveAccountNavigationUserResult(input, isMissingSession),
+      AccountNavigationUnavailableError,
+      "A failed or malformed account identity result became anonymous or authenticated.",
+    );
+  }
+  assert.throws(
+    () => resolveAccountNavigationUserResult({ data: { user: null }, error: missingSession }, () => { throw new Error("bad discriminator"); }),
+    AccountNavigationUnavailableError,
+    "A failing missing-session discriminator became anonymous.",
+  );
+
+  const readyAccount = {
+    state: "ready",
+    account: {
+      username: "member_one",
+      display_name: "Member One",
+      email: "member@example.com",
+    },
+  };
+  assert.deepEqual(resolveAccountNavigationProfileResult({
+    data: { username: "member_one", display_name: "Member One" },
+    error: null,
+  }, authenticated.user), readyAccount);
+  assert.deepEqual(resolveAccountNavigationProfileResult({ data: null, error: null }, authenticated.user), {
+    state: "ready",
+    account: { username: null, display_name: null, email: "member@example.com" },
+  });
+  for (const input of [
+    null,
+    {},
+    { data: null },
+    { data: null, error: retryableAuthError },
+    { data: { username: "member_one", display_name: "Member One", extra: true }, error: null },
+    { data: { username: "Member", display_name: "Member One" }, error: null },
+    { data: { username: "member_one", display_name: "" }, error: null },
+    { data: { username: "member_one", display_name: "   " }, error: null },
+    { data: { username: "member_one", display_name: "Member\nOne" }, error: null },
+    { data: { username: "member_one", display_name: "x".repeat(81) }, error: null },
+  ]) {
+    assert.throws(
+      () => resolveAccountNavigationProfileResult(input, authenticated.user),
+      AccountNavigationUnavailableError,
+      "A failed or malformed account profile result became ready.",
+    );
+  }
+
+  assert.deepEqual(parseAccountNavigationResponse(200, { state: "disabled" }), { state: "disabled" });
+  assert.deepEqual(parseAccountNavigationResponse(200, { state: "anonymous" }), { state: "anonymous" });
+  assert.deepEqual(parseAccountNavigationResponse(200, readyAccount), readyAccount);
+  assert.deepEqual(parseAccountNavigationResponse(503, { state: "unavailable" }), { state: "unavailable" });
+  for (const [status, body] of [
+    [500, { state: "anonymous" }],
+    [200, {}],
+    [200, { state: "anonymous", account: null }],
+    [200, { ...readyAccount, account: { ...readyAccount.account, unexpected: true } }],
+    [200, { ...readyAccount, account: { ...readyAccount.account, username: "Member" } }],
+    [200, { ...readyAccount, account: { ...readyAccount.account, display_name: "" } }],
+    [200, { ...readyAccount, account: { ...readyAccount.account, email: "not-an-email" } }],
+    [503, { state: "ready", account: readyAccount.account }],
+    [503, { state: "unavailable", detail: "private" }],
+  ]) {
+    assert.deepEqual(
+      parseAccountNavigationResponse(status, body),
+      { state: "unavailable" },
+      "A noncanonical account response became a rendered identity state.",
+    );
+  }
+
+  assert.deepEqual(resolveAccountNavigationSettlement({ state: "loading" }, { state: "unavailable" }), { state: "unavailable" });
+  assert.deepEqual(resolveAccountNavigationSettlement(readyAccount, { state: "unavailable" }), readyAccount, "A refresh failure removed the last verified account state.");
+  assert.deepEqual(resolveAccountNavigationSettlement(readyAccount, { state: "anonymous" }, true), readyAccount, "An authenticated refresh race removed the last verified account state.");
+  assert.deepEqual(resolveAccountNavigationSettlement({ state: "anonymous" }, { state: "anonymous" }, true), { state: "unavailable" }, "A signed-in refresh failure remained falsely anonymous.");
+  assert.deepEqual(resolveAccountNavigationSettlement({ state: "loading" }, { state: "anonymous" }), { state: "anonymous" });
+  assert.equal(ACCOUNT_NAVIGATION_UNAVAILABLE_MESSAGE, "Account status is temporarily unavailable.");
+  assert.equal(new AccountNavigationUnavailableError().message, ACCOUNT_NAVIGATION_UNAVAILABLE_MESSAGE);
+} catch (error) {
+  failures.push(`Account-navigation identity, profile, response, or settlement validation failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
 try {
@@ -350,9 +469,48 @@ for (const marker of ["Your interview pipeline", "Upcoming interviews", "Applica
 prohibit(dashboard, /PageHero|Mock interviews|Referral requests/, "Dashboard retained the marketing/legacy placeholder shell.");
 
 const accountControl = read("components/account-control.tsx");
-for (const marker of ["account === undefined", "account-control-loading", 'fetch("/api/auth/account"', 'cache: "no-store"', "onAuthStateChange", "signOutAction", 'scope: "local"', "setAccount(null)", "resetAnalyticsUser", 'href="/signin"', 'href="/signup"', 'href="/dashboard"', 'href="/settings"', "signOutError"]) requireText(accountControl, marker, `Account navigation lacks ${marker}.`);
+const accountNavigation = read("lib/auth/account-navigation.ts");
+for (const marker of ["AccountNavigationUnavailableError", "resolveAccountNavigationUserResult", "resolveAccountNavigationProfileResult", "parseAccountNavigationResponse", "resolveAccountNavigationSettlement", "Account status is temporarily unavailable."]) requireText(accountNavigation, marker, `Account navigation result boundary lacks ${marker}.`);
+for (const marker of ['navigation.state === "loading"', "account-control-loading", 'fetch("/api/auth/account"', 'cache: "no-store"', "parseAccountNavigationResponse", "requestId !== requestEpoch.current", "resolveAccountNavigationSettlement", "onAuthStateChange", 'event === "SIGNED_OUT"', 'event === "INITIAL_SESSION"', 'event === "TOKEN_REFRESHED"', "retryPending.current", 'aria-live="polite"', 'aria-atomic="true"', "focusAfterRetry", "signOutAction", 'scope: "local"', "resetAnalyticsUser", 'href="/signin"', 'href="/signup"', 'href="/dashboard"', 'href="/settings"', "signOutError"]) requireText(accountControl, marker, `Account navigation lacks ${marker}.`);
+prohibit(accountControl, /as\s*\{\s*account:/, "Account navigation still trusts a cast response instead of parsing runtime JSON.");
+prohibit(accountControl, /if\s*\(!session\?\.user\)\s*set/, "A sessionless non-sign-out event can still force anonymous navigation.");
+const accountFetch = accountControl.indexOf('fetch("/api/auth/account"');
+const accountParse = accountControl.indexOf("parseAccountNavigationResponse", accountFetch);
+const accountEpochGuard = accountControl.indexOf("requestId !== requestEpoch.current", accountParse);
+const accountSettle = accountControl.indexOf("resolveAccountNavigationSettlement", accountEpochGuard);
+assert.ok(accountFetch >= 0 && accountParse > accountFetch && accountEpochGuard > accountParse && accountSettle > accountEpochGuard, "Account navigation does not parse and stale-guard each response before settlement.");
+const signedOutBranch = accountControl.slice(accountControl.indexOf('if (event === "SIGNED_OUT")'), accountControl.indexOf('} else if (', accountControl.indexOf('if (event === "SIGNED_OUT")')));
+assert.ok(signedOutBranch.indexOf("requestEpoch.current += 1") < signedOutBranch.indexOf('commitNavigation({ state: "anonymous" })'), "SIGNED_OUT does not invalidate an in-flight account response before rendering anonymous navigation.");
+const authenticatedRefreshStart = accountControl.indexOf("} else if (", accountControl.indexOf('if (event === "SIGNED_OUT")'));
+const authenticatedRefreshEnd = accountControl.indexOf("\n        }\n      },", authenticatedRefreshStart);
+const authenticatedRefreshBranch = accountControl.slice(authenticatedRefreshStart, authenticatedRefreshEnd);
+for (const marker of ['session?.user', 'event === "SIGNED_IN"', 'event === "TOKEN_REFRESHED"', 'navigationRef.current.state !== "ready"', 'commitNavigation({ state: "loading" })', "window.setTimeout", "void load(true)"]) requireText(authenticatedRefreshBranch, marker, `Authenticated navigation refresh lacks ${marker}.`);
+assert.ok(authenticatedRefreshBranch.indexOf('commitNavigation({ state: "loading" })') < authenticatedRefreshBranch.indexOf("window.setTimeout") && authenticatedRefreshBranch.indexOf("window.setTimeout") < authenticatedRefreshBranch.indexOf("void load(true)"), "A signed-in event can remain falsely anonymous while its authoritative account refresh fails.");
+const unavailableBranchStart = accountControl.indexOf('if (navigation.state === "unavailable")');
+const unavailableBranch = accountControl.slice(unavailableBranchStart, accountControl.indexOf('if (navigation.state === "anonymous")', unavailableBranchStart));
+for (const marker of ["ACCOUNT_NAVIGATION_UNAVAILABLE_MESSAGE", "retryTrigger", "aria-disabled={retrying}", "onClick={() => void retry()}"]) requireText(unavailableBranch, marker, `Unavailable account navigation lacks ${marker}.`);
 const accountRoute = read("app/api/auth/account/route.ts");
-for (const marker of ["getAuthenticatedActor", '"Cache-Control"', "no-store", "actor.user.email", ".eq(\"id\", actor.user.id)"]) requireText(accountRoute, marker, `Server-backed navigation account state lacks ${marker}.`);
+for (const marker of ["createSupabaseServerClient", "auth.getUser()", "isAuthSessionMissingError", "resolveAccountNavigationUserResult", 'identity.state === "anonymous"', 'select("username,display_name")', ".eq(\"id\", identity.user.id)", "resolveAccountNavigationProfileResult", 'status: 503', '"Cache-Control"', "no-store", '"X-Robots-Tag": "noindex, nofollow"']) requireText(accountRoute, marker, `Server-backed navigation account state lacks ${marker}.`);
+prohibit(accountRoute, /getAuthenticatedActor|avatar_url|is_public/, "The navigation route still inherits ambiguous actor resolution or returns unused profile fields.");
+const accountRouteBody = accountRoute.slice(accountRoute.indexOf("export async function GET"));
+const routeClient = accountRouteBody.indexOf("createSupabaseServerClient()");
+const routeUser = accountRouteBody.indexOf("auth.getUser()", routeClient);
+const routeIdentity = accountRouteBody.indexOf("resolveAccountNavigationUserResult", routeUser);
+const routeProfile = accountRouteBody.indexOf('.from("profiles")', routeIdentity);
+const routeReady = accountRouteBody.indexOf("resolveAccountNavigationProfileResult", routeProfile);
+assert.ok(routeClient >= 0 && routeUser > routeClient && routeIdentity > routeUser && routeProfile > routeIdentity && routeReady > routeProfile, "Account navigation does not distinguish verified absence before its profile read and ready response.");
+const authSecurity = read("docs/auth-security.md");
+for (const marker of ["Global account-navigation truth", "only Supabase's explicit `AuthSessionMissingError`", "private, no-store, noindex `503` unavailable response", "Network, non-OK, JSON, and malformed-body failures", "shared `getAuthenticatedActor()` helper still maps", "Rendered browser timing, focus, and assistive-technology behavior remain manual validation"]) requireText(authSecurity, marker, `Authentication documentation omits account-navigation boundary: ${marker}.`);
+const globalRequirement = JSON.parse(read("docs/product-blueprint/registry/requirements.json")).requirements.find((requirement) => requirement.id === "EF-GLOBAL");
+if (!globalRequirement) failures.push("EF-GLOBAL governance requirement is missing.");
+else {
+  for (const path of ["app/api/auth/account/route.ts", "components/account-control.tsx", "lib/auth/account-navigation.ts", "scripts/test-auth-foundation.mjs"]) {
+    if (!globalRequirement.code_paths.includes(path)) failures.push(`EF-GLOBAL lacks account-navigation path ${path}.`);
+  }
+  if (!globalRequirement.content_paths.includes("docs/auth-security.md")) failures.push("EF-GLOBAL lacks account-navigation documentation attribution.");
+  if (!globalRequirement.test_commands.includes("npm run test:auth-foundation")) failures.push("EF-GLOBAL lacks its account-navigation regression command.");
+  if (!globalRequirement.acceptance_criteria.some((criterion) => criterion.includes("only Supabase's explicit missing-session error becomes anonymous") && criterion.includes("broader shared actor authentication-service-versus-anonymous ambiguity remains outside"))) failures.push("EF-GLOBAL overclaims or omits the route-specific account-navigation truth boundary.");
+}
 const signOutActionSource = read("features/auth/sign-out-action.ts");
 for (const marker of ["createSupabaseServerClient", "supabase.auth.signOut()", 'scope: "local"']) requireText(signOutActionSource, marker, `Server-authoritative sign-out lacks ${marker}.`);
 
@@ -374,6 +532,13 @@ const profileValidation = read("lib/auth/validation.ts");
 const profileFormSource = read("features/profile/profile-form.tsx");
 const profileActions = read("features/profile/actions.ts");
 const globalStyles = read("app/globals.css");
+for (const marker of [".account-control-unavailable {", ".mobile-account-unavailable {", '.account-control-unavailable button[aria-disabled="true"]', ".mobile-account-unavailable button { min-width: 64px; min-height: 44px; }"]) requireText(globalStyles, marker, `Account-navigation unavailable state lacks ${marker}.`);
+const accountUnavailableCopyRule = globalStyles.match(/\.account-control-unavailable\s*>\s*span,\s*\.mobile-account-unavailable\s*>\s*span\s*\{([^}]*)\}/)?.[1];
+const accountUnavailableFontSize = accountUnavailableCopyRule?.match(/font-size:\s*([\d.]+)px/)?.[1];
+if (!accountUnavailableFontSize || Number(accountUnavailableFontSize) < 13) failures.push("Account-navigation unavailable copy must remain readable at 13px or larger.");
+const accountUnavailableButtonRule = globalStyles.match(/\.account-control-unavailable\s+button,\s*\.mobile-account-unavailable\s+button\s*\{([^}]*)\}/)?.[1];
+const accountUnavailableButtonFontSize = accountUnavailableButtonRule?.match(/font-size:\s*([\d.]+)px/)?.[1];
+if (!accountUnavailableButtonFontSize || Number(accountUnavailableButtonFontSize) < 13) failures.push("Account-navigation retry labels must remain readable at 13px or larger.");
 for (const marker of ['rpc("get_public_profile"', "profile_username: username", ".maybeSingle()", "const result = await", "resolvePublicProfileQuery(result)"]) requireText(authQueries, marker, `Public-profile query must retain data and error for the resolver: ${marker}.`);
 prohibit(authQueries, /const\s*\{\s*data\s*\}\s*=\s*await\s+supabase\.rpc\("get_public_profile"/, "Public-profile query discards its RPC error before resolution.");
 if ((authQueries.match(/\.toLowerCase\(\)/g) ?? []).length !== 1 || publicProfilePage.includes(".toLowerCase()")) failures.push("Public-profile usernames must be normalized exactly once at the shared query boundary for metadata and page rendering.");

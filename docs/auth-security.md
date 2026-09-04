@@ -40,6 +40,14 @@ The Next.js proxy calls `supabase.auth.getClaims()` so expired tokens can be ver
 
 Do not use `getSession()` as proof of identity in server authorization code. Do not cache responses that can refresh authentication cookies.
 
+### Global account-navigation truth
+
+The global header uses the request-time `/api/auth/account` route rather than trusting browser session contents as an identity projection. That route calls `getUser()` directly and treats only Supabase's explicit `AuthSessionMissingError` as a genuine anonymous state. Other Auth failures, contradictory results, profile-query errors, and malformed rows return a private, no-store, noindex `503` unavailable response. A verified user with a genuine missing profile row remains signed in with the minimal email-or-Member identity; the response does not include unused profile visibility or avatar fields.
+
+The client strictly parses the status-correlated `disabled`, `anonymous`, `ready`, and `unavailable` response shapes. Network, non-OK, JSON, and malformed-body failures render compact retryable unavailable copy instead of Sign in and Sign up. Request epochs reject stale and unmounted settlements; `SIGNED_OUT` invalidates an in-flight request before rendering anonymous controls, while authenticated session events trigger an authoritative reload and cannot leave a formerly anonymous state in place after failure. A refresh failure preserves an already verified ready identity, and a successful retry restores focus only when the retry control owned it.
+
+These protections are deliberately route-specific. The shared `getAuthenticatedActor()` helper still maps an authentication-service failure and a legitimate missing session to the same `null` result for other call sites; that broader contract remains separate follow-up work. Automated checks execute the pure identity/profile/response/settlement matrices and source-regress request, event, retry, and focus wiring. Rendered browser timing, focus, and assistive-technology behavior remain manual validation.
+
 ### Proxy cache safety
 
 The Proxy uses `getClaims()` for session verification and refresh, copies refreshed cookies to the outgoing response, and propagates every cache-control or security header supplied by `@supabase/ssr`. Responses that refresh authentication must not be cached by a CDN or reverse proxy, because replaying a cached `Set-Cookie` response could attach one user's session to another request.

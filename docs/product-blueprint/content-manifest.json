@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "51a0c25f816ea262bb522225d2e816c41cf889ff",
-  "repository_state_sha256": "c584314499719d91089ca8c92acd76a0264103c9b6ac2a728f345eaa059c9bdb",
+  "repository_sha": "d75189921307c79a8a4fe9e903223b91aacf1ec9",
+  "repository_state_sha256": "a266c1134df199f0e4b13da126e0421a020d1a2946d2b046327a20341a3cd39f",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -612,6 +612,7 @@
     {
       "acceptance_criteria": [
         "Global public routes preserve honest navigation, privacy, accessibility, analytics, and evidence boundaries; only a fresh server-signed proof can produce the account-deletion notice, whose copy distinguishes removed account-owned data from retained private operational feedback.",
+        "Global account navigation uses a route-specific verified-user boundary where only Supabase's explicit missing-session error becomes anonymous; other Auth errors, profile-query errors, contradictory results, malformed runtime responses, and client transport failures become a private no-store retryable unavailable state instead of Sign in and Sign up. The client invalidates stale and unmounted responses, only an explicit SIGNED_OUT event forces anonymous navigation, re-verifies authenticated session events, preserves a last verified ready identity on refresh failure, and source-regresses compact live retry and conditional focus recovery without claiming rendered browser automation. Executable identity, profile, response, and settlement matrices run in npm run test:auth-foundation; the broader shared actor authentication-service-versus-anonymous ambiguity remains outside this route-specific boundary.",
         "Application full edits carry the exact loaded database revision into an owner-scoped timestamp compare-and-swap, so a newer quick status or other intervening save cannot be overwritten by a stale form. Query failures remain distinct from zero-row conflicts, while edit-only duplicate submission guards, retained drafts, atomic conflict copy, and a safe latest-version review path are source-regressed; real stale-write behavior runs in npm run qualify:database.",
         "Homepage account continuation distinguishes anonymous, ready (including genuinely empty), and unavailable states; authenticated continuation-data query failures plus client transport and malformed-response failures cannot masquerade as signed-out or zero activity, account import requires a ready response, browser-local continuation remains available, and retry status and guarded focus recovery are source-regressed without claiming rendered browser automation. The shared actor boundary still does not distinguish an authentication-service failure from a legitimate anonymous session.",
         "Explicit browser-activity import strictly validates one bounded snapshot before actor work and uses owner-derived insert-only RPCs to report imported, existing, and failed outcomes without overwriting richer account progress. Only exact submitted snapshots confirmed imported or existing are removed from current primary and legacy browser state; concurrent edits, failed and unrelated activity, and saved plans remain. Duplicate, stale, and unmounted client settlements are guarded, while truthful live status and conditional focus recovery are source-regressed without claiming rendered browser automation; database atomicity, concurrency, and owner isolation run in npm run qualify:database, and hosted RPC checks remain an external owner gate.",
@@ -627,6 +628,7 @@
         "Password-reset navigation and mutation require a recent verified Supabase recovery authentication-method claim correlated to the same account; caller-controlled callback labels and an ordinary authenticated session cannot create that capability, and malformed, duplicate, file-valued, unknown, weak, or mismatched password fields are rejected before Auth work without a literal application recovery cookie."
       ],
       "code_paths": [
+        "app/api/auth/account/route.ts",
         "app/api/preparation/continuation/route.ts",
         "app/api/preparation/import/route.ts",
         "app/applications/[id]/edit/page.tsx",
@@ -639,6 +641,7 @@
         "app/reset-password/page.tsx",
         "app/settings/preparation/page.tsx",
         "app/u/[username]/page.tsx",
+        "components/account-control.tsx",
         "components/global-search.tsx",
         "components/header.tsx",
         "components/home-entry-experience.tsx",
@@ -660,6 +663,7 @@
         "lib/account/preparation-preferences.ts",
         "lib/applications/edit-revision.ts",
         "lib/auth/account-deletion.ts",
+        "lib/auth/account-navigation.ts",
         "lib/auth/credentials.ts",
         "lib/auth/password-recovery-claims.ts",
         "lib/auth/profile-links.ts",
