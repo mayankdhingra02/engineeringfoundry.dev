@@ -6,6 +6,11 @@ import type { Application, BehavioralAnswer, BehavioralCustomQuestion, Behaviora
 import { CURATED_BEHAVIORAL_QUESTIONS, customQuestionView, type WorkspaceQuestion } from "./catalog";
 import type { PreparationStatus } from "./options";
 import { isBehavioralRoundType, storyReadiness } from "./readiness";
+import {
+  resolveBehavioralStoryEditSnapshot,
+  type BehavioralStoryEditSnapshot,
+} from "./story-edit-state";
+import { parseCanonicalBehavioralStoryId } from "./story-action-input";
 
 export type BehavioralUpcomingInterview = {
   id: string;
@@ -54,6 +59,33 @@ export async function getBehavioralWorkspaceData(): Promise<BehavioralWorkspaceD
     applications: (applicationsResult.data ?? []) as Array<Pick<Application, "id" | "company_name" | "company_slug" | "role_title">>,
     upcomingInterviews: ((upcomingResult.data ?? []) as unknown as BehavioralUpcomingInterview[]).filter((round) => isBehavioralRoundType(round.round_type)),
   };
+}
+
+export async function getBehavioralStoryEditSnapshot(
+  storyIdInput: unknown,
+): Promise<BehavioralStoryEditSnapshot | null> {
+  const storyId = parseCanonicalBehavioralStoryId(storyIdInput);
+  if (!storyId) return null;
+  const current = await getAuthenticatedActor();
+  if (!current) throw new PrivateDataUnavailableError("behavioral story");
+  const result = await current.supabase
+    .from("behavioral_stories")
+    .select(
+      "id,user_id,title,company_or_context,role,approximate_period,project,situation,task,action,result,reflection,short_summary,status,notes,created_at,updated_at,behavioral_story_themes!behavioral_story_themes_story_owner_fkey(theme)",
+    )
+    .eq("id", storyId)
+    .eq("user_id", current.user.id)
+    .maybeSingle();
+  const resolved = resolveBehavioralStoryEditSnapshot(
+    { data: result.data, error: result.error },
+    storyId,
+    current.user.id,
+  );
+  if (resolved.status === "missing") return null;
+  if (resolved.status !== "ready") {
+    throw new PrivateDataUnavailableError("behavioral story");
+  }
+  return resolved.value;
 }
 
 export function linkMatchesQuestion(link: BehavioralStoryQuestionLink, question: WorkspaceQuestion) {

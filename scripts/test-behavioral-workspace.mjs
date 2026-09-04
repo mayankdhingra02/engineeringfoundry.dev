@@ -44,6 +44,7 @@ const {
   parseBehavioralStoryMutationResult,
   parseCanonicalBehavioralStoryId,
 } = await import("../lib/behavioral/story-action-input.ts");
+const { resolveBehavioralStoryEditSnapshot } = await import("../lib/behavioral/story-edit-state.ts");
 
 const canonicalStoryId = "123e4567-e89b-42d3-a456-426614174000";
 const canonicalStoryRevision = "2026-09-03T18:15:00.123456+00:00";
@@ -83,6 +84,56 @@ const emptyThemes = parses(storyForm({ themes: [] }), { kind: "create" });
 check(emptyThemes.ok && emptyThemes.value.themes.length === 0, "an explicit theme-presence sentinel permits an intentional empty theme set");
 const validEdit = parses(storyForm({ revision: canonicalStoryRevision }), { kind: "edit", storyId: canonicalStoryId.toUpperCase() });
 check(validEdit.ok && validEdit.value.storyId === canonicalStoryId && validEdit.value.expectedUpdatedAt === canonicalStoryRevision, "edit parsing canonicalizes an uppercase UUID and preserves the database revision");
+
+const canonicalStoryOwnerId = "223e4567-e89b-42d3-a456-426614174000";
+const persistedStorySnapshot = {
+  id: canonicalStoryId.toUpperCase(),
+  user_id: canonicalStoryOwnerId.toUpperCase(),
+  title: "Stabilized a launch",
+  company_or_context: "Engineering Foundry",
+  role: "Staff engineer",
+  approximate_period: "Q3 2026",
+  project: "Release safety",
+  situation: "A release was at risk.",
+  task: "I owned the recovery plan.",
+  action: "I aligned owners and staged a rollback.",
+  result: "The release completed safely.",
+  reflection: "I would create the runbook earlier.",
+  short_summary: "Protected a risky release.",
+  status: "Ready",
+  notes: "Private follow-up notes.",
+  created_at: "2026-09-03T18:00:00+00:00",
+  updated_at: canonicalStoryRevision,
+  behavioral_story_themes: [{ theme: "Ownership" }, { theme: "Leadership" }],
+};
+const coherentSnapshot = resolveBehavioralStoryEditSnapshot(
+  { data: persistedStorySnapshot, error: null },
+  canonicalStoryId,
+  canonicalStoryOwnerId,
+);
+check(coherentSnapshot.status === "ready" && coherentSnapshot.value.story.id === canonicalStoryId && coherentSnapshot.value.story.user_id === canonicalStoryOwnerId && coherentSnapshot.value.themes.join("|") === "Leadership|Ownership", "one valid nested row resolves a canonical parent revision and controlled themes from the same snapshot");
+check(resolveBehavioralStoryEditSnapshot({ data: null, error: null }, canonicalStoryId, canonicalStoryOwnerId).status === "missing", "an explicit successful null story is the only missing result");
+for (const value of [
+  null,
+  {},
+  { data: null },
+  { error: null },
+  { data: persistedStorySnapshot, error: { message: "private detail" } },
+  { data: [persistedStorySnapshot], error: null },
+  { data: { ...persistedStorySnapshot, extra: true }, error: null },
+  { data: { ...persistedStorySnapshot, id: canonicalStoryOwnerId }, error: null },
+  { data: { ...persistedStorySnapshot, user_id: canonicalStoryId }, error: null },
+  { data: { ...persistedStorySnapshot, title: " " }, error: null },
+  { data: { ...persistedStorySnapshot, status: "Published" }, error: null },
+  { data: { ...persistedStorySnapshot, updated_at: "2026-02-30T00:00:00Z" }, error: null },
+  { data: { ...persistedStorySnapshot, notes: 1 }, error: null },
+  { data: { ...persistedStorySnapshot, behavioral_story_themes: [{ theme: "Leadership" }, { theme: "Leadership" }] }, error: null },
+  { data: { ...persistedStorySnapshot, behavioral_story_themes: [{ theme: "Unknown" }] }, error: null },
+  { data: { ...persistedStorySnapshot, behavioral_story_themes: [{ theme: "Leadership", extra: true }] }, error: null },
+]) {
+  check(resolveBehavioralStoryEditSnapshot(value, canonicalStoryId, canonicalStoryOwnerId).status === "unavailable", "failed, malformed, uncorrelated, or noncanonical edit snapshots must be unavailable rather than missing");
+}
+check(resolveBehavioralStoryEditSnapshot({ data: persistedStorySnapshot, error: null }, "bad-id", canonicalStoryOwnerId).status === "unavailable" && resolveBehavioralStoryEditSnapshot({ data: persistedStorySnapshot, error: null }, canonicalStoryId, "bad-owner").status === "unavailable", "invalid expected story or owner identity must fail closed");
 
 for (const invalid of [null, undefined, "form", [], {}, new URLSearchParams()]) {
   check(!parses(invalid, { kind: "create" }).ok, `story parser rejects non-FormData input: ${String(invalid)}`);
@@ -452,6 +503,7 @@ const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
 for (const marker of [
   "concurrent stale full-story saves commit exactly one coherent aggregate",
   "reversed concurrent stale saves preserve the second winner as one aggregate",
+  "a concurrent Behavioral story edit read keeps the parent revision and theme snapshot coherent",
   "concurrent duplicate captures either complete aggregate snapshot",
   "invalid aggregate themes roll back both parent and theme changes",
   "foreign and missing story duplicates are indistinguishable",
@@ -473,6 +525,8 @@ const lifecycleQualifier = read("scripts/qualify-account-lifecycle-local.mjs");
 for (const marker of ["create_behavioral_story_with_themes", "story.data[0].story_id", "create_behavioral_answer_aggregate", "answer.data?.length", "Private behavioral note"]) requireText(lifecycleQualifier, marker, `Behavioral account-lifecycle qualification lacks aggregate compatibility marker ${marker}.`);
 const preparationDatabaseTest = read("supabase/tests/database/user_preparation_state.test.sql");
 for (const marker of ["create_behavioral_story_with_themes", "update_behavioral_story_with_themes_if_revision", "duplicate_behavioral_story_with_themes", "invalid theme replacement leaves existing themes intact"]) requireText(preparationDatabaseTest, marker, `Behavioral preparation pgTAP compatibility lacks ${marker}.`);
+const behavioralWorkspaceDoc = read("docs/behavioral-workspace.md");
+for (const marker of ["one owner-scoped nested database statement", "successful null result is a missing story", "cannot pair a newer parent revision with older theme defaults"]) requireText(behavioralWorkspaceDoc, marker, `Behavioral workspace documentation lacks coherent edit-read truth: ${marker}.`);
 
 const actions = read("features/behavioral/actions.ts");
 const actor = read("lib/auth/actor.ts");
@@ -521,6 +575,14 @@ const queries = read("lib/behavioral/queries.ts");
 for (const marker of ["CURATED_BEHAVIORAL_QUESTIONS", "preparationStatus", 'return "Ready"', 'return "Drafted"', 'return "Story linked"', 'return "Not started"']) requireText(queries, marker, `Behavioral data layer lacks ${marker}.`);
 requireText(queries, "getAuthenticatedActor", "Behavioral reads do not resolve the current server actor.");
 if (/function getBehavioralWorkspaceData\s*\([^)]*userId/.test(queries)) failures.push("Behavioral reads accept an arbitrary user identifier.");
+const editPageSource = read("app/behavioral/stories/[id]/edit/page.tsx");
+const editSnapshotStart = queries.indexOf("export async function getBehavioralStoryEditSnapshot");
+const editSnapshotEnd = queries.indexOf("export function linkMatchesQuestion", editSnapshotStart);
+const editSnapshotQuery = queries.slice(editSnapshotStart, editSnapshotEnd);
+for (const marker of ["parseCanonicalBehavioralStoryId(storyIdInput)", "getAuthenticatedActor()", '.from("behavioral_stories")', "behavioral_story_themes!behavioral_story_themes_story_owner_fkey(theme)", '.eq("id", storyId)', '.eq("user_id", current.user.id)', ".maybeSingle()", "resolveBehavioralStoryEditSnapshot", 'throw new PrivateDataUnavailableError("behavioral story")']) requireText(editSnapshotQuery, marker, `Coherent story edit query lacks ${marker}.`);
+check(editSnapshotQuery.indexOf("parseCanonicalBehavioralStoryId(storyIdInput)") < editSnapshotQuery.indexOf("getAuthenticatedActor()") && editSnapshotQuery.indexOf("getAuthenticatedActor()") < editSnapshotQuery.indexOf('.from("behavioral_stories")') && editSnapshotQuery.indexOf(".maybeSingle()") < editSnapshotQuery.indexOf("resolveBehavioralStoryEditSnapshot"), "Story edit reads must validate identity, resolve the actor, issue one nested owner query, then strictly resolve its result");
+for (const marker of ["getBehavioralStoryEditSnapshot(id)", "snapshot.story", "themes={[...snapshot.themes]}"]) requireText(editPageSource, marker, `Story edit route lacks coherent snapshot wiring ${marker}.`);
+check(!editPageSource.includes("getBehavioralWorkspaceData") && !editPageSource.includes("data.themes.filter"), "Story editing must not reconstruct a revision and theme defaults from independent workspace requests");
 const storyFormSource = read("features/behavioral/story-form.tsx");
 for (const marker of ["beforeunload", "Unsaved changes", "Situation", "Task", "Action", "Result", "Reflection", "STORY_THEMES"]) requireText(storyFormSource, marker, `Story editor lacks ${marker}.`);
 if (storyFormSource.includes('name="status"')) failures.push("Story readiness is still manually editable instead of deterministic.");

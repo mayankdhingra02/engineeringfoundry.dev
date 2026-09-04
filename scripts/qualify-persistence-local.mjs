@@ -1245,6 +1245,44 @@ await check("reversed concurrent stale saves preserve the second winner as one a
   expect(coherent && themeRows.length === 1, "reverse-order parent and themes were torn");
 });
 
+await check("a concurrent Behavioral story edit read keeps the parent revision and theme snapshot coherent", async () => {
+  const storyId = requireFixture(fixture.storyId, "story");
+  const priorRevision = requireFixture(fixture.storyRevision, "story revision");
+  const selectEditSnapshot = () => a.authClient
+    .from("behavioral_stories")
+    .select("id,user_id,title,company_or_context,role,approximate_period,project,situation,task,action,result,reflection,short_summary,status,notes,created_at,updated_at,behavioral_story_themes!behavioral_story_themes_story_owner_fkey(theme)")
+    .eq("id", storyId)
+    .eq("user_id", a.user.id)
+    .single();
+  const before = expectSuccess(await selectEditSnapshot(), "pre-update coherent story edit read failed");
+  const beforeThemes = before.behavioral_story_themes.map((item) => item.theme).sort();
+  const [concurrentRead, updated] = await Promise.all([
+    selectEditSnapshot(),
+    a.authClient.rpc("update_behavioral_story_with_themes_if_revision", {
+      target_story_id: storyId,
+      target_expected_updated_at: priorRevision,
+      ...behavioralStoryArgs({
+        target_notes: "Coherent edit snapshot after update",
+        target_themes: ["Ownership", "Technical judgment"],
+      }),
+    }),
+  ]);
+  const updatedRows = expectSuccess(updated, "story update during coherent edit read failed");
+  expect(updatedRows.length === 1, `expected one story update row, observed ${updatedRows.length}`);
+  const updatedRevision = updatedRows[0].updated_at;
+  const readRow = expectSuccess(concurrentRead, "concurrent coherent story edit read failed");
+  const readThemes = readRow.behavioral_story_themes.map((item) => item.theme).sort();
+  if (readRow.updated_at === priorRevision) {
+    expect(readRow.notes === before.notes && JSON.stringify(readThemes) === JSON.stringify(beforeThemes), "pre-update edit read mixed old revision with new story or themes");
+  } else {
+    expect(readRow.updated_at === updatedRevision && readRow.notes === "Coherent edit snapshot after update" && JSON.stringify(readThemes) === JSON.stringify(["Ownership", "Technical judgment"]), "post-update edit read mixed new revision with old story or themes");
+  }
+  const finalRead = expectSuccess(await selectEditSnapshot(), "final coherent story edit read failed");
+  expect(finalRead.updated_at === updatedRevision && finalRead.notes === "Coherent edit snapshot after update" && JSON.stringify(finalRead.behavioral_story_themes.map((item) => item.theme).sort()) === JSON.stringify(["Ownership", "Technical judgment"]), "final story edit snapshot did not match the committed aggregate");
+  fixture.storyRevision = updatedRevision;
+  return `concurrent read revision ${readRow.updated_at}; saved revision ${updatedRevision}`;
+});
+
 await check("concurrent duplicate captures either complete aggregate snapshot", async () => {
   const storyId = requireFixture(fixture.storyId, "story");
   const priorRevision = requireFixture(fixture.storyRevision, "story revision");
