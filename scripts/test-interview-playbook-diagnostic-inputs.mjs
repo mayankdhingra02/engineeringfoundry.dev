@@ -1,7 +1,19 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseInterviewPlaybookDiagnosticInputForm } from "../lib/interview-playbook/diagnostic-input-form.ts";
+import {
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_ABSENT_REVISION,
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_CONFLICT_ERROR,
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_EXPECTED_REVISION_FIELD,
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_PENDING_MESSAGE,
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_SAVED_MESSAGE,
+  isCanonicalInterviewPlaybookDiagnosticRevision,
+  parseInterviewPlaybookDiagnosticInputForm,
+  parseInterviewPlaybookDiagnosticSaveResult,
+  parseInterviewPlaybookDiagnosticSnapshotResult,
+  resolveInterviewPlaybookDiagnosticDisplayState,
+} from "../lib/interview-playbook/diagnostic-input-form.ts";
 import { INTERVIEW_PREPARATION_AREAS } from "../lib/interview-playbook/evidence.ts";
 import { buildInterviewDiagnosticSnapshot } from "../lib/interview-playbook/diagnostic.ts";
 import { buildAdaptiveInterviewPlan } from "../lib/interview-playbook/planning.ts";
@@ -11,6 +23,7 @@ const root = process.cwd();
 const read = (path) => readFileSync(join(root, path), "utf8");
 
 const migration = read("supabase/migrations/202608190001_create_interview_playbook_diagnostic_inputs.sql");
+const casMigration = read("supabase/migrations/202609040002_save_interview_playbook_diagnostic_inputs_if_revision.sql");
 const pgtapTest = read("supabase/tests/database/interview_playbook_diagnostic_inputs.test.sql");
 const diagnosticInputsSource = read("lib/interview-playbook/diagnostic-inputs.ts");
 const diagnosticInputFormSource = read("lib/interview-playbook/diagnostic-input-form.ts");
@@ -20,14 +33,31 @@ const pageSource = read("app/interview-playbook/page.tsx");
 const exportSource = read("lib/account/export.ts");
 const styles = read("app/globals.css");
 const databaseTypes = read("lib/supabase/database.types.ts");
+const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
+const securityQualifier = read("scripts/qualify-security-local.mjs");
 
 const cases = [];
 const check = (name, ok) => cases.push([name, Boolean(ok)]);
 const deepEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-function formDataOf(entries) {
+function formDataOf(entries = {}) {
   const formData = new FormData();
-  for (const [key, value] of Object.entries(entries)) formData.set(key, value);
+  formData.set(INTERVIEW_PLAYBOOK_DIAGNOSTIC_EXPECTED_REVISION_FIELD, INTERVIEW_PLAYBOOK_DIAGNOSTIC_ABSENT_REVISION);
+  formData.set("availableHoursPerWeek", "");
+  formData.set("behavioralStoriesCoverage", "unknown");
+  formData.set("projectDeepDiveCoverage", "unknown");
+  for (const area of INTERVIEW_PREPARATION_AREAS) {
+    formData.set(`confidence:${area}`, "");
+    formData.set(`priority:${area}`, "");
+  }
+  for (let index = 0; index < 10; index += 1) {
+    formData.set(`constraint:${index}:category`, "");
+    formData.set(`constraint:${index}:description`, "");
+  }
+  for (const [key, value] of Object.entries(entries)) {
+    if (value === undefined) formData.delete(key);
+    else formData.set(key, value);
+  }
   return formData;
 }
 
@@ -83,12 +113,7 @@ check("only SELECT is granted back to authenticated (no direct writes)", (migrat
 check("migration reloads PostgREST schema cache", migration.includes("notify pgrst, 'reload schema';"));
 check("migration is wrapped in a single transaction", migration.trimStart().startsWith("begin;") && migration.trimEnd().endsWith("commit;"));
 
-// pgTAP test file: plan() count must match the actual number of assertions.
-{
-  const planMatch = pgtapTest.match(/select plan\((\d+)\);/);
-  const assertionCount = (pgtapTest.match(/^select (ok|is|throws_ok|lives_ok)\(/gm) ?? []).length;
-  check("pgTAP plan() count matches the actual assertion count", Boolean(planMatch) && Number(planMatch[1]) === assertionCount);
-}
+check("pgTAP plan freezes all 112 aggregate assertions", pgtapTest.includes("select plan(112);"));
 check("pgTAP test proves cross-user isolation", pgtapTest.includes("bbbbbbbb-2222-4bbb-8bbb-bbbbbbbbbbbb"));
 check("pgTAP test proves cascade deletion from auth.users", /delete from auth\.users where id = 'aaaaaaaa/.test(pgtapTest));
 check("pgTAP test proves atomic rollback on a rejected save", pgtapTest.includes("bad-value"));
@@ -98,6 +123,34 @@ for (const table of ["interview_playbook_diagnostic_settings", "interview_playbo
   check(`database.types.ts declares table ${table}`, databaseTypes.includes(`${table}: {`));
 }
 check("database.types.ts declares the RPC", databaseTypes.includes("save_interview_playbook_diagnostic_inputs: {"));
+
+const functionBody = (source, name) => source.match(new RegExp(`create or replace function public\\.${name}\\([\\s\\S]*?\\n\\$\\$;`))?.[0] ?? "";
+const snapshotRpc = functionBody(casMigration, "get_interview_playbook_diagnostic_inputs_snapshot");
+const casRpc = functionBody(casMigration, "save_interview_playbook_diagnostic_inputs_if_revision");
+const legacyRpc = functionBody(casMigration, "save_interview_playbook_diagnostic_inputs");
+check("the coherent snapshot RPC is one owner-derived SQL statement", snapshotRpc.includes("current_user_id uuid := auth.uid()") && snapshotRpc.includes("return query") && snapshotRpc.includes("left join public.interview_playbook_diagnostic_settings"));
+check("the snapshot returns one explicit neutral absence row", snapshotRpc.includes("settings.user_id is not null") && snapshotRpc.includes("from (select current_user_id as user_id) as owner"));
+check("snapshot confidence, priorities, and constraints have deterministic canonical order", snapshotRpc.includes("order by case confidence.area") && snapshotRpc.includes('order by priority."position"') && snapshotRpc.includes('order by diagnostic_constraint."position"'));
+check("the coherent snapshot RPC denies anonymous and grants only authenticated", casMigration.includes("revoke all on function public.get_interview_playbook_diagnostic_inputs_snapshot()\n  from public, anon, authenticated") && casMigration.includes("grant execute on function public.get_interview_playbook_diagnostic_inputs_snapshot()\n  to authenticated"));
+check("the CAS RPC derives owner and serializes per owner", casRpc.includes("current_user_id uuid := auth.uid()") && casRpc.includes("pg_advisory_xact_lock") && casRpc.includes("interview-playbook-diagnostic-owner:"));
+check("the CAS RPC requires exactly one absence-or-revision state", casRpc.includes("target_expect_absent is null") && casRpc.includes("target_expect_absent and target_expected_updated_at is not null") && casRpc.includes("not target_expect_absent and target_expected_updated_at is null"));
+check("the CAS mutates normalized children only after one revision winner", casRpc.indexOf("if saved_updated_at is null") < casRpc.indexOf("delete from public.interview_playbook_confidence") && casRpc.includes("settings.updated_at = target_expected_updated_at"));
+check("the settings revision advances monotonically", casMigration.includes("old.updated_at + interval '1 microsecond'") && casMigration.includes("greatest("));
+check("the CAS grant is authenticated-only", casMigration.includes("grant execute on function public.save_interview_playbook_diagnostic_inputs_if_revision(boolean,timestamptz,numeric,jsonb,text[],jsonb,text,text)\n  to authenticated"));
+check("legacy snapshot saves fail before mutation with stable 0A000", legacyRpc.includes("Revision-checked Interview Playbook diagnostic saving is required") && legacyRpc.includes("errcode = '0A000'") && !/\b(insert|update|delete)\b/.test(legacyRpc));
+check("database.types.ts declares coherent read and revision CAS RPCs", databaseTypes.includes("get_interview_playbook_diagnostic_inputs_snapshot: {") && databaseTypes.includes("save_interview_playbook_diagnostic_inputs_if_revision: {"));
+check("pgTAP freezes the final 112-assertion DB contract", pgtapTest.includes("select plan(112);"));
+for (const marker of [
+  "Interview Playbook diagnostic snapshot distinguishes absence and saves one coherent aggregate",
+  "concurrent stale Interview Playbook diagnostic saves commit exactly one coherent winner",
+  "a snapshot read concurrent with a diagnostic save is entirely before or after the saved aggregate",
+  "legacy Interview Playbook diagnostic save fails before mutating the aggregate",
+]) check(`persistence qualification covers: ${marker}`, persistenceQualifier.includes(marker));
+for (const marker of [
+  "Interview Playbook diagnostic snapshot and CAS RPCs deny anonymous callers",
+  "Interview Playbook diagnostic aggregate derives its owner and closes legacy and direct-write bypasses",
+  "foreign and missing Interview Playbook diagnostic revision targets are indistinguishable",
+]) check(`security qualification covers: ${marker}`, securityQualifier.includes(marker));
 
 // =====================================================================
 // 2. Pure form parsing (lib/interview-playbook/diagnostic-input-form.ts)
@@ -147,7 +200,7 @@ check("a 500-character constraint description is accepted", parseInterviewPlaybo
 check("a 501-character constraint description is rejected", !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "constraint:0:description": "a".repeat(501), "constraint:0:category": "other" })).ok);
 {
   const result = parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "constraint:10:description": "Row past the cap", "constraint:10:category": "other" }));
-  check("only the first 10 constraint rows (index 0-9) are ever read", result.ok && result.value.constraintEntries.length === 0);
+  check("constraint rows beyond the browser contract fail closed", !result.ok);
 }
 
 check("coverage 'covered' passes through unchanged", parseInterviewPlaybookDiagnosticInputForm(formDataOf({ behavioralStoriesCoverage: "covered" })).value.behavioralStoriesCoverage === "covered");
@@ -173,23 +226,114 @@ check("an invalid coverage value is rejected", !parseInterviewPlaybookDiagnostic
     && result.value.projectDeepDiveCoverage === "covered");
 }
 
+const canonicalRevision = "2026-09-04T12:34:56.123456Z";
+check("canonical database revisions are accepted", isCanonicalInterviewPlaybookDiagnosticRevision(canonicalRevision));
+for (const revision of ["absent", "2026-02-30T12:00:00Z", "0000-01-01T00:00:00Z", "2026-09-04 12:00:00Z", "2026-09-04T12:00:00+14:01", null]) {
+  check(`noncanonical persisted revision is rejected: ${String(revision)}`, !isCanonicalInterviewPlaybookDiagnosticRevision(revision));
+}
+for (const value of [null, {}, [], "form-data"]) {
+  check(`non-FormData action input fails closed: ${JSON.stringify(value)}`, !parseInterviewPlaybookDiagnosticInputForm(value).ok);
+}
+{
+  const form = formDataOf({ [INTERVIEW_PLAYBOOK_DIAGNOSTIC_EXPECTED_REVISION_FIELD]: canonicalRevision });
+  const result = parseInterviewPlaybookDiagnosticInputForm(form);
+  check("a persisted revision maps to an exact existing-row CAS", result.ok && !result.value.expectAbsent && result.value.expectedUpdatedAt === canonicalRevision && result.value.revision === canonicalRevision);
+}
+{
+  const result = parseInterviewPlaybookDiagnosticInputForm(formDataOf());
+  check("the absent sentinel maps to an explicit absent-row CAS", result.ok && result.value.expectAbsent && result.value.expectedUpdatedAt === null && result.value.revision === INTERVIEW_PLAYBOOK_DIAGNOSTIC_ABSENT_REVISION);
+}
+for (const field of [
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_EXPECTED_REVISION_FIELD,
+  "availableHoursPerWeek",
+  "behavioralStoriesCoverage",
+  "projectDeepDiveCoverage",
+  "confidence:system-design",
+  "priority:system-design",
+  "constraint:0:category",
+  "constraint:0:description",
+]) {
+  const missing = formDataOf({ [field]: undefined });
+  check(`missing singleton field fails closed: ${field}`, !parseInterviewPlaybookDiagnosticInputForm(missing).ok);
+  const duplicate = formDataOf();
+  duplicate.append(field, "");
+  check(`duplicate singleton field fails closed: ${field}`, !parseInterviewPlaybookDiagnosticInputForm(duplicate).ok);
+  const file = formDataOf();
+  file.set(field, new File(["x"], "x.txt"));
+  check(`File-valued singleton field fails closed: ${field}`, !parseInterviewPlaybookDiagnosticInputForm(file).ok);
+}
+check("unknown action fields fail closed", !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ unexpected: "value" })).ok);
+check("Next action metadata remains allowed", parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "$ACTION_ID_x": "metadata" })).ok);
+for (const hours of [" 12", "01", "1.234", "NaN", "-1", "169"]) {
+  check(`noncanonical hours fail closed: ${hours}`, !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ availableHoursPerWeek: hours })).ok);
+}
+check("coverage names are case-sensitive", !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ behavioralStoriesCoverage: "Covered" })).ok);
+check("confidence names are case-sensitive", !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "confidence:system-design": "High" })).ok);
+check("priority rank names are canonical", !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "priority:system-design": "01" })).ok);
+check("constraint descriptions reject controls", !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "constraint:0:category": "work", "constraint:0:description": "line\nbreak" })).ok);
+check("500 Unicode code points are accepted", parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "constraint:0:category": "other", "constraint:0:description": "😀".repeat(500) })).ok);
+check("501 Unicode code points are rejected", !parseInterviewPlaybookDiagnosticInputForm(formDataOf({ "constraint:0:category": "other", "constraint:0:description": "😀".repeat(501) })).ok);
+
+const neutralSnapshotRow = {
+  has_saved_inputs: false,
+  available_hours_per_week: null,
+  confidence_entries: [],
+  priority_areas: [],
+  constraint_entries: [],
+  behavioral_stories_coverage: "unknown",
+  project_deep_dive_coverage: "unknown",
+  updated_at: null,
+};
+const savedSnapshotRow = {
+  has_saved_inputs: true,
+  available_hours_per_week: 12.5,
+  confidence_entries: [{ area: "system-design", confidence: "high" }],
+  priority_areas: ["system-design", "behavioral"],
+  constraint_entries: [{ id: "123e4567-e89b-42d3-a456-426614174000", category: "work", description: "On call" }],
+  behavioral_stories_coverage: "partial",
+  project_deep_dive_coverage: "covered",
+  updated_at: canonicalRevision,
+};
+{
+  const parsed = parseInterviewPlaybookDiagnosticSnapshotResult([neutralSnapshotRow]);
+  check("the exact neutral aggregate is a genuine empty snapshot", parsed.status === "ready" && !parsed.value.hasSavedInputs && parsed.value.revision === INTERVIEW_PLAYBOOK_DIAGNOSTIC_ABSENT_REVISION);
+}
+{
+  const parsed = parseInterviewPlaybookDiagnosticSnapshotResult([savedSnapshotRow]);
+  check("the exact saved aggregate preserves ordered children and revision", parsed.status === "ready" && parsed.value.hasSavedInputs && deepEqual(parsed.value.priorities, ["system-design", "behavioral"]) && parsed.value.revision === canonicalRevision);
+}
+check("persisted numeric(5,2) hours accept the exact 167.99 boundary", parseInterviewPlaybookDiagnosticSnapshotResult([{ ...savedSnapshotRow, available_hours_per_week: 167.99 }]).status === "ready");
+for (const value of [null, {}, [], [neutralSnapshotRow, neutralSnapshotRow], [{ ...neutralSnapshotRow, extra: true }], [{ ...neutralSnapshotRow, has_saved_inputs: false, available_hours_per_week: 1 }], [{ ...savedSnapshotRow, updated_at: null }], [{ ...savedSnapshotRow, available_hours_per_week: 1.234 }], [{ ...savedSnapshotRow, priority_areas: ["behavioral", "behavioral"] }], [{ ...savedSnapshotRow, behavioral_stories_coverage: "Covered" }], [{ ...savedSnapshotRow, confidence_entries: [{ area: "unknown", confidence: "high" }] }], [{ ...savedSnapshotRow, confidence_entries: [{ area: "behavioral", confidence: "high" }, { area: "system-design", confidence: "low" }] }], [{ ...savedSnapshotRow, confidence_entries: [{ area: "system-design", confidence: "high" }, { area: "system-design", confidence: "low" }] }], [{ ...savedSnapshotRow, constraint_entries: [savedSnapshotRow.constraint_entries[0], savedSnapshotRow.constraint_entries[0]] }], [{ ...savedSnapshotRow, constraint_entries: [{ ...savedSnapshotRow.constraint_entries[0], extra: true }] }], [{ ...savedSnapshotRow, constraint_entries: [{ ...savedSnapshotRow.constraint_entries[0], description: "bad\nvalue" }] }]]) {
+  check(`malformed aggregate snapshot fails closed: ${JSON.stringify(value)}`, parseInterviewPlaybookDiagnosticSnapshotResult(value).status === "invalid");
+}
+check("zero save rows are an exact conflict", parseInterviewPlaybookDiagnosticSaveResult([]).status === "conflict");
+check("one correlated canonical revision is saved", deepEqual(parseInterviewPlaybookDiagnosticSaveResult([{ updated_at: canonicalRevision }]), { status: "saved", updatedAt: canonicalRevision }));
+for (const value of [null, {}, [{ updated_at: canonicalRevision }, { updated_at: canonicalRevision }], [{ updated_at: "bad" }], [{ updated_at: canonicalRevision, extra: true }]]) {
+  check(`malformed save result fails closed: ${JSON.stringify(value)}`, parseInterviewPlaybookDiagnosticSaveResult(value).status === "invalid");
+}
+const successState = { status: "success", message: INTERVIEW_PLAYBOOK_DIAGNOSTIC_SAVED_MESSAGE };
+check("pending display truth wins over stale results", deepEqual(resolveInterviewPlaybookDiagnosticDisplayState(successState, true, true), { status: "pending", message: INTERVIEW_PLAYBOOK_DIAGNOSTIC_PENDING_MESSAGE }));
+check("ordinary confirmed success stays truthful", deepEqual(resolveInterviewPlaybookDiagnosticDisplayState(successState, false, false), successState));
+check("edits after submit turn confirmed success into save-again truth", deepEqual(resolveInterviewPlaybookDiagnosticDisplayState(successState, false, true), { status: "success", message: INTERVIEW_PLAYBOOK_DIAGNOSTIC_EARLIER_SNAPSHOT_SAVED_MESSAGE }));
+const conflictState = { status: "error", message: INTERVIEW_PLAYBOOK_DIAGNOSTIC_CONFLICT_ERROR };
+check("errors pass through when no request is pending", deepEqual(resolveInterviewPlaybookDiagnosticDisplayState(conflictState, false, true), conflictState));
+
 // =====================================================================
 // 3. Persistence/query architecture (lib/interview-playbook/diagnostic-inputs.ts)
 // =====================================================================
 check("diagnostic-inputs.ts declares itself server-only", diagnosticInputsSource.trimStart().startsWith('import "server-only";'));
-check("diagnostic-inputs.ts loads all four tables in one bounded Promise.all", /Promise\.all\(\[[\s\S]{0,900}interview_playbook_diagnostic_settings[\s\S]{0,900}interview_playbook_confidence[\s\S]{0,900}interview_playbook_priorities[\s\S]{0,900}interview_playbook_constraints[\s\S]{0,900}\]\)/.test(diagnosticInputsSource));
-check("every load query is scoped to the authenticated actor's id", (diagnosticInputsSource.match(/\.eq\("user_id", actor\.user\.id\)/g) ?? []).length === 4);
-check("priorities are loaded ordered by position", /interview_playbook_priorities[\s\S]{0,200}\.order\("position"/.test(diagnosticInputsSource));
-check("constraints are loaded ordered by position", /interview_playbook_constraints[\s\S]{0,200}\.order\("position"/.test(diagnosticInputsSource));
+check("diagnostic-inputs.ts loads the aggregate through one coherent snapshot RPC", (diagnosticInputsSource.match(/\.rpc\(\s*"get_interview_playbook_diagnostic_inputs_snapshot"/g) ?? []).length === 1);
+check("diagnostic-inputs.ts has no four-table Promise.all torn-read path", !diagnosticInputsSource.includes("Promise.all(") && !/\.from\("interview_playbook_(diagnostic_settings|confidence|priorities|constraints)"\)/.test(diagnosticInputsSource));
 check("diagnostic-inputs.ts never writes directly to these tables (no .insert/.update/.delete)", !/\.insert\(|\.update\(|\.delete\(/.test(diagnosticInputsSource));
-check("diagnostic-inputs.ts writes exclusively through the RPC", (diagnosticInputsSource.match(/\.rpc\("save_interview_playbook_diagnostic_inputs"/g) ?? []).length === 1);
+check("diagnostic-inputs.ts writes exclusively through the revision CAS RPC", (diagnosticInputsSource.match(/\.rpc\(\s*"save_interview_playbook_diagnostic_inputs_if_revision"/g) ?? []).length === 1 && !diagnosticInputsSource.includes('.rpc("save_interview_playbook_diagnostic_inputs",'));
 check("the loader always sets evidence: [] (no performance evidence in this phase)", diagnosticInputsSource.includes("evidence: []"));
-check("hasSavedInputs is false when no settings row exists (legitimate no-saved-input branch)", /if \(!settings\) return neutralDiagnosticInputs\(\);/.test(diagnosticInputsSource));
 check("diagnostic-inputs.ts imports the established PrivateDataUnavailableError convention", diagnosticInputsSource.includes('import { PrivateDataUnavailableError } from "@/lib/persistence/errors";'));
-check("a query failure throws PrivateDataUnavailableError, not the neutral fallback", /if \(settingsResult\.error \|\| confidenceResult\.error \|\| prioritiesResult\.error \|\| constraintsResult\.error\) \{\s*throw new PrivateDataUnavailableError\(/.test(diagnosticInputsSource));
+check("an aggregate query failure throws PrivateDataUnavailableError, not neutral", /if \(error\) \{\s*throw new PrivateDataUnavailableError\(/.test(diagnosticInputsSource));
+check("a malformed aggregate also throws PrivateDataUnavailableError", /snapshot\.status === "invalid"[\s\S]{0,120}throw new PrivateDataUnavailableError/.test(diagnosticInputsSource));
 check("the PrivateDataUnavailableError label is a plain string literal (no db error text, user id, or table name leaked)", /throw new PrivateDataUnavailableError\("[^"$]+"\);/.test(diagnosticInputsSource) && !diagnosticInputsSource.includes("throw new PrivateDataUnavailableError(`"));
-check("the query-failure branch and the no-settings branch are distinct, sequential code paths", diagnosticInputsSource.indexOf("throw new PrivateDataUnavailableError") < diagnosticInputsSource.indexOf("if (!settings) return neutralDiagnosticInputs();"));
-check("neutral is returned only for signed-out and no-settings-row (exactly 2 return sites; the query-failure branch is not one of them)", (diagnosticInputsSource.match(/return neutralDiagnosticInputs\(\);/g) ?? []).length === 2);
+check("actor absence remains the sole local neutral shortcut; aggregate absence is parsed", (diagnosticInputsSource.match(/return neutralDiagnosticInputs\(\);/g) ?? []).length === 1 && diagnosticInputsSource.includes("parseInterviewPlaybookDiagnosticSnapshotResult(data)"));
+check("the CAS sends the explicit absence/revision pair and all aggregate children", ["target_expect_absent", "target_expected_updated_at", "confidence_entries", "priority_areas", "constraint_entries"].every((marker) => diagnosticInputsSource.includes(marker)));
+check("CAS result parsing distinguishes saved, conflict, and malformed/error", diagnosticInputsSource.includes("parseInterviewPlaybookDiagnosticSaveResult(data)") && diagnosticInputsSource.includes('outcome.status === "invalid"'));
 
 // =====================================================================
 // 4. Server action safety (app/interview-playbook/actions.ts)
@@ -198,7 +342,18 @@ check("actions.ts is a server action module", actionsSource.trimStart().startsWi
 check("actions.ts resolves the actor from the session, never from formData", actionsSource.includes("getAuthenticatedActor()") && !/formData\.get\("user(Id|_id)?"\)/.test(actionsSource));
 check("actions.ts revalidates the Interview Playbook page after saving", actionsSource.includes('revalidatePath("/interview-playbook")'));
 check("actions.ts never logs form content (no console.* calls)", !/console\.\w+\(/.test(actionsSource));
-check("actions.ts saves through the actor-scoped helper, not a raw RPC call", actionsSource.includes("saveInterviewPlaybookDiagnosticInputsForActor(actor, parsed.value)") && !actionsSource.includes(".rpc("));
+check("actions.ts saves through the actor-scoped helper, not a raw RPC call", actionsSource.includes("saveInterviewPlaybookDiagnosticInputsForActor(") && !actionsSource.includes(".rpc("));
+{
+  const action = actionsSource.slice(actionsSource.indexOf("export async function saveInterviewPlaybookDiagnosticInputs"));
+  const parser = action.indexOf("parseInterviewPlaybookDiagnosticInputForm(formData)");
+  const invalid = action.indexOf("if (!parsed.ok)");
+  const availability = action.indexOf("isAccountPlatformAvailable()");
+  const actor = action.indexOf("getAuthenticatedActor()");
+  const save = action.indexOf("saveInterviewPlaybookDiagnosticInputsForActor(", parser + 1);
+  check("the strict parser and invalid return precede availability, actor, and persistence", parser >= 0 && parser < invalid && invalid < availability && availability < actor && actor < save);
+  check("zero rows become a stable conflict without persistence claims", action.includes('result.status === "conflict"') && action.includes("INTERVIEW_PLAYBOOK_DIAGNOSTIC_CONFLICT_ERROR, true"));
+  check("only saved results revalidate and advance the revision", action.indexOf('result.status === "error"') < action.indexOf('revalidatePath("/interview-playbook")') && action.includes("revision: result.updatedAt"));
+}
 
 // =====================================================================
 // 5. Planner integration behavioral proofs
@@ -352,11 +507,11 @@ for (const coverageValue of ["not-started", "partial"]) {
 check("the form is collapsed by default (a <details> with no open attribute)", /<details[^>]*>/.test(componentSource) && !/<details[^>]*\bopen\b/.test(componentSource));
 check("the disclosure is titled 'Personalize adaptive planning'", componentSource.includes("Personalize adaptive planning"));
 check("copy states these inputs never become performance evidence", componentSource.includes("These inputs guide planning. They do not become performance evidence."));
-check("copy states constraints never change evidence or score", componentSource.includes("Constraints are planning context only. They do not change evidence or score you."));
+check("copy states constraints never change evidence or score", /Constraints are planning context only\.\s+They do not change evidence or\s+score you\./.test(componentSource));
 check("copy states coverage is material, not performance", componentSource.includes("Coverage describes preparation material, not interview performance."));
 check("the form has no severity/diagnosis/disability/medical/productivity input", !/severity|diagnosis|disability|medical|productivity/i.test(componentSource));
 check("confidence copy no longer overclaims that evidence state always comes from observed practice", !componentSource.includes("which always comes from observed practice"));
-check("confidence copy states self-reported confidence guides planning but is not performance evidence", componentSource.includes("Self-reported confidence guides planning but does not become performance evidence."));
+check("confidence copy states self-reported confidence guides planning but is not performance evidence", /Self-reported confidence guides planning but does not become\s+performance evidence\./.test(componentSource));
 check("the form never claims ready/not-ready/pass/fail/candidate-strength verdicts", !/\b(ready|not ready|pass|fail|strong candidate|weak candidate)\b/i.test(componentSource));
 check("the constraint category select has an accessible name", componentSource.includes("aria-label={`Constraint ${index + 1} category`}"));
 check("the form iterates all 9 canonical areas structurally (never hardcoded per-area)", componentSource.includes("INTERVIEW_PREPARATION_AREAS.map((area) =>"));
@@ -366,7 +521,27 @@ check("INTERVIEW_PREPARATION_AREAS has exactly the 9 canonical areas", INTERVIEW
 check("the form has a Behavioral stories coverage select", componentSource.includes('name="behavioralStoriesCoverage"'));
 check("the form has a Project Deep Dive coverage select", componentSource.includes('name="projectDeepDiveCoverage"'));
 check("the form allows up to 10 constraint rows (index 0-9)", componentSource.includes("MAX_CONSTRAINT_ROWS = 10"));
-check("the form submits to the diagnostic-inputs server action", componentSource.includes("action={saveInterviewPlaybookDiagnosticInputs}"));
+check("the form retains a progressive host-action fallback", componentSource.includes("action={action}") && componentSource.includes("onSubmit={submit}"));
+{
+  const submitStart = componentSource.indexOf("const submit = (");
+  const submitEnd = componentSource.indexOf("const displayState", submitStart);
+  const submit = componentSource.slice(submitStart, submitEnd);
+  const prevent = submit.indexOf("event.preventDefault()");
+  const guard = submit.indexOf("if (submissionPending.current) return");
+  const claim = submit.indexOf("submissionPending.current = true");
+  const snapshot = submit.indexOf("new FormData(event.currentTarget)");
+  const signature = submit.indexOf("submittedDraftSignature.current = diagnosticDraftSignature(formData)");
+  const reset = submit.indexOf("setChangedSinceSubmit(false)");
+  const transition = submit.indexOf("startTransition(() => action(formData))");
+  check("manual submit preserves drafts and synchronously rejects duplicates before dispatch", submitStart >= 0 && prevent < guard && guard < claim && claim < snapshot && snapshot < signature && signature < reset && reset < transition);
+}
+check("post-submit edits are compared with the exact submitted desired-value signature", componentSource.includes("diagnosticDraftSignature(new FormData(form))") && componentSource.includes("submittedDraftSignature.current") && componentSource.includes("onChange={(event) => updateChangedSinceSubmit(event.currentTarget)}"));
+check("the loaded or returned revision is submitted on every save", componentSource.includes(`name={INTERVIEW_PLAYBOOK_DIAGNOSTIC_EXPECTED_REVISION_FIELD}`) && componentSource.includes("value={state.revision ?? revision}"));
+check("pending semantics use form busy and guarded aria-disabled without native disabled", componentSource.includes("aria-busy={pending}") && componentSource.includes("aria-disabled={pending}") && !/(?:^|[\s<])disabled=\{pending\}/m.test(componentSource));
+check("one persistent polite atomic live region announces pending, conflict, success, and save-again truth", (componentSource.match(/className=\{`form-status/g) ?? []).length === 1 && componentSource.includes('role="status"') && componentSource.includes('aria-live="polite"') && componentSource.includes('aria-atomic="true"') && componentSource.includes("resolveInterviewPlaybookDiagnosticDisplayState("));
+check("conflicts expose only a safe canonical latest-page link", componentSource.includes("!pending && state.conflict") && componentSource.includes('href="/interview-playbook"') && componentSource.includes('target="_blank"') && componentSource.includes('rel="noopener noreferrer"') && componentSource.includes("Review latest in a new tab"));
+check("stable constraint index keys prevent regenerated database UUIDs from remounting drafts", componentSource.includes('key={`constraint-${index}`}'));
+check("pending styling is scoped and hover-neutralized", styles.includes('.interview-playbook-diagnostic-form .button[aria-disabled="true"]') && styles.includes('.interview-playbook-diagnostic-form .button[aria-disabled="true"]:hover'));
 check("the component introduces no inline <style> tag", !componentSource.includes("<style"));
 {
   const usedClassNames = [...componentSource.matchAll(/className="([^"]+)"/g)].flatMap((match) => match[1].split(/\s+/));
@@ -382,6 +557,7 @@ check("the page renders the diagnostic input form", pageSource.includes("<Interv
 check("the page still contains the original round-context-only limitation copy", pageSource.includes("does not infer performance evidence, confidence, or available study time"));
 check("the page preserves the checklist-completion-is-not-readiness copy", pageSource.includes("Checklist completion is planning progress, not interview readiness or a probability of passing."));
 check("diagnosticInput is only forwarded when the user has actually saved inputs", pageSource.includes("diagnosticInputs.hasSavedInputs ? diagnosticInputs.diagnosticInput : undefined"));
+check("the page passes the coherent aggregate revision into the form", pageSource.includes("revision={diagnosticInputs.revision}"));
 
 // =====================================================================
 // 8. Account export

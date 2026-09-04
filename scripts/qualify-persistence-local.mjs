@@ -123,6 +123,39 @@ async function saveReminderPreferences(supabase, values, expectation) {
   });
 }
 
+async function getInterviewPlaybookDiagnosticSnapshot(supabase) {
+  const result = await supabase.rpc("get_interview_playbook_diagnostic_inputs_snapshot");
+  const rows = expectSuccess(result, "Interview Playbook diagnostic snapshot lookup failed");
+  expect(rows.length === 1, `expected one Interview Playbook diagnostic snapshot row, observed ${rows.length}`);
+  return rows[0];
+}
+
+async function saveInterviewPlaybookDiagnosticSnapshot(supabase, values, expectedUpdatedAt) {
+  return supabase.rpc("save_interview_playbook_diagnostic_inputs_if_revision", {
+    target_expect_absent: expectedUpdatedAt === null,
+    target_expected_updated_at: expectedUpdatedAt,
+    available_hours_per_week_value: values.availableHoursPerWeek,
+    confidence_entries: values.confidenceEntries,
+    priority_areas: values.priorityAreas,
+    constraint_entries: values.constraintEntries,
+    behavioral_stories_coverage_value: values.behavioralStoriesCoverage,
+    project_deep_dive_coverage_value: values.projectDeepDiveCoverage,
+  });
+}
+
+function assertInterviewPlaybookDiagnosticSnapshot(actual, expected, revision) {
+  expect(actual.has_saved_inputs === true, "diagnostic snapshot was not marked saved");
+  expect(actual.available_hours_per_week === expected.availableHoursPerWeek, "diagnostic hours came from a different aggregate snapshot");
+  expect(JSON.stringify(actual.confidence_entries) === JSON.stringify(expected.confidenceEntries), "diagnostic confidence came from a different aggregate snapshot");
+  expect(JSON.stringify(actual.priority_areas) === JSON.stringify(expected.priorityAreas), "diagnostic priorities came from a different aggregate snapshot");
+  const constraints = actual.constraint_entries.map(({ category, description }) => ({ category, description }));
+  expect(JSON.stringify(constraints) === JSON.stringify(expected.constraintEntries), "diagnostic constraints came from a different aggregate snapshot");
+  expect(actual.constraint_entries.every((entry) => /^[0-9a-f-]{36}$/i.test(entry.id)), "diagnostic constraint snapshot omitted a canonical row id");
+  expect(actual.behavioral_stories_coverage === expected.behavioralStoriesCoverage, "Behavioral coverage came from a different aggregate snapshot");
+  expect(actual.project_deep_dive_coverage === expected.projectDeepDiveCoverage, "Project Deep Dive coverage came from a different aggregate snapshot");
+  expect(actual.updated_at === revision, "diagnostic aggregate returned the wrong revision");
+}
+
 const enabledReminderPreferences = {
   preferredTimezone: "America/Chicago",
   inAppEnabled: true,
@@ -260,6 +293,13 @@ async function cleanOwnedFixtures(account) {
     "delete from public.preparation_track_progress where user_id = :'user_id'::uuid",
     { user_id: account.user.id },
   );
+  queryLocalDatabase(
+    `delete from public.interview_playbook_constraints where user_id = :'user_id'::uuid;
+     delete from public.interview_playbook_priorities where user_id = :'user_id'::uuid;
+     delete from public.interview_playbook_confidence where user_id = :'user_id'::uuid;
+     delete from public.interview_playbook_diagnostic_settings where user_id = :'user_id'::uuid;`,
+    { user_id: account.user.id },
+  );
 }
 
 function cleanPublicExperienceFixtures() {
@@ -292,6 +332,42 @@ const fixture = {
   preparationId: null,
   preparationTaskId: null,
   publicExperienceId: null,
+};
+
+let interviewPlaybookDiagnosticRevision = null;
+let interviewPlaybookDiagnosticValue = null;
+
+const diagnosticSnapshotA = {
+  availableHoursPerWeek: 8,
+  confidenceEntries: [
+    { area: "algorithmic-coding", confidence: "medium" },
+    { area: "system-design", confidence: "low" },
+  ],
+  priorityAreas: ["system-design", "behavioral"],
+  constraintEntries: [
+    { category: "work", description: "Weeknight practice window" },
+    { category: "health", description: "Protected recovery break" },
+  ],
+  behavioralStoriesCoverage: "partial",
+  projectDeepDiveCoverage: "not-started",
+};
+
+const diagnosticSnapshotB = {
+  availableHoursPerWeek: 12,
+  confidenceEntries: [{ area: "behavioral", confidence: "high" }],
+  priorityAreas: ["behavioral"],
+  constraintEntries: [{ category: "family", description: "Weekend caregiving plan" }],
+  behavioralStoriesCoverage: "covered",
+  projectDeepDiveCoverage: "partial",
+};
+
+const diagnosticSnapshotC = {
+  availableHoursPerWeek: 6,
+  confidenceEntries: [{ area: "project-deep-dive", confidence: "medium" }],
+  priorityAreas: ["project-deep-dive"],
+  constraintEntries: [{ category: "school", description: "Course deadline boundary" }],
+  behavioralStoriesCoverage: "not-started",
+  projectDeepDiveCoverage: "covered",
 };
 
 await check("public interview experience uses the exact anonymous nested projection", async () => {
@@ -812,6 +888,89 @@ await check("invalid application status is rejected", async () => {
     .update({ status: "Published" })
     .eq("id", requireFixture(fixture.applicationId, "application"));
   return expectSqlError(update, "23514");
+});
+
+await check("Interview Playbook diagnostic snapshot distinguishes absence and saves one coherent aggregate", async () => {
+  const absent = await getInterviewPlaybookDiagnosticSnapshot(a.authClient);
+  expect(absent.has_saved_inputs === false, "missing diagnostic settings were not represented as explicit absence");
+  expect(absent.updated_at === null, "missing diagnostic settings received a synthetic revision");
+  expect(
+    JSON.stringify([absent.confidence_entries, absent.priority_areas, absent.constraint_entries]) === JSON.stringify([[], [], []]),
+    "missing diagnostic settings did not return exact neutral collections",
+  );
+
+  const created = expectSuccess(
+    await saveInterviewPlaybookDiagnosticSnapshot(a.authClient, diagnosticSnapshotA, null),
+    "diagnostic aggregate creation failed",
+  );
+  expect(created.length === 1 && typeof created[0].updated_at === "string", "diagnostic aggregate create did not return one revision");
+  interviewPlaybookDiagnosticRevision = created[0].updated_at;
+  interviewPlaybookDiagnosticValue = diagnosticSnapshotA;
+  const loaded = await getInterviewPlaybookDiagnosticSnapshot(a.authClient);
+  assertInterviewPlaybookDiagnosticSnapshot(loaded, diagnosticSnapshotA, interviewPlaybookDiagnosticRevision);
+  return `saved coherent aggregate at ${interviewPlaybookDiagnosticRevision}`;
+});
+
+await check("concurrent stale Interview Playbook diagnostic saves commit exactly one coherent winner", async () => {
+  expect(interviewPlaybookDiagnosticRevision, "diagnostic aggregate revision fixture was unavailable");
+  const attempts = await Promise.all([
+    saveInterviewPlaybookDiagnosticSnapshot(a.authClient, diagnosticSnapshotB, interviewPlaybookDiagnosticRevision),
+    saveInterviewPlaybookDiagnosticSnapshot(a.authClient, diagnosticSnapshotC, interviewPlaybookDiagnosticRevision),
+  ]);
+  for (const attempt of attempts) expect(!attempt.error, attempt.error?.message ?? "concurrent diagnostic save failed");
+  const successIndexes = attempts.flatMap((attempt, index) => attempt.data?.length === 1 ? [index] : []);
+  const conflictCount = attempts.filter((attempt) => attempt.data?.length === 0).length;
+  expect(successIndexes.length === 1 && conflictCount === 1, `expected one diagnostic winner and one conflict, observed ${successIndexes.length}/${conflictCount}`);
+
+  const winnerIndex = successIndexes[0];
+  const winner = winnerIndex === 0 ? diagnosticSnapshotB : diagnosticSnapshotC;
+  const revision = attempts[winnerIndex].data[0].updated_at;
+  const loaded = await getInterviewPlaybookDiagnosticSnapshot(a.authClient);
+  assertInterviewPlaybookDiagnosticSnapshot(loaded, winner, revision);
+  interviewPlaybookDiagnosticRevision = revision;
+  interviewPlaybookDiagnosticValue = winner;
+  return `one winner at ${revision}; losing full snapshot returned zero rows`;
+});
+
+await check("a snapshot read concurrent with a diagnostic save is entirely before or after the saved aggregate", async () => {
+  expect(interviewPlaybookDiagnosticRevision && interviewPlaybookDiagnosticValue, "diagnostic winner fixture was unavailable");
+  const priorRevision = interviewPlaybookDiagnosticRevision;
+  const priorValue = interviewPlaybookDiagnosticValue;
+  const [saved, concurrentRead] = await Promise.all([
+    saveInterviewPlaybookDiagnosticSnapshot(a.authClient, diagnosticSnapshotA, priorRevision),
+    getInterviewPlaybookDiagnosticSnapshot(a.authClient),
+  ]);
+  const savedRows = expectSuccess(saved, "diagnostic save during coherent read failed");
+  expect(savedRows.length === 1, `expected the coherent-read save to return one row, observed ${savedRows.length}`);
+  const savedRevision = savedRows[0].updated_at;
+
+  if (concurrentRead.updated_at === priorRevision) {
+    assertInterviewPlaybookDiagnosticSnapshot(concurrentRead, priorValue, priorRevision);
+  } else {
+    assertInterviewPlaybookDiagnosticSnapshot(concurrentRead, diagnosticSnapshotA, savedRevision);
+  }
+
+  const finalRead = await getInterviewPlaybookDiagnosticSnapshot(a.authClient);
+  assertInterviewPlaybookDiagnosticSnapshot(finalRead, diagnosticSnapshotA, savedRevision);
+  interviewPlaybookDiagnosticRevision = savedRevision;
+  interviewPlaybookDiagnosticValue = diagnosticSnapshotA;
+  return `concurrent read revision ${concurrentRead.updated_at}; saved revision ${savedRevision}`;
+});
+
+await check("legacy Interview Playbook diagnostic save fails before mutating the aggregate", async () => {
+  expect(interviewPlaybookDiagnosticRevision && interviewPlaybookDiagnosticValue, "diagnostic aggregate fixture was unavailable");
+  const legacy = await a.authClient.rpc("save_interview_playbook_diagnostic_inputs", {
+    available_hours_per_week_value: 168,
+    confidence_entries: [],
+    priority_areas: [],
+    constraint_entries: [],
+    behavioral_stories_coverage_value: "unknown",
+    project_deep_dive_coverage_value: "unknown",
+  });
+  expectSqlError(legacy, "0A000");
+  const loaded = await getInterviewPlaybookDiagnosticSnapshot(a.authClient);
+  assertInterviewPlaybookDiagnosticSnapshot(loaded, interviewPlaybookDiagnosticValue, interviewPlaybookDiagnosticRevision);
+  return "SQLSTATE 0A000; aggregate unchanged";
 });
 
 await check("User A creates a custom behavioral question", async () => {

@@ -265,6 +265,7 @@ export default async function InterviewPlaybookPage() {
       priorities={diagnosticInputs.priorities}
       constraints={diagnosticInputs.constraints}
       coverage={diagnosticInputs.coverage}
+      revision={diagnosticInputs.revision}
     />
 
     {planningProjection && <section className="prep-module" aria-labelledby="playbook-strategy-heading">
