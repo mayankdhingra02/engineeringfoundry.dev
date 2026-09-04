@@ -81,6 +81,20 @@ function behavioralAnswerArgs(overrides = {}) {
   };
 }
 
+function interviewPlaybookDiagnosticArgs(overrides = {}) {
+  return {
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    available_hours_per_week_value: 7,
+    confidence_entries: [{ area: "system-design", confidence: "medium" }],
+    priority_areas: ["system-design"],
+    constraint_entries: [{ category: "work", description: "Bounded private planning window" }],
+    behavioral_stories_coverage_value: "partial",
+    project_deep_dive_coverage_value: "not-started",
+    ...overrides,
+  };
+}
+
 async function check(name, work) {
   try {
     const note = await work();
@@ -108,6 +122,103 @@ const consume = (client, max = 3, window = 900) =>
 
 let behavioralStory;
 let behavioralAnswer;
+let interviewPlaybookDiagnosticRevision;
+
+await check("Interview Playbook diagnostic snapshot and CAS RPCs deny anonymous callers", async () => {
+  const [read, write] = await Promise.all([
+    anon.rpc("get_interview_playbook_diagnostic_inputs_snapshot"),
+    anon.rpc("save_interview_playbook_diagnostic_inputs_if_revision", interviewPlaybookDiagnosticArgs()),
+  ]);
+  assert.equal(read.error?.code, "42501", "anonymous diagnostic snapshot read must fail with 42501");
+  assert.equal(write.error?.code, "42501", "anonymous diagnostic aggregate save must fail with 42501");
+  return "read and write returned SQLSTATE 42501";
+});
+
+await check("Interview Playbook diagnostic aggregate derives its owner and closes legacy and direct-write bypasses", async () => {
+  const created = await a.client.rpc("save_interview_playbook_diagnostic_inputs_if_revision", interviewPlaybookDiagnosticArgs());
+  assert.ifError(created.error);
+  assert.equal(created.data?.length, 1, "owner diagnostic create did not return one revision");
+  interviewPlaybookDiagnosticRevision = created.data[0].updated_at;
+
+  const directMutations = await Promise.all([
+    a.client.from("interview_playbook_diagnostic_settings").update({ available_hours_per_week: 168 }).eq("user_id", a.user.id),
+    a.client.from("interview_playbook_confidence").delete().eq("user_id", a.user.id),
+    a.client.from("interview_playbook_priorities").insert({ user_id: a.user.id, area: "behavioral", position: 2 }),
+    a.client.from("interview_playbook_constraints").update({ description: "Direct overwrite" }).eq("user_id", a.user.id),
+  ]);
+  for (const mutation of directMutations) assert.equal(mutation.error?.code, "42501", "direct diagnostic aggregate mutation must fail with 42501");
+
+  const invalid = await a.client.rpc("save_interview_playbook_diagnostic_inputs_if_revision", interviewPlaybookDiagnosticArgs({
+    target_expect_absent: false,
+    target_expected_updated_at: interviewPlaybookDiagnosticRevision,
+    confidence_entries: null,
+  }));
+  assert.equal(invalid.error?.code, "22023", "invalid diagnostic aggregate input must fail closed with 22023");
+
+  const legacy = await a.client.rpc("save_interview_playbook_diagnostic_inputs", {
+    available_hours_per_week_value: 168,
+    confidence_entries: [],
+    priority_areas: [],
+    constraint_entries: [],
+    behavioral_stories_coverage_value: "unknown",
+    project_deep_dive_coverage_value: "unknown",
+  });
+  assert.equal(legacy.error?.code, "0A000", "legacy diagnostic save must fail safely with 0A000");
+
+  const read = await a.client.rpc("get_interview_playbook_diagnostic_inputs_snapshot");
+  assert.ifError(read.error);
+  assert.equal(read.data?.length, 1);
+  assert.deepEqual(
+    {
+      hasSavedInputs: read.data[0].has_saved_inputs,
+      availableHoursPerWeek: read.data[0].available_hours_per_week,
+      confidenceEntries: read.data[0].confidence_entries,
+      priorityAreas: read.data[0].priority_areas,
+      constraintDescriptions: read.data[0].constraint_entries.map(({ category, description }) => ({ category, description })),
+      updatedAt: read.data[0].updated_at,
+    },
+    {
+      hasSavedInputs: true,
+      availableHoursPerWeek: 7,
+      confidenceEntries: [{ area: "system-design", confidence: "medium" }],
+      priorityAreas: ["system-design"],
+      constraintDescriptions: [{ category: "work", description: "Bounded private planning window" }],
+      updatedAt: interviewPlaybookDiagnosticRevision,
+    },
+  );
+  return `owner revision ${interviewPlaybookDiagnosticRevision}; direct writes denied; legacy retired`;
+});
+
+await check("foreign and missing Interview Playbook diagnostic revision targets are indistinguishable", async () => {
+  assert.ok(interviewPlaybookDiagnosticRevision, "owner diagnostic revision fixture was unavailable");
+  const foreign = await b.client.rpc("save_interview_playbook_diagnostic_inputs_if_revision", interviewPlaybookDiagnosticArgs({
+    target_expect_absent: false,
+    target_expected_updated_at: interviewPlaybookDiagnosticRevision,
+    available_hours_per_week_value: 20,
+  }));
+  const missing = await b.client.rpc("save_interview_playbook_diagnostic_inputs_if_revision", interviewPlaybookDiagnosticArgs({
+    target_expect_absent: false,
+    target_expected_updated_at: "2000-01-01T00:00:00.000Z",
+    available_hours_per_week_value: 30,
+  }));
+  for (const attempt of [foreign, missing]) {
+    assert.ifError(attempt.error);
+    assert.deepEqual(attempt.data, [], "foreign or missing diagnostic target must return zero rows");
+  }
+  const bRead = await b.client.rpc("get_interview_playbook_diagnostic_inputs_snapshot");
+  assert.ifError(bRead.error);
+  assert.deepEqual(bRead.data, [{
+    has_saved_inputs: false,
+    available_hours_per_week: null,
+    confidence_entries: [],
+    priority_areas: [],
+    constraint_entries: [],
+    behavioral_stories_coverage: "unknown",
+    project_deep_dive_coverage: "unknown",
+    updated_at: null,
+  }]);
+  return "both writes returned zero rows; owner B remained explicitly absent";
+});
 
 await check("Behavioral aggregate RPCs deny anonymous callers", async () => {
   const attempts = await Promise.all([

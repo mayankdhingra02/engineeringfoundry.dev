@@ -1,18 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
-import { parseInterviewPlaybookDiagnosticInputForm } from "@/lib/interview-playbook/diagnostic-input-form.ts";
+import {
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_CONFLICT_ERROR,
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_PERSISTENCE_ERROR,
+  INTERVIEW_PLAYBOOK_DIAGNOSTIC_SAVED_MESSAGE,
+  parseInterviewPlaybookDiagnosticInputForm,
+} from "@/lib/interview-playbook/diagnostic-input-form.ts";
 import { saveInterviewPlaybookDiagnosticInputsForActor } from "@/lib/interview-playbook/diagnostic-inputs.ts";
 
-function mutationFailure(message: string): never {
-  throw new Error(message);
-}
-
-function signInAgain(): never {
-  redirect(`/signin?next=${encodeURIComponent("/interview-playbook")}`);
-}
+export type InterviewPlaybookDiagnosticActionState = Readonly<{
+  status: "idle" | "error" | "success";
+  message: string;
+  conflict?: boolean;
+  revision?: string;
+}>;
 
 /**
  * The only write path for Phase 3B1 diagnostic inputs. The actor's id never
@@ -22,15 +26,47 @@ function signInAgain(): never {
  * descriptions are forwarded to the database only; they are never logged or
  * sent to analytics.
  */
-export async function saveInterviewPlaybookDiagnosticInputs(formData: FormData): Promise<void> {
-  const actor = await getAuthenticatedActor();
-  if (!actor) signInAgain();
-
+export async function saveInterviewPlaybookDiagnosticInputs(
+  previousState: InterviewPlaybookDiagnosticActionState,
+  formData: unknown,
+): Promise<InterviewPlaybookDiagnosticActionState> {
   const parsed = parseInterviewPlaybookDiagnosticInputForm(formData);
-  if (!parsed.ok) mutationFailure(parsed.error);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: parsed.error,
+      revision: previousState.revision,
+    };
+  }
 
-  const result = await saveInterviewPlaybookDiagnosticInputsForActor(actor, parsed.value);
-  if (!result.ok) mutationFailure("We couldn't save your diagnostic inputs. Review the values and try again.");
+  const input = parsed.value;
+  const failed = (message: string, conflict = false) => ({
+    status: "error" as const,
+    message,
+    conflict,
+    revision: input.revision,
+  });
+  if (!isAccountPlatformAvailable()) {
+    return failed("Account persistence is not available in this configuration.");
+  }
+  const actor = await getAuthenticatedActor();
+  if (!actor) return failed("Your session expired. Sign in and try again.");
+
+  const result = await saveInterviewPlaybookDiagnosticInputsForActor(
+    actor,
+    input,
+  );
+  if (result.status === "conflict") {
+    return failed(INTERVIEW_PLAYBOOK_DIAGNOSTIC_CONFLICT_ERROR, true);
+  }
+  if (result.status === "error") {
+    return failed(INTERVIEW_PLAYBOOK_DIAGNOSTIC_PERSISTENCE_ERROR);
+  }
 
   revalidatePath("/interview-playbook");
+  return {
+    status: "success",
+    message: INTERVIEW_PLAYBOOK_DIAGNOSTIC_SAVED_MESSAGE,
+    revision: result.updatedAt,
+  };
 }

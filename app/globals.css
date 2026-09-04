@@ -1262,6 +1262,8 @@ button.flow-card { cursor: pointer; }
 .reminder-preferences-form .button { width: fit-content; }
 .reminder-preferences-form .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
 .reminder-preferences-form .button[aria-disabled="true"]:hover { background: var(--accent); border-color: var(--accent); transform: none; }
+.interview-playbook-diagnostic-form .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
+.interview-playbook-diagnostic-form .button[aria-disabled="true"]:hover { background: var(--accent); border-color: var(--accent); transform: none; }
 .form-status { min-height: 20px; margin: -9px 0 -13px; color: var(--muted); font-size: 12.5px; }.form-status.error { color: #8e2d24; }.form-status.success { color: var(--green); }
 .reminder-settings-grid > aside { padding: 22px; display: grid; gap: 19px; border-radius: 13px; background: var(--text); color: var(--bg); box-shadow: 0 14px 40px rgba(23,25,24,.1); }
 .reminder-settings-grid > aside section { display: flex; align-items: flex-start; gap: 11px; }

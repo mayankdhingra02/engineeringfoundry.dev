@@ -924,6 +924,32 @@ export type Database = {
         };
         Returns: Database["public"]["Tables"]["interview_playbook_diagnostic_settings"]["Row"];
       };
+      get_interview_playbook_diagnostic_inputs_snapshot: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          has_saved_inputs: boolean;
+          available_hours_per_week: number | null;
+          confidence_entries: Json;
+          priority_areas: string[];
+          constraint_entries: Json;
+          behavioral_stories_coverage: string;
+          project_deep_dive_coverage: string;
+          updated_at: string | null;
+        }[];
+      };
+      save_interview_playbook_diagnostic_inputs_if_revision: {
+        Args: {
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          available_hours_per_week_value: number | null;
+          confidence_entries: Json;
+          priority_areas: string[];
+          constraint_entries: Json;
+          behavioral_stories_coverage_value: string;
+          project_deep_dive_coverage_value: string;
+        };
+        Returns: { updated_at: string }[];
+      };
       save_interview_reminder_preferences: {
         Args: {
           preferred_timezone_value: string | null;

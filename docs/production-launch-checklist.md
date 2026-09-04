@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 35 migrations are recorded, ending at `202609040001_save_interview_reminder_preferences_if_revision`
+4. [ ] `supabase migration list --linked` — confirm all 36 migrations are recorded, ending at `202609040002_save_interview_playbook_diagnostic_inputs_if_revision`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -102,6 +102,8 @@ Apply `202609030006_save_system_design_item_progress_if_revision.sql` before dep
 Apply `202609030007_save_behavioral_answer_aggregate.sql` before deploying the Behavioral answer aggregate application. Migration-first denies authenticated direct answer `INSERT`/`UPDATE` with `42501` and makes direct calls to the legacy primary-only RPC fail with `0A000`, so already-loaded split-write clients fail before partial mutation. Application-first protects only newly loaded clients and leaves the old torn-save and stale-overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the direct and primary-only write paths stay unavailable; keep the migration and roll forward.
 
 Apply `202609040001_save_interview_reminder_preferences_if_revision.sql` before deploying the revision-aware reminder-settings application. Migration-first makes already-loaded full-snapshot clients fail safely with `0A000` and makes repeated completed-onboarding requests no-ops for reminder and preparation preferences. Application-first protects only newly loaded settings clients and leaves the stale overwrite window open until the migration lands. Rolling application code back after the migration is safe but degraded because the legacy preference-save path stays unavailable; keep the migration and roll forward.
+
+Apply `202609040002_save_interview_playbook_diagnostic_inputs_if_revision.sql` before deploying the revision-aware Interview Playbook application. Migration-first makes already-loaded whole-aggregate clients fail safely with `0A000` and installs the coherent snapshot read before new code depends on it. Application-first can break new reads while leaving already-loaded clients able to overwrite newer diagnostic inputs until the migration lands. Rolling application code back after the migration is safe but degraded because the legacy snapshot-save path stays unavailable; keep the migration and roll forward.
 
 ---
 
@@ -153,6 +155,8 @@ Use two disposable accounts (User A and User B) against the production origin wi
 - [ ] Race a User A reminder-preference save with a future-round schedule change and confirm the shared owner lock leaves reminder rows matching the final committed settings and schedule. Confirm User B cannot read or mutate User A's preference row.
 - [ ] Review the candidate's local pgTAP/database evidence that an injected reminder-resync failure rolls the preference snapshot back; do not inject a failure into the hosted project.
 - [ ] After User A has completed onboarding, make a repeated onboarding submission with different timezone and preparation choices and confirm neither preference family nor the reminder revision changes. Confirm the authenticated legacy `save_interview_reminder_preferences` call fails without mutation with SQLSTATE `0A000` and `Revision-checked reminder preference saving is required`.
+- [ ] Confirm `anon` cannot execute `get_interview_playbook_diagnostic_inputs_snapshot` or `save_interview_playbook_diagnostic_inputs_if_revision`. As User A, confirm the read RPC returns exactly one explicit neutral row before the first save, then submit an absent revision and confirm one returned `updated_at` with confidence, priorities, and constraints in their canonical stored order.
+- [ ] Race two complete User A diagnostic saves from one revision and confirm exactly one coherent aggregate wins. Read concurrently with another save and confirm the result is wholly before or wholly after, never mixed across settings and child collections. Confirm stale, foreign, and missing revisions are indistinguishable zero-row outcomes, User B cannot observe or mutate User A's aggregate, and the authenticated legacy `save_interview_playbook_diagnostic_inputs` call fails without mutation with SQLSTATE `0A000` and `Revision-checked Interview Playbook diagnostic saving is required`. These hosted checks remain unchecked until owner-run evidence is recorded.
 
 ### Anonymous browser-progress import boundary
 
