@@ -44,6 +44,24 @@ const {
   parseBehavioralStoryMutationResult,
   parseCanonicalBehavioralStoryId,
 } = await import("../lib/behavioral/story-action-input.ts");
+const {
+  BEHAVIORAL_QUESTION_ABSENT_REVISION,
+  BEHAVIORAL_QUESTION_CONFLICT_ERROR,
+  BEHAVIORAL_QUESTION_DELETE_ERROR,
+  BEHAVIORAL_QUESTION_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  BEHAVIORAL_QUESTION_EXPECTED_REVISION_FIELD,
+  BEHAVIORAL_QUESTION_ID_FIELD,
+  BEHAVIORAL_QUESTION_INVALID_INPUT_ERROR,
+  BEHAVIORAL_QUESTION_PERSISTENCE_ERROR,
+  BEHAVIORAL_QUESTION_SAVED_MESSAGE,
+  isCanonicalBehavioralQuestionRevision,
+  parseBehavioralQuestionActionInput,
+  parseBehavioralQuestionDeleteResult,
+  parseBehavioralQuestionMutationResult,
+  parseBehavioralQuestionRevision,
+  parseCanonicalBehavioralQuestionId,
+  resolveBehavioralQuestionDisplayState,
+} = await import("../lib/behavioral/question-action-input.ts");
 const { resolveBehavioralStoryEditSnapshot } = await import("../lib/behavioral/story-edit-state.ts");
 
 const canonicalStoryId = "123e4567-e89b-42d3-a456-426614174000";
@@ -229,6 +247,88 @@ for (const [label, value] of [
 check(BEHAVIORAL_STORY_INVALID_INPUT_ERROR === "Review the story fields and try again.", "invalid story input uses stable curated copy");
 check(BEHAVIORAL_STORY_CONFLICT_ERROR.includes("Your edits were not saved") && BEHAVIORAL_STORY_CONFLICT_ERROR.includes("Review the latest saved version"), "story conflict copy states preservation and recovery");
 check([BEHAVIORAL_STORY_CREATE_ERROR, BEHAVIORAL_STORY_UPDATE_ERROR, BEHAVIORAL_STORY_DUPLICATE_ERROR].every((message) => message.length > 0 && !/postgres|sql|owner|uuid/i.test(message)), "story persistence failures use stable sanitized copy");
+
+const canonicalQuestionId = "323e4567-e89b-42d3-a456-426614174000";
+const canonicalQuestionRevision = "2026-09-04T11:15:00.123456+00:00";
+const questionValues = {
+  question_text: "  Tell me about a difficult technical tradeoff?  ",
+  category: "  Leadership  ",
+  company_slug: " OpenAI ",
+  description: "  Private interview context.  ",
+  notes: "  Private preparation notes.  ",
+};
+const questionForm = ({ values = {}, revision = BEHAVIORAL_QUESTION_ABSENT_REVISION, metadata = false } = {}) => {
+  const form = new FormData();
+  form.set(BEHAVIORAL_QUESTION_ID_FIELD, canonicalQuestionId.toUpperCase());
+  form.set(BEHAVIORAL_QUESTION_EXPECTED_REVISION_FIELD, revision);
+  for (const [name, value] of Object.entries({ ...questionValues, ...values })) form.set(name, value);
+  if (metadata) form.set("$ACTION_ID_test", "trusted framework metadata");
+  return form;
+};
+
+const validQuestionCreate = parseBehavioralQuestionActionInput(questionForm({ metadata: true }));
+check(validQuestionCreate.ok, "strict question parser accepts a complete absent create snapshot and framework metadata");
+check(validQuestionCreate.ok && validQuestionCreate.value.questionId === canonicalQuestionId && validQuestionCreate.value.expectAbsent && validQuestionCreate.value.expectedUpdatedAt === null, "question create parsing canonicalizes caller identity and preserves explicit absence");
+check(validQuestionCreate.ok && validQuestionCreate.value.question.question_text === "Tell me about a difficult technical tradeoff?" && validQuestionCreate.value.question.company_slug === "openai", "question parser trims text and normalizes bounded company context");
+const validQuestionEdit = parseBehavioralQuestionActionInput(questionForm({ revision: canonicalQuestionRevision }));
+check(validQuestionEdit.ok && !validQuestionEdit.value.expectAbsent && validQuestionEdit.value.expectedUpdatedAt === canonicalQuestionRevision, "question edit parsing preserves the exact persisted revision");
+const blankQuestionOptionals = parseBehavioralQuestionActionInput(questionForm({ values: { category: "", company_slug: "", description: "", notes: "" } }));
+check(blankQuestionOptionals.ok && blankQuestionOptionals.value.question.category === "Other" && blankQuestionOptionals.value.question.company_slug === null && blankQuestionOptionals.value.question.description === null && blankQuestionOptionals.value.question.notes === null, "question parser resolves explicit blank optionals without inventing private text");
+for (const invalid of [null, undefined, "form", [], {}, new URLSearchParams()]) {
+  check(!parseBehavioralQuestionActionInput(invalid).ok, `question parser rejects non-FormData input: ${String(invalid)}`);
+}
+for (const name of [BEHAVIORAL_QUESTION_ID_FIELD, BEHAVIORAL_QUESTION_EXPECTED_REVISION_FIELD, ...Object.keys(questionValues)]) {
+  const missing = questionForm(); missing.delete(name);
+  check(!parseBehavioralQuestionActionInput(missing).ok, `question parser rejects missing singleton ${name}`);
+  const duplicate = questionForm(); duplicate.append(name, "duplicate");
+  check(!parseBehavioralQuestionActionInput(duplicate).ok, `question parser rejects duplicate singleton ${name}`);
+  const file = questionForm(); file.delete(name); file.append(name, new Blob(["file"]), `${name}.txt`);
+  check(!parseBehavioralQuestionActionInput(file).ok, `question parser rejects File-valued singleton ${name}`);
+}
+for (const [label, mutate] of [
+  ["unknown field", (form) => form.set("unexpected", "value")],
+  ["malformed question id", (form) => form.set(BEHAVIORAL_QUESTION_ID_FIELD, "not-a-uuid")],
+  ["blank revision", (form) => form.set(BEHAVIORAL_QUESTION_EXPECTED_REVISION_FIELD, "")],
+  ["impossible revision", (form) => form.set(BEHAVIORAL_QUESTION_EXPECTED_REVISION_FIELD, "2026-02-30T00:00:00Z")],
+  ["invalid revision offset", (form) => form.set(BEHAVIORAL_QUESTION_EXPECTED_REVISION_FIELD, "2026-09-04T12:00:00+14:01")],
+]) {
+  const form = questionForm(); mutate(form);
+  check(!parseBehavioralQuestionActionInput(form).ok, `question parser rejects ${label}`);
+}
+for (const [field, limit] of [["question_text", 1_000], ["category", 100], ["company_slug", 80], ["description", 5_000], ["notes", 20_000]]) {
+  const atLimit = questionForm({ values: { [field]: "😀".repeat(limit) } });
+  check(parseBehavioralQuestionActionInput(atLimit).ok, `question parser counts ${field} Unicode code points at its limit`);
+  const overLimit = questionForm({ values: { [field]: "😀".repeat(limit + 1) } });
+  check(!parseBehavioralQuestionActionInput(overLimit).ok, `question parser rejects ${field} above its Unicode code-point limit`);
+  const control = questionForm({ values: { [field]: "valid\u0000value" } });
+  check(!parseBehavioralQuestionActionInput(control).ok, `question parser rejects control characters in ${field}`);
+}
+check(parseBehavioralQuestionActionInput(questionForm({ values: { question_text: "Tell me\nabout the decision?", description: "Context\nline", notes: "Private\tnote" } })).ok, "question parser preserves supported multiline whitespace");
+check(parseCanonicalBehavioralQuestionId(canonicalQuestionId.toUpperCase()) === canonicalQuestionId && parseCanonicalBehavioralQuestionId("00000000-0000-0000-0000-000000000000") === null, "standalone question ID parsing canonicalizes valid IDs and rejects deceptive UUIDs");
+check(isCanonicalBehavioralQuestionRevision(canonicalQuestionRevision), "standalone question revision accepts a database timestamp");
+assert.deepEqual(parseBehavioralQuestionRevision(canonicalQuestionId.toUpperCase(), canonicalQuestionRevision), { questionId: canonicalQuestionId, expectedUpdatedAt: canonicalQuestionRevision });
+check(parseBehavioralQuestionRevision("bad-id", canonicalQuestionRevision) === null && parseBehavioralQuestionRevision(canonicalQuestionId, "bad-revision") === null, "delete revision parsing fails closed on malformed identity or revision");
+
+const savedQuestionRow = [{ question_id: canonicalQuestionId.toUpperCase(), updated_at: canonicalQuestionRevision }];
+assert.deepEqual(parseBehavioralQuestionMutationResult(savedQuestionRow, canonicalQuestionId), { status: "saved", questionId: canonicalQuestionId, updatedAt: canonicalQuestionRevision });
+assert.deepEqual(parseBehavioralQuestionMutationResult([], canonicalQuestionId), { status: "conflict" });
+assert.deepEqual(parseBehavioralQuestionDeleteResult([{ question_id: canonicalQuestionId.toUpperCase() }], canonicalQuestionId), { status: "deleted", questionId: canonicalQuestionId });
+assert.deepEqual(parseBehavioralQuestionDeleteResult([], canonicalQuestionId), { status: "conflict" });
+for (const value of [savedQuestionRow[0], null, [null], [...savedQuestionRow, ...savedQuestionRow], [{ ...savedQuestionRow[0], extra: true }], [{ question_id: canonicalQuestionId }], [{ question_id: canonicalStoryId, updated_at: canonicalQuestionRevision }], [{ question_id: canonicalQuestionId, updated_at: "bad" }]]) {
+  check(parseBehavioralQuestionMutationResult(value, canonicalQuestionId).status === "invalid", "question mutation-result parser rejects malformed, extra, or mismatched rows");
+}
+for (const input of [
+  [null],
+  [{ question_id: canonicalQuestionId, extra: true }],
+  [{ question_id: canonicalStoryId }],
+  [{ question_id: canonicalQuestionId }, { question_id: canonicalQuestionId }],
+]) {
+  check(parseBehavioralQuestionDeleteResult(input, canonicalQuestionId).status === "invalid", "question delete-result parser rejects malformed, extra, duplicate, or mismatched rows");
+}
+assert.deepEqual(resolveBehavioralQuestionDisplayState({ status: "success", message: BEHAVIORAL_QUESTION_SAVED_MESSAGE }, true, true), { status: "pending", message: "Saving question…" });
+assert.deepEqual(resolveBehavioralQuestionDisplayState({ status: "success", message: BEHAVIORAL_QUESTION_SAVED_MESSAGE }, false, true), { status: "success", message: BEHAVIORAL_QUESTION_EARLIER_SNAPSHOT_SAVED_MESSAGE });
+assert.deepEqual(resolveBehavioralQuestionDisplayState({ status: "error", message: BEHAVIORAL_QUESTION_CONFLICT_ERROR }, false, true), { status: "error", message: BEHAVIORAL_QUESTION_CONFLICT_ERROR });
+check([BEHAVIORAL_QUESTION_INVALID_INPUT_ERROR, BEHAVIORAL_QUESTION_PERSISTENCE_ERROR, BEHAVIORAL_QUESTION_DELETE_ERROR].every((message) => message.length > 0 && !/postgres|sql|owner|uuid/i.test(message)), "question failures use stable sanitized copy");
 
 const canonicalAnswerId = "223e4567-e89b-42d3-a456-426614174000";
 const canonicalAnswerRevision = "2026-09-03T19:45:00.654321+00:00";
@@ -478,9 +578,40 @@ for (const marker of ["target_expected_updated_at is null", "for update", "if no
 check(updateAnswerAggregateSql.indexOf("for update") < updateAnswerAggregateSql.lastIndexOf("if target_make_primary") && updateAnswerAggregateSql.lastIndexOf("if target_make_primary") < updateAnswerAggregateSql.lastIndexOf("update public.behavioral_answers as answer"), "answer CAS verifies and locks the exact revision before changing sibling primary state or the target aggregate");
 check(legacyPrimarySql.includes("raise exception 'Atomic Behavioral answer saving is required' using errcode = '0A000'"), "legacy primary-only RPC must be a stable authenticated no-mutation failure");
 check(!answerAggregateMigration.includes("revoke select, delete on table public.behavioral_answers") && !answerAggregateMigration.includes("delete from public.behavioral_answers"), "answer aggregate migration preserves owner-scoped reads and deletion without destructive data changes");
+const questionRevisionMigration = read("supabase/migrations/202609040007_save_behavioral_custom_question_if_revision.sql");
+for (const marker of [
+  "set_behavioral_custom_question_updated_at",
+  "save_behavioral_custom_question_if_revision",
+  "delete_behavioral_custom_question_if_revision",
+  "target_expect_absent",
+  "on conflict on constraint behavioral_custom_questions_pkey do nothing",
+  "question.updated_at = target_expected_updated_at",
+  "pg_catalog.pg_advisory_xact_lock",
+  "greatest(",
+  "old.updated_at + interval '1 microsecond'",
+  "security definer",
+  "set search_path = ''",
+  "auth.uid()",
+  "revoke insert, update, delete on table public.behavioral_custom_questions",
+  "revoke insert (",
+  "revoke update (",
+]) requireText(questionRevisionMigration, marker, `Behavioral question revision migration lacks ${marker}.`);
+for (const rpc of [
+  "save_behavioral_custom_question_if_revision(uuid,boolean,timestamptz,text,text,text,text,text)",
+  "delete_behavioral_custom_question_if_revision(uuid,timestamptz)",
+]) {
+  const functionName = rpc.slice(0, rpc.indexOf("("));
+  check(questionRevisionMigration.includes(`revoke all on function public.${functionName}(`) && questionRevisionMigration.includes(`grant execute on function public.${functionName}(`), `${rpc} must start closed and grant only authenticated execution`);
+}
+const saveQuestionSql = sqlFunctionSource(questionRevisionMigration, "save_behavioral_custom_question_if_revision");
+const deleteQuestionSql = sqlFunctionSource(questionRevisionMigration, "delete_behavioral_custom_question_if_revision");
+for (const [name, source, mutation] of [["save", saveQuestionSql, "update public.behavioral_custom_questions as question"], ["delete", deleteQuestionSql, "delete from public.behavioral_custom_questions as question"]]) {
+  for (const marker of ["auth.uid()", "target_question_id", "target_expected_updated_at", "pg_catalog.pg_advisory_xact_lock", mutation, "return query"]) requireText(source, marker, `Behavioral question ${name} RPC lacks ${marker}.`);
+  check(source.indexOf("pg_catalog.pg_advisory_xact_lock") < source.indexOf(mutation), `Behavioral question ${name} RPC must lock before mutating`);
+}
 const aggregateDatabaseTest = read("supabase/tests/database/behavioral_workspace.test.sql");
 for (const marker of [
-  "plan(114)",
+  "plan(135)",
   "the exact aggregate revision updates the parent and themes",
   "a stale aggregate update preserves the parent row",
   "a stale aggregate update preserves the theme set",
@@ -498,6 +629,13 @@ for (const marker of [
   "clients cannot bypass aggregate answer revision checks",
   "another user receives no answer aggregate update row",
   "a missing answer aggregate update returns the same zero-row result",
+  "authenticated can save a revision-checked custom question",
+  "clients cannot bypass custom-question revision checks with a direct update",
+  "an exact custom-question revision advances monotonically",
+  "a stale custom-question revision preserves private notes",
+  "another user receives no custom-question save row",
+  "a stale custom-question delete preserves the question",
+  "an exact custom-question delete cascades its private children",
 ]) requireText(aggregateDatabaseTest, marker, `Behavioral aggregate pgTAP lacks ${marker}.`);
 const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
 for (const marker of [
@@ -512,6 +650,8 @@ for (const marker of [
   "competing Behavioral primary saves serialize to one desired primary",
   "invalid Behavioral aggregate input rolls back before changing the primary",
   "legacy primary-only mutation fails without changing the aggregate",
+  "concurrent custom-question saves accept exactly one coherent snapshot",
+  "stale parent-revision custom-question delete preserves the question and children",
 ]) requireText(persistenceQualifier, marker, `Behavioral persistence qualification lacks ${marker}.`);
 const securityQualifier = read("scripts/qualify-security-local.mjs");
 for (const marker of [
@@ -520,6 +660,8 @@ for (const marker of [
   "foreign and missing Behavioral aggregate targets are indistinguishable",
   "Behavioral answer aggregate derives its owner and closes split-write bypasses",
   "foreign and missing Behavioral answer targets are indistinguishable",
+  "Behavioral custom-question RPCs deny anonymous and direct mutation",
+  "foreign and missing Behavioral custom-question targets are indistinguishable",
 ]) requireText(securityQualifier, marker, `Behavioral security qualification lacks ${marker}.`);
 const lifecycleQualifier = read("scripts/qualify-account-lifecycle-local.mjs");
 for (const marker of ["create_behavioral_story_with_themes", "story.data[0].story_id", "create_behavioral_answer_aggregate", "answer.data?.length", "Private behavioral note"]) requireText(lifecycleQualifier, marker, `Behavioral account-lifecycle qualification lacks aggregate compatibility marker ${marker}.`);
@@ -530,7 +672,7 @@ for (const marker of ["one owner-scoped nested database statement", "successful 
 
 const actions = read("features/behavioral/actions.ts");
 const actor = read("lib/auth/actor.ts");
-for (const marker of ["getAuthenticatedActor", 'eq("user_id", current.user.id)', "createStoryAction", "updateStoryAction", "deleteStoryAction", "duplicateStoryAction", "createQuestionAction", "updateQuestionAction", "deleteQuestionAction", "linkStoryAction", "linkQuestionToStoryAction", "unlinkStoryAction", "createAnswerAction", "updateAnswerAction", "deleteAnswerAction", "create_behavioral_answer_aggregate", "update_behavioral_answer_aggregate_if_revision"]) requireText(actions, marker, `Behavioral actions lack ${marker}.`);
+for (const marker of ["getAuthenticatedActor", 'eq("user_id", current.user.id)', "createStoryAction", "updateStoryAction", "deleteStoryAction", "duplicateStoryAction", "saveQuestionAction", "deleteQuestionAction", "linkStoryAction", "linkQuestionToStoryAction", "unlinkStoryAction", "createAnswerAction", "updateAnswerAction", "deleteAnswerAction", "create_behavioral_answer_aggregate", "update_behavioral_answer_aggregate_if_revision", "save_behavioral_custom_question_if_revision", "delete_behavioral_custom_question_if_revision"]) requireText(actions, marker, `Behavioral actions lack ${marker}.`);
 for (const marker of ["auth.getUser", "getAuthenticatedActor", "createSupabaseServerClient"]) requireText(actor, marker, `Canonical behavioral actor lacks ${marker}.`);
 const createStoryAction = functionSource(actions, "createStoryAction");
 const updateStoryAction = functionSource(actions, "updateStoryAction");
@@ -555,6 +697,14 @@ check(updateStoryAction.indexOf("if (!parsed.ok) return") < updateStoryAction.in
 check(createStoryAction.indexOf("parseBehavioralStoryMutationResult") < createStoryAction.indexOf("redirect("), "createStoryAction validates its RPC row before claiming success");
 check(updateStoryAction.includes('outcome.status === "missing"') && updateStoryAction.includes("conflict: true") && updateStoryAction.indexOf("parseBehavioralStoryMutationResult") < updateStoryAction.indexOf("refreshBehavioral"), "updateStoryAction distinguishes a zero-row conflict and validates success before refresh");
 check(duplicateStoryAction.indexOf("parseBehavioralStoryMutationResult") < duplicateStoryAction.indexOf("redirect("), "duplicateStoryAction validates its RPC row before redirecting");
+const saveQuestionAction = functionSource(actions, "saveQuestionAction");
+const deleteQuestionAction = functionSource(actions, "deleteQuestionAction");
+check(saveQuestionAction.indexOf("parseBehavioralQuestionActionInput(formData)") < saveQuestionAction.indexOf("getAuthenticatedActor") && saveQuestionAction.indexOf("getAuthenticatedActor") < saveQuestionAction.indexOf('rpc(\n    "save_behavioral_custom_question_if_revision"'), "saveQuestionAction parses the complete runtime snapshot before actor and revision-checked persistence work");
+check(saveQuestionAction.includes("parseBehavioralQuestionMutationResult") && saveQuestionAction.includes('outcome.status === "conflict"') && saveQuestionAction.includes("conflict: true"), "saveQuestionAction distinguishes a zero-row conflict through its strict result parser");
+check(saveQuestionAction.indexOf("parseBehavioralQuestionMutationResult") < saveQuestionAction.indexOf("refreshBehavioral()") && !saveQuestionAction.includes("redirect("), "saveQuestionAction validates one correlated row before refresh and retains the form after success");
+for (const obsolete of ['from("behavioral_custom_questions").insert', 'from("behavioral_custom_questions").update', "parseQuestionForm"]) check(!saveQuestionAction.includes(obsolete), `saveQuestionAction must not retain ${obsolete}`);
+check(deleteQuestionAction.indexOf("parseBehavioralQuestionRevision") < deleteQuestionAction.indexOf("getAuthenticatedActor") && deleteQuestionAction.indexOf("getAuthenticatedActor") < deleteQuestionAction.indexOf('rpc(\n    "delete_behavioral_custom_question_if_revision"'), "deleteQuestionAction validates identity and revision before actor and deletion work");
+check(deleteQuestionAction.indexOf("parseBehavioralQuestionDeleteResult") < deleteQuestionAction.indexOf("refreshBehavioral()") && !deleteQuestionAction.includes('from("behavioral_custom_questions").delete'), "deleteQuestionAction accepts only one correlated RPC result before redirecting");
 const createAnswerAction = functionSource(actions, "createAnswerAction");
 const updateAnswerAction = functionSource(actions, "updateAnswerAction");
 for (const [name, body, rpc] of [
@@ -570,6 +720,7 @@ check(createAnswerAction.includes("BEHAVIORAL_ANSWER_CREATE_ERROR") && createAns
 check(updateAnswerAction.includes("BEHAVIORAL_ANSWER_UPDATE_ERROR") && updateAnswerAction.includes("BEHAVIORAL_ANSWER_CONFLICT_ERROR") && updateAnswerAction.includes("conflict: true"), "updateAnswerAction keeps persistence failure distinct from a stable zero-row conflict");
 check(updateAnswerAction.indexOf("parseBehavioralAnswerMutationResult") < updateAnswerAction.indexOf("refreshBehavioral") && updateAnswerAction.indexOf("refreshBehavioral") < updateAnswerAction.indexOf("redirect("), "updateAnswerAction validates one correlated saved row before refresh and redirect");
 check(!actions.includes("parseAnswerForm") && !actions.includes('rpc("set_behavioral_primary_answer"'), "production actions remove the fail-open answer parser and legacy primary-only mutation path");
+check(!actions.includes("parseQuestionForm") && !actions.includes('from("behavioral_custom_questions").insert') && !actions.includes('from("behavioral_custom_questions").update') && !actions.includes('from("behavioral_custom_questions").delete'), "production actions remove coercive and direct custom-question mutation paths");
 
 const queries = read("lib/behavioral/queries.ts");
 for (const marker of ["CURATED_BEHAVIORAL_QUESTIONS", "preparationStatus", 'return "Ready"', 'return "Drafted"', 'return "Story linked"', 'return "Not started"']) requireText(queries, marker, `Behavioral data layer lacks ${marker}.`);
@@ -622,6 +773,38 @@ for (const name of ["title", "company_or_context", "role", "approximate_period",
 for (const name of ["situation", "task", "action", "result", "reflection"]) check(storyFormSource.includes(`["${name}",`), `Story editor STAR field map must retain ${name}`);
 check(storyFormSource.includes("behavioralErrorProps(state, name)") && storyFormSource.includes("<BehavioralFieldError state={state} name={name}"), "Every mapped STAR field shares the conditional aria relationship and matching error target");
 check(storyFormSource.includes('<BehavioralFieldError state={state} name="themes"'), "Story editor renders the controlled-theme error target");
+const questionFormSource = read("features/behavioral/question-form.tsx");
+for (const marker of [
+  "BEHAVIORAL_QUESTION_ID_FIELD",
+  "BEHAVIORAL_QUESTION_EXPECTED_REVISION_FIELD",
+  "BEHAVIORAL_QUESTION_ABSENT_REVISION",
+  "submissionPending",
+  "changedSinceSubmit",
+  "resolveBehavioralQuestionDisplayState",
+  "aria-busy={pending}",
+  "aria-disabled={pending}",
+  'aria-atomic="true"',
+  "Review latest question in a new tab",
+  'target="_blank"',
+  'rel="noopener noreferrer"',
+  "View question",
+]) requireText(questionFormSource, marker, `Custom-question editor lacks source-regressed revision or recovery marker ${marker}.`);
+const questionSubmitStart = questionFormSource.indexOf("const submit =");
+const questionSubmitEnd = questionFormSource.indexOf("const displayState", questionSubmitStart);
+const questionSubmitSource = questionFormSource.slice(questionSubmitStart, questionSubmitEnd);
+for (const marker of ["event.preventDefault()", "if (submissionPending.current) return", "submissionPending.current = true", "setChangedSinceSubmit(false)", "setDirty(false)", "new FormData(event.currentTarget)", "startTransition(() => formAction(formData))"]) requireText(questionSubmitSource, marker, `Custom-question submit flow lacks ${marker}.`);
+check(questionSubmitSource.indexOf("event.preventDefault()") < questionSubmitSource.indexOf("if (submissionPending.current) return") && questionSubmitSource.indexOf("if (submissionPending.current) return") < questionSubmitSource.indexOf("submissionPending.current = true") && questionSubmitSource.indexOf("submissionPending.current = true") < questionSubmitSource.indexOf("new FormData(event.currentTarget)") && questionSubmitSource.indexOf("new FormData(event.currentTarget)") < questionSubmitSource.indexOf("startTransition(() => formAction(formData))"), "Custom-question editor prevents native reset, blocks duplicate dispatch, captures the complete draft, then enters the action transition");
+check(questionFormSource.includes("<form action={formAction} onSubmit={submit}") && questionFormSource.includes("if (submissionPending.current) setChangedSinceSubmit(true)"), "Custom-question editor retains no-JS action fallback and records edits made after the submitted snapshot");
+check(!/<button[^>]*\sdisabled=\{pending\}/.test(questionFormSource), "Custom-question editor keeps the focused submit control available while pending");
+for (const name of ["question_text", "category", "company_slug", "description", "notes"]) {
+  check(questionFormSource.includes(`behavioralErrorProps(state, "${name}")`) && questionFormSource.includes(`<BehavioralFieldError state={state} name="${name}"`), `Custom-question editor connects ${name} to its exact server error target`);
+}
+const newQuestionPage = read("app/behavioral/questions/new/page.tsx");
+const editQuestionPage = read("app/behavioral/questions/[questionId]/edit/page.tsx");
+const questionDetailPage = read("app/behavioral/questions/[questionId]/page.tsx");
+check(newQuestionPage.includes("randomUUID") && newQuestionPage.includes("<QuestionForm questionId={randomUUID()}"), "New custom questions receive a stable caller-generated mutation identity");
+check(editQuestionPage.includes("<QuestionForm questionId={question.id} question={question}"), "Custom-question edits pass the exact loaded row and revision into the editor");
+check(questionDetailPage.includes("deleteQuestionAction.bind(null, question.id, question.custom.updated_at)"), "Custom-question deletion submits the exact displayed revision");
 const globalCss = read("app/globals.css");
 check(globalCss.includes('.behavioral-form .button[aria-disabled="true"]') && globalCss.includes('.behavioral-form .button[aria-disabled="true"]:hover') && globalCss.includes(".behavioral-save-status"), "Story pending and save status styles stay scoped to the Behavioral aggregate editor");
 const readiness = read("lib/behavioral/readiness.ts");

@@ -81,6 +81,20 @@ function behavioralAnswerArgs(overrides = {}) {
   };
 }
 
+function behavioralQuestionArgs(questionId, overrides = {}) {
+  return {
+    target_question_id: questionId,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_question_text: "Phase 9 private custom Behavioral question?",
+    target_description: "Owner A private question context.",
+    target_category: "Leadership",
+    target_company_slug: null,
+    target_notes: "Owner A private custom-question note.",
+    ...overrides,
+  };
+}
+
 function interviewExperienceArgs(overrides = {}) {
   return {
     target_experience_id: crypto.randomUUID(),
@@ -164,6 +178,7 @@ const consume = (client, max = 3, window = 900) =>
 
 let behavioralStory;
 let behavioralAnswer;
+let behavioralQuestion;
 let interviewPlaybookDiagnosticRevision;
 let interviewExperience;
 
@@ -410,6 +425,29 @@ await check("Behavioral aggregate RPCs deny anonymous callers", async () => {
   return "story and answer aggregate mutations returned SQLSTATE 42501";
 });
 
+await check("Behavioral custom-question RPCs deny anonymous and direct mutation", async () => {
+  const questionId = randomUUID();
+  const anonymousCalls = await Promise.all([
+    anon.rpc("save_behavioral_custom_question_if_revision", behavioralQuestionArgs(questionId)),
+    anon.rpc("delete_behavioral_custom_question_if_revision", {
+      target_question_id: questionId,
+      target_expected_updated_at: new Date().toISOString(),
+    }),
+  ]);
+  for (const attempt of anonymousCalls) assert.equal(attempt.error?.code, "42501", "anonymous custom-question mutation must fail with 42501");
+  const created = await a.client.rpc("save_behavioral_custom_question_if_revision", behavioralQuestionArgs(questionId));
+  assert.ifError(created.error);
+  assert.equal(created.data?.length, 1);
+  behavioralQuestion = created.data[0];
+  const directMutations = await Promise.all([
+    a.client.from("behavioral_custom_questions").insert({ user_id: a.user.id, question_text: "Direct custom question bypass" }),
+    a.client.from("behavioral_custom_questions").update({ notes: "Direct private overwrite" }).eq("id", questionId),
+    a.client.from("behavioral_custom_questions").delete().eq("id", questionId),
+  ]);
+  for (const mutation of directMutations) assert.equal(mutation.error?.code, "42501", "direct custom-question mutation must fail with 42501");
+  return `owner question ${questionId}; anonymous and direct writes denied`;
+});
+
 await check("Behavioral aggregate derives its owner and closes direct mutation bypasses", async () => {
   const created = await a.client.rpc("create_behavioral_story_with_themes", behavioralStoryArgs());
   assert.ifError(created.error);
@@ -529,6 +567,46 @@ await check("foreign and missing Behavioral answer targets are indistinguishable
     updated_at: behavioralAnswer.updated_at,
   });
   return "foreign and missing updates returned zero rows; foreign relationship rejected; owner answer unchanged";
+});
+
+await check("foreign and missing Behavioral custom-question targets are indistinguishable", async () => {
+  assert.ok(behavioralQuestion, "owner custom-question fixture was unavailable");
+  const missingId = randomUUID();
+  const [foreignSave, missingSave, foreignDelete, missingDelete] = await Promise.all([
+    b.client.rpc("save_behavioral_custom_question_if_revision", behavioralQuestionArgs(behavioralQuestion.question_id, {
+      target_expect_absent: false,
+      target_expected_updated_at: behavioralQuestion.updated_at,
+      target_notes: "Foreign private overwrite.",
+    })),
+    b.client.rpc("save_behavioral_custom_question_if_revision", behavioralQuestionArgs(missingId, {
+      target_expect_absent: false,
+      target_expected_updated_at: behavioralQuestion.updated_at,
+      target_notes: "Missing private overwrite.",
+    })),
+    b.client.rpc("delete_behavioral_custom_question_if_revision", {
+      target_question_id: behavioralQuestion.question_id,
+      target_expected_updated_at: behavioralQuestion.updated_at,
+    }),
+    b.client.rpc("delete_behavioral_custom_question_if_revision", {
+      target_question_id: missingId,
+      target_expected_updated_at: behavioralQuestion.updated_at,
+    }),
+  ]);
+  for (const attempt of [foreignSave, missingSave, foreignDelete, missingDelete]) {
+    assert.ifError(attempt.error);
+    assert.deepEqual(attempt.data, []);
+  }
+  const owner = await a.client.from("behavioral_custom_questions").select("question_text,description,category,company_slug,notes,updated_at").eq("id", behavioralQuestion.question_id).single();
+  assert.ifError(owner.error);
+  assert.deepEqual(owner.data, {
+    question_text: "Phase 9 private custom Behavioral question?",
+    description: "Owner A private question context.",
+    category: "Leadership",
+    company_slug: null,
+    notes: "Owner A private custom-question note.",
+    updated_at: behavioralQuestion.updated_at,
+  });
+  return "foreign and missing save/delete returned zero rows; owner question unchanged";
 });
 
 // --- Export throttle -------------------------------------------------------

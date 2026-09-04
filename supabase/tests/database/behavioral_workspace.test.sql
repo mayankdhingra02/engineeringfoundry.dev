@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(114);
+select plan(135);
 
 select is((select count(*)::integer from public.behavioral_curated_questions where is_active), 48, 'the global curated catalog is seeded once');
 select ok(has_table_privilege('anon', 'public.behavioral_curated_questions', 'select'), 'anon can read the curated catalog');
@@ -14,6 +14,13 @@ select ok(not has_table_privilege('anon', 'public.behavioral_story_themes', 'sel
 select ok(not has_table_privilege('anon', 'public.behavioral_story_question_links', 'select'), 'anon cannot read story links');
 select ok(not has_table_privilege('anon', 'public.behavioral_answers', 'select'), 'anon cannot read answers');
 select ok(has_table_privilege('authenticated', 'public.behavioral_custom_questions', 'select'), 'authenticated can read owned custom questions through RLS');
+select ok(has_function_privilege('authenticated', 'public.save_behavioral_custom_question_if_revision(uuid,boolean,timestamptz,text,text,text,text,text)', 'execute'), 'authenticated can save a revision-checked custom question');
+select ok(has_function_privilege('authenticated', 'public.delete_behavioral_custom_question_if_revision(uuid,timestamptz)', 'execute'), 'authenticated can delete a custom question with its exact revision');
+select ok(not has_function_privilege('anon', 'public.save_behavioral_custom_question_if_revision(uuid,boolean,timestamptz,text,text,text,text,text)', 'execute'), 'anon cannot save custom questions');
+select ok(not has_function_privilege('anon', 'public.delete_behavioral_custom_question_if_revision(uuid,timestamptz)', 'execute'), 'anon cannot delete custom questions');
+select ok(not has_column_privilege('authenticated', 'public.behavioral_custom_questions', 'question_text', 'insert'), 'clients cannot bypass custom-question creation with a direct insert');
+select ok(not has_column_privilege('authenticated', 'public.behavioral_custom_questions', 'notes', 'update'), 'clients cannot bypass custom-question revision checks with a direct update');
+select ok(not has_table_privilege('authenticated', 'public.behavioral_custom_questions', 'delete'), 'clients cannot bypass custom-question revision checks with a direct delete');
 select ok(has_table_privilege('authenticated', 'public.behavioral_stories', 'select'), 'authenticated can read owned stories through RLS');
 select ok(has_table_privilege('authenticated', 'public.behavioral_story_themes', 'select'), 'authenticated can read owned themes through RLS');
 select ok(has_table_privilege('authenticated', 'public.behavioral_story_question_links', 'select'), 'authenticated can read owned story links through RLS');
@@ -50,11 +57,24 @@ values
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', true);
 
-insert into public.behavioral_custom_questions (user_id, question_text, category)
-values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Tell me about a private example question?', 'Leadership');
 select set_config(
   'test.behavioral_custom_question_id',
-  (select id::text from public.behavioral_custom_questions where question_text = 'Tell me about a private example question?'),
+  'c1111111-1111-4111-8111-111111111111',
+  true
+);
+select public.save_behavioral_custom_question_if_revision(
+  current_setting('test.behavioral_custom_question_id')::uuid,
+  true,
+  null,
+  'Tell me about a private example question?',
+  'Private original context.',
+  'Leadership',
+  null,
+  'Private original notes.'
+);
+select set_config(
+  'test.behavioral_custom_question_revision',
+  (select updated_at::text from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid),
   true
 );
 select set_config(
@@ -154,6 +174,82 @@ select is((select count(*)::integer from public.behavioral_story_themes), 1, 'ow
 select is((select count(*)::integer from public.behavioral_story_question_links), 2, 'one story can link to curated and custom questions');
 select is((select count(*)::integer from public.behavioral_answers where curated_question_id = 'beh-lead-01'), 2, 'one question supports multiple answer versions');
 select is((select count(*)::integer from public.behavioral_answers where custom_question_id = current_setting('test.behavioral_custom_question_id')::uuid), 1, 'custom question can have an answer');
+select is(
+  (
+    select count(*)::integer
+    from public.save_behavioral_custom_question_if_revision(
+      current_setting('test.behavioral_custom_question_id')::uuid,
+      false,
+      current_setting('test.behavioral_custom_question_revision')::timestamptz,
+      'Tell me about an updated private example question?',
+      'Updated private context.',
+      'Leadership',
+      'engineering-foundry',
+      'Owner-edited private note.'
+    )
+  ),
+  1,
+  'an exact custom-question revision saves the complete private snapshot'
+);
+select ok(
+  (select updated_at > current_setting('test.behavioral_custom_question_revision')::timestamptz from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid),
+  'an exact custom-question revision advances monotonically'
+);
+select set_config(
+  'test.behavioral_custom_question_current_revision',
+  (select updated_at::text from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid),
+  true
+);
+select is(
+  (
+    select count(*)::integer
+    from public.save_behavioral_custom_question_if_revision(
+      current_setting('test.behavioral_custom_question_id')::uuid,
+      false,
+      current_setting('test.behavioral_custom_question_revision')::timestamptz,
+      'Stale custom question overwrite',
+      null,
+      'Other',
+      null,
+      'Stale private notes'
+    )
+  ),
+  0,
+  'a stale custom-question revision returns no row'
+);
+select is((select notes from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid), 'Owner-edited private note.', 'a stale custom-question revision preserves private notes');
+select is(
+  (
+    select count(*)::integer
+    from public.save_behavioral_custom_question_if_revision(
+      current_setting('test.behavioral_custom_question_id')::uuid,
+      true,
+      null,
+      'Absent replay overwrite',
+      null,
+      'Other',
+      null,
+      null
+    )
+  ),
+  0,
+  'an absent replay cannot overwrite an existing custom question'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.delete_behavioral_custom_question_if_revision(
+      current_setting('test.behavioral_custom_question_id')::uuid,
+      current_setting('test.behavioral_custom_question_revision')::timestamptz
+    )
+  ),
+  0,
+  'a stale custom-question delete returns no row'
+);
+select is((select count(*)::integer from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid), 1, 'a stale custom-question delete preserves the question');
+select throws_ok($$insert into public.behavioral_custom_questions (user_id, question_text) values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Direct custom-question insert')$$, '42501');
+select throws_ok($$update public.behavioral_custom_questions set notes = 'Direct custom-question update' where id = current_setting('test.behavioral_custom_question_id')::uuid$$, '42501');
+select throws_ok($$delete from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid$$, '42501');
 select is(
   (
     select count(*)::integer
@@ -412,13 +508,40 @@ select set_config(
   ),
   true
 );
-select throws_ok($$insert into public.behavioral_custom_questions (user_id, question_text) values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'Attempted forged ownership')$$, '42501');
+select is(
+  (
+    select count(*)::integer
+    from public.save_behavioral_custom_question_if_revision(
+      current_setting('test.behavioral_custom_question_id')::uuid,
+      false,
+      current_setting('test.behavioral_custom_question_current_revision')::timestamptz,
+      'Foreign custom question update', null, 'Other', null, 'Intrusion'
+    )
+  ),
+  0,
+  'another user receives no custom-question save row'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.save_behavioral_custom_question_if_revision(
+      'c9999999-9999-4999-8999-999999999999'::uuid,
+      false,
+      pg_catalog.clock_timestamp(),
+      'Missing custom question update', null, 'Other', null, null
+    )
+  ),
+  0,
+  'a missing custom-question save returns the same zero-row result'
+);
+select is((select count(*)::integer from public.delete_behavioral_custom_question_if_revision(current_setting('test.behavioral_custom_question_id')::uuid, pg_catalog.clock_timestamp())), 0, 'another user receives no custom-question delete row');
+select is((select count(*)::integer from public.delete_behavioral_custom_question_if_revision('c9999999-9999-4999-8999-999999999999'::uuid, pg_catalog.clock_timestamp())), 0, 'a missing custom-question delete returns the same zero-row result');
 select throws_ok($$insert into public.behavioral_story_themes (user_id, story_id, theme) values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', current_setting('test.behavioral_story_id')::uuid, 'Ownership')$$, '42501');
 select throws_ok($$insert into public.behavioral_story_question_links (user_id, story_id, curated_question_id) values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', current_setting('test.behavioral_story_id')::uuid, 'beh-lead-02')$$, '42501');
 select throws_ok($$insert into public.behavioral_answers (user_id, custom_question_id, title, answer_text) values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', current_setting('test.behavioral_custom_question_id')::uuid, 'Intrusion', 'No access')$$, '42501');
 select throws_ok($$update public.behavioral_stories set title = 'Intrusion' where id = current_setting('test.behavioral_story_id')::uuid$$, '42501');
 select results_eq($$with removed as (delete from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid returning id) select count(*)::integer from removed$$, array[0], 'another user cannot delete an owned story');
-select results_eq($$with changed as (update public.behavioral_custom_questions set notes = 'Intrusion' where id = current_setting('test.behavioral_custom_question_id')::uuid returning id) select count(*)::integer from changed$$, array[0], 'another user cannot edit an owned custom question');
+select throws_ok($$update public.behavioral_custom_questions set notes = 'Intrusion' where id = current_setting('test.behavioral_custom_question_id')::uuid$$, '42501');
 select throws_ok($$select public.set_behavioral_primary_answer(current_setting('test.behavioral_answer_two_id')::uuid, true)$$, '0A000');
 select throws_ok($$insert into public.behavioral_answers (user_id, curated_question_id, application_id, title, answer_text) values ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'beh-lead-02', current_setting('test.behavioral_application_id')::uuid, 'Foreign application', '')$$, '42501');
 select is(
@@ -506,8 +629,17 @@ select throws_ok($$insert into public.behavioral_answers (user_id, curated_quest
 delete from public.behavioral_stories where id = current_setting('test.behavioral_story_three_id')::uuid;
 delete from public.behavioral_stories where id = current_setting('test.behavioral_duplicate_id')::uuid;
 delete from public.behavioral_stories where id = current_setting('test.behavioral_story_two_id')::uuid;
-delete from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid;
-select is((select count(*)::integer from public.behavioral_story_question_links where custom_question_id is not null), 0, 'deleting a custom question cascades its story links');
+select set_config(
+  'test.behavioral_custom_question_current_revision',
+  (select updated_at::text from public.behavioral_custom_questions where id = current_setting('test.behavioral_custom_question_id')::uuid),
+  true
+);
+select is(
+  (select count(*)::integer from public.delete_behavioral_custom_question_if_revision(current_setting('test.behavioral_custom_question_id')::uuid, current_setting('test.behavioral_custom_question_current_revision')::timestamptz)),
+  1,
+  'an exact custom-question delete removes one owned row'
+);
+select is((select count(*)::integer from public.behavioral_story_question_links where custom_question_id is not null), 0, 'an exact custom-question delete cascades its private children');
 select is((select count(*)::integer from public.behavioral_answers where custom_question_id is not null), 0, 'deleting a custom question cascades its answers');
 delete from public.behavioral_stories where id = current_setting('test.behavioral_story_id')::uuid;
 select is((select count(*)::integer from public.behavioral_story_themes), 0, 'deleting a story cascades its themes');

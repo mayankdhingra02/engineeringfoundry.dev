@@ -1248,6 +1248,26 @@ export type Database = {
         };
         Returns: { story_id: string; updated_at: string }[];
       };
+      save_behavioral_custom_question_if_revision: {
+        Args: {
+          target_question_id: string;
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          target_question_text: string;
+          target_description: string | null;
+          target_category: string;
+          target_company_slug: string | null;
+          target_notes: string | null;
+        };
+        Returns: { question_id: string; updated_at: string }[];
+      };
+      delete_behavioral_custom_question_if_revision: {
+        Args: {
+          target_question_id: string;
+          target_expected_updated_at: string;
+        };
+        Returns: { question_id: string }[];
+      };
       update_behavioral_story_with_themes_if_revision: {
         Args: {
           target_story_id: string;
