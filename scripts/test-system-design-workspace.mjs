@@ -26,6 +26,18 @@ import {
   parseSystemDesignItemProgressActionInput,
   parseSystemDesignItemProgressSaveResult,
 } from "../lib/system-design/item-progress-action-input.ts";
+import {
+  SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  SYSTEM_DESIGN_ATTEMPT_INVALID_INPUT_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_PENDING_MESSAGE,
+  SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR,
+  SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE,
+  parseSystemDesignAttemptActionInput,
+  parseSystemDesignAttemptSaveResult,
+  resolveSystemDesignAttemptDisplayState,
+  systemDesignAttemptDraftSignature,
+} from "../lib/system-design/attempt-action-input.ts";
 import { PrivateDataUnavailableError } from "../lib/persistence/errors.ts";
 
 let checks = 0;
@@ -39,6 +51,7 @@ const securityQualifier = readFileSync(new URL("../scripts/qualify-security-loca
 const actions = readFileSync(new URL("../features/system-design/actions.ts", import.meta.url), "utf8");
 const queries = readFileSync(new URL("../lib/system-design/queries.ts", import.meta.url), "utf8");
 const attemptQuery = readFileSync(new URL("../lib/system-design/attempt-query.ts", import.meta.url), "utf8");
+const attemptActionInput = readFileSync(new URL("../lib/system-design/attempt-action-input.ts", import.meta.url), "utf8");
 const editor = readFileSync(new URL("../features/system-design/attempt-editor.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("../app/system-design/practice/page.tsx", import.meta.url), "utf8");
 const problemPanel = readFileSync(new URL("../features/system-design/problem-practice-panel.tsx", import.meta.url), "utf8");
@@ -88,6 +101,40 @@ function progressForm(overrides = {}) {
 }
 
 const parseProgress = (form) => parseSystemDesignItemProgressActionInput(form, canonicalSystemDesignItemIds);
+
+function attemptForm(overrides = {}) {
+  const values = {
+    expected_revision: "7",
+    title: "URL Shortener rehearsal",
+    status: "review",
+    confidence: "high",
+    application_id: "33333333-3333-4333-8333-333333333333",
+    functional_requirements: "Create link\nResolve link",
+    non_functional_requirements: "p99 < 100ms",
+    capacity_assumptions: "DAU | 10M | users/day",
+    capacity_calculations: "Average RPS | 10M / 86400 | 116 RPS",
+    apis: "POST | /v1/links | Create short link",
+    data_models: "Link | id,url | keyed by id",
+    high_level_design: "Client to API to cache and database.",
+    deep_dives: "Key generation",
+    bottlenecks: "Hot keys",
+    failure_modes: "Cache outage | Higher latency | Bypass with limits",
+    tradeoffs: "Random keys | Low coordination | Collision handling",
+    follow_ups: "How would analytics change the design?",
+    final_review_notes: "State assumptions sooner.",
+    ...overrides,
+  };
+  const result = new FormData();
+  for (const [name, value] of Object.entries(values)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) result.append(name, item);
+    } else {
+      result.set(name, value);
+    }
+  }
+  return result;
+}
 
 check(canonicalSystemDesignConceptIds.size === 146, "published concept catalog stays canonical");
 check(canonicalSystemDesignProblemIds.size === 27, "published problem catalog stays canonical");
@@ -306,6 +353,124 @@ check(parsed.ok && parsed.data.capacity.assumptions[0].unit === "users/day", "ca
 check(parsed.ok && parsed.data.apis[0].method === "POST", "API method is structured");
 check(parsed.ok && parsed.data.failure_modes[0].mitigation === "Bypass with limits", "failure mitigation is structured");
 
+const validAttemptInput = parseSystemDesignAttemptActionInput(
+  canonicalAttemptId.toUpperCase(),
+  "url-shortener",
+  attemptForm({
+    title: "  URL Shortener rehearsal  ",
+    application_id: "33333333-3333-4333-8333-333333333333".toUpperCase(),
+    $ACTION_ID_attempt: "framework metadata",
+  }),
+);
+check(validAttemptInput.ok, "a complete canonical attempt form is accepted");
+check(validAttemptInput.ok && validAttemptInput.value.attemptId === canonicalAttemptId && validAttemptInput.value.problemId === "url-shortener", "bound attempt context is validated and UUID casing is canonicalized");
+check(validAttemptInput.ok && validAttemptInput.value.expectedRevision === 7 && validAttemptInput.value.title === "URL Shortener rehearsal", "the exact positive revision and trimmed title are preserved");
+check(validAttemptInput.ok && validAttemptInput.value.status === "review" && validAttemptInput.value.confidence === "high" && validAttemptInput.value.applicationId === "33333333-3333-4333-8333-333333333333", "attempt metadata is strictly normalized");
+check(validAttemptInput.ok && validAttemptInput.value.document.functional_requirements.length === 2 && validAttemptInput.value.document.capacity.assumptions[0].unit === "users/day", "the complete browser worksheet becomes one validated structured document");
+
+for (const input of [null, {}, [], new URLSearchParams()]) {
+  check(!parseSystemDesignAttemptActionInput(canonicalAttemptId, "url-shortener", input).ok, "non-FormData attempt roots fail closed");
+}
+for (const [attemptId, problemId] of [
+  ["", "url-shortener"],
+  ["11111111-1111-6111-8111-111111111111", "url-shortener"],
+  [canonicalAttemptId, "fabricated-problem"],
+  [[canonicalAttemptId], "url-shortener"],
+]) {
+  check(!parseSystemDesignAttemptActionInput(attemptId, problemId, attemptForm()).ok, "malformed or noncanonical bound attempt context fails before account work");
+}
+for (const field of [
+  "expected_revision",
+  "title",
+  "status",
+  "confidence",
+  "application_id",
+  "functional_requirements",
+  "non_functional_requirements",
+  "capacity_assumptions",
+  "capacity_calculations",
+  "apis",
+  "data_models",
+  "high_level_design",
+  "deep_dives",
+  "bottlenecks",
+  "failure_modes",
+  "tradeoffs",
+  "follow_ups",
+  "final_review_notes",
+]) {
+  check(!parseSystemDesignAttemptActionInput(canonicalAttemptId, "url-shortener", attemptForm({ [field]: undefined })).ok, `missing ${field} fails the complete attempt snapshot`);
+  check(!parseSystemDesignAttemptActionInput(canonicalAttemptId, "url-shortener", attemptForm({ [field]: ["first", "second"] })).ok, `duplicate ${field} fails the complete attempt snapshot`);
+  check(!parseSystemDesignAttemptActionInput(canonicalAttemptId, "url-shortener", attemptForm({ [field]: fileValue })).ok, `File-valued ${field} cannot be string-coerced into the private attempt`);
+}
+for (const [label, override] of [
+  ["unknown field", { surprise: "private" }],
+  ["zero revision", { expected_revision: "0" }],
+  ["leading-zero revision", { expected_revision: "07" }],
+  ["decimal revision", { expected_revision: "7.0" }],
+  ["maximum safe revision without a safe successor", { expected_revision: String(Number.MAX_SAFE_INTEGER) }],
+  ["unsafe revision", { expected_revision: String(Number.MAX_SAFE_INTEGER + 1) }],
+  ["empty title", { title: "   " }],
+  ["overlong Unicode title", { title: "😀".repeat(161) }],
+  ["unknown status", { status: "completed" }],
+  ["unknown confidence", { confidence: "certain" }],
+  ["invalid application", { application_id: "not-a-uuid" }],
+  ["control character", { final_review_notes: "private\u0000draft" }],
+  ["C1 control", { high_level_design: "private\u0085draft" }],
+  ["too many structured rows", { functional_requirements: Array.from({ length: 51 }, (_, index) => `requirement ${index}`).join("\n") }],
+  ["oversized raw field", { apis: "x".repeat(200001) }],
+]) {
+  check(!parseSystemDesignAttemptActionInput(canonicalAttemptId, "url-shortener", attemptForm(override)).ok, `${label} attempt input fails closed`);
+}
+
+check(SYSTEM_DESIGN_ATTEMPT_INVALID_INPUT_ERROR === "Review the attempt fields and try again.", "malformed attempt input uses stable curated copy");
+check(SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR === "This attempt may have changed since you opened this page. Your edits were not saved. Review the latest saved version before trying again.", "stale attempt saves use non-destructive conflict copy");
+check(SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR === "We couldn't save this attempt." && SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE === "Attempt saved.", "attempt persistence and success copy remain stable");
+check(SYSTEM_DESIGN_ATTEMPT_PENDING_MESSAGE === "Saving attempt…" && SYSTEM_DESIGN_ATTEMPT_EARLIER_SNAPSHOT_SAVED_MESSAGE === "An earlier attempt snapshot saved. Review your current changes and save again.", "pending and earlier-snapshot attempt copy remain truthful");
+
+if (!validAttemptInput.ok) throw new Error("valid attempt fixture did not parse");
+const validAttemptSaveRow = {
+  ...validPersistedAttempt,
+  id: validAttemptInput.value.attemptId,
+  problem_id: validAttemptInput.value.problemId,
+  application_id: validAttemptInput.value.applicationId,
+  title: validAttemptInput.value.title,
+  status: validAttemptInput.value.status,
+  confidence: validAttemptInput.value.confidence,
+  document: validAttemptInput.value.document,
+  revision: validAttemptInput.value.expectedRevision + 1,
+};
+check(parseSystemDesignAttemptSaveResult([], validAttemptInput.value).status === "conflict", "only an exact zero-row attempt save is a stale conflict");
+check(parseSystemDesignAttemptSaveResult([validAttemptSaveRow], validAttemptInput.value).revision === 8, "one complete correlated attempt result advances the revision");
+for (const [label, result] of [
+  ["null", null],
+  ["object", {}],
+  ["two rows", [validAttemptSaveRow, validAttemptSaveRow]],
+  ["wrong attempt", [{ ...validAttemptSaveRow, id: "22222222-2222-4222-8222-222222222222" }]],
+  ["wrong problem", [{ ...validAttemptSaveRow, problem_id: "chat-application" }]],
+  ["wrong catalog type", [{ ...validAttemptSaveRow, catalog_item_type: "concept" }]],
+  ["wrong title", [{ ...validAttemptSaveRow, title: "Unexpected" }]],
+  ["wrong status", [{ ...validAttemptSaveRow, status: "draft" }]],
+  ["wrong confidence", [{ ...validAttemptSaveRow, confidence: null }]],
+  ["wrong application", [{ ...validAttemptSaveRow, application_id: null }]],
+  ["stale revision", [{ ...validAttemptSaveRow, revision: 7 }]],
+  ["skipped revision", [{ ...validAttemptSaveRow, revision: 9 }]],
+  ["malformed returned document", [{ ...validAttemptSaveRow, document: { private: "field" } }]],
+  ["different returned document", [{ ...validAttemptSaveRow, document: { ...validAttemptInput.value.document, high_level_design: "Different" } }]],
+]) {
+  check(parseSystemDesignAttemptSaveResult(result, validAttemptInput.value).status === "invalid", `${label} attempt result cannot claim a save or conflict`);
+}
+
+const submittedAttemptForm = attemptForm();
+const submittedAttemptSignature = systemDesignAttemptDraftSignature(submittedAttemptForm);
+submittedAttemptForm.set("title", "A newer local title");
+check(systemDesignAttemptDraftSignature(submittedAttemptForm) !== submittedAttemptSignature, "attempt draft signatures detect edits after a submitted snapshot");
+submittedAttemptForm.set("title", "URL Shortener rehearsal");
+check(systemDesignAttemptDraftSignature(submittedAttemptForm) === submittedAttemptSignature, "attempt draft signatures recognize a return to the exact submitted snapshot");
+check(resolveSystemDesignAttemptDisplayState({ status: "idle", message: "" }, true, false).message === SYSTEM_DESIGN_ATTEMPT_PENDING_MESSAGE, "pending attempt copy outranks prior settled state");
+check(resolveSystemDesignAttemptDisplayState({ status: "success", message: SYSTEM_DESIGN_ATTEMPT_SAVED_MESSAGE }, false, true).message === SYSTEM_DESIGN_ATTEMPT_EARLIER_SNAPSHOT_SAVED_MESSAGE, "a successful earlier attempt snapshot cannot claim newer visible edits were saved");
+check(resolveSystemDesignAttemptDisplayState({ status: "error", message: SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR, conflict: true }, false, true).message === SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR, "attempt conflicts retain their exact error instead of becoming earlier-snapshot success");
+
 const continueCatalog = [{ id: "caching", itemType: "concept", title: "Caching", href: "/system-design/caching/caching" }];
 const draftTarget = chooseSystemDesignContinueTarget([
   { id: "older", problem_id: "url-shortener", title: "Older review", status: "review", confidence: null, updated_at: "2026-08-13T00:00:00Z" },
@@ -390,7 +555,7 @@ for (const marker of [
 check(actions.includes("canonicalSystemDesignProblemIds.has"), "server action validates problem catalog");
 check(actions.includes("target_expected_revision"), "server action forwards concurrency token");
 check(actions.includes("getAuthenticatedActor"), "server actions derive actor from session");
-check(actions.includes("attemptDocumentFromForm"), "attempt document is server-validated");
+check(attemptActionInput.includes("attemptDocumentFromForm(input)") && attemptActionInput.includes("if (!documentResult.ok) return { ok: false }"), "the strict attempt parser delegates the proven-complete fields to structured document validation");
 const progressActionStart = actions.indexOf("export async function saveSystemDesignProgressAction");
 const progressActionEnd = actions.indexOf("\nexport async function ", progressActionStart + 1);
 const progressActionBody = actions.slice(progressActionStart, progressActionEnd);
@@ -406,13 +571,46 @@ check(progressActionBody.includes('outcome.status === "conflict"') && progressAc
 check(progressActionBody.includes('outcome.status === "invalid"') && progressActionBody.includes("SYSTEM_DESIGN_PROGRESS_PERSISTENCE_ERROR"), "malformed success data becomes a sanitized persistence failure");
 check(progressActionBody.includes("revision: outcome.updatedAt") && progressActionBody.indexOf("refreshSystemDesign(") < progressActionBody.indexOf("analytics:"), "only a validated one-row success advances revision, refreshes, and exposes analytics");
 check(!progressActionBody.includes('rpc("save_system_design_item_progress"'), "production full progress cannot call the legacy whole-row RPC");
+const attemptActionStart = actions.indexOf("export async function saveSystemDesignAttemptAction");
+const attemptActionEnd = actions.indexOf("\nexport async function ", attemptActionStart + 1);
+const attemptActionBody = actions.slice(attemptActionStart, attemptActionEnd);
+const attemptBodyOpen = attemptActionBody.indexOf("{");
+const attemptParserIndex = attemptActionBody.indexOf("parseSystemDesignAttemptActionInput(");
+const attemptInvalidIndex = attemptActionBody.indexOf("if (!parsed.ok)");
+const attemptAvailabilityIndex = attemptActionBody.indexOf("isAccountPlatformAvailable()");
+const attemptActorIndex = attemptActionBody.indexOf("getAuthenticatedActor()");
+const attemptRpcIndex = attemptActionBody.indexOf('rpc("save_system_design_attempt"');
+check(
+  attemptActionStart >= 0 &&
+    attemptActionBody.slice(attemptBodyOpen + 1).trimStart().startsWith("const parsed = parseSystemDesignAttemptActionInput(") &&
+    attemptParserIndex < attemptInvalidIndex &&
+    attemptInvalidIndex < attemptAvailabilityIndex &&
+    attemptAvailabilityIndex < attemptActorIndex &&
+    attemptActorIndex < attemptRpcIndex,
+  "attempt saves parse and reject the complete runtime snapshot before availability, actor, or persistence work",
+);
+for (const argument of [
+  "target_attempt_id: input.attemptId",
+  "target_expected_revision: input.expectedRevision",
+  "target_title: input.title",
+  "target_status: input.status",
+  "target_confidence: input.confidence",
+  "target_application_id: input.applicationId",
+  "target_document: attemptDocumentToJson(input.document)",
+]) check(attemptActionBody.includes(argument), `attempt save RPC is missing ${argument}`);
+check(attemptActionBody.indexOf("if (error)") < attemptActionBody.indexOf("parseSystemDesignAttemptSaveResult(data, input)"), "attempt RPC errors cannot be reclassified as zero-row conflicts");
+check(attemptActionBody.includes('outcome.status === "conflict"') && attemptActionBody.includes("return failed(SYSTEM_DESIGN_ATTEMPT_CONFLICT_ERROR, true)"), "only a validated zero-row attempt result becomes a stable stale-write conflict");
+check(attemptActionBody.includes('outcome.status === "invalid"') && attemptActionBody.includes("return failed(SYSTEM_DESIGN_ATTEMPT_PERSISTENCE_ERROR)"), "malformed or mismatched attempt success data stays a sanitized persistence failure");
+check(attemptActionBody.includes("revision: previousState.revision") && attemptActionBody.includes("revision: input.expectedRevision"), "input and persistence failures retain the last trustworthy revision instead of adopting unverified data");
+check(attemptActionBody.indexOf("refreshSystemDesign(input.problemId, input.attemptId)") < attemptActionBody.indexOf("revision: outcome.revision"), "only a correlated one-row result refreshes the attempt and advances its revision");
+check(!attemptActionBody.includes("formData.get") && !attemptActionBody.includes("String(formData") && !attemptActionBody.includes("attemptDocumentFromForm"), "the attempt action cannot coerce or partially parse raw FormData outside the strict helper");
 for (const actionName of ["saveSystemDesignProgressAction", "createSystemDesignAttemptAction", "saveSystemDesignAttemptAction", "deleteSystemDesignAttemptAction"]) {
   const start = actions.indexOf(`export async function ${actionName}`);
   const end = actions.indexOf("\nexport async function ", start + 1);
   const body = actions.slice(start, end < 0 ? undefined : end);
   check(start >= 0 && body.indexOf("isAccountPlatformAvailable()") < body.indexOf("getAuthenticatedActor()"), `${actionName} must reject disabled account persistence before resolving an actor`);
 }
-check(actions.includes('message: "Account persistence is not available in this configuration."'), "disabled progress and attempt saves return an explicit configuration error");
+check(actions.includes('failed("Account persistence is not available in this configuration.")'), "disabled progress and attempt saves return an explicit configuration error without actor work");
 check(actions.includes('redirect(`/signin?next=${encodeURIComponent(`/system-design/problems/${problemId}`)}`)') && actions.includes('redirect("/signin?next=/system-design/practice")'), "enabled signed-out attempt actions preserve their sign-in handoffs");
 check((queries.match(/if \(!accountPlatformAvailable\) return \{ accountPlatformAvailable, signedIn: false as const/g) ?? []).length === 3, "workspace, item, and problem queries expose a distinct disabled-account state");
 check((queries.match(/if \(!actor\) return \{ accountPlatformAvailable, signedIn: false as const/g) ?? []).length === 3, "enabled signed-out queries preserve account availability separately from authentication");
@@ -480,7 +678,32 @@ check(progressEditor.includes('const key = `${state.analytics.itemType}:${state.
 check(styles.includes('.sd-private-progress .button[aria-disabled="true"]') && styles.includes('.sd-private-progress .button[aria-disabled="true"]:hover'), "progress pending styling is scoped and hover-neutral while focus stays on the submit control");
 check(sidebar.includes("accountPlatformAvailable: boolean") && sidebar.includes("...(accountPlatformAvailable ?") && sidebar.includes('label: "My Practice"'), "sidebar exposes My Practice only when the account platform is available");
 check(contentRoute.includes("accountPlatformAvailable={state.accountPlatformAvailable}") && lesson.includes("accountPlatformAvailable={accountPlatformAvailable}") && plan.includes("accountPlatformAvailable={accountPlatformAvailable}"), "public problem, lesson, and plan routes forward server-derived account availability");
-check(editor.includes('role="status"'), "attempt save and error feedback is announced");
+const attemptSubmitStart = editor.indexOf("const submit = (");
+const attemptSubmitEnd = editor.indexOf("\n\n  const attemptDocument", attemptSubmitStart);
+const attemptSubmitBody = editor.slice(attemptSubmitStart, attemptSubmitEnd);
+const attemptPreventDefaultIndex = attemptSubmitBody.indexOf("event.preventDefault()");
+const attemptDuplicateGuardIndex = attemptSubmitBody.indexOf("if (submissionPending.current || state.conflict) return");
+const attemptPendingClaimIndex = attemptSubmitBody.indexOf("submissionPending.current = true");
+const attemptFormSnapshotIndex = attemptSubmitBody.indexOf("new FormData(event.currentTarget)");
+const attemptSignatureIndex = attemptSubmitBody.indexOf("systemDesignAttemptDraftSignature(formData)");
+const attemptTransitionIndex = attemptSubmitBody.indexOf("startTransition(() => formAction(formData))");
+check(
+  attemptPreventDefaultIndex >= 0 &&
+    attemptPreventDefaultIndex < attemptDuplicateGuardIndex &&
+    attemptDuplicateGuardIndex < attemptPendingClaimIndex &&
+    attemptPendingClaimIndex < attemptFormSnapshotIndex &&
+    attemptFormSnapshotIndex < attemptSignatureIndex &&
+    attemptSignatureIndex < attemptTransitionIndex,
+  "manual attempt submission preserves the uncontrolled draft and synchronously guards duplicate or conflicted snapshots before transition dispatch",
+);
+check(editor.includes("if (!pending) submissionPending.current = false") && editor.includes("submissionPending.current = false;\n      submittedDraftSignature.current = null;"), "the attempt duplicate guard resets only after settlement and on unmount");
+check(editor.includes("<form action={formAction}") && editor.includes("onSubmit={submit}") && editor.includes("aria-busy={pending}"), "attempt editing retains a no-JavaScript action while exposing the guarded pending state");
+check(editor.includes('name="expected_revision" value={state.revision ?? attempt.revision}') && attemptActionBody.includes("revision: outcome.revision"), "the editor submits the exact loaded revision and the action advances it only after correlated persistence");
+check(editor.includes("submittedDraftSignature.current =") && editor.includes("changedSinceSubmitRef.current = changed") && editor.includes("result.status === \"success\" && !changedSinceSubmitRef.current"), "attempt editing distinguishes the saved snapshot from edits made or reverted while persistence is pending");
+check(!/(?:^|\s)disabled=\{pending/m.test(editor) && !editor.includes("key={state") && !editor.includes(".focus()"), "attempt pending and conflict handling neither natively disables, remounts, nor claims focus from the draft");
+check(editor.includes('role={displayState.status === "error" ? "alert" : "status"}') && editor.includes('aria-live={displayState.status === "error" ? "assertive" : "polite"}') && (editor.match(/aria-atomic="true"/g) ?? []).length === 1, "one atomic live region announces pending, earlier-snapshot success, and conflict with appropriate urgency");
+check(editor.includes("!pending && state.conflict") && editor.includes('<Link href={latestHref} target="_blank" rel="noopener noreferrer">Review latest in a new tab</Link>'), "only a settled attempt conflict exposes the canonical same-record recovery link with safe new-tab attributes");
+check(editor.includes("aria-disabled={pending || Boolean(state.conflict)}") && styles.includes('.sd-attempt-savebar .button[aria-disabled="true"]') && styles.includes('.sd-attempt-savebar .button[aria-disabled="true"]:hover'), "attempt submit remains focusable while scoped pending or conflict styling blocks repeat activation without hover drift");
 check(editor.includes("<fieldset"), "structured attempt controls have a labeled semantic group");
 check(!editor.includes("<main>"), "attempt editor does not nest a main landmark");
 check(problemPanel.includes("Each attempt remains independent"), "problem UI explains attempt independence");
