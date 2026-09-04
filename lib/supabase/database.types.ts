@@ -920,6 +920,10 @@ export type Database = {
       submit_feedback_submission: { Args: { payload: Json; anonymous_subject?: string | null }; Returns: string };
       export_own_feedback_submissions: { Args: Record<PropertyKey, never>; Returns: { reference_id: string; category: "bug" | "suggestion" | "content_source" | "accessibility" | "privacy_safety" | "other"; message: string; page_context: string | null; contact_email: string | null; contact_consent: boolean; status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; created_at: string; updated_at: string }[] };
       update_feedback_submission: { Args: { target_id: string; next_status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; next_note?: string | null }; Returns: boolean };
+      update_feedback_submission_if_revision: {
+        Args: { target_feedback_id: string; target_expected_updated_at: string; target_status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; target_admin_note: string | null };
+        Returns: { feedback_id: string; status: "new" | "triaged" | "planned" | "resolved" | "closed" | "spam"; updated_at: string }[];
+      };
       moderate_interview_experience: { Args: { target_id: string; next_status: "needs_changes" | "approved" | "rejected"; moderation_note?: string | null }; Returns: boolean };
       moderate_interview_experience_if_revision: {
         Args: { target_experience_id: string; target_expected_updated_at: string; target_status: "needs_changes" | "approved" | "rejected"; target_moderation_note: string | null };

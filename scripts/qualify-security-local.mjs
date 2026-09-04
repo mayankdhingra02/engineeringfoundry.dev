@@ -197,6 +197,36 @@ let behavioralQuestion;
 let interviewPlaybookDiagnosticRevision;
 let interviewExperience;
 
+await check("feedback triage requires an admin, a revision, and the controlled RPC", async () => {
+  const targetId = randomUUID();
+  const revision = "2026-09-04T12:00:00.000Z";
+  const [anonymous, member, legacy, direct] = await Promise.all([
+    anon.rpc("update_feedback_submission_if_revision", {
+      target_feedback_id: targetId,
+      target_expected_updated_at: revision,
+      target_status: "resolved",
+      target_admin_note: null,
+    }),
+    a.client.rpc("update_feedback_submission_if_revision", {
+      target_feedback_id: targetId,
+      target_expected_updated_at: revision,
+      target_status: "resolved",
+      target_admin_note: null,
+    }),
+    a.client.rpc("update_feedback_submission", {
+      target_id: targetId,
+      next_status: "resolved",
+      next_note: null,
+    }),
+    a.client.from("feedback_submissions").update({ status: "resolved" }).eq("id", targetId),
+  ]);
+  assert.equal(anonymous.error?.code, "42501");
+  assert.equal(member.error?.code, "42501");
+  assert.equal(legacy.error?.code, "0A000");
+  assert.equal(direct.error?.code, "42501");
+  return "anonymous 42501; non-admin 42501; legacy 0A000; direct update 42501";
+});
+
 await check("profile revision writers derive the owner and deny anonymous or direct writes", async () => {
   const ownerBefore = await a.client.from("profiles").select("display_name,updated_at").single();
   assert.ifError(ownerBefore.error);

@@ -26,6 +26,8 @@ The first operator membership is a deliberate deployment bootstrap action, perfo
 
 The feedback queue requests an exact filtered count and pages through at most 100 reports at a time using deterministic creation-time and ID ordering. Previous and next links retain the active status and category filters, the visible range is disclosed, and an out-of-range page returns to the last real page. No queue result is silently truncated.
 
+Feedback triage is revision-bound. The detail read carries the exact `updated_at` revision into a strict status-and-private-note form, and `update_feedback_submission_if_revision` serializes changes per item. Two operator snapshots from one revision can produce only one coherent winner; a stale save returns no row and cannot replace the newer status or private note. An exact no-op returns the current revision without timestamp or audit churn. The form keeps the operator draft and focus in place on conflict, offers a non-destructive latest-record view in a new tab, and distinguishes an earlier submitted snapshot from edits made while saving. These rendered draft and focus behaviors remain browser/manual validation; repository checks cover the parser, result resolver, action ordering, and component wiring.
+
 ## Audit and source review
 
 Admin status changes and experience moderation create `admin_audit_events` with only actor, action, target, prior status, new status, and timestamp. Audit events never copy feedback bodies, contributor reports, contact details, or private notes.

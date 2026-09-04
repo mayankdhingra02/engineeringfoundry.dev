@@ -549,6 +549,56 @@ await check("public interview experience uses the exact anonymous nested project
   return "safe nested fields only; anon hidden columns denied; non-owner base row invisible";
 });
 
+await check("concurrent feedback triage snapshots accept exactly one coherent operator state", async () => {
+  const reference = expectSuccess(await a.authClient.rpc("submit_feedback_submission", {
+    payload: {
+      category: "privacy_safety",
+      message: "Private feedback triage concurrency qualification fixture.",
+      page_context: "/feedback",
+    },
+    anonymous_subject: null,
+  }), "feedback triage fixture submission failed");
+  queryLocalDatabase("insert into public.admin_memberships(user_id) values (:'user_id'::uuid) on conflict do nothing", { user_id: a.user.id });
+  try {
+    const initial = expectSuccess(await a.authClient
+      .from("feedback_submissions")
+      .select("id,status,admin_note,updated_at")
+      .eq("reference_id", reference)
+      .single(), "feedback triage fixture read failed");
+    const candidates = [
+      { status: "planned", note: "Operator snapshot one." },
+      { status: "resolved", note: "Operator snapshot two." },
+    ];
+    const attempts = await Promise.all(candidates.map((candidate) =>
+      a.authClient.rpc("update_feedback_submission_if_revision", {
+        target_feedback_id: initial.id,
+        target_expected_updated_at: initial.updated_at,
+        target_status: candidate.status,
+        target_admin_note: candidate.note,
+      })));
+    for (const attempt of attempts) expect(!attempt.error, attempt.error?.message ?? "feedback triage race failed");
+    expect(attempts.reduce((total, attempt) => total + (attempt.data?.length ?? 0), 0) === 1, "feedback triage race did not produce exactly one revision winner");
+    const winnerIndex = attempts.findIndex((attempt) => attempt.data?.length === 1);
+    const saved = expectSuccess(await a.authClient
+      .from("feedback_submissions")
+      .select("status,admin_note,updated_at")
+      .eq("id", initial.id)
+      .single(), "feedback triage winner read failed");
+    expect(saved.status === candidates[winnerIndex].status && saved.admin_note === candidates[winnerIndex].note, "feedback triage race produced a torn operator state");
+    expect(saved.updated_at === attempts[winnerIndex].data[0].updated_at && saved.updated_at !== initial.updated_at, "feedback triage winner returned the wrong revision");
+    const stale = await a.authClient.rpc("update_feedback_submission_if_revision", {
+      target_feedback_id: initial.id,
+      target_expected_updated_at: initial.updated_at,
+      target_status: "closed",
+      target_admin_note: "Stale operator state.",
+    });
+    expect(!stale.error && stale.data?.length === 0, stale.error?.message ?? "stale feedback triage did not return zero rows");
+    return `${saved.status} won with its matching private note; stale retry returned zero rows`;
+  } finally {
+    queryLocalDatabase("delete from public.admin_memberships where user_id = :'user_id'::uuid", { user_id: a.user.id });
+  }
+});
+
 await check("concurrent Interview Experience full saves commit one coherent parent and round snapshot", async () => {
   const experienceId = randomUUID();
   const initial = expectSingleExperienceResult(await a.authClient.rpc("save_interview_experience_if_revision", interviewExperienceArgs({

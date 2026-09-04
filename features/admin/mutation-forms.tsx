@@ -18,11 +18,15 @@ import {
   feedbackStatusLabel,
 } from "@/lib/feedback/model";
 import {
+  ADMIN_FEEDBACK_EXPECTED_REVISION_FIELD,
+  adminFeedbackTriageDraftSignature,
+  resolveAdminFeedbackTriageDisplayState,
+} from "@/lib/admin/feedback-triage-action-input";
+import {
   INTERVIEW_EXPERIENCE_EXPECTED_REVISION_FIELD,
   resolveInterviewExperienceDisplayState,
 } from "@/lib/interview-experiences/action-input";
 import {
-  initialAdminMutationState,
   moderateInterviewExperienceAction,
   updateFeedbackAction,
   type AdminMutationState,
@@ -32,18 +36,75 @@ export function FeedbackTriageForm({
   feedbackId,
   currentStatus,
   note,
+  revision,
 }: {
   feedbackId: string;
   currentStatus: string;
   note: string | null;
+  revision: string;
 }) {
   const [state, action, pending] = useActionState(
     updateFeedbackAction,
-    initialAdminMutationState,
+    {
+      status: "idle",
+      message: "",
+      revision,
+    } satisfies AdminMutationState,
   );
+  const [changedSinceSubmit, setChangedSinceSubmit] = useState(false);
+  const submissionPending = useRef(false);
+  const submittedDraftSignature = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!pending) submissionPending.current = false;
+  }, [pending]);
+
+  useEffect(
+    () => () => {
+      submissionPending.current = false;
+      submittedDraftSignature.current = null;
+    },
+    [],
+  );
+
+  const updateChangedSinceSubmit = (form: HTMLFormElement | null) => {
+    if (!form || submittedDraftSignature.current === null) return;
+    setChangedSinceSubmit(
+      adminFeedbackTriageDraftSignature(new FormData(form)) !==
+        submittedDraftSignature.current,
+    );
+  };
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submissionPending.current) return;
+    submissionPending.current = true;
+    const formData = new FormData(event.currentTarget);
+    submittedDraftSignature.current = adminFeedbackTriageDraftSignature(formData);
+    setChangedSinceSubmit(false);
+    startTransition(() => action(formData));
+  };
+
+  const displayState = resolveAdminFeedbackTriageDisplayState(
+    state,
+    pending,
+    changedSinceSubmit,
+  );
+
   return (
-    <form action={action} className="admin-mutation-form">
+    <form
+      action={action}
+      className="admin-mutation-form"
+      onSubmit={submit}
+      onChange={(event) => updateChangedSinceSubmit(event.currentTarget)}
+      aria-busy={pending}
+    >
       <input type="hidden" name="feedback_id" value={feedbackId} />
+      <input
+        type="hidden"
+        name={ADMIN_FEEDBACK_EXPECTED_REVISION_FIELD}
+        value={state.revision ?? revision}
+      />
       <label>
         Status
         <select name="status" defaultValue={currentStatus}>
@@ -63,15 +124,29 @@ export function FeedbackTriageForm({
           defaultValue={note ?? ""}
         />
       </label>
-      {state.message && (
+      {(pending || displayState.message) && (
         <p
-          className={state.status === "error" ? "form-error" : "form-success"}
-          role={state.status === "error" ? "alert" : "status"}
+          className={displayState.status === "error" ? "form-error" : "form-success"}
+          role={displayState.status === "error" ? "alert" : "status"}
+          aria-live={displayState.status === "error" ? "assertive" : "polite"}
+          aria-atomic="true"
         >
-          {state.message}
+          {displayState.message}
+          {!pending && state.conflict && (
+            <>
+              <br />
+              <Link
+                href={`/admin/feedback/${feedbackId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Review latest in a new tab
+              </Link>
+            </>
+          )}
         </p>
       )}
-      <button type="submit" className="button" disabled={pending}>
+      <button type="submit" className="button" aria-disabled={pending}>
         {pending ? (
           <>
             <LoaderCircle size={15} className="spin" />Saving…
