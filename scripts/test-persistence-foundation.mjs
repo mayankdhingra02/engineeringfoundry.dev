@@ -72,7 +72,7 @@ for (const invalid of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, "1"]) assert.equ
 const actor = read("lib/auth/actor.ts");
 const repository = read("lib/preparation-state/repository.ts");
 assert.match(actor, /(?:function\s+getAuthenticatedActor\s*\(\s*\)|getAuthenticatedActor\s*=\s*cache\(async\s*\(\s*\))/, "canonical actor must not accept a client-supplied identity");
-for (const marker of ["createSupabaseServerClient", "auth.getUser", "user: data.user"]) assertContains(actor, marker, `canonical actor lacks ${marker}`);
+for (const marker of ["createSupabaseServerClient", "auth.getUser", "resolveAuthenticatedActorUserResult", "result.data.user", "AuthenticatedActorUnavailableError"]) assertContains(actor, marker, `canonical actor lacks ${marker}`);
 assertNotMatches(actor, /\.auth\.getSession\(/, "server authorization must not trust getSession()");
 for (const marker of [
   "getCurrentPreparationPreferences",
@@ -90,7 +90,9 @@ for (const marker of [
   'eq("user_id", actor.user.id)',
   'eq("user_id", current.data.user.id)',
   "isAccountPlatformAvailable",
-  "getAuthenticatedActor",
+  "getAuthenticatedActorState",
+  'actorState.state === "unavailable"',
+  'actorState.state === "anonymous"',
 ]) assertContains(repository, marker, `current-user persistence boundary lacks ${marker}`);
 assertNotMatches(repository, /export\s+(?:async\s+)?function\s+\w+\s*\([^)]*(?:userId|user_id)/, "exported persistence APIs must not accept an arbitrary user ID");
 assertNotMatches(repository, /service[_-]?role|SUPABASE_SERVICE/i, "request persistence must not bypass RLS with service credentials");

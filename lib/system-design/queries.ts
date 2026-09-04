@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActor, getAuthenticatedActorState } from "@/lib/auth/actor";
 import { PrivateDataUnavailableError } from "@/lib/persistence/errors";
 import {
   isSystemDesignAttemptId,
@@ -15,8 +15,9 @@ const summaryColumns = "id,problem_id,application_id,title,status,confidence,rev
 export async function getSystemDesignWorkspaceState(applicationId?: string | null) {
   const accountPlatformAvailable = isAccountPlatformAvailable();
   if (!accountPlatformAvailable) return { accountPlatformAvailable, signedIn: false as const, progress: {}, attempts: [], applications: [], application: null };
-  const actor = await getAuthenticatedActor();
-  if (!actor) return { accountPlatformAvailable, signedIn: false as const, progress: {}, attempts: [], applications: [], application: null };
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state !== "authenticated") return { accountPlatformAvailable: actorState.state === "anonymous", signedIn: false as const, progress: {}, attempts: [], applications: [], application: null };
+  const actor = actorState.actor;
   const [progressResult, attemptsResult, applicationsResult] = await Promise.all([
     actor.supabase.from("system_design_item_progress").select("*").eq("user_id", actor.user.id).order("last_practiced_at", { ascending: false, nullsFirst: false }),
     actor.supabase.from("system_design_attempts").select(summaryColumns).eq("user_id", actor.user.id).order("updated_at", { ascending: false }).limit(100),
@@ -39,8 +40,9 @@ export async function getSystemDesignWorkspaceState(applicationId?: string | nul
 export async function getSystemDesignItemState(itemId: string, itemType: "concept" | "design_problem") {
   const accountPlatformAvailable = isAccountPlatformAvailable();
   if (!accountPlatformAvailable) return { accountPlatformAvailable, signedIn: false as const, progress: null };
-  const actor = await getAuthenticatedActor();
-  if (!actor) return { accountPlatformAvailable, signedIn: false as const, progress: null };
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state !== "authenticated") return { accountPlatformAvailable: actorState.state === "anonymous", signedIn: false as const, progress: null };
+  const actor = actorState.actor;
   const { data, error } = await actor.supabase.from("system_design_item_progress").select("*").eq("user_id", actor.user.id).eq("item_id", itemId).eq("item_type", itemType).maybeSingle();
   if (error) throw new Error("Could not load System Design progress.");
   return { accountPlatformAvailable, signedIn: true as const, progress: data };
@@ -60,8 +62,9 @@ export async function getSystemDesignAttempt(attemptId: string) {
 export async function getSystemDesignProblemAttempts(problemId: string) {
   const accountPlatformAvailable = isAccountPlatformAvailable();
   if (!accountPlatformAvailable) return { accountPlatformAvailable, signedIn: false as const, attempts: [], applications: [] };
-  const actor = await getAuthenticatedActor();
-  if (!actor) return { accountPlatformAvailable, signedIn: false as const, attempts: [], applications: [] };
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state !== "authenticated") return { accountPlatformAvailable: actorState.state === "anonymous", signedIn: false as const, attempts: [], applications: [] };
+  const actor = actorState.actor;
   const [attempts, applications] = await Promise.all([
     actor.supabase.from("system_design_attempts").select(summaryColumns).eq("user_id", actor.user.id).eq("problem_id", problemId).order("updated_at", { ascending: false }).limit(25),
     actor.supabase.from("applications").select("id,company_name,role_title").eq("user_id", actor.user.id).order("updated_at", { ascending: false }).limit(100),

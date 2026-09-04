@@ -49,7 +49,13 @@ The global header uses the request-time `/api/auth/account` route rather than tr
 
 The client strictly parses the status-correlated `disabled`, `anonymous`, `ready`, and `unavailable` response shapes. Network, non-OK, JSON, and malformed-body failures render compact retryable unavailable copy instead of Sign in and Sign up. Request epochs reject stale and unmounted settlements; `SIGNED_OUT` invalidates an in-flight request before rendering anonymous controls, while authenticated session events trigger an authoritative reload and cannot leave a formerly anonymous state in place after failure. A refresh failure preserves an already verified ready identity, and a successful retry restores focus only when the retry control owned it.
 
-These protections are deliberately route-specific. The shared `getAuthenticatedActor()` helper still maps an authentication-service failure and a legitimate missing session to the same `null` result for other call sites; that broader contract remains separate follow-up work. Automated checks execute the pure identity/profile/response/settlement matrices and source-regress request, event, retry, and focus wiring. Rendered browser timing, focus, and assistive-technology behavior remain manual validation.
+### Shared authenticated-actor truth
+
+The cached server actor boundary applies the same identity rule everywhere else: only Supabase's explicit `AuthSessionMissingError` with no returned user becomes anonymous. A missing server client, thrown Auth request, retryable or other Auth error, contradictory user-plus-error result, malformed response, or invalid user identifier becomes a stable unavailable state and never becomes a signed-out identity. Private pages and mutations fail closed through `AuthenticatedActorUnavailableError`; they may still use their existing signed-out path only after the resolver has positively identified a missing session.
+
+Public account-optional surfaces consume the discriminated actor state directly. DSA and System Design keep public curriculum available while suppressing misleading sign-in prompts when account identity cannot be verified; the homepage continuation and Interview Experience contribution history expose their existing unavailable states; optional browser-activity and mock-review saves return unavailable rather than unauthenticated. Anonymous feedback remains available through its controlled public client without claiming a verified account association. Private JSON and calendar exports return unavailable rather than authentication-required or not-found when their actor lookup fails.
+
+Automated checks execute the pure shared-actor and route-specific identity/profile/response/settlement matrices and source-regress public fallbacks, request, event, retry, and focus wiring. Rendered browser timing, focus, and assistive-technology behavior remain manual validation.
 
 ### Proxy cache safety
 

@@ -95,7 +95,7 @@ assert.ok(read("app/mock-interviews/page.tsx").includes("isAccountPlatformAvaila
 const mockAction = read("app/mock-interviews/actions.ts");
 const mockParseIndex = mockAction.indexOf("const parsed = parseMockInterviewReviewInput(input);");
 const mockAvailabilityIndex = mockAction.indexOf("if (!isAccountPlatformAvailable())");
-const mockActorIndex = mockAction.indexOf("getAuthenticatedActor()", mockAvailabilityIndex);
+const mockActorIndex = mockAction.indexOf("getAuthenticatedActorState()", mockAvailabilityIndex);
 const mockRpcIndex = mockAction.indexOf('actor.supabase.rpc("save_mock_interview_review"');
 assert.ok(mockParseIndex >= 0 && mockParseIndex < mockAvailabilityIndex && mockAvailabilityIndex < mockActorIndex && mockActorIndex < mockRpcIndex, "The Mock save action must parse unknown input before enforcing account availability, reading an actor, or writing a review.");
 const model = read("docs/mock-interview-model.md");

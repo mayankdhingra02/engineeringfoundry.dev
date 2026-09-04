@@ -26,7 +26,7 @@ function assertNever(value: never): never {
 function localSuccessMessage(reason: PreparationActivityAccountFailureReason): string {
   switch (reason) {
     case "account-unavailable":
-      return "Saved in this browser. Account saving is unavailable in this configuration.";
+      return "Saved in this browser. Account saving is unavailable right now.";
     case "unauthenticated":
       return "Saved in this browser. Sign in to import browser activity deliberately.";
     case "invalid-input":
@@ -43,7 +43,7 @@ function localSuccessMessage(reason: PreparationActivityAccountFailureReason): s
 function totalFailureMessage(reason: PreparationActivityAccountFailureReason): string {
   switch (reason) {
     case "account-unavailable":
-      return "Recorded for this visit, but browser storage is unavailable. Account saving is unavailable in this configuration.";
+      return "Recorded for this visit, but browser storage is unavailable. Account saving is unavailable right now.";
     case "unauthenticated":
       return "Recorded for this visit, but browser storage is unavailable. Sign in to save future activity to your account.";
     case "invalid-input":

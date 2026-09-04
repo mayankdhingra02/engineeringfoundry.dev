@@ -3,7 +3,7 @@ import "server-only";
 import { activeBehavioralQuestions } from "@/data/behavioral";
 import { activeMlDesignProblems } from "@/data/ml-design";
 import { canonicalDsaQuestionById } from "@/lib/dsa/catalog";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import { UPCOMING_ROUND_STATUSES } from "@/lib/applications/options";
 import { systemDesignPracticeContents } from "@/content/system-design/problems/data";
 import { systemDesignLessons } from "@/data/system-design/curriculum";
@@ -27,8 +27,12 @@ const timestamp = (value: string | null | undefined) => Number.isFinite(Date.par
 
 /** Returns public labels and links only; private workspace text never crosses this boundary. */
 export async function getAccountPreparationContinuations(): Promise<AccountPreparationContinuationState> {
-  const actor = await getAuthenticatedActor();
-  if (!actor) return resolveAccountPreparationContinuationState({ authenticated: false, queryFailed: false, candidates: [], weeklyActivityDays: 0 });
+  const actorState = await getAuthenticatedActorState();
+  if (actorState.state === "unavailable") {
+    return resolveAccountPreparationContinuationState({ authenticated: false, queryFailed: true, candidates: [], weeklyActivityDays: 0 });
+  }
+  if (actorState.state === "anonymous") return resolveAccountPreparationContinuationState({ authenticated: false, queryFailed: false, candidates: [], weeklyActivityDays: 0 });
+  const actor = actorState.actor;
   const { supabase, user } = actor;
   const [upcomingRoundResult, preferencesResult, dsaResult, systemProgressResult, attemptsResult, trackResult, behavioralResult] = await Promise.all([
     supabase.from("interview_rounds").select("id,scheduled_at").eq("user_id", user.id).gte("scheduled_at", new Date().toISOString()).in("status", [...UPCOMING_ROUND_STATUSES]).order("scheduled_at", { ascending: true }).limit(1),

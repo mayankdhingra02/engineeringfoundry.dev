@@ -4,7 +4,7 @@ import { ExperienceSubmission } from "@/features/interview-experiences/experienc
 import { ExperienceDirectory, type PublicExperience } from "@/features/interview-experiences/experience-directory";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
-import { getAuthenticatedActor } from "@/lib/auth/actor";
+import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import { getOwnedInterviewExperienceHistory } from "@/lib/interview-experiences/queries";
 import { listPublicInterviewExperiences } from "@/lib/supabase/public";
 
@@ -13,11 +13,15 @@ export const dynamic = "force-dynamic";
 
 export default async function InterviewExperiencesPage() {
   const accountPlatformAvailable = isAccountPlatformAvailable();
-  const actor = accountPlatformAvailable ? await getAuthenticatedActor() : null;
+  const actorState = accountPlatformAvailable
+    ? await getAuthenticatedActorState()
+    : { state: "anonymous" as const };
   const publicResult = await listPublicInterviewExperiences();
-  const ownerState = actor
-    ? await getOwnedInterviewExperienceHistory(actor)
-    : { status: "anonymous" as const };
+  const ownerState = actorState.state === "authenticated"
+    ? await getOwnedInterviewExperienceHistory(actorState.actor)
+    : actorState.state === "unavailable"
+      ? { status: "unavailable" as const }
+      : { status: "anonymous" as const };
   const experiences = (publicResult.data ?? []) as unknown as PublicExperience[];
   return <>
     <PageHero eyebrow="Interview experiences" title="Interview experiences, reviewed before they are shared." description="Browse real, high-level process reports—not copied questions or invented activity. Processes vary by role, team, location, and time." />
