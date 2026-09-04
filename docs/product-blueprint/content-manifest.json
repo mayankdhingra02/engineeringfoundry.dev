@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "bb2c7da619aa092a7bd93f743c0a1bd2fb788882",
-  "repository_state_sha256": "6d5bdbc2fa85ac734a1142f46aa6a1228ee766f54ffd5bf86a5f65fbb56554dc",
+  "repository_sha": "93bc7bab4272503eebaf51ac6270d61f9444377d",
+  "repository_state_sha256": "b76833b77c0a50a40e42dfb12b5e6ef156b541a01dee2bbcbb990abb033af510",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -113,23 +113,36 @@
       "acceptance_criteria": [
         "Existing public questions and private/local practice preserve fact integrity and privacy boundaries.",
         "Public filters and selected prompts derive from validated, deterministic URL state across direct links and history snapshots.",
-        "Behavioral prompt activity reports only confirmed account, browser-local, or visit-only outcomes; disabled-account rendering skips the account action and workspace handoff, and an in-flight result cannot be presented as belonging to a newly selected prompt."
+        "Behavioral prompt activity reports only confirmed account, browser-local, or visit-only outcomes; disabled-account rendering skips the account action and workspace handoff, and an in-flight result cannot be presented as belonging to a newly selected prompt.",
+        "Behavioral story create and full-edit actions strictly parse exact bounded runtime fields and a complete controlled-theme snapshot before actor or persistence work, then use only owner-derived aggregate RPCs; full edits compare the loaded revision, coherent duplication captures one parent/theme snapshot, and direct or legacy split writes fail safely. Executable parsing and source-integration checks run in npm run test:behavioral-workspace, while database atomicity, concurrency, rollback, grants, and owner privacy run in npm run qualify:database and hosted checks remain an unchecked external-owner step. Source-integration checks cover draft-preserving manual-submit wiring, duplicate guards, bounded text field-error relationships, live-region semantics, and safe conflict recovery-link attributes; rendered draft retention and focus behavior remain browser/manual validation."
       ],
       "code_paths": [
         "app/behavioral",
+        "app/globals.css",
         "components/behavioral-practice.tsx",
         "components/preparation-activity-control.tsx",
         "features/behavioral",
         "features/preparation-progress/actions.ts",
         "lib/behavioral/practice-url-state.ts",
+        "lib/behavioral/story-action-input.ts",
         "lib/preparation-progress/activity-save.ts",
+        "lib/supabase/database.types.ts",
+        "scripts/qualify-account-lifecycle-local.mjs",
+        "scripts/qualify-persistence-local.mjs",
+        "scripts/qualify-security-local.mjs",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-behavioral-v1-polish.mjs",
+        "scripts/test-behavioral-workspace.mjs",
         "scripts/test-practice-url-state.mjs",
         "scripts/test-public-route-smoke.mjs",
-        "scripts/test-unified-progress.mjs"
+        "scripts/test-unified-progress.mjs",
+        "supabase/migrations/202609030005_save_behavioral_story_aggregate.sql",
+        "supabase/tests/database/behavioral_workspace.test.sql",
+        "supabase/tests/database/user_preparation_state.test.sql"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/behavioral-workspace.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-BEH",
       "kind": "requirement-family",
@@ -163,6 +176,7 @@
       "source_ledger_ids": [],
       "status": "partial",
       "test_commands": [
+        "npm run qualify:database",
         "npm run test:behavioral-v1-polish",
         "npm run test:behavioral-workspace",
         "npm run test:practice-url-state",
