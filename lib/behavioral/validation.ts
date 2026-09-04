@@ -1,5 +1,5 @@
 import { normalizeCompanySlug } from "@/lib/applications/options";
-import { ANSWER_STATUSES, STORY_THEMES } from "./options";
+import { ANSWER_STATUSES } from "./options";
 
 export type BehavioralFieldErrors = Record<string, string>;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -8,28 +8,6 @@ const optional = (formData: FormData, key: string) => text(formData, key) || nul
 
 function limited(value: string | null, max: number, label: string, errors: BehavioralFieldErrors, key: string) {
   if (value && value.length > max) errors[key] = `${label} must be ${max.toLocaleString()} characters or fewer.`;
-}
-
-export function parseStoryForm(formData: FormData) {
-  const errors: BehavioralFieldErrors = {};
-  const data = {
-    title: text(formData, "title"), company_or_context: optional(formData, "company_or_context"), role: optional(formData, "role"),
-    approximate_period: optional(formData, "approximate_period"), project: optional(formData, "project"), situation: optional(formData, "situation"),
-    task: optional(formData, "task"), action: optional(formData, "action"), result: optional(formData, "result"), reflection: optional(formData, "reflection"),
-    short_summary: optional(formData, "short_summary"), notes: optional(formData, "notes"),
-  };
-  if (data.title.length < 2 || data.title.length > 200) errors.title = "Add a title between 2 and 200 characters.";
-  limited(data.company_or_context, 200, "Company or context", errors, "company_or_context");
-  limited(data.role, 160, "Role", errors, "role");
-  limited(data.approximate_period, 100, "Approximate period", errors, "approximate_period");
-  limited(data.project, 200, "Project", errors, "project");
-  (["situation", "task", "action", "result", "reflection", "notes"] as const).forEach((key) => limited(data[key], 50000, key[0].toUpperCase() + key.slice(1), errors, key));
-  limited(data.short_summary, 5000, "Summary", errors, "short_summary");
-  const themes = Array.from(new Set(formData.getAll("themes").map(String).map((value) => value.trim()).filter(Boolean)));
-  if (themes.length > 20) errors.themes = "Choose no more than 20 themes.";
-  if (themes.some((theme) => theme.length > 80)) errors.themes = "Each theme must be 80 characters or fewer.";
-  if (themes.some((theme) => !STORY_THEMES.includes(theme as (typeof STORY_THEMES)[number]))) errors.themes = "Choose themes from the supported list.";
-  return { data: Object.keys(errors).length ? null : data, themes, errors };
 }
 
 export function parseQuestionForm(formData: FormData) {

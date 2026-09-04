@@ -110,9 +110,24 @@ await check("disposable account can populate every major private workspace", asy
   roundId = round.data.id;
   assert.ifError((await a.client.rpc("save_interview_preparation", { target_round_id: roundId, notes_value: "Private preparation note" })).error);
   assert.ifError((await a.client.rpc("set_interview_preparation_checklist_item", { target_round_id: roundId, target_item_id: "dsa-review-queue", target_completed: true })).error);
-  const story = await a.client.from("behavioral_stories").insert({ user_id: a.user.id, title: "Phase 8 disposable story", situation: "Private behavioral situation", notes: "Private behavioral note" }).select("id").single();
+  const story = await a.client.rpc("create_behavioral_story_with_themes", {
+    target_title: "Phase 8 disposable story",
+    target_company_or_context: null,
+    target_role: null,
+    target_approximate_period: null,
+    target_project: null,
+    target_situation: "Private behavioral situation",
+    target_task: null,
+    target_action: null,
+    target_result: null,
+    target_reflection: null,
+    target_short_summary: null,
+    target_notes: "Private behavioral note",
+    target_themes: ["Leadership"],
+  });
   assert.ifError(story.error);
-  assert.ifError((await a.client.from("behavioral_answers").insert({ user_id: a.user.id, curated_question_id: "beh-lead-01", story_id: story.data.id, title: "Phase 8 private answer", opening_framing: "Private opening framing", details_to_emphasize: "Private detail to emphasize", details_to_avoid: "Private detail to avoid", answer_text: "Private prepared answer" })).error);
+  assert.equal(story.data?.length, 1);
+  assert.ifError((await a.client.from("behavioral_answers").insert({ user_id: a.user.id, curated_question_id: "beh-lead-01", story_id: story.data[0].story_id, title: "Phase 8 private answer", opening_framing: "Private opening framing", details_to_emphasize: "Private detail to emphasize", details_to_avoid: "Private detail to avoid", answer_text: "Private prepared answer" })).error);
   assert.ifError((await a.client.rpc("save_dsa_question_progress_if_revision", { target_question_id: "two-sum", target_expect_absent: true, target_expected_updated_at: null, target_status: "attempted", target_confidence: "medium", target_bookmarked: true, target_notes: "Private DSA note" })).error);
   assert.ifError((await a.client.rpc("save_system_design_item_progress", { target_item_id: "introduction", target_item_type: "concept", target_status: "reviewed", target_confidence: "medium", target_bookmarked: true, target_notes: "Private System Design note" })).error);
   const document = { functional_requirements: [], non_functional_requirements: [], capacity: { assumptions: [], calculations: [] }, apis: [], data_models: [], high_level_design: "Private design", deep_dives: [], bottlenecks: [], failure_modes: [], tradeoffs: [], follow_ups: [], final_review_notes: "" };
