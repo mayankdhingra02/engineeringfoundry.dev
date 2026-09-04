@@ -4,9 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { parseApplicationForm, parseRoundForm, type FieldErrors } from "@/lib/applications/validation";
 import { APPLICATION_STATUSES } from "@/lib/applications/options";
+import {
+  APPLICATION_EDIT_CONFLICT_MESSAGE,
+  INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE,
+  parseTrackerEditRevision,
+} from "@/lib/applications/edit-revision";
 import { getAuthenticatedActor } from "@/lib/auth/actor";
 
-export interface TrackerActionState { status: "idle" | "error"; message: string; fieldErrors?: FieldErrors }
+export interface TrackerActionState { status: "idle" | "error"; message: string; fieldErrors?: FieldErrors; conflict?: boolean }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -35,13 +40,16 @@ export async function createApplicationAction(_: TrackerActionState, formData: F
 }
 
 export async function updateApplicationAction(applicationId: string, _: TrackerActionState, formData: FormData): Promise<TrackerActionState> {
+  const revision = parseTrackerEditRevision(formData);
+  if (!revision.ok) return { status: "error", conflict: true, message: APPLICATION_EDIT_CONFLICT_MESSAGE };
   const current = await getAuthenticatedActor();
   if (!current) return sessionError();
   if (!UUID_PATTERN.test(applicationId)) return { status: "error", message: "This application could not be found." };
   const parsed = parseApplicationForm(formData);
   if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("applications").update(parsed.data).eq("id", applicationId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) return { status: "error", message: "We couldn't update this application. It may no longer be available." };
+  const { data, error } = await current.supabase.from("applications").update(parsed.data).eq("id", applicationId).eq("user_id", current.user.id).eq("updated_at", revision.expectedUpdatedAt).select("id").maybeSingle();
+  if (error) return { status: "error", message: "We couldn't update this application. It may no longer be available." };
+  if (!data) return { status: "error", conflict: true, message: APPLICATION_EDIT_CONFLICT_MESSAGE };
   revalidatePath("/applications");
   revalidatePath(`/applications/${applicationId}`);
   revalidatePath("/dashboard");
@@ -96,13 +104,16 @@ export async function createRoundAction(applicationId: string, _: TrackerActionS
 }
 
 export async function updateRoundAction(applicationId: string, roundId: string, _: TrackerActionState, formData: FormData): Promise<TrackerActionState> {
+  const revision = parseTrackerEditRevision(formData);
+  if (!revision.ok) return { status: "error", conflict: true, message: INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE };
   const current = await getAuthenticatedActor();
   if (!current) return sessionError();
   if (!UUID_PATTERN.test(applicationId) || !UUID_PATTERN.test(roundId)) return { status: "error", message: "This interview round could not be found." };
   const parsed = parseRoundForm(formData);
   if (!parsed.data) return { status: "error", message: "Review the highlighted fields.", fieldErrors: parsed.errors };
-  const { data, error } = await current.supabase.from("interview_rounds").update(parsed.data).eq("id", roundId).eq("application_id", applicationId).eq("user_id", current.user.id).select("id").maybeSingle();
-  if (error || !data) return { status: "error", message: "We couldn't update this interview round. It may no longer be available." };
+  const { data, error } = await current.supabase.from("interview_rounds").update(parsed.data).eq("id", roundId).eq("application_id", applicationId).eq("user_id", current.user.id).eq("updated_at", revision.expectedUpdatedAt).select("id").maybeSingle();
+  if (error) return { status: "error", message: "We couldn't update this interview round. It may no longer be available." };
+  if (!data) return { status: "error", conflict: true, message: INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE };
   revalidatePath(`/applications/${applicationId}`); revalidatePath("/applications"); revalidatePath("/dashboard");
   redirect(`/applications/${applicationId}`);
 }

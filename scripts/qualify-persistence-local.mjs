@@ -250,6 +250,62 @@ await check("User A updates their application", async () => {
   expect(row.status === "Interviewing" && row.notes === "Owner update persisted.", "application update did not persist");
 });
 
+await check("stale full application edit cannot overwrite a newer quick status", async () => {
+  const created = expectSuccess(await a.authClient
+    .from("applications")
+    .insert({
+      user_id: a.user.id,
+      company_name: `${fixtureCompany} application CAS`,
+      company_slug: "application-cas",
+      role_title: "Original role",
+      status: "Applied",
+      notes: "Original private note.",
+    })
+    .select("id,updated_at")
+    .single(), "application CAS fixture creation failed");
+
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  const quickStatus = expectSuccess(await a.authClient
+    .from("applications")
+    .update({ status: "Interviewing" })
+    .eq("id", created.id)
+    .eq("user_id", a.user.id)
+    .select("updated_at")
+    .single(), "application quick-status setup failed");
+  expect(quickStatus.updated_at !== created.updated_at, "application quick status did not advance the edit revision");
+
+  const staleFullEdit = expectSuccess(await a.authClient
+    .from("applications")
+    .update({
+      company_name: `${fixtureCompany} stale overwrite`,
+      company_slug: "stale-overwrite",
+      role_title: "Stale overwrite",
+      status: "Applied",
+      notes: "Stale private note.",
+    })
+    .eq("id", created.id)
+    .eq("user_id", a.user.id)
+    .eq("updated_at", created.updated_at)
+    .select("id"), "stale application CAS request failed");
+  expect(staleFullEdit.length === 0, `stale application edit affected ${staleFullEdit.length} row(s)`);
+
+  const preserved = expectSuccess(await a.authClient
+    .from("applications")
+    .select("company_name,role_title,status,notes,updated_at")
+    .eq("id", created.id)
+    .eq("user_id", a.user.id)
+    .single(), "application CAS preservation read failed");
+  expect(
+    preserved.company_name === `${fixtureCompany} application CAS`
+      && preserved.role_title === "Original role"
+      && preserved.status === "Interviewing"
+      && preserved.notes === "Original private note."
+      && preserved.updated_at === quickStatus.updated_at,
+    "stale full application edit overwrote newer or unrelated saved values",
+  );
+  return "0 stale rows; newer status and original fields preserved";
+});
+
 await check("User A creates two owned interview rounds", async () => {
   const applicationId = requireFixture(fixture.applicationId, "application");
   const insertion = await a.authClient
@@ -276,6 +332,83 @@ await check("User A creates two owned interview rounds", async () => {
   expect(rows.length === 2, `expected 2 rounds, observed ${rows.length}`);
   fixture.firstRoundId = rows[0].id;
   fixture.secondRoundId = rows[1].id;
+});
+
+await check("stale full round edit cannot overwrite a newer completion", async () => {
+  const application = expectSuccess(await a.authClient
+    .from("applications")
+    .insert({
+      user_id: a.user.id,
+      company_name: `${fixtureCompany} round CAS`,
+      company_slug: "round-cas",
+      role_title: "Round CAS role",
+      status: "Interviewing",
+    })
+    .select("id")
+    .single(), "round CAS application fixture creation failed");
+  const created = expectSuccess(await a.authClient
+    .from("interview_rounds")
+    .insert({
+      application_id: application.id,
+      user_id: a.user.id,
+      round_number: 1,
+      round_name: "Round CAS technical screen",
+      round_type: "Coding",
+      scheduled_at: "2026-09-18T19:00:00Z",
+      timezone: "America/Chicago",
+      status: "Scheduled",
+      result: "Pending",
+      notes: "Original round note.",
+    })
+    .select("id,updated_at")
+    .single(), "round CAS fixture creation failed");
+
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  const completed = expectSuccess(await a.authClient
+    .from("interview_rounds")
+    .update({ status: "Completed" })
+    .eq("id", created.id)
+    .eq("application_id", application.id)
+    .eq("user_id", a.user.id)
+    .select("updated_at")
+    .single(), "round completion setup failed");
+  expect(completed.updated_at !== created.updated_at, "round completion did not advance the edit revision");
+
+  const staleFullEdit = expectSuccess(await a.authClient
+    .from("interview_rounds")
+    .update({
+      round_name: "Stale round overwrite",
+      round_type: "System Design",
+      scheduled_at: "2026-09-18T19:00:00Z",
+      timezone: "America/Chicago",
+      status: "Scheduled",
+      result: "Pending",
+      notes: "Stale round note.",
+    })
+    .eq("id", created.id)
+    .eq("application_id", application.id)
+    .eq("user_id", a.user.id)
+    .eq("updated_at", created.updated_at)
+    .select("id"), "stale round CAS request failed");
+  expect(staleFullEdit.length === 0, `stale round edit affected ${staleFullEdit.length} row(s)`);
+
+  const preserved = expectSuccess(await a.authClient
+    .from("interview_rounds")
+    .select("round_name,round_type,status,result,notes,updated_at")
+    .eq("id", created.id)
+    .eq("application_id", application.id)
+    .eq("user_id", a.user.id)
+    .single(), "round CAS preservation read failed");
+  expect(
+    preserved.round_name === "Round CAS technical screen"
+      && preserved.round_type === "Coding"
+      && preserved.status === "Completed"
+      && preserved.result === "Pending"
+      && preserved.notes === "Original round note."
+      && preserved.updated_at === completed.updated_at,
+    "stale full round edit overwrote newer or unrelated saved values",
+  );
+  return "0 stale rows; completion and original fields preserved";
 });
 
 await check("atomic move_interview_round swaps adjacent owner rounds", async () => {

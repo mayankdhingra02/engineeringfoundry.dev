@@ -5,6 +5,12 @@ import { register } from "node:module";
 register(new URL("./typescript-path-loader.mjs", import.meta.url));
 
 const { parseApplicationForm, parseRoundForm } = await import("../lib/applications/validation.ts");
+const {
+  APPLICATION_EDIT_CONFLICT_MESSAGE,
+  INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE,
+  TRACKER_EDIT_REVISION_FIELD,
+  parseTrackerEditRevision,
+} = await import("../lib/applications/edit-revision.ts");
 const { applicationNeedsAttention, attentionLabel, isActiveApplication, isActiveInterviewProcess, isUpcomingInterview, roundProgress } = await import("../lib/applications/insights.ts");
 const {
   DASHBOARD_PRIVATE_DATA_DOMAIN,
@@ -42,6 +48,7 @@ for (const marker of ["getApplicationById", "notFound()", "Interview process", "
 prohibit(detail, /getBehavioralWorkspaceData|STAR story bank|Private behavioral prep/, "Application detail reintroduced the out-of-scope behavioral story bank.");
 
 const applicationForm = read("features/applications/application-form.tsx");
+const roundForm = read("features/applications/round-form.tsx");
 prohibit(applicationForm, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/, "Application date defaults through UTC instead of the user's local calendar.");
 
 const validation = read("lib/applications/validation.ts");
@@ -161,6 +168,121 @@ invalidRound.set("duration_minutes", "2");
 invalidRound.set("status", "Scheduled");
 const invalidRoundResult = parseRoundForm(invalidRound);
 assert.ok(invalidRoundResult.errors.timezone && invalidRoundResult.errors.duration_minutes, "invalid timezone and duration must be rejected");
+
+assert.equal(TRACKER_EDIT_REVISION_FIELD, "expected_updated_at", "tracker edit revision field name changed unexpectedly");
+assert.equal(
+  APPLICATION_EDIT_CONFLICT_MESSAGE,
+  "This application may have changed since you opened this page. Your edits were not saved. Review the latest saved version before trying again.",
+  "application conflict copy no longer states that edits were not saved",
+);
+assert.equal(
+  INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE,
+  "This interview round may have changed since you opened this page. Your edits were not saved. Review the latest saved version before trying again.",
+  "round conflict copy no longer states that edits were not saved",
+);
+
+const revisionForm = (value = "2026-09-03T18:24:31.123456+00:00") => {
+  const form = new FormData();
+  form.set(TRACKER_EDIT_REVISION_FIELD, value);
+  return form;
+};
+for (const value of [
+  "2024-02-29T00:00:00Z",
+  "2026-09-03T18:24:31.1Z",
+  "2026-09-03T18:24:31.123456+00:00",
+  "2026-09-03T13:24:31.123456-05:00",
+  "2026-01-01T00:00:00+14:00",
+]) {
+  assert.deepEqual(parseTrackerEditRevision(revisionForm(value)), { ok: true, expectedUpdatedAt: value }, `valid database edit revision was rejected: ${value}`);
+}
+for (const input of [null, undefined, {}, [], "2026-09-03T18:24:31Z", 1]) {
+  assert.deepEqual(parseTrackerEditRevision(input), { ok: false, reason: "invalid-input" }, `non-FormData edit revision was accepted: ${String(input)}`);
+}
+const missingRevision = revisionForm();
+missingRevision.delete(TRACKER_EDIT_REVISION_FIELD);
+assert.deepEqual(parseTrackerEditRevision(missingRevision), { ok: false, reason: "invalid-input" }, "missing edit revision was accepted");
+const duplicateRevision = revisionForm();
+duplicateRevision.append(TRACKER_EDIT_REVISION_FIELD, "2026-09-03T18:24:32Z");
+assert.deepEqual(parseTrackerEditRevision(duplicateRevision), { ok: false, reason: "invalid-input" }, "duplicate edit revisions were accepted");
+const fileRevision = revisionForm();
+fileRevision.set(TRACKER_EDIT_REVISION_FIELD, new File(["2026-09-03T18:24:31Z"], "revision.txt"));
+assert.deepEqual(parseTrackerEditRevision(fileRevision), { ok: false, reason: "invalid-input" }, "file-valued edit revision was accepted");
+for (const value of [
+  "",
+  "2026-09-03",
+  "2026-09-03 18:24:31Z",
+  "2026-09-03T18:24:31",
+  "2026-09-03T18:24:31z",
+  "0000-01-01T00:00:00Z",
+  "1900-02-29T00:00:00Z",
+  "2026-02-29T00:00:00Z",
+  "2026-04-31T00:00:00Z",
+  "2026-00-01T00:00:00Z",
+  "2026-13-01T00:00:00Z",
+  "2026-01-00T00:00:00Z",
+  "2026-01-01T24:00:00Z",
+  "2026-01-01T00:60:00Z",
+  "2026-01-01T00:00:60Z",
+  "2026-01-01T00:00:00.1234567Z",
+  "2026-01-01T00:00:00+14:01",
+  "2026-01-01T00:00:00+15:00",
+  "2026-01-01T00:00:00Z\nforged",
+]) {
+  assert.deepEqual(parseTrackerEditRevision(revisionForm(value)), { ok: false, reason: "invalid-input" }, `invalid edit revision was accepted: ${JSON.stringify(value)}`);
+}
+
+const actionSource = (name, nextName) => {
+  const start = actions.indexOf(`export async function ${name}`);
+  const end = nextName ? actions.indexOf(`export async function ${nextName}`, start) : actions.length;
+  assert.ok(start >= 0 && end > start, `could not isolate ${name} source`);
+  return actions.slice(start, end);
+};
+const applicationUpdateAction = actionSource("updateApplicationAction", "updateApplicationStatusAction");
+const applicationStatusAction = actionSource("updateApplicationStatusAction", "deleteApplicationAction");
+const roundUpdateAction = actionSource("updateRoundAction", "deleteRoundAction");
+const roundCompletionAction = actionSource("completeRoundAction", "moveRoundAction");
+for (const [label, source, conflictMessage, ownerPredicates] of [
+  ["application", applicationUpdateAction, "APPLICATION_EDIT_CONFLICT_MESSAGE", ['.eq("id", applicationId)', '.eq("user_id", current.user.id)']],
+  ["round", roundUpdateAction, "INTERVIEW_ROUND_EDIT_CONFLICT_MESSAGE", ['.eq("id", roundId)', '.eq("application_id", applicationId)', '.eq("user_id", current.user.id)']],
+]) {
+  const revisionParse = source.indexOf("parseTrackerEditRevision(formData)");
+  const invalidRevision = source.indexOf("if (!revision.ok)", revisionParse);
+  const actorLookup = source.indexOf("getAuthenticatedActor()", invalidRevision);
+  const contentParse = source.indexOf(label === "application" ? "parseApplicationForm(formData)" : "parseRoundForm(formData)", actorLookup);
+  const update = source.indexOf(".update(parsed.data)", contentParse);
+  const revisionCas = source.indexOf('.eq("updated_at", revision.expectedUpdatedAt)', update);
+  const queryError = source.indexOf("if (error)", revisionCas);
+  const missingRow = source.indexOf("if (!data)", queryError);
+  const revalidation = source.indexOf("revalidatePath", missingRow);
+  assert.match(source, /\): Promise<TrackerActionState> \{\s*const revision = parseTrackerEditRevision\(formData\);/, `${label} full edit does not parse its revision as the first action-body step`);
+  assert.ok(revisionParse >= 0 && invalidRevision > revisionParse && actorLookup > invalidRevision && contentParse > actorLookup && update > contentParse && revisionCas > update && queryError > revisionCas && missingRow > queryError && revalidation > missingRow, `${label} full edit does not preserve revision parse -> actor -> content parse -> owner CAS -> error/conflict -> revalidation ordering`);
+  for (const predicate of ownerPredicates) assert.ok(source.indexOf(predicate, update) > update && source.indexOf(predicate, update) < revisionCas, `${label} CAS is missing owner predicate ${predicate}`);
+  assert.ok(source.slice(invalidRevision, actorLookup).includes(conflictMessage), `${label} invalid revision does not fail before actor work with stable conflict copy`);
+  assert.ok(source.slice(missingRow, revalidation).includes(conflictMessage) && source.slice(missingRow, revalidation).includes("conflict: true"), `${label} zero-row CAS is not distinguished from a query failure as a stable conflict`);
+}
+
+for (const [label, source, entity, editHref] of [
+  ["application", applicationForm, "application", "/applications/${application.id}/edit"],
+  ["round", roundForm, "round", "/applications/${applicationId}/rounds/${round.id}/edit"],
+]) {
+  const submitEditStart = source.indexOf("const submitEdit");
+  const submitEditEnd = source.indexOf("return <form", submitEditStart);
+  const submitEditSource = source.slice(submitEditStart, submitEditEnd);
+  const preventDefault = submitEditSource.indexOf("event.preventDefault()");
+  const duplicateGuard = submitEditSource.indexOf("if (editSubmissionPending.current) return", preventDefault);
+  const markPending = submitEditSource.indexOf("editSubmissionPending.current = true", duplicateGuard);
+  const captureForm = submitEditSource.indexOf("new FormData(event.currentTarget)", markPending);
+  const dispatch = submitEditSource.indexOf("startTransition(() => formAction(formData))", captureForm);
+  assert.ok(source.includes("TRACKER_EDIT_REVISION_FIELD") && source.includes(`value={${entity}.updated_at}`), `${label} edit form does not submit the exact loaded revision`);
+  assert.ok(submitEditStart >= 0 && preventDefault >= 0 && duplicateGuard > preventDefault && markPending > duplicateGuard && captureForm > markPending && dispatch > captureForm, `${label} edit form does not synchronously guard, capture, and manually dispatch the submitted draft`);
+  assert.ok(source.includes("<form action={formAction}") && source.includes(`onSubmit={${entity} ? submitEdit : undefined}`), `${label} create and edit submissions are not separated while retaining the host action`);
+  assert.ok(source.includes("if (!pending) editSubmissionPending.current = false") && source.includes("editSubmissionPending.current = false;\n  }, []);"), `${label} edit submission guard is not released after settlement and cleanup`);
+  assert.ok(source.includes('role="alert" aria-atomic="true"') && source.includes("state.conflict") && source.includes("Review latest in a new tab") && source.includes(`href={\`${editHref}\`}`) && source.includes('target="_blank"') && source.includes('rel="noopener noreferrer"'), `${label} conflict does not preserve an atomic error plus safe latest-version review path`);
+  assert.ok(!/key=\{[^}]*updated_at/.test(source), `${label} edit form remounts from a newer revision and can discard the submitted draft`);
+  assert.ok(!source.includes(".focus("), `${label} conflict moves focus away from the retained submitted draft`);
+}
+assert.match(applicationStatusAction, /\.update\(\{ status \}\)/, "application quick status no longer updates only the requested status before a stale full-edit CAS");
+assert.match(roundCompletionAction, /\.update\(\{ status: "Completed" \}\)/, "round completion no longer updates only completion status before a stale full-edit CAS");
 
 const insightNow = new Date("2026-08-14T12:00:00Z");
 const waitingApplication = { status: "Recruiter Screen", updated_at: "2026-08-05T12:00:00Z" };

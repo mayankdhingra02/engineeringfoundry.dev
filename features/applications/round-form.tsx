@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { LoaderCircle } from "lucide-react";
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import type { InterviewRound } from "@/lib/supabase/database.types";
+import { TRACKER_EDIT_REVISION_FIELD } from "@/lib/applications/edit-revision";
 import { ROUND_RESULTS, ROUND_STATUSES, ROUND_TYPES } from "@/lib/applications/options";
 import { toLocalDateTimeValue } from "@/lib/applications/format";
 import type { TrackerActionState } from "./actions";
@@ -14,7 +15,17 @@ const COMMON_TIMEZONES = ["America/New_York", "America/Chicago", "America/Denver
 
 export function RoundForm({ action, applicationId, round }: { action: RoundFormAction; applicationId: string; round?: InterviewRound }) {
   const [state, formAction, pending] = useActionState(action, initialTrackerState);
+  const editSubmissionPending = useRef(false);
   const [timezone, setTimezone] = useState(round?.timezone ?? "");
+
+  useEffect(() => {
+    if (!pending) editSubmissionPending.current = false;
+  }, [pending]);
+
+  useEffect(() => () => {
+    editSubmissionPending.current = false;
+  }, []);
+
   const detectTimezone = () => { if (!timezone) setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone); };
   const error = (name: string) => state.fieldErrors?.[name];
   const errorProps = (name: string) => ({
@@ -22,7 +33,17 @@ export function RoundForm({ action, applicationId, round }: { action: RoundFormA
     "aria-describedby": error(name) ? `${name}-error` : undefined,
   });
   const fieldError = (name: string) => error(name) ? <small className="field-error" id={`${name}-error`}>{error(name)}</small> : null;
-  return <form action={formAction} className="tracker-form form-shell">
+  const submitEdit = (event: FormEvent<HTMLFormElement>) => {
+    if (!round) return;
+    event.preventDefault();
+    if (editSubmissionPending.current) return;
+    editSubmissionPending.current = true;
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => formAction(formData));
+  };
+
+  return <form action={formAction} onSubmit={round ? submitEdit : undefined} className="tracker-form form-shell">
+    {round && <input type="hidden" name={TRACKER_EDIT_REVISION_FIELD} value={round.updated_at} />}
     <div className="tracker-form-section"><div><h2>Round details</h2><p>Rounds can be created before the company confirms a schedule.</p></div><div className="form-grid">
       <div className="form-group"><label htmlFor="round-name">Round name <span>Required</span></label><input id="round-name" name="round_name" required maxLength={120} defaultValue={round?.round_name ?? ""} {...errorProps("round_name")} />{fieldError("round_name")}</div>
       <div className="form-group"><label htmlFor="round-type">Round type <span>Required · custom allowed</span></label><input id="round-type" name="round_type" list="round-types" required maxLength={100} defaultValue={round?.round_type ?? ""} {...errorProps("round_type")} /><datalist id="round-types">{ROUND_TYPES.map((type) => <option key={type} value={type} />)}</datalist>{fieldError("round_type")}</div>
@@ -39,7 +60,7 @@ export function RoundForm({ action, applicationId, round }: { action: RoundFormA
       <div className="form-group"><label htmlFor="round-location">Location</label><input id="round-location" name="location" maxLength={200} defaultValue={round?.location ?? ""} /></div>
       <div className="form-group full"><label htmlFor="round-notes">Private round notes</label><textarea id="round-notes" name="notes" maxLength={10000} rows={7} defaultValue={round?.notes ?? ""} /></div>
     </div></details>
-    {state.message && <p className="form-error" role="alert">{state.message}</p>}
+    {state.message && <p className="form-error" role="alert" aria-atomic="true">{state.message}{state.conflict && round && <><br /><Link href={`/applications/${applicationId}/rounds/${round.id}/edit`} target="_blank" rel="noopener noreferrer">Review latest in a new tab</Link></>}</p>}
     <div className="tracker-form-actions"><button className="button" disabled={pending} type="submit">{pending ? <><LoaderCircle className="spin" size={16} />Saving…</> : round ? "Save round" : "Add interview round"}</button><Link className="button button-secondary" href={`/applications/${applicationId}`}>Cancel</Link></div>
   </form>;
 }
