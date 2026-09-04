@@ -7,8 +7,26 @@ import {
   parsePreparationChecklistActionInput,
   PREPARATION_CHECKLIST_INVALID_INPUT_ERROR,
 } from "@/lib/interview-preparation/checklist-action-input";
+import {
+  PREPARATION_NOTES_CONFLICT_ERROR,
+  PREPARATION_NOTES_INVALID_INPUT_ERROR,
+  PREPARATION_NOTES_PERSISTENCE_ERROR,
+  PREPARATION_NOTES_SAVED_MESSAGE,
+  PREPARATION_REFLECTION_CONFLICT_ERROR,
+  PREPARATION_REFLECTION_INVALID_INPUT_ERROR,
+  PREPARATION_REFLECTION_PERSISTENCE_ERROR,
+  PREPARATION_REFLECTION_SAVED_MESSAGE,
+  parsePreparationNotesActionInput,
+  parsePreparationReflectionActionInput,
+  parsePreparationTextSaveResult,
+} from "@/lib/interview-preparation/text-action-input";
 
-export type PreparationActionState = { status: "idle" | "success" | "error"; message: string };
+export type PreparationActionState = {
+  status: "idle" | "success" | "error";
+  message: string;
+  conflict?: boolean;
+  revision?: string;
+};
 
 function refresh(roundId: string, applicationId?: string) {
   revalidatePath(`/interviews/${roundId}/prepare`);
@@ -16,14 +34,52 @@ function refresh(roundId: string, applicationId?: string) {
   if (applicationId) revalidatePath(`/applications/${applicationId}`);
 }
 
-export async function savePreparationNotesAction(roundId: string, applicationId: string, _: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+export async function savePreparationNotesAction(
+  roundId: unknown,
+  applicationId: unknown,
+  previousState: PreparationActionState,
+  formData: unknown,
+): Promise<PreparationActionState> {
+  const parsed = parsePreparationNotesActionInput(roundId, applicationId, formData);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: PREPARATION_NOTES_INVALID_INPUT_ERROR,
+      revision: previousState.revision,
+    };
+  }
+  const input = parsed.value;
+  const failed = (message: string, conflict = false) => ({
+    status: "error" as const,
+    message,
+    conflict,
+    revision: input.revision,
+  });
   const actor = await getAuthenticatedActor();
-  if (!actor) return { status: "error", message: "Your session expired. Sign in and try again." };
-  const notes = String(formData.get("private_notes") ?? "").trim().slice(0, 12000);
-  const { error } = await actor.supabase.rpc("save_interview_preparation", { target_round_id: roundId, notes_value: notes });
-  if (error) return { status: "error", message: "Your notes could not be saved. Try again." };
-  refresh(roundId, applicationId);
-  return { status: "success", message: "Private notes saved." };
+  if (!actor) return failed("Your session expired. Sign in and try again.");
+  const { data, error } = await actor.supabase.rpc(
+    "save_interview_preparation_notes_if_revision",
+    {
+      target_round_id: input.roundId,
+      target_expect_absent: input.expectAbsent,
+      target_expected_updated_at: input.expectedUpdatedAt,
+      target_notes: input.notes,
+    },
+  );
+  if (error) return failed(PREPARATION_NOTES_PERSISTENCE_ERROR);
+  const outcome = parsePreparationTextSaveResult(data, input.roundId);
+  if (outcome.status === "conflict") {
+    return failed(PREPARATION_NOTES_CONFLICT_ERROR, true);
+  }
+  if (outcome.status === "invalid") {
+    return failed(PREPARATION_NOTES_PERSISTENCE_ERROR);
+  }
+  refresh(input.roundId, input.applicationId);
+  return {
+    status: "success",
+    message: PREPARATION_NOTES_SAVED_MESSAGE,
+    revision: outcome.updatedAt,
+  };
 }
 
 export async function togglePreparationChecklistAction(roundId: unknown, itemId: unknown, targetCompleted: unknown, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
@@ -78,12 +134,53 @@ export async function deletePreparationTaskAction(roundId: string, applicationId
   return { status: "success", message: "Task removed." };
 }
 
-export async function savePreparationReflectionAction(roundId: string, applicationId: string, _: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+export async function savePreparationReflectionAction(
+  roundId: unknown,
+  applicationId: unknown,
+  previousState: PreparationActionState,
+  formData: unknown,
+): Promise<PreparationActionState> {
+  const parsed = parsePreparationReflectionActionInput(roundId, applicationId, formData);
+  if (!parsed.ok) {
+    return {
+      status: "error",
+      message: PREPARATION_REFLECTION_INVALID_INPUT_ERROR,
+      revision: previousState.revision,
+    };
+  }
+  const input = parsed.value;
+  const failed = (message: string, conflict = false) => ({
+    status: "error" as const,
+    message,
+    conflict,
+    revision: input.revision,
+  });
   const actor = await getAuthenticatedActor();
-  if (!actor) return { status: "error", message: "Your session expired. Sign in and try again." };
-  const value = (name: string) => String(formData.get(name) ?? "").trim().slice(0, 8000);
-  const { error } = await actor.supabase.rpc("save_interview_preparation", { target_round_id: roundId, topics_asked_value: value("topics_asked"), went_well_value: value("went_well"), needs_improvement_value: value("needs_improvement"), follow_up_notes_value: value("follow_up_notes") });
-  if (error) return { status: "error", message: "Reflection could not be saved. Confirm the round is completed and try again." };
-  refresh(roundId, applicationId);
-  return { status: "success", message: "Private reflection saved." };
+  if (!actor) return failed("Your session expired. Sign in and try again.");
+  const { data, error } = await actor.supabase.rpc(
+    "save_interview_preparation_reflection_if_revision",
+    {
+      target_round_id: input.roundId,
+      target_expect_absent: input.expectAbsent,
+      target_expected_updated_at: input.expectedUpdatedAt,
+      target_topics_asked: input.topicsAsked,
+      target_went_well: input.wentWell,
+      target_needs_improvement: input.needsImprovement,
+      target_follow_up_notes: input.followUpNotes,
+    },
+  );
+  if (error) return failed(PREPARATION_REFLECTION_PERSISTENCE_ERROR);
+  const outcome = parsePreparationTextSaveResult(data, input.roundId);
+  if (outcome.status === "conflict") {
+    return failed(PREPARATION_REFLECTION_CONFLICT_ERROR, true);
+  }
+  if (outcome.status === "invalid") {
+    return failed(PREPARATION_REFLECTION_PERSISTENCE_ERROR);
+  }
+  refresh(input.roundId, input.applicationId);
+  return {
+    status: "success",
+    message: PREPARATION_REFLECTION_SAVED_MESSAGE,
+    revision: outcome.updatedAt,
+  };
 }

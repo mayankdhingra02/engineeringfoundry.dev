@@ -134,7 +134,14 @@ await check("disposable account can populate every major private workspace", asy
   const round = await a.client.from("interview_rounds").insert({ application_id: applicationId, user_id: a.user.id, round_number: 1, round_name: "Technical screen", round_type: "Coding", scheduled_at: "2099-09-01T18:00:00Z", timezone: "America/Chicago", status: "Scheduled", notes: "Private round note" }).select("id").single();
   assert.ifError(round.error);
   roundId = round.data.id;
-  assert.ifError((await a.client.rpc("save_interview_preparation", { target_round_id: roundId, notes_value: "Private preparation note" })).error);
+  const preparation = await a.client.rpc("save_interview_preparation_notes_if_revision", {
+    target_round_id: roundId,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_notes: "Private preparation note",
+  });
+  assert.ifError(preparation.error);
+  assert.equal(preparation.data?.length, 1);
   assert.ifError((await a.client.rpc("set_interview_preparation_checklist_item", { target_round_id: roundId, target_item_id: "dsa-review-queue", target_completed: true })).error);
   const story = await a.client.rpc("create_behavioral_story_with_themes", {
     target_title: "Phase 8 disposable story",

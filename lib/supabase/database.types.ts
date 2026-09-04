@@ -414,12 +414,16 @@ export type Database = {
         Row: {
           id: string; round_id: string; user_id: string; private_notes: string | null;
           completed_template_item_ids: string[]; topics_asked: string | null; went_well: string | null;
-          needs_improvement: string | null; follow_up_notes: string | null; created_at: string; updated_at: string;
+          needs_improvement: string | null; follow_up_notes: string | null;
+          private_notes_updated_at: string | null; reflection_updated_at: string | null;
+          created_at: string; updated_at: string;
         };
         Insert: {
           id?: string; round_id: string; user_id: string; private_notes?: string | null;
           completed_template_item_ids?: string[]; topics_asked?: string | null; went_well?: string | null;
-          needs_improvement?: string | null; follow_up_notes?: string | null; created_at?: string; updated_at?: string;
+          needs_improvement?: string | null; follow_up_notes?: string | null;
+          private_notes_updated_at?: string | null; reflection_updated_at?: string | null;
+          created_at?: string; updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["interview_preparations"]["Insert"]>;
         Relationships: [{ foreignKeyName: "interview_preparations_round_owner_fkey"; columns: ["round_id", "user_id"]; isOneToOne: true; referencedRelation: "interview_rounds"; referencedColumns: ["id", "user_id"] }];
@@ -1172,6 +1176,27 @@ export type Database = {
       save_interview_preparation: {
         Args: { target_round_id: string; notes_value?: string | null; completed_ids_value?: string[] | null; topics_asked_value?: string | null; went_well_value?: string | null; needs_improvement_value?: string | null; follow_up_notes_value?: string | null };
         Returns: string;
+      };
+      save_interview_preparation_notes_if_revision: {
+        Args: {
+          target_round_id: string;
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          target_notes: string;
+        };
+        Returns: { round_id: string; updated_at: string }[];
+      };
+      save_interview_preparation_reflection_if_revision: {
+        Args: {
+          target_round_id: string;
+          target_expect_absent: boolean;
+          target_expected_updated_at: string | null;
+          target_topics_asked: string;
+          target_went_well: string;
+          target_needs_improvement: string;
+          target_follow_up_notes: string;
+        };
+        Returns: { round_id: string; updated_at: string }[];
       };
       set_interview_preparation_checklist_item: {
         Args: { target_round_id: string; target_item_id: string; target_completed: boolean };

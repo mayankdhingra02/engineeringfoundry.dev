@@ -3,6 +3,16 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { chooseRoundPreparationNextAction } from "../lib/interview-preparation/next-action.ts";
 import { parsePreparationChecklistActionInput, PREPARATION_CHECKLIST_INVALID_INPUT_ERROR } from "../lib/interview-preparation/checklist-action-input.ts";
+import {
+  PREPARATION_NOTES_CONFLICT_ERROR,
+  PREPARATION_NOTES_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  PREPARATION_REFLECTION_CONFLICT_ERROR,
+  PREPARATION_REFLECTION_EARLIER_SNAPSHOT_SAVED_MESSAGE,
+  parsePreparationNotesActionInput,
+  parsePreparationReflectionActionInput,
+  parsePreparationTextSaveResult,
+  resolvePreparationTextDisplayState,
+} from "../lib/interview-preparation/text-action-input.ts";
 import { ALL_CHECKLIST_IDS, checklistForRound, modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
 import { resolvePreparationCounts } from "../lib/interview-preparation/preparation-counts.ts";
 import { buildInterviewPlaybookOverview } from "../lib/interview-playbook/overview.ts";
@@ -16,6 +26,21 @@ const model = read("lib/interview-preparation/model.ts");
 const query = read("lib/interview-preparation/queries.ts");
 const preparationCountsCore = read("lib/interview-preparation/preparation-counts.ts");
 const actions = read("features/interview-preparation/actions.ts");
+const notesAction = actions.slice(
+  actions.indexOf("export async function savePreparationNotesAction"),
+  actions.indexOf("export async function togglePreparationChecklistAction"),
+);
+const reflectionAction = actions.slice(
+  actions.indexOf("export async function savePreparationReflectionAction"),
+);
+const textForm = read("features/interview-preparation/text-form.tsx");
+const notesFormSource = textForm.slice(
+  textForm.indexOf("export function PreparationNotesForm"),
+  textForm.indexOf("export function PreparationReflectionForm"),
+);
+const reflectionFormSource = textForm.slice(
+  textForm.indexOf("export function PreparationReflectionForm"),
+);
 const checklistAction = actions.slice(
   actions.indexOf("export async function togglePreparationChecklistAction"),
   actions.indexOf("export async function addPreparationTaskAction"),
@@ -24,6 +49,19 @@ const mutationControls = read("features/interview-preparation/mutation-controls.
 const page = read("app/interviews/[roundId]/prepare/page.tsx");
 const migration = read("supabase/migrations/202608140011_create_interview_preparation_hub.sql");
 const atomicChecklistMigration = read("supabase/migrations/202609030001_set_interview_preparation_checklist_item.sql");
+const preparationTextRevisionMigration = read("supabase/migrations/202609040004_save_interview_preparation_text_if_revision.sql");
+const notesRevisionFunction = preparationTextRevisionMigration.slice(
+  preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation_notes_if_revision"),
+  preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation_reflection_if_revision"),
+);
+const reflectionRevisionFunction = preparationTextRevisionMigration.slice(
+  preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation_reflection_if_revision"),
+  preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation("),
+);
+const retiredPreparationFunction = preparationTextRevisionMigration.slice(
+  preparationTextRevisionMigration.indexOf("create or replace function public.save_interview_preparation("),
+  preparationTextRevisionMigration.indexOf("revoke all on function public.save_interview_preparation_notes_if_revision"),
+);
 const legacySaveMigration = atomicChecklistMigration.slice(
   atomicChecklistMigration.indexOf("create or replace function public.save_interview_preparation"),
   atomicChecklistMigration.indexOf("create or replace function public.set_interview_preparation_checklist_item"),
@@ -52,6 +90,8 @@ assert.deepEqual(
 );
 const interviewPreparationDatabaseTest = read("supabase/tests/database/interview_preparation.test.sql");
 const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
+const securityQualifier = read("scripts/qualify-security-local.mjs");
+const lifecycleQualifier = read("scripts/qualify-account-lifecycle-local.mjs");
 const dashboard = read("app/dashboard/page.tsx");
 const application = read("app/applications/[id]/page.tsx");
 const behavioralLibrary = read("app/behavioral/questions/page.tsx");
@@ -112,6 +152,136 @@ for (const [roundId, itemId, targetCompleted] of [
     "malformed, missing, case-changed, or non-scalar atomic checklist input must fail closed",
   );
 }
+
+const preparationRoundId = "91919191-9191-4919-8919-919191919302";
+const preparationApplicationId = "91919191-9191-4919-8919-919191919301";
+const preparationRevision = "2026-09-04T12:34:56.123456Z";
+const copyFormData = (source) => {
+  const copy = new FormData();
+  for (const [key, value] of source.entries()) copy.append(key, value);
+  return copy;
+};
+const notesForm = new FormData();
+notesForm.set("private_notes", "  Preserve the current draft.  ");
+notesForm.set("expected_updated_at", "absent");
+notesForm.set("$ACTION_fixture", "ignored");
+assert.deepEqual(
+  parsePreparationNotesActionInput(preparationRoundId.toUpperCase(), preparationApplicationId.toUpperCase(), notesForm),
+  {
+    ok: true,
+    value: {
+      roundId: preparationRoundId,
+      applicationId: preparationApplicationId,
+      expectAbsent: true,
+      expectedUpdatedAt: null,
+      revision: "absent",
+      notes: "Preserve the current draft.",
+    },
+  },
+  "notes parsing must normalize bound UUIDs, preserve explicit absence, trim text, and ignore only action metadata",
+);
+
+const reflectionForm = new FormData();
+for (const [name, value] of [
+  ["topics_asked", "  Caching and failure modes  "],
+  ["went_well", "Clear trade-offs"],
+  ["needs_improvement", "Estimate sooner"],
+  ["follow_up_notes", "Send thanks"],
+  ["expected_updated_at", preparationRevision],
+]) reflectionForm.set(name, value);
+assert.deepEqual(
+  parsePreparationReflectionActionInput(preparationRoundId, preparationApplicationId, reflectionForm),
+  {
+    ok: true,
+    value: {
+      roundId: preparationRoundId,
+      applicationId: preparationApplicationId,
+      expectAbsent: false,
+      expectedUpdatedAt: preparationRevision,
+      revision: preparationRevision,
+      topicsAsked: "Caching and failure modes",
+      wentWell: "Clear trade-offs",
+      needsImprovement: "Estimate sooner",
+      followUpNotes: "Send thanks",
+    },
+  },
+  "reflection parsing must retain one complete normalized snapshot and exact loaded revision",
+);
+
+const invalidNoteInputs = [
+  null,
+  {},
+  new URLSearchParams(),
+  (() => { const value = new FormData(); value.set("expected_updated_at", "absent"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.delete("expected_updated_at"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.append("private_notes", "duplicate"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.append("expected_updated_at", "absent"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.set("private_notes", new File(["text"], "note.txt")); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.set("unknown", "field"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.set("private_notes", "bad\u0000control"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.set("private_notes", "😀".repeat(12001)); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.set("expected_updated_at", "2026-02-30T00:00:00Z"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.set("expected_updated_at", "2026-09-04T25:00:00Z"); return value; })(),
+  (() => { const value = copyFormData(notesForm); value.set("expected_updated_at", "2026-09-04T12:00:00+14:01"); return value; })(),
+];
+for (const input of invalidNoteInputs) {
+  assert.deepEqual(
+    parsePreparationNotesActionInput(preparationRoundId, preparationApplicationId, input),
+    { ok: false },
+    "malformed, incomplete, duplicate, file, foreign, controlled, oversized, or noncanonical notes input must fail closed",
+  );
+}
+for (const [roundId, applicationId] of [
+  ["", preparationApplicationId],
+  ["91919191-9191-6919-8919-919191919302", preparationApplicationId],
+  [preparationRoundId, ""],
+  [preparationRoundId, [preparationApplicationId]],
+]) {
+  assert.deepEqual(
+    parsePreparationNotesActionInput(roundId, applicationId, notesForm),
+    { ok: false },
+    "malformed bound round or application identifiers must fail before actor work",
+  );
+}
+
+for (const field of ["topics_asked", "went_well", "needs_improvement", "follow_up_notes", "expected_updated_at"]) {
+  const missing = copyFormData(reflectionForm);
+  missing.delete(field);
+  assert.deepEqual(parsePreparationReflectionActionInput(preparationRoundId, preparationApplicationId, missing), { ok: false }, `missing ${field} must reject the complete reflection snapshot`);
+  const duplicate = copyFormData(reflectionForm);
+  duplicate.append(field, "duplicate");
+  assert.deepEqual(parsePreparationReflectionActionInput(preparationRoundId, preparationApplicationId, duplicate), { ok: false }, `duplicate ${field} must reject the complete reflection snapshot`);
+}
+for (const invalidReflection of [
+  (() => { const value = copyFormData(reflectionForm); value.set("topics_asked", new File(["text"], "reflection.txt")); return value; })(),
+  (() => { const value = copyFormData(reflectionForm); value.set("went_well", "bad\u007fcontrol"); return value; })(),
+  (() => { const value = copyFormData(reflectionForm); value.set("needs_improvement", "😀".repeat(8001)); return value; })(),
+  (() => { const value = copyFormData(reflectionForm); value.set("unknown", "field"); return value; })(),
+]) {
+  assert.deepEqual(
+    parsePreparationReflectionActionInput(preparationRoundId, preparationApplicationId, invalidReflection),
+    { ok: false },
+    "reflection File, control, oversized, and unknown-field input must fail closed",
+  );
+}
+
+assert.deepEqual(parsePreparationTextSaveResult([], preparationRoundId), { status: "conflict" }, "zero saved rows must be a revision conflict");
+assert.deepEqual(parsePreparationTextSaveResult([{ round_id: preparationRoundId, updated_at: preparationRevision }], preparationRoundId), { status: "saved", updatedAt: preparationRevision }, "one exact correlated row must advance the form revision");
+for (const invalidResult of [
+  null,
+  {},
+  [{ round_id: preparationRoundId }],
+  [{ round_id: preparationRoundId, updated_at: "invalid" }],
+  [{ round_id: "92929292-9292-4929-8929-929292929292", updated_at: preparationRevision }],
+  [{ round_id: preparationRoundId, updated_at: preparationRevision, extra: true }],
+  [{ round_id: preparationRoundId, updated_at: preparationRevision }, { round_id: preparationRoundId, updated_at: preparationRevision }],
+]) {
+  assert.deepEqual(parsePreparationTextSaveResult(invalidResult, preparationRoundId), { status: "invalid" }, "malformed or uncorrelated preparation text results must fail closed");
+}
+assert.deepEqual(resolvePreparationTextDisplayState({ status: "success", message: "Private notes saved." }, false, true, "notes"), { status: "success", message: PREPARATION_NOTES_EARLIER_SNAPSHOT_SAVED_MESSAGE }, "a notes edit made during flight must not receive a full-current-draft success claim");
+assert.deepEqual(resolvePreparationTextDisplayState({ status: "success", message: "Private reflection saved." }, false, true, "reflection"), { status: "success", message: PREPARATION_REFLECTION_EARLIER_SNAPSHOT_SAVED_MESSAGE }, "a reflection edit made during flight must not receive a full-current-draft success claim");
+assert.deepEqual(resolvePreparationTextDisplayState({ status: "error", message: PREPARATION_NOTES_CONFLICT_ERROR }, false, true, "notes"), { status: "error", message: PREPARATION_NOTES_CONFLICT_ERROR }, "notes conflicts must outrank later draft-change messaging");
+assert.deepEqual(resolvePreparationTextDisplayState({ status: "error", message: PREPARATION_REFLECTION_CONFLICT_ERROR }, false, true, "reflection"), { status: "error", message: PREPARATION_REFLECTION_CONFLICT_ERROR }, "reflection conflicts must outrank later draft-change messaging");
 
 const nextActionApplicationId = "app-fixture-1";
 const nextActionDsaQuestion = { id: "two-sum", title: "Two Sum" };
@@ -547,8 +717,31 @@ const cases = [
   ["atomic checklist clearing removes only the requested membership without creating a row", atomicChecklistClearBranch.includes("update public.interview_preparations") && atomicChecklistClearBranch.includes("array_remove(completed_template_item_ids, target_item_id)") && atomicChecklistClearBranch.includes("target_item_id = any(completed_template_item_ids)") && !atomicChecklistClearBranch.includes("insert into")],
   ["atomic checklist errors keep invalid, foreign, and missing inputs indistinguishable where required", atomicChecklistFunction.includes("errcode = '23514'") && atomicChecklistFunction.includes("errcode = '23502'") && atomicChecklistFunction.includes("errcode = 'P0002'") && atomicChecklistFunction.includes("Interview round not found")],
   ["atomic checklist RPC is authenticated-only", atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from public") && atomicChecklistMigration.includes("revoke all on function public.set_interview_preparation_checklist_item(uuid,text,boolean) from anon") && atomicChecklistMigration.includes("grant execute on function public.set_interview_preparation_checklist_item(uuid,text,boolean) to authenticated")],
-  ["pgTAP covers desired-state membership, idempotence, preservation, legacy rejection, and owner privacy", ["distinct desired-state updates retain both checklist items", "repeated true never creates a duplicate", "clearing one item preserves other checklist items", "rejected legacy checklist writes leave preparation unchanged", "missing and foreign rounds are indistinguishable"].every((marker) => interviewPreparationDatabaseTest.includes(marker))],
+  ["pgTAP covers desired-state membership, idempotence, preservation, legacy rejection, and owner privacy", ["distinct desired-state updates retain both checklist items", "repeated true never creates a duplicate", "clearing one item preserves other checklist items", "rejected legacy snapshot writes leave preparation unchanged", "missing and foreign rounds are indistinguishable"].every((marker) => interviewPreparationDatabaseTest.includes(marker))],
   ["local persistence qualification exercises concurrent atomic updates and the legacy rejection", persistenceQualifier.includes('check("User A creates notes and concurrent desired-state checklist updates retain both items"') && persistenceQualifier.includes('rpc("set_interview_preparation_checklist_item"') && persistenceQualifier.includes("Promise.all") && persistenceQualifier.includes('expectSqlError(rejected, "0A000")')],
+  ["notes action parses strict runtime input before actor or persistence work", notesAction.indexOf("parsePreparationNotesActionInput") >= 0 && notesAction.indexOf("parsePreparationNotesActionInput") < notesAction.indexOf("getAuthenticatedActor") && notesAction.indexOf("getAuthenticatedActor") < notesAction.indexOf('rpc(\n    "save_interview_preparation_notes_if_revision"')],
+  ["reflection action parses strict runtime input before actor or persistence work", reflectionAction.indexOf("parsePreparationReflectionActionInput") >= 0 && reflectionAction.indexOf("parsePreparationReflectionActionInput") < reflectionAction.indexOf("getAuthenticatedActor") && reflectionAction.indexOf("getAuthenticatedActor") < reflectionAction.indexOf('rpc(\n    "save_interview_preparation_reflection_if_revision"')],
+  ["preparation text actions use no legacy snapshot RPC", !notesAction.includes('rpc("save_interview_preparation"') && !reflectionAction.includes('rpc("save_interview_preparation"')],
+  ["notes action submits one explicit revision state and exact text", ["target_round_id: input.roundId", "target_expect_absent: input.expectAbsent", "target_expected_updated_at: input.expectedUpdatedAt", "target_notes: input.notes"].every((marker) => notesAction.includes(marker))],
+  ["reflection action submits one explicit revision state and complete snapshot", ["target_round_id: input.roundId", "target_expect_absent: input.expectAbsent", "target_expected_updated_at: input.expectedUpdatedAt", "target_topics_asked: input.topicsAsked", "target_went_well: input.wentWell", "target_needs_improvement: input.needsImprovement", "target_follow_up_notes: input.followUpNotes"].every((marker) => reflectionAction.includes(marker))],
+  ["notes action distinguishes query errors, zero-row conflicts, malformed results, and success before refresh", notesAction.indexOf("if (error)") < notesAction.indexOf('outcome.status === "conflict"') && notesAction.indexOf('outcome.status === "conflict"') < notesAction.indexOf('outcome.status === "invalid"') && notesAction.indexOf('outcome.status === "invalid"') < notesAction.indexOf("refresh(input.roundId, input.applicationId)")],
+  ["reflection action distinguishes query errors, zero-row conflicts, malformed results, and success before refresh", reflectionAction.indexOf("if (error)") < reflectionAction.indexOf('outcome.status === "conflict"') && reflectionAction.indexOf('outcome.status === "conflict"') < reflectionAction.indexOf('outcome.status === "invalid"') && reflectionAction.indexOf('outcome.status === "invalid"') < reflectionAction.indexOf("refresh(input.roundId, input.applicationId)")],
+  ["notes editor prevents native reset, synchronously guards duplicates, snapshots, then dispatches in a transition", ["event.preventDefault()", "if (submissionPending.current) return", "submissionPending.current = true", "new FormData(event.currentTarget)", "startTransition(() => formAction(formData))"].every((marker) => notesFormSource.includes(marker)) && notesFormSource.indexOf("event.preventDefault()") < notesFormSource.indexOf("if (submissionPending.current) return") && notesFormSource.indexOf("if (submissionPending.current) return") < notesFormSource.indexOf("submissionPending.current = true") && notesFormSource.indexOf("submissionPending.current = true") < notesFormSource.indexOf("new FormData(event.currentTarget)") && notesFormSource.indexOf("new FormData(event.currentTarget)") < notesFormSource.indexOf("startTransition(() => formAction(formData))")],
+  ["reflection editor prevents native reset, synchronously guards duplicates, snapshots, then dispatches in a transition", ["event.preventDefault()", "if (submissionPending.current) return", "submissionPending.current = true", "new FormData(event.currentTarget)", "startTransition(() => formAction(formData))"].every((marker) => reflectionFormSource.includes(marker)) && reflectionFormSource.indexOf("event.preventDefault()") < reflectionFormSource.indexOf("if (submissionPending.current) return") && reflectionFormSource.indexOf("if (submissionPending.current) return") < reflectionFormSource.indexOf("submissionPending.current = true") && reflectionFormSource.indexOf("submissionPending.current = true") < reflectionFormSource.indexOf("new FormData(event.currentTarget)") && reflectionFormSource.indexOf("new FormData(event.currentTarget)") < reflectionFormSource.indexOf("startTransition(() => formAction(formData))")],
+  ["preparation text editors track draft changes against the submitted snapshot", [notesFormSource, reflectionFormSource].every((source) => source.includes("submittedDraftSignature") && source.includes("changedSinceSubmit") && source.includes("preparationTextDraftSignature") && source.includes("setChangedSinceSubmit(false)") && source.includes("onChange="))],
+  ["preparation text editors retain progressive action fallback and exact returned revisions", [notesFormSource, reflectionFormSource].every((source) => source.includes("action={formAction}") && source.includes("state.revision ?? revision") && !source.includes("key={state.revision"))],
+  ["preparation text editors keep the pending trigger focusable and expose one atomic live status", [notesFormSource, reflectionFormSource].every((source) => source.includes('aria-busy={pending}') && source.includes('aria-disabled={pending}')) && textForm.includes('aria-atomic="true"') && textForm.includes('role={displayState.status === "error" ? "alert" : "status"}')],
+  ["preparation text conflicts offer a non-destructive current-page review", textForm.includes("!pending && conflict") && textForm.includes('target="_blank"') && textForm.includes('rel="noopener noreferrer"') && textForm.includes("Review latest in a new tab")],
+  ["preparation page passes independent loaded-or-absent revisions and a canonical latest link", page.includes("preparation?.private_notes_updated_at ?? PREPARATION_TEXT_ABSENT_REVISION") && page.includes("preparation?.reflection_updated_at ?? PREPARATION_TEXT_ABSENT_REVISION") && page.includes("latestHref={latestHref}") && page.includes("const latestHref = `/interviews/${round.id}/prepare`")],
+  ["migration adds independent notes and reflection revisions and backfills only existing text", preparationTextRevisionMigration.includes("add column private_notes_updated_at") && preparationTextRevisionMigration.includes("add column reflection_updated_at") && preparationTextRevisionMigration.includes("where private_notes is not null") && preparationTextRevisionMigration.includes("where topics_asked is not null")],
+  ["notes and reflection CAS functions share the owned-round lock while comparing only their own revision", [notesRevisionFunction, reflectionRevisionFunction].every((source) => source.includes("from public.interview_rounds as rounds") && source.includes("and rounds.user_id = current_user_id") && source.includes("for update;") && source.includes("target_expect_absent")) && notesRevisionFunction.includes("preparations.private_notes_updated_at = target_expected_updated_at") && reflectionRevisionFunction.includes("preparations.reflection_updated_at = target_expected_updated_at")],
+  ["reflection CAS preserves the completed-round boundary", reflectionRevisionFunction.includes("owned_round_status <> 'Completed'") && reflectionRevisionFunction.includes("Reflection is available after the round is completed")],
+  ["legacy preparation snapshots fail safely without mutation", retiredPreparationFunction.includes("Revision-checked preparation text saving is required") && retiredPreparationFunction.includes("errcode = '0A000'") && !retiredPreparationFunction.includes("insert into") && !retiredPreparationFunction.includes("update public")],
+  ["new preparation text RPCs are authenticated-only", ["save_interview_preparation_notes_if_revision(uuid,boolean,timestamptz,text)", "save_interview_preparation_reflection_if_revision(uuid,boolean,timestamptz,text,text,text,text)"].every((signature) => preparationTextRevisionMigration.includes(`revoke all on function public.${signature} from public, anon, authenticated`) && preparationTextRevisionMigration.includes(`grant execute on function public.${signature} to authenticated`))],
+  ["preparation pgTAP covers strict revisions, stale preservation, owner privacy, and legacy fail-safe", ["a stale notes revision cannot overwrite the saved text", "a stale reflection revision cannot mix or overwrite fields", "missing and foreign notes targets are indistinguishable", "missing and foreign reflection targets are indistinguishable", "legacy preparation snapshot writes fail closed"].every((marker) => interviewPreparationDatabaseTest.includes(marker))],
+  ["persistence qualification covers absent/checklist, notes/notes, reflection/reflection, and independent text races", ["concurrent absent notes and checklist saves preserve both fields", "concurrent notes snapshots accept exactly one revision", "concurrent reflection snapshots accept exactly one coherent revision", "notes and reflection saves advance independently"].every((marker) => persistenceQualifier.includes(marker))],
+  ["security qualification covers anonymous denial and foreign-or-missing text privacy", securityQualifier.includes("foreign and nonexistent preparation text targets are indistinguishable") && securityQualifier.includes("anonymous callers cannot execute preparation text or legacy snapshot RPCs")],
+  ["account lifecycle qualification populates preparation through the new notes CAS", lifecycleQualifier.includes('rpc("save_interview_preparation_notes_if_revision"') && lifecycleQualifier.includes("target_expect_absent: true")],
   ["mutation errors returned", actions.includes("Checklist change was not saved") && actions.includes("Task change was not saved") && actions.includes("Task was not removed")],
   ["mutation pending states announced", mutationControls.includes('aria-live="polite"') && mutationControls.includes("Saving checklist…") && mutationControls.includes("Adding task…")],
   ["dashboard Prepare", dashboard.includes(">Prepare<")],

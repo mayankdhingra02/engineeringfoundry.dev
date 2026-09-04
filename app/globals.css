@@ -250,6 +250,9 @@ a.feature-card:hover { transform: translateY(-3px); border-color: var(--line-str
 .prep-notes-form p, .prep-reflection-form footer p { margin: 0; min-height: 18px; color: var(--muted); font-size: 12px; }
 .prep-notes-form p.success, .prep-reflection-form p.success { color: var(--green); }
 .prep-notes-form p.error, .prep-reflection-form p.error { color: var(--accent-dark); }
+.prep-notes-form .button[aria-disabled="true"], .prep-reflection-form .button[aria-disabled="true"] { cursor: wait; opacity: .52; transform: none; }
+.prep-notes-form .button-secondary[aria-disabled="true"]:hover { background: var(--surface-2); border-color: var(--control-border, var(--line-strong)); transform: none; }
+.prep-reflection-form .button[aria-disabled="true"]:hover { background: var(--accent); border-color: var(--accent); transform: none; }
 .prep-privacy { margin: 0 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .prep-mutation-status { margin: -3px 2px 7px; color: var(--muted); font-size: 12px; line-height: 1.4; }
 .prep-mutation-status.success { color: var(--green); }

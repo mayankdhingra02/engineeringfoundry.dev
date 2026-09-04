@@ -74,7 +74,7 @@ insert into public.applications (id, user_id, company_name, role_title, status)
 values ('83838383-8383-4838-8838-838383838301', '83838383-8383-4838-8838-838383838383', 'Disposable Co', 'SDE II', 'Interviewing');
 insert into public.interview_rounds (id, application_id, user_id, round_number, round_name, round_type, scheduled_at, timezone, status)
 values ('83838383-8383-4838-8838-838383838302', '83838383-8383-4838-8838-838383838301', '83838383-8383-4838-8838-838383838383', 1, 'Technical screen', 'Coding', '2099-09-01T18:00:00Z', 'America/Chicago', 'Scheduled');
-select public.save_interview_preparation('83838383-8383-4838-8838-838383838302', 'Private preparation note', null, null, null, null, null);
+select public.save_interview_preparation_notes_if_revision('83838383-8383-4838-8838-838383838302', true, null, 'Private preparation note');
 select public.set_interview_preparation_checklist_item('83838383-8383-4838-8838-838383838302', 'dsa-review-queue', true);
 select public.add_interview_preparation_task('83838383-8383-4838-8838-838383838302', 'Review two sum');
 

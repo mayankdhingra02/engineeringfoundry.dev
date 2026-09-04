@@ -776,11 +776,86 @@ await check("User B cannot read User A interview round", async () => {
 });
 
 await check("User A creates note-only preparation before checklist isolation checks", async () => {
-  const { error } = await a.client.rpc("save_interview_preparation", {
+  const { data, error } = await a.client.rpc("save_interview_preparation_notes_if_revision", {
     target_round_id: roundId,
-    notes_value: "Owner-only preparation note",
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_notes: "Owner-only preparation note",
   });
   assert.ifError(error);
+  assert.equal(data?.length, 1);
+});
+
+await check("foreign and nonexistent preparation text targets are indistinguishable", async () => {
+  const missingRoundId = "93939393-9393-4939-8939-939393939393";
+  const calls = await Promise.all([
+    b.client.rpc("save_interview_preparation_notes_if_revision", {
+      target_round_id: roundId,
+      target_expect_absent: true,
+      target_expected_updated_at: null,
+      target_notes: "Foreign note",
+    }),
+    b.client.rpc("save_interview_preparation_notes_if_revision", {
+      target_round_id: missingRoundId,
+      target_expect_absent: true,
+      target_expected_updated_at: null,
+      target_notes: "Missing note",
+    }),
+    b.client.rpc("save_interview_preparation_reflection_if_revision", {
+      target_round_id: roundId,
+      target_expect_absent: true,
+      target_expected_updated_at: null,
+      target_topics_asked: "",
+      target_went_well: "",
+      target_needs_improvement: "",
+      target_follow_up_notes: "",
+    }),
+    b.client.rpc("save_interview_preparation_reflection_if_revision", {
+      target_round_id: missingRoundId,
+      target_expect_absent: true,
+      target_expected_updated_at: null,
+      target_topics_asked: "",
+      target_went_well: "",
+      target_needs_improvement: "",
+      target_follow_up_notes: "",
+    }),
+  ]);
+  for (const call of calls) {
+    assert.ifError(call.error);
+    assert.deepEqual(call.data, []);
+  }
+  const ownerState = await a.client.from("interview_preparations").select("private_notes,private_notes_updated_at,reflection_updated_at").eq("round_id", roundId).single();
+  assert.ifError(ownerState.error);
+  assert.equal(ownerState.data.private_notes, "Owner-only preparation note");
+  assert.ok(ownerState.data.private_notes_updated_at);
+  assert.equal(ownerState.data.reflection_updated_at, null);
+  return "matching zero-row results; owner text and revisions unchanged";
+});
+
+await check("anonymous callers cannot execute preparation text or legacy snapshot RPCs", async () => {
+  const notes = await anon.rpc("save_interview_preparation_notes_if_revision", {
+    target_round_id: roundId,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_notes: "Anonymous note",
+  });
+  const reflection = await anon.rpc("save_interview_preparation_reflection_if_revision", {
+    target_round_id: roundId,
+    target_expect_absent: true,
+    target_expected_updated_at: null,
+    target_topics_asked: "",
+    target_went_well: "",
+    target_needs_improvement: "",
+    target_follow_up_notes: "",
+  });
+  const legacy = await anon.rpc("save_interview_preparation", {
+    target_round_id: roundId,
+    notes_value: "Anonymous legacy note",
+  });
+  for (const call of [notes, reflection, legacy]) {
+    assert.equal(call.error?.code, "42501");
+  }
+  return "notes, reflection, and legacy denied with SQLSTATE 42501";
 });
 
 await check("foreign and nonexistent checklist targets are indistinguishable and do not mutate", async () => {
