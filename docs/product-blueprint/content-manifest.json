@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "4459b618c04ed6838a720a6bc2f7342e9ef2404e",
-  "repository_state_sha256": "2f6cf12b5909bc8d6f995563673a03cea3fed4e9dbd725e0ce5bae5dd968f020",
+  "repository_sha": "aaa41413d6b2b3e4e03d78ecd6c87353e55e52cd",
+  "repository_state_sha256": "f12ed4ec5aad7acdacffef67e5d0ace9fa65b05e63d555faffa803841759723d",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -619,6 +619,7 @@
         "Shared study-plan and preparation-activity controls announce only confirmed account, browser-local, or visit-only outcomes, skip unavailable account actions, retain the bounded 160-item local write contract, and never apply stale results to a different plan or item. Account persistence from the shared activity control changes DSA and System Design status only through their owner-derived atomic quick boundaries, validates the returned canonical item ID, and cannot clear richer private progress fields.",
         "Public-profile lookup treats only a successful zero-row result as not found; RPC failures remain on a temporary error path, account-disabled metadata stays truthful and noindex, and successful rendering remains limited to the approved safe public projection.",
         "Branded public-profile links accept only bounded, credential-free canonical HTTPS GitHub or LinkedIn hosts; changed invalid values are rejected, unchanged legacy-invalid values are omitted from unrelated owner updates so they neither block edits nor get rewritten, and both the public RPC and application query independently mask unsafe legacy values.",
+        "Profile settings strictly parse one complete singleton browser snapshot and exact loaded revision before actor or profile work, then use only the owner-derived revision-checked full-save RPC. The account display-name action uses a one-field desired-state RPC under the same owner lock; direct authenticated profile updates are denied, revisions advance monotonically, two full snapshots from one revision accept exactly one coherent winner, and a concurrent display-name change cannot be erased by a stale full save. Executable parser, legacy-link, result, display-state, and source-integration checks run in npm run test:auth-foundation; database concurrency, grants, and owner isolation run in npm run qualify:database, while hosted checks remain unchecked external-owner work. Source-integration checks cover manual-submit draft retention, duplicate guards, revision submission, earlier-snapshot truth, atomic live status, and safe conflict-link attributes; rendered draft retention, focus, and assistive-technology behavior remain browser/manual validation.",
         "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed.",
         "Uncaught private Server Component failures reach the accessible temporary application error state, whose explicit Try again control uses Next 16's refetching retry contract; this source regression does not claim rendered browser execution.",
         "Dashboard first-use focus and Behavioral story count come only from complete owner-scoped query results; query errors, malformed result shapes, invalid persisted focus values, and invalid counts surface one sanitized private-data error before first-use copy instead of defaulting to unsure or zero.",
@@ -640,6 +641,7 @@
         "app/page.tsx",
         "app/reset-password/page.tsx",
         "app/settings/preparation/page.tsx",
+        "app/settings/profile/page.tsx",
         "app/u/[username]/page.tsx",
         "components/account-control.tsx",
         "components/global-search.tsx",
@@ -666,6 +668,7 @@
         "lib/auth/account-navigation.ts",
         "lib/auth/credentials.ts",
         "lib/auth/password-recovery-claims.ts",
+        "lib/auth/profile-action-input.ts",
         "lib/auth/profile-links.ts",
         "lib/auth/public-profile-query.ts",
         "lib/auth/queries.ts",
@@ -699,6 +702,7 @@
         "scripts/validate-public-links.mjs",
         "supabase/migrations/202608240001_harden_profile_professional_links.sql",
         "supabase/migrations/202609030003_import_preparation_activity_if_absent.sql",
+        "supabase/migrations/202609040006_save_profile_if_revision.sql",
         "supabase/tests/database/auth_profile_hardening.test.sql",
         "supabase/tests/database/preparation_activity_import.test.sql"
       ],
