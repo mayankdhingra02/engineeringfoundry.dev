@@ -751,6 +751,7 @@ await check("a fabricated System Design concept cannot be persisted", async () =
 
 // --- Cross-user isolation for later-phase surfaces -------------------------
 let roundId;
+let preparationTaskId;
 await check("User A creates an application and interview round", async () => {
   // user_id is supplied explicitly and RLS verifies it matches the caller; the
   // server never accepts it from a browser payload.
@@ -784,6 +785,32 @@ await check("User A creates note-only preparation before checklist isolation che
   });
   assert.ifError(error);
   assert.equal(data?.length, 1);
+});
+
+await check("User A creates an owner-scoped preparation task security fixture", async () => {
+  const created = await a.client.rpc("add_interview_preparation_task", {
+    target_round_id: roundId,
+    title_value: "Owner-only preparation task",
+  });
+  assert.ifError(created.error);
+  assert.ok(created.data);
+  preparationTaskId = created.data;
+});
+
+await check("direct preparation task completion writes cannot bypass the desired-state RPC", async () => {
+  const direct = await a.client
+    .from("interview_preparation_custom_tasks")
+    .update({ completed: true })
+    .eq("id", preparationTaskId);
+  assert.equal(direct.error?.code, "42501");
+  const ownerTask = await a.client
+    .from("interview_preparation_custom_tasks")
+    .select("completed")
+    .eq("id", preparationTaskId)
+    .single();
+  assert.ifError(ownerTask.error);
+  assert.equal(ownerTask.data.completed, false);
+  return "direct UPDATE denied with SQLSTATE 42501; owner task unchanged";
 });
 
 await check("foreign and nonexistent preparation text targets are indistinguishable", async () => {
@@ -856,6 +883,44 @@ await check("anonymous callers cannot execute preparation text or legacy snapsho
     assert.equal(call.error?.code, "42501");
   }
   return "notes, reflection, and legacy denied with SQLSTATE 42501";
+});
+
+await check("anonymous callers cannot execute desired-state or legacy preparation task mutations", async () => {
+  const desired = await anon.rpc("set_interview_preparation_task_completed", {
+    target_round_id: roundId,
+    target_task_id: preparationTaskId,
+    target_completed: true,
+  });
+  const legacy = await anon.rpc("toggle_interview_preparation_task", {
+    target_task_id: preparationTaskId,
+  });
+  for (const call of [desired, legacy]) {
+    assert.equal(call.error?.code, "42501");
+  }
+  return "desired state and retired toggle denied with SQLSTATE 42501";
+});
+
+await check("foreign and nonexistent preparation tasks are indistinguishable", async () => {
+  const calls = await Promise.all([
+    b.client.rpc("set_interview_preparation_task_completed", {
+      target_round_id: roundId,
+      target_task_id: preparationTaskId,
+      target_completed: true,
+    }),
+    b.client.rpc("set_interview_preparation_task_completed", {
+      target_round_id: "93939393-9393-4939-8939-939393939393",
+      target_task_id: "93939393-9393-4939-8939-939393939394",
+      target_completed: true,
+    }),
+  ]);
+  for (const call of calls) {
+    assert.ifError(call.error);
+    assert.deepEqual(call.data, []);
+  }
+  const ownerTask = await a.client.from("interview_preparation_custom_tasks").select("completed").eq("id", preparationTaskId).single();
+  assert.ifError(ownerTask.error);
+  assert.equal(ownerTask.data.completed, false);
+  return "matching zero-row results; owner task unchanged";
 });
 
 await check("foreign and nonexistent checklist targets are indistinguishable and do not mutate", async () => {

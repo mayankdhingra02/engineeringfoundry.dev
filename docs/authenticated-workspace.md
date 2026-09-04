@@ -56,6 +56,8 @@ Preparation state uses compact, deterministic keys rather than copied curriculum
 
 Round-preparation free text uses two independent revision domains. Private notes carry `private_notes_updated_at`; the four post-interview reflection fields form one coherent snapshot under `reflection_updated_at`. A save supplies either an explicit absent revision or the exact loaded timestamp. The owner-derived RPC locks the round shared with checklist changes, returns one row with the new revision on success, and returns zero rows without mutation for stale, missing, or foreign targets. Notes, reflection, and checklist updates therefore remain independent: a checklist change does not manufacture a text conflict, while two stale editors cannot silently overwrite the same text family. Reflection remains writable only after the owned round is completed. Browser forms strictly parse complete inputs before actor work, preserve edits made while a request is pending, and distinguish an earlier-snapshot success from the current unsaved draft. The legacy whole-snapshot RPC is retired as a stable `0A000` no-mutation fail-safe.
 
+Custom preparation-task completion is also desired state, never a flip-current command. The browser submits the exact owned round, task, and target boolean; the owner-derived RPC locks that exact task, returns one correlated row for both a changed state and an idempotent repeat, and leaves `updated_at` unchanged for a no-op. Missing, foreign, and round-mismatched tasks return the same zero-row result. The legacy toggle RPC is retained only as a stable `0A000` no-mutation fail-safe so two stale tabs cannot accidentally invert the user's intent.
+
 ## Mutation and validation contract
 
 Private mutations follow one sequence:

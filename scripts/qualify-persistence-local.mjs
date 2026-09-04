@@ -1015,12 +1015,78 @@ await check("User A adds a bounded custom preparation task", async () => {
   expect(task.title === "Test the interview meeting link" && task.completed === false, "custom task did not round-trip");
 });
 
-await check("User B cannot read or toggle User A preparation state", async () => {
+await check("concurrent identical preparation task intentions remain completed", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const taskId = requireFixture(fixture.preparationTaskId, "preparation task");
+  const results = await Promise.all([
+    a.authClient.rpc("set_interview_preparation_task_completed", {
+      target_round_id: roundId,
+      target_task_id: taskId,
+      target_completed: true,
+    }),
+    a.authClient.rpc("set_interview_preparation_task_completed", {
+      target_round_id: roundId,
+      target_task_id: taskId,
+      target_completed: true,
+    }),
+  ]);
+  for (const result of results) {
+    const rows = expectSuccess(result, "concurrent desired task completion failed");
+    expect(rows.length === 1, "same desired task intent did not return one result");
+    expect(rows[0].task_id === taskId && rows[0].round_id === roundId && rows[0].application_id === fixture.applicationId && rows[0].completed === true, "same desired task intent returned an uncorrelated result");
+  }
+  const task = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).single(), "concurrent task result read failed");
+  expect(task.completed === true, "concurrent identical task intents inverted the requested completion state");
+  return "both calls returned the exact desired true state; final task completed";
+});
+
+await check("repeated desired task completion does not churn its timestamp", async () => {
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  const taskId = requireFixture(fixture.preparationTaskId, "preparation task");
+  const before = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).single(), "task no-op setup read failed");
+  expect(before.completed === true, "task no-op setup was not completed");
+  const rows = expectSuccess(await a.authClient.rpc("set_interview_preparation_task_completed", {
+    target_round_id: roundId,
+    target_task_id: taskId,
+    target_completed: true,
+  }), "repeated desired task completion failed");
+  expect(rows.length === 1 && rows[0].completed === true, "repeated desired task completion did not return its exact state");
+  const after = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).single(), "task no-op result read failed");
+  expect(after.completed === true && after.updated_at === before.updated_at, "repeated desired task completion churned state or timestamp");
+  return `stable revision ${after.updated_at}`;
+});
+
+await check("legacy preparation task toggles fail safely without mutation", async () => {
+  const taskId = requireFixture(fixture.preparationTaskId, "preparation task");
+  const before = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).single(), "legacy task setup read failed");
+  expectSqlError(await a.authClient.rpc("toggle_interview_preparation_task", { target_task_id: taskId }), "0A000");
+  const after = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed,updated_at").eq("id", taskId).single(), "legacy task result read failed");
+  expect(JSON.stringify(after) === JSON.stringify(before), "rejected legacy task toggle mutated owner state");
+  return "SQLSTATE 0A000; completion and timestamp unchanged";
+});
+
+await check("User B cannot read or set User A preparation task state", async () => {
   expectInvisible(await b.authClient.from("interview_preparations").select("id").eq("id", requireFixture(fixture.preparationId, "preparation")), "preparation read");
-  expectInvisible(await b.authClient.from("interview_preparation_custom_tasks").select("id").eq("id", requireFixture(fixture.preparationTaskId, "preparation task")), "preparation task read");
-  const toggled = expectSuccess(await b.authClient.rpc("toggle_interview_preparation_task", { target_task_id: fixture.preparationTaskId }), "foreign task toggle call failed");
-  expect(toggled === false, "User B toggled User A task");
-  return "0 rows and false mutation";
+  const taskId = requireFixture(fixture.preparationTaskId, "preparation task");
+  const roundId = requireFixture(fixture.secondRoundId, "second round");
+  expectInvisible(await b.authClient.from("interview_preparation_custom_tasks").select("id").eq("id", taskId), "preparation task read");
+  const [foreign, missing] = await Promise.all([
+    b.authClient.rpc("set_interview_preparation_task_completed", {
+      target_round_id: roundId,
+      target_task_id: taskId,
+      target_completed: false,
+    }),
+    b.authClient.rpc("set_interview_preparation_task_completed", {
+      target_round_id: "93939393-9393-4939-8939-939393939393",
+      target_task_id: "93939393-9393-4939-8939-939393939394",
+      target_completed: false,
+    }),
+  ]);
+  expect(expectSuccess(foreign, "foreign task desired-state call failed").length === 0, "foreign preparation task returned a row");
+  expect(expectSuccess(missing, "missing task desired-state call failed").length === 0, "missing preparation task returned a row");
+  const ownerTask = expectSuccess(await a.authClient.from("interview_preparation_custom_tasks").select("completed").eq("id", taskId).single(), "owner task preservation read failed");
+  expect(ownerTask.completed === true, "foreign desired-state call changed User A task");
+  return "foreign and missing returned zero rows; owner state remained completed";
 });
 
 await check("post-interview reflection is rejected before completion", async () => {

@@ -20,6 +20,13 @@ import {
   parsePreparationReflectionActionInput,
   parsePreparationTextSaveResult,
 } from "@/lib/interview-preparation/text-action-input";
+import {
+  PREPARATION_TASK_INVALID_INPUT_ERROR,
+  PREPARATION_TASK_PERSISTENCE_ERROR,
+  PREPARATION_TASK_SAVED_MESSAGE,
+  parsePreparationTaskCompletionInput,
+  parsePreparationTaskCompletionResult,
+} from "@/lib/interview-preparation/task-action-input";
 
 export type PreparationActionState = {
   status: "idle" | "success" | "error";
@@ -112,15 +119,23 @@ export async function addPreparationTaskAction(roundId: string, applicationId: s
   return { status: "success", message: "Private task added." };
 }
 
-export async function togglePreparationTaskAction(roundId: string, applicationId: string, taskId: string, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+export async function togglePreparationTaskAction(roundId: unknown, taskId: unknown, targetCompleted: unknown, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {
+  const parsed = parsePreparationTaskCompletionInput(roundId, taskId, targetCompleted);
   void previousState;
   void formData;
+  if (!parsed.ok) return { status: "error", message: PREPARATION_TASK_INVALID_INPUT_ERROR };
   const actor = await getAuthenticatedActor();
   if (!actor) return { status: "error", message: "Your session expired. Sign in and try again." };
-  const { error } = await actor.supabase.rpc("toggle_interview_preparation_task", { target_task_id: taskId });
-  if (error) return { status: "error", message: "Task change was not saved. Try again." };
-  refresh(roundId, applicationId);
-  return { status: "success", message: "Task saved." };
+  const { data, error } = await actor.supabase.rpc("set_interview_preparation_task_completed", {
+    target_round_id: parsed.value.roundId,
+    target_task_id: parsed.value.taskId,
+    target_completed: parsed.value.targetCompleted,
+  });
+  if (error) return { status: "error", message: PREPARATION_TASK_PERSISTENCE_ERROR };
+  const outcome = parsePreparationTaskCompletionResult(data, parsed.value);
+  if (outcome.status !== "saved") return { status: "error", message: PREPARATION_TASK_PERSISTENCE_ERROR };
+  refresh(parsed.value.roundId, outcome.applicationId);
+  return { status: "success", message: PREPARATION_TASK_SAVED_MESSAGE };
 }
 
 export async function deletePreparationTaskAction(roundId: string, applicationId: string, taskId: string, previousState: PreparationActionState, formData: FormData): Promise<PreparationActionState> {

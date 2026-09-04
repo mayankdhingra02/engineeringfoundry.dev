@@ -143,6 +143,20 @@ await check("disposable account can populate every major private workspace", asy
   assert.ifError(preparation.error);
   assert.equal(preparation.data?.length, 1);
   assert.ifError((await a.client.rpc("set_interview_preparation_checklist_item", { target_round_id: roundId, target_item_id: "dsa-review-queue", target_completed: true })).error);
+  const preparationTask = await a.client.rpc("add_interview_preparation_task", {
+    target_round_id: roundId,
+    title_value: "Private disposable preparation task",
+  });
+  assert.ifError(preparationTask.error);
+  assert.ok(preparationTask.data);
+  const completedPreparationTask = await a.client.rpc("set_interview_preparation_task_completed", {
+    target_round_id: roundId,
+    target_task_id: preparationTask.data,
+    target_completed: true,
+  });
+  assert.ifError(completedPreparationTask.error);
+  assert.equal(completedPreparationTask.data?.length, 1);
+  assert.equal(completedPreparationTask.data?.[0]?.completed, true);
   const story = await a.client.rpc("create_behavioral_story_with_themes", {
     target_title: "Phase 8 disposable story",
     target_company_or_context: null,
