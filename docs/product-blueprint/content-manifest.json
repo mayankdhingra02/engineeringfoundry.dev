@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "0d3a102bc6919e44caafa28a3da1f1acf0ca86de",
-  "repository_state_sha256": "fee09410117757fe900c752f6f7d84d573a9f21873d054a3ecc0c5be0d135fca",
+  "repository_sha": "72331b1ab0184f8a3054e87784a7fafd8fa2bdde",
+  "repository_state_sha256": "3dd37f760762cd3761ee40471e9acb40b6d7cb64589f76123d9cb755612b22f5",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -283,7 +283,8 @@
         "lib/admin/operations.ts",
         "lib/company-guides/freshness.ts",
         "scripts/test-company-guides.mjs",
-        "scripts/test-feedback-admin-operations.mjs"
+        "scripts/test-feedback-admin-operations.mjs",
+        "scripts/test-low-level-design.mjs"
       ],
       "content_paths": [
         "docs/product-blueprint/research/company-guides/priority-company-guides.md"
