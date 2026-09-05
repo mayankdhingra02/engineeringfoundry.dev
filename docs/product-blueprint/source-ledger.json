@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "c6b955f0f96839f8ed64b128484f43c2965e783b",
-  "repository_state_sha256": "723d6be7d837fd60cd1f381ae361d29c39ac694c4443f54b24cf950dfed8757a",
+  "repository_sha": "c4fb5f57c8e87d86d9b521a652ebf825d0d131d6",
+  "repository_state_sha256": "994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac274b5e3d510",
   "schema_version": 1,
   "sources": [
     {
@@ -181,6 +181,199 @@
         "EF-SD-TOPIC-COVERAGE"
       ],
       "claims_supported": [
+        "SD-PATTERN-READ-SCALE"
+      ],
+      "id": "SRC-SD-AWS-CACHING",
+      "notes": "Supports read-heavy miss-path and stampede reasoning.",
+      "published_at": null,
+      "publisher": "Amazon Builders' Library",
+      "source_class": "first-party engineering/science",
+      "title": "Caching challenges and strategies",
+      "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
+      "usage_limits": "Use for cache failure and operating trade-offs, not as a universal provider configuration.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-WRITE-DISTRIBUTION"
+      ],
+      "id": "SRC-SD-AWS-DYNAMO-PARTITIONS",
+      "notes": "Supports hot-partition diagnosis.",
+      "published_at": null,
+      "publisher": "AWS Documentation",
+      "source_class": "official documentation",
+      "title": "Designing partition keys to distribute workloads",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-uniform-load.html",
+      "usage_limits": "Use for partition-key distribution concepts; current service quotas require provider verification.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-WRITE-DISTRIBUTION"
+      ],
+      "id": "SRC-SD-AWS-DYNAMO-WRITE-SHARDING",
+      "notes": "Supports write scaling and hot-key mitigation.",
+      "published_at": null,
+      "publisher": "AWS Documentation",
+      "source_class": "official documentation",
+      "title": "Using write sharding to distribute workloads evenly",
+      "url": "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html",
+      "usage_limits": "Use for random and calculated write-sharding trade-offs, not for universal shard-count guidance.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-WORKFLOW"
+      ],
+      "id": "SRC-SD-AWS-IDEMPOTENT-APIS",
+      "notes": "Supports replay-safe workflow-step reasoning.",
+      "published_at": null,
+      "publisher": "Amazon Builders' Library",
+      "source_class": "first-party engineering/science",
+      "title": "Making retries safe with idempotent APIs",
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "usage_limits": "Use for retry identity and idempotency guidance; operation-specific conflict and retention policy still require design.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-LARGE-FILE"
+      ],
+      "id": "SRC-SD-AWS-S3-MULTIPART",
+      "notes": "Supports resumable large-file transfer and explicit completion.",
+      "published_at": null,
+      "publisher": "AWS Documentation",
+      "source_class": "official documentation",
+      "title": "Uploading and copying objects using multipart upload",
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html",
+      "usage_limits": "Use for multipart transfer, checksums, completion, and cleanup concepts; verify current object-store limits separately.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-JOBS"
+      ],
+      "id": "SRC-SD-AZURE-ASYNC-REPLY",
+      "notes": "Supports long-running job product truth.",
+      "published_at": null,
+      "publisher": "Microsoft Azure Architecture Center",
+      "source_class": "official documentation",
+      "title": "Asynchronous Request-Reply pattern",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/asynchronous-request-reply",
+      "usage_limits": "Use for accepted-operation and status-resource semantics, not as a requirement to poll when push is appropriate.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-JOBS",
+        "SD-PATTERN-LARGE-FILE"
+      ],
+      "id": "SRC-SD-AZURE-BACKGROUND-JOBS",
+      "notes": "Supports job status, retry, and result patterns.",
+      "published_at": null,
+      "publisher": "Microsoft Azure Architecture Center",
+      "source_class": "official documentation",
+      "title": "Best practices for background jobs",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/best-practices/background-jobs",
+      "usage_limits": "Use for durable background-work decisions; concrete worker and queue guarantees remain platform-specific.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-FANOUT",
+        "SD-PATTERN-JOBS"
+      ],
+      "id": "SRC-SD-AZURE-COMPETING-CONSUMERS",
+      "notes": "Distinguishes competing workers from independent subscriber copies.",
+      "published_at": null,
+      "publisher": "Microsoft Azure Architecture Center",
+      "source_class": "official documentation",
+      "title": "Competing Consumers pattern",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/competing-consumers",
+      "usage_limits": "Use for shared-queue consumer semantics; delivery and ordering guarantees depend on the selected broker.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-CQRS"
+      ],
+      "id": "SRC-SD-AZURE-CQRS",
+      "notes": "Supports the complexity threshold and projection boundary.",
+      "published_at": null,
+      "publisher": "Microsoft Azure Architecture Center",
+      "source_class": "official documentation",
+      "title": "CQRS pattern",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs",
+      "usage_limits": "Use for command/query model separation and eventual-consistency trade-offs, not as a default service template.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-CQRS",
+        "SD-PATTERN-WORKFLOW"
+      ],
+      "id": "SRC-SD-AZURE-SAGA",
+      "notes": "Supports durable multi-step workflow reasoning.",
+      "published_at": null,
+      "publisher": "Microsoft Azure Architecture Center",
+      "source_class": "official documentation",
+      "title": "Saga distributed transactions pattern",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/patterns/saga",
+      "usage_limits": "Use for local transactions and compensating actions; compensation does not guarantee restoration of every external effect.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
         "SD-SLO-CONTROL"
       ],
       "id": "SRC-SD-GOOGLE-ALERTING",
@@ -193,6 +386,63 @@
       "usage_limits": "Use for burn-rate and SLO-alerting reasoning; examples require adaptation to the system's actual window and traffic.",
       "verified_at": "2026-09-04",
       "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-BATCH-STREAM"
+      ],
+      "id": "SRC-SD-GOOGLE-DATAFLOW",
+      "notes": "Supports a shared programming model with distinct batch and streaming operations.",
+      "published_at": null,
+      "publisher": "Google Cloud Documentation",
+      "source_class": "official documentation",
+      "title": "Dataflow overview",
+      "url": "https://docs.cloud.google.com/dataflow/docs/overview",
+      "usage_limits": "Use for bounded and unbounded processing concepts; service modes, cost, and delivery guarantees require current verification.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-BATCH-STREAM"
+      ],
+      "id": "SRC-SD-GOOGLE-DATAFLOW-PLANNING",
+      "notes": "Supports event-time and recovery framing.",
+      "published_at": null,
+      "publisher": "Google Cloud Documentation",
+      "source_class": "official documentation",
+      "title": "Plan your Dataflow pipeline",
+      "url": "https://docs.cloud.google.com/dataflow/docs/guides/plan-pipelines",
+      "usage_limits": "Use for pipeline-planning boundaries; tune windows, replay, and resource choices to the actual workload.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-FANOUT"
+      ],
+      "id": "SRC-SD-GOOGLE-PUBSUB",
+      "notes": "Supports independent subscription and competing-consumer distinctions.",
+      "published_at": null,
+      "publisher": "Google Cloud Documentation",
+      "source_class": "official documentation",
+      "title": "Overview of the Pub/Sub service",
+      "url": "https://docs.cloud.google.com/pubsub/docs/pubsub-basics",
+      "usage_limits": "Use for fan-out versus load-balanced subscription semantics; verify product limits and delivery options separately.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
     },
     {
       "applies_to": [
@@ -419,6 +669,63 @@
       "title": "Session Management Cheat Sheet",
       "url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
       "usage_limits": "Use for session lifecycle and browser threat guidance; framework and provider behavior must be verified separately.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-CONTENTION"
+      ],
+      "id": "SRC-SD-POSTGRES-ISOLATION",
+      "notes": "Supports transaction-conflict reasoning.",
+      "published_at": null,
+      "publisher": "PostgreSQL Documentation",
+      "source_class": "official documentation",
+      "title": "PostgreSQL transaction isolation",
+      "url": "https://www.postgresql.org/docs/current/transaction-iso.html",
+      "usage_limits": "Use for PostgreSQL isolation semantics; do not generalize implementation details to every database.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-CONTENTION"
+      ],
+      "id": "SRC-SD-POSTGRES-LOCKING",
+      "notes": "Supports lock-order and bounded-transaction guidance.",
+      "published_at": null,
+      "publisher": "PostgreSQL Documentation",
+      "source_class": "official documentation",
+      "title": "PostgreSQL explicit locking",
+      "url": "https://www.postgresql.org/docs/current/explicit-locking.html",
+      "usage_limits": "Use for lock and deadlock mechanics; business conflict policy and retry limits remain application decisions.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-PATTERN-READ-SCALE"
+      ],
+      "id": "SRC-SD-POSTGRES-REPLICATION",
+      "notes": "Supports the read-replica freshness boundary.",
+      "published_at": null,
+      "publisher": "PostgreSQL Documentation",
+      "source_class": "official documentation",
+      "title": "PostgreSQL warm standby and replication",
+      "url": "https://www.postgresql.org/docs/current/warm-standby.html",
+      "usage_limits": "Use for replication and standby-read mechanics; application freshness and failover policy remain design-specific.",
       "verified_at": "2026-09-04",
       "volatility": "periodic"
     },
