@@ -58,6 +58,7 @@ for (const override of [{ expected_revision: "0" }, { mode: "guided", duration_m
 
 const row = { id: attemptId, user_id: userId, problem_id: problemId, problem_version: 1, title: parsed.value.title, status: parsed.value.status, mode: parsed.value.mode, duration_minutes: parsed.value.durationMinutes, document: parsed.value.document, revision: 4, first_practiced_at: "2026-09-04T00:00:00Z", created_at: "2026-09-04T00:00:00Z", updated_at: "2026-09-04T00:00:01Z" };
 assert.deepEqual(parseMlDesignAttemptSaveResult([row], parsed.value), { status: "saved", revision: 4 });
+assert.deepEqual(parseMlDesignAttemptSaveResult([{ ...row, document: { fresh_exposure: true, follow_up_actions: row.document.follow_up_actions, dimension_evidence: row.document.dimension_evidence, self_review: row.document.self_review, hints_used: 1, completed_decide_sections: row.document.completed_decide_sections, design_notes: row.document.design_notes, assumptions: row.document.assumptions } }], parsed.value), { status: "saved", revision: 4 }, "JSONB key order cannot invalidate a correlated save");
 assert.equal(parseMlDesignAttemptSaveResult([], parsed.value).status, "conflict");
 for (const value of [null, {}, [row, row], [{ ...row, revision: 5 }], [{ ...row, document: emptyMlDesignAttemptDocument(true) }]]) assert.equal(parseMlDesignAttemptSaveResult(value, parsed.value).status, "invalid");
 assert.equal(resolveMlDesignAttemptQuery({ data: row, error: null })?.id, attemptId);

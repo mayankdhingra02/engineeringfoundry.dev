@@ -73,6 +73,11 @@ const containsDisallowedControl = (value: string) => Array.from(value).some((cha
   const code = character.codePointAt(0) ?? 0;
   return (code < 32 && code !== 9 && code !== 10 && code !== 13) || (code >= 127 && code <= 159);
 });
+const stableJson = (value: unknown): string => {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (isPlainRecord(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  return JSON.stringify(value) ?? "undefined";
+};
 
 function hasOnlyKnownFields(formData: FormData, allowed: ReadonlySet<string>) {
   for (const key of formData.keys()) if (!allowed.has(key) && !key.startsWith("$ACTION_")) return false;
@@ -183,7 +188,7 @@ export function parseMlDesignAttemptSaveResult(value: unknown, expected: MlDesig
   if (value.length !== 1 || !isPlainRecord(value[0])) return { status: "invalid" };
   const row = value[0];
   const document = validateMlDesignAttemptDocument(row.document);
-  if (row.id !== expected.attemptId || row.problem_id !== expected.problemId || row.problem_version !== expected.problemVersion || row.title !== expected.title || row.status !== expected.status || row.mode !== expected.mode || row.duration_minutes !== expected.durationMinutes || row.revision !== expected.expectedRevision + 1 || !document || JSON.stringify(document) !== JSON.stringify(expected.document)) return { status: "invalid" };
+  if (row.id !== expected.attemptId || row.problem_id !== expected.problemId || row.problem_version !== expected.problemVersion || row.title !== expected.title || row.status !== expected.status || row.mode !== expected.mode || row.duration_minutes !== expected.durationMinutes || row.revision !== expected.expectedRevision + 1 || !document || stableJson(document) !== stableJson(expected.document)) return { status: "invalid" };
   return { status: "saved", revision: row.revision as number };
 }
 
