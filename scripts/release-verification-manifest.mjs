@@ -35,7 +35,7 @@ export const STATIC_STEPS = [
     "test:system-design-required-closure",
     "test:system-design-specialized", "test:system-design-technology", "test:system-design-practice",
     "test:system-design-workspace", "test:system-design-release-audit", "test:ml-design", "test:ml-design-attempts", "test:low-level-design",
-    "test:salary-negotiation", "test:dsa-interview-prep", "test:dsa-foundry-75", "test:dsa-pattern-index", "test:dsa-roadmap",
+    "test:salary-negotiation", "test:dsa-interview-prep", "test:dsa-foundry-75", "test:dsa-topic-pattern-lessons", "test:dsa-pattern-index", "test:dsa-roadmap",
     "test:dsa-level-roadmaps", "test:dsa-roadmap-planning", "test:dsa-progress",
     "test:dsa-study-plans", "test:dsa-languages", "test:dsa-strategy",
     "test:company-interview-guide", "test:company-guides", "validate:content",

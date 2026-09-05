@@ -305,3 +305,87 @@
   .dsa-choice-row label span { min-height: 44px; justify-content: center; }
   .dsa-row-progress button { min-height: 44px; }
 }
+
+/* Required topic and pattern lessons: field-guide density, explicit invariants, exact routes. */
+.pattern-grid h2 a { color: inherit; text-decoration: none; }
+.pattern-grid h2 a:hover { color: var(--accent); }
+.pattern-grid-actions { margin-top: auto; padding-top: 12px; display: grid; gap: 8px; border-top: 1px solid var(--line); }
+.pattern-grid-actions .card-link { margin: 0; }
+.dsa-pattern-lesson-actions { margin-bottom: 22px; display: flex; flex-wrap: wrap; gap: 8px 20px; border-block: 1px solid var(--line); }
+.dsa-pattern-lesson-actions a { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: var(--type-meta); font-weight: 740; }
+.dsa-pattern-signal-grid, .dsa-pattern-review-grid { margin-block: 18px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); }
+.dsa-pattern-signal-grid > section, .dsa-pattern-review-grid > section { min-width: 0; padding: 18px; }
+.dsa-pattern-signal-grid > section + section, .dsa-pattern-review-grid > section + section { border-left: 1px solid var(--line); }
+.dsa-pattern-signal-grid h3, .dsa-pattern-review-grid h3 { margin-top: 0; display: flex; align-items: center; gap: 6px; }
+.dsa-pattern-baseline { margin-top: 16px; padding: 16px 18px; border-left: 3px solid var(--accent); background: var(--surface-2); }
+.dsa-pattern-baseline span, .dsa-pattern-worked > span, .dsa-pattern-exercises section > span { color: var(--muted); font: 740 var(--type-label)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
+.dsa-pattern-baseline p { margin: 5px 0 0; }
+.dsa-pattern-derivation { margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--line); }
+.dsa-pattern-derivation li { padding: 14px 0; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); }
+.dsa-pattern-derivation span { color: var(--accent); font: 740 var(--type-label)/1.5 ui-monospace, monospace; }
+.dsa-pattern-derivation p { margin: 0; }
+.sd-article blockquote strong { display: block; margin-bottom: 5px; color: var(--accent); font: 740 var(--type-label)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
+.dsa-pattern-complexity { margin-block: 18px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); }
+.dsa-pattern-complexity article { padding: 15px 18px; display: grid; gap: 3px; }
+.dsa-pattern-complexity article + article { border-left: 1px solid var(--line); }
+.dsa-pattern-complexity article span { color: var(--muted); font-size: var(--type-label); text-transform: uppercase; letter-spacing: .06em; }
+.dsa-pattern-complexity > p { grid-column: 1 / -1; margin: 0; padding: 13px 18px; border-top: 1px solid var(--line); color: var(--text-secondary); font-size: var(--type-meta); }
+.dsa-pattern-language-links { min-height: 48px; padding: 0 14px; display: flex; align-items: center; gap: 12px; border-block: 1px solid var(--line); font-size: var(--type-meta); }
+.dsa-pattern-language-links > span { margin-right: auto; font-weight: 740; }
+.dsa-pattern-language-links a { color: var(--accent); font-weight: 740; }
+.dsa-pattern-trace { margin: 18px 0; border: 1px solid var(--line); }
+.dsa-pattern-trace figcaption { padding: 10px 14px; border-bottom: 1px solid var(--line); color: var(--muted); font: 740 var(--type-label)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
+.dsa-pattern-trace ol { margin: 0; padding: 0; list-style: none; }
+.dsa-pattern-trace li { padding: 14px; display: grid; grid-template-columns: minmax(90px, .3fr) minmax(130px, .65fr) minmax(0, 1fr); align-items: start; gap: 12px; }
+.dsa-pattern-trace li + li { border-top: 1px solid var(--line); }
+.dsa-pattern-trace li > span { color: var(--accent); font-weight: 740; }
+.dsa-pattern-trace code { padding: 2px 5px; overflow-wrap: anywhere; white-space: normal; }
+.dsa-pattern-trace p { margin: 0; color: var(--text-secondary); font-size: var(--type-meta); }
+.dsa-pattern-review-grid article + article { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.dsa-pattern-review-grid article p { margin: 3px 0 0; }
+.dsa-pattern-worked { margin-block: 18px; padding: 20px; border: 1px solid var(--line-strong); background: var(--surface); }
+.dsa-pattern-worked h3 { margin: 6px 0; font-size: 1.3rem; }
+.dsa-pattern-worked a { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 740; }
+.dsa-pattern-exercises { margin-block: 18px; display: grid; grid-template-columns: 1fr 1fr; border-block: 1px solid var(--line); }
+.dsa-pattern-exercises > * { min-width: 0; padding: 18px; }
+.dsa-pattern-exercises > * + * { border-left: 1px solid var(--line); }
+.dsa-pattern-exercises summary { color: var(--accent); font-weight: 740; cursor: pointer; }
+.dsa-pattern-exercises details details { padding: 8px 0 0; }
+.dsa-pattern-related { display: grid; border-top: 1px solid var(--line); }
+.dsa-pattern-related > a { min-height: 76px; padding: 12px 4px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 11px; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
+.dsa-pattern-related > a > svg:first-child { color: var(--accent); }
+.dsa-pattern-related span { display: grid; gap: 3px; }
+.dsa-pattern-related strong { text-transform: capitalize; }
+.dsa-pattern-related small { color: var(--muted); font-size: var(--type-meta); line-height: 1.45; }
+.dsa-topic-contract-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); }
+.dsa-topic-contract-grid article { min-width: 0; padding: 18px; }
+.dsa-topic-contract-grid article + article { border-left: 1px solid var(--line); }
+.dsa-topic-contract-grid svg { color: var(--accent); }
+.dsa-topic-contract-grid span { margin-block: 8px 5px; display: block; color: var(--muted); font-size: var(--type-label); font-weight: 740; text-transform: uppercase; letter-spacing: .06em; }
+.dsa-topic-contract-grid p { margin: 0; }
+.dsa-topic-contract-grid ul { margin-bottom: 0; }
+.dsa-topic-field-guide { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); }
+.dsa-topic-field-guide section { min-width: 0; padding: 18px; }
+.dsa-topic-field-guide section + section { border-left: 1px solid var(--line); }
+.dsa-topic-field-guide h3 { margin-top: 0; }
+.dsa-topic-pattern-register { margin-top: 26px; }
+.dsa-topic-pattern-register > div { display: grid; border-top: 1px solid var(--line); }
+.dsa-topic-pattern-register a { min-height: 72px; padding: 12px 2px; display: grid; grid-template-columns: minmax(130px, .35fr) minmax(0, 1fr) auto; align-items: center; gap: 16px; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
+.dsa-topic-pattern-register a span { color: var(--muted); font-size: var(--type-meta); line-height: 1.45; }
+.dsa-topic-review-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); }
+.dsa-topic-review-grid > section { min-width: 0; padding: 18px; }
+.dsa-topic-review-grid > section + section { border-left: 1px solid var(--line); }
+.dsa-topic-review-grid h2 { margin: 7px 0; font-size: 1.2rem; }
+.dsa-topic-review-grid p { color: var(--muted); font-size: var(--type-meta); line-height: 1.5; }
+.dsa-topic-review-grid p svg { margin-right: 5px; vertical-align: text-bottom; color: var(--accent); }
+.dsa-topic-review-grid ul { margin: 10px 0 0; padding: 0; display: grid; gap: 9px; list-style: none; }
+.dsa-topic-review-grid li { display: flex; align-items: flex-start; gap: 7px; font-size: var(--type-meta); line-height: 1.45; }
+.dsa-topic-review-grid li svg { flex: none; margin-top: 2px; color: var(--success); }
+
+@media (max-width: 800px) {
+  .dsa-pattern-signal-grid, .dsa-pattern-review-grid, .dsa-pattern-exercises, .dsa-topic-contract-grid, .dsa-topic-field-guide, .dsa-topic-review-grid { grid-template-columns: 1fr; }
+  .dsa-pattern-signal-grid > section + section, .dsa-pattern-review-grid > section + section, .dsa-pattern-exercises > * + *, .dsa-topic-contract-grid article + article, .dsa-topic-field-guide section + section, .dsa-topic-review-grid > section + section { border-left: 0; border-top: 1px solid var(--line); }
+  .dsa-pattern-trace li { grid-template-columns: 1fr; gap: 6px; }
+  .dsa-topic-pattern-register a { grid-template-columns: 1fr auto; gap: 6px 12px; }
+  .dsa-topic-pattern-register a span { grid-column: 1 / -1; }
+}

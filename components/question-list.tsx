@@ -5,7 +5,7 @@ import { VerificationLabel } from "@/components/verification-label";
 import { StatusPill } from "@/components/page-shell";
 import { patternBySlug, topicBySlug } from "@/data/dsa";
 
-export function QuestionList({ questions, emptyTitle = "No questions match these filters", emptyText = "Try clearing a filter or choosing another roadmap area." }: { questions: DsaQuestion[]; emptyTitle?: string; emptyText?: string }) {
+export function QuestionList({ questions, emptyTitle = "No questions match these filters", emptyText = "Try clearing a filter or choosing another roadmap area." }: { questions: readonly DsaQuestion[]; emptyTitle?: string; emptyText?: string }) {
   if (!questions.length) return <div className="empty-inline question-empty"><strong>{emptyTitle}</strong><span>{emptyText}</span></div>;
 
   return <ol className="question-list" aria-label="DSA practice questions">{questions.map((question) => <li className="question-card" key={question.id}>
@@ -15,7 +15,7 @@ export function QuestionList({ questions, emptyTitle = "No questions match these
       <p>{question.note}</p>
       <div className="question-taxonomy" aria-label="Question topics and patterns">
         {question.topics.map((slug) => <Link className="tag" href={`/dsa/${slug}`} key={slug}>{topicBySlug.get(slug)?.name ?? slug}</Link>)}
-        {question.patterns.map((slug) => <span className="tag tag-pattern" key={slug}>{patternBySlug.get(slug)?.name ?? slug}</span>)}
+        {question.patterns.map((slug) => <Link className="tag tag-pattern" href={`/dsa/patterns/${slug}`} key={slug}>{patternBySlug.get(slug)?.name ?? slug}</Link>)}
       </div>
       {question.originalPrompt && <details className="original-prompt"><summary>Read original prompt</summary><p>{question.originalPrompt}</p></details>}
     </div>

@@ -1,11 +1,11 @@
-import type { DsaPattern, DsaQuestion, DsaTopic, RoadmapStage } from "@/types";
-import patternsData from "./patterns.json";
+import type { DsaQuestion, RoadmapStage } from "@/types";
 import { foundry75Questions } from "./foundry-75";
+import { dsaPatternLessons } from "./pattern-lessons";
 import roadmapData from "./roadmap.json";
-import topicsData from "./topics.json";
+import { dsaTopicLessons } from "./topic-lessons";
 
-export const dsaTopics = topicsData as DsaTopic[];
-export const dsaPatterns = patternsData as DsaPattern[];
+export const dsaTopics = dsaTopicLessons;
+export const dsaPatterns = dsaPatternLessons;
 export const roadmapStages = roadmapData as RoadmapStage[];
 export const questions = foundry75Questions satisfies readonly DsaQuestion[];
 
@@ -16,6 +16,10 @@ export const roadmapStageBySlug = new Map(roadmapStages.map((stage) => [stage.sl
 
 export function questionsForTopic(topicSlug: string) {
   return activeQuestions.filter((question) => question.topics.includes(topicSlug));
+}
+
+export function questionsForPattern(patternSlug: string) {
+  return activeQuestions.filter((question) => question.patterns.includes(patternSlug));
 }
 
 export function questionsForCompany(companySlug: string) {

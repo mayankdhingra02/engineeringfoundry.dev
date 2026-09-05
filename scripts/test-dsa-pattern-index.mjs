@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { dsaPatterns } from "../data/dsa/index.ts";
+import { dsaPatterns, questionsForPattern } from "../data/dsa/index.ts";
 import { dsaCompanies } from "../data/dsa/interview-prep.ts";
 import { dsaInterviewQuestionDatabase } from "../data/dsa/question-database.ts";
 import {
@@ -22,6 +22,7 @@ const requireText = (source, text, message) => { if (!source.includes(text)) fai
 const prohibit = (source, pattern, message) => { if (pattern.test(source)) failures.push(message); };
 
 const route = read("app/dsa/[...segments]/page.tsx");
+const topicLesson = read("features/dsa/topic-lesson.tsx");
 const styles = read("app/globals.css");
 const browser = read("features/dsa/questions/question-browser.tsx");
 const questionBrowserUrlState = read("lib/dsa/question-browser-url-state.ts");
@@ -168,9 +169,9 @@ for (const pattern of dsaPatterns) {
   }
 }
 
-requireText(route, 'filterDsaQuestionsBySearch(dsaInterviewQuestionDatabase, pattern.slug).length', "Pattern card counts do not use the production browser search helper and public question collection.");
+requireText(route, 'questionsForPattern(pattern.slug).length', "Pattern card counts do not use the canonical Foundry 75 pattern helper.");
 requireText(route, 'className="pattern-grid"', "Pattern index does not use the responsive pattern-card grid.");
-requireText(route, '<h3 className="pattern-grid-title">{pattern.name}</h3>', "Topic pattern cards do not preserve semantic title hierarchy.");
+requireText(topicLesson, '<h3>Patterns that operate on this topic</h3>', "Topic lessons do not preserve a semantic heading for their pattern register.");
 requireText(styles, ".pattern-grid h3.pattern-grid-title { margin: 0; font-size: 13px; font-weight: 700; }", "Topic pattern-card headings do not preserve their compact title styling.");
 requireText(route, 'dsaPatterns.map((pattern) =>', "Pattern index is not derived from curated pattern data.");
 for (const field of ["pattern.id", "pattern.name", "pattern.summary", "pattern.recognitionSignals.map", "pattern.commonMistakes.map"]) {
@@ -213,7 +214,8 @@ const accountAvailabilityIndex = dsaQueries.indexOf("const accountPlatformAvaila
 const applicationQueryIndex = dsaQueries.indexOf('.eq("id", canonicalApplicationId)');
 if (applicationValidationIndex < 0 || applicationValidationIndex > accountAvailabilityIndex || applicationQueryIndex < accountAvailabilityIndex || applicationQueryIndex < applicationValidationIndex) failures.push("DSA workspace queries do not validate application context before account work and the owner-scoped query.");
 prohibit(dsaQueries, /\.eq\("id", applicationId\)/, "Malformed raw application context can still reach the DSA application query.");
-requireText(search, 'href: `/dsa/questions?q=${encodeURIComponent(pattern.slug)}`', "Global search pattern results do not use the canonical pattern query.");
+requireText(search, 'href: `/dsa/patterns/${pattern.slug}`', "Global search pattern results do not link to the canonical pattern lesson.");
+requireText(search, 'questionsForPattern(pattern.slug).length', "Global search pattern results do not expose the canonical exact practice count.");
 for (const marker of ["Reviewed report directory", "Private local reflection", "Reviewed reports · private local reflection"]) {
   requireText(search, marker, `Global search does not accurately describe the live interview-experience surface: ${marker}.`);
 }
@@ -227,6 +229,9 @@ for (const pattern of dsaPatterns) {
   }
   if (slugResults.length === 0 && !route.includes("No matching questions cataloged yet.")) {
     failures.push(`${pattern.name} has no production results but the index lacks an honest unavailable state.`);
+  }
+  if (questionsForPattern(pattern.slug).map((question) => question.slug).join("|") !== slugResults.map((question) => question.slug).join("|")) {
+    failures.push(`${pattern.name} canonical card count and production browser results disagree.`);
   }
 }
 

@@ -1,6 +1,6 @@
 import { activeChallenges } from "@/data/challenges";
 import { companies } from "@/data/companies";
-import { dsaTopics } from "@/data/dsa";
+import { dsaPatterns, dsaTopics } from "@/data/dsa";
 import { dsaCurriculumPages } from "@/data/dsa/curriculum";
 import { foundry75Questions } from "@/data/dsa/foundry-75";
 import { dsaCompanies } from "@/data/dsa/interview-prep";
@@ -133,6 +133,7 @@ const dsaPaths = uniquePaths(
   [
     ...dsaCurriculumPages.map((page) => page.slug ?? ""),
     ...dsaTopics.map((topic) => `/dsa/${topic.slug}`),
+    ...dsaPatterns.map((pattern) => `/dsa/patterns/${pattern.slug}`),
     ...dsaCompanies.flatMap((company) => [
       `/dsa/companies/${company.slug}`,
       `/dsa/company-questions/${company.slug}`,
@@ -174,6 +175,7 @@ export const indexableFinitePublicRoutes = uniquePaths(
     ...companyPaths,
     ...interviewExperiencePaths,
     ...dsaTopics.map((topic) => `/dsa/${topic.slug}`),
+    ...dsaPatterns.map((pattern) => `/dsa/patterns/${pattern.slug}`),
     ...dsaCurriculumPages.map((page) => page.slug ?? ""),
     "/dsa/questions",
     "/dsa/roadmap",
