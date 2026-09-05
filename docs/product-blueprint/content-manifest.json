@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "30a050d3b798589ad381d3da737d1e074b4e75d0",
-  "repository_state_sha256": "e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d07a418b84",
+  "repository_sha": "0c168dae5a416bd409d85b606aeb05730e013946",
+  "repository_state_sha256": "2980d65b1ffc68ee05e9b836b5946894ce784ac52fef9ec6d353754a09c609ce",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1768,41 +1768,53 @@
     },
     {
       "acceptance_criteria": [
-        "Eight modules, private in-memory comparison, and anti-fabrication guidance remain available without persisting worksheet values."
+        "All eight cross-linked modules, actual-offer Playbook handoff, transparent session-only comparison math, value-free analytics, truthful editable examples, startup-equity uncertainty, current jurisdiction-scoped first-party sources with explicit review deadlines, selectable clipboard-failure recovery, and desktop/390px keyboard-responsive behavior are qualified without persisting private worksheet values."
       ],
       "code_paths": [
+        "app/globals.css",
         "app/salary-negotiation",
-        "features/salary-negotiation"
+        "data/salary-negotiation",
+        "features/salary-negotiation",
+        "scripts/test-salary-negotiation.mjs"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/research/salary-negotiation/final-synthesis.md",
+        "docs/salary-negotiation-v1.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-SAL",
       "kind": "requirement-family",
-      "known_gaps": [
-        "Source, freshness, and qualified legal review remain incomplete.",
-        "Persistent comparison remains deliberately unapproved."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Required acceptance is closed. Persistent offer storage, salary-band publishing, individualized advice, offer scoring, market prediction, and recruiter automation remain deliberate exclusions rather than open gaps.",
       "owner": "salary-negotiation",
       "prerequisite_ids": [
         "EF-GLOBAL"
       ],
       "priority": "required",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-SAL-SECTION-BLUEPRINT"
       ],
-      "research_status": "needs-current-verification",
+      "research_status": "approved",
       "route_families": [],
       "routes": [
         "/salary-negotiation"
       ],
       "section": "salary-negotiation",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-SAL-DOL-OTHER-COMP",
+        "SRC-SAL-DOL-VETS-2026",
+        "SRC-SAL-FTC-NONCOMPETE",
+        "SRC-SAL-IRS-STOCK-OPTIONS",
+        "SRC-SAL-USCIS-I765"
+      ],
+      "status": "implemented",
       "test_commands": [
-        "npm run test:salary-negotiation"
+        "npm run lint",
+        "npm run test:public-links",
+        "npm run test:salary-negotiation",
+        "npm run typecheck"
       ],
       "title": "Salary Negotiation",
       "visual_ids": []
@@ -2747,19 +2759,19 @@
       "version_or_hash": "5035f63068078276cfbf89f7f57a4c6e72425195377cdbb24e83d02c5d221d21"
     },
     {
-      "approval_status": "needs-current-verification",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-SAL",
       "id": "RA-SAL-SECTION-BLUEPRINT",
-      "notes": "Existing modules do not substitute for the missing original research, freshness, legal, and editorial record.",
-      "repository_path": null,
+      "notes": "Current official-source synthesis defines bounded U.S. legal/tax starting points, public source-card fields, expiry behavior, and the privacy-preserving product contract without creating personalized advice.",
+      "repository_path": "docs/product-blueprint/research/salary-negotiation/final-synthesis.md",
       "requirement_ids": [
         "EF-SAL"
       ],
       "title": "Salary Negotiation: Research-Backed Website Section Blueprint",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "4f0f7b4e55cd1aa815544fa55033e5aeab96e0a54becfe9224890a724913ae28"
     },
     {
       "approval_status": "unverified",
