@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-04
-repository_sha: eb51981f0716214a8f34db8748d5a6bfa5bc5e09
-repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165d5cef8a15
+repository_sha: 55db1387046ae7e40bb1712b66c003f29f3feeac
+repository_state_sha256: 5c5b79da3b2936bbfac6e63b5b3fc331e960af568d16f577bb73ba60a59ff66f
 ---
 
 # Engineering Foundry requirement coverage
@@ -13,7 +13,7 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 ## Summary
 
 - Requirements: 34
-- Sources: 60
+- Sources: 76
 - Gap inventory IDs: 18
 - Explicitly unmodeled atomic requirements: 1
 
@@ -23,9 +23,9 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 1 |
-| partial | 23 |
+| partial | 19 |
 | implemented-unverified | 0 |
-| implemented | 3 |
+| implemented | 7 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -46,8 +46,8 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 
 | Research status | Count |
 | --- | ---: |
-| approved | 0 |
-| approved-needs-source-import | 7 |
+| approved | 4 |
+| approved-needs-source-import | 3 |
 | needs-current-verification | 9 |
 | needs-research | 13 |
 | not-applicable | 5 |
@@ -58,8 +58,8 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 | --- | ---: |
 | unpublished | 11 |
 | noindex-draft | 0 |
-| published | 3 |
-| stale-review | 20 |
+| published | 7 |
+| stale-review | 16 |
 | archived | 0 |
 
 ## Requirements by family
@@ -125,10 +125,10 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
 | EF-LLD | low-level-design | required | partial | needs-research | stale-review | missing | /low-level-design | — | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
 | EF-LLD-REHEARSAL | low-level-design | p1 | partial | needs-research | unpublished | missing | /low-level-design | /low-level-design/practice/[slug] | 0 | 1 | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
-| EF-ML | ml-design | required | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 5 | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; Original research artifacts and claim-level provenance are not imported. |
-| EF-ML-CONCEPT-COVERAGE | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Ten compact summaries exist versus the blueprint target of 20 concepts.; No approved deep-lesson route and provenance contract is implemented. |
-| EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | partial | approved-needs-source-import | stale-review | missing | — | /ml-design/[slug] | 0 | 1 | Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields. |
-| EF-ML-ROADMAP-MAPPING | ml-design | p1 | partial | approved-needs-source-import | stale-review | missing | /ml-design | — | 0 | 1 | Eight static stages have no approved mapping to concept IDs and practice records. |
+| EF-ML | ml-design | required | implemented | approved | published | claim-recorded | /ml-design, /ml-design/core-concepts, /ml-design/glossary, /ml-design/practice, /ml-design/problems, /ml-design/rubric | /ml-design/core-concepts/[slug], /ml-design/problems/[problem]/practice/[attemptId], /ml-design/problems/[slug] | 16 | 6 | — |
+| EF-ML-CONCEPT-COVERAGE | ml-design | p1 | implemented | approved | published | claim-recorded | /ml-design/core-concepts | /ml-design/core-concepts/[slug] | 16 | 2 | — |
+| EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | implemented | approved | published | claim-recorded | /ml-design/practice, /ml-design/problems | /ml-design/problems/[problem]/practice/[attemptId], /ml-design/problems/[slug] | 16 | 4 | — |
+| EF-ML-ROADMAP-MAPPING | ml-design | p1 | implemented | approved | published | claim-recorded | /ml-design, /ml-design/practice | — | 3 | 2 | — |
 | EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 4 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
 | EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 10 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
@@ -155,7 +155,6 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
-| EF-ML | modeled | partial | The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.; Original research artifacts and claim-level provenance are not imported. |
 | EF-MOCK | modeled | partial | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-PLAY | modeled | partial | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
@@ -171,8 +170,6 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 | EF-COMP-GUIDE-COVERAGE | modeled | partial | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
 | EF-DSA-LANGUAGE-COVERAGE | modeled | partial | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-LLD-REHEARSAL | modeled | partial | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
-| EF-ML-CONCEPT-COVERAGE | modeled | partial | Ten compact summaries exist versus the blueprint target of 20 concepts.; No approved deep-lesson route and provenance contract is implemented. |
-| EF-ML-ROADMAP-MAPPING | modeled | partial | Eight static stages have no approved mapping to concept IDs and practice records. |
 | EF-PLAY-CURRICULUM-DEPTH | modeled | partial | Research methodology and master-depth acceptance mapping remain incomplete. |
 | EF-PLAY-ROUND-PROVENANCE | modeled | partial | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
 | EF-VIZ | modeled | partial | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
@@ -189,10 +186,6 @@ repository_state_sha256: 97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165
 | EF-DSA-CURRICULUM-SHELLS | dsa | approved-needs-source-import | 0 |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 0 |
 | EF-LLD | low-level-design | needs-research | 0 |
-| EF-ML | ml-design | approved-needs-source-import | 0 |
-| EF-ML-CONCEPT-COVERAGE | ml-design | approved-needs-source-import | 0 |
-| EF-ML-PRACTICE-PROVENANCE | ml-design | approved-needs-source-import | 0 |
-| EF-ML-ROADMAP-MAPPING | ml-design | approved-needs-source-import | 0 |
 | EF-MOCK | mock-interviews | approved-needs-source-import | 0 |
 | EF-PLAY | interview-playbook | needs-current-verification | 0 |
 | EF-PLAY-CURRICULUM-DEPTH | interview-playbook | needs-current-verification | 0 |
@@ -226,9 +219,9 @@ These states describe recorded provenance only; they do not claim source complet
 | Source record state | Count |
 | --- | ---: |
 | not-applicable | 5 |
-| missing | 25 |
+| missing | 21 |
 | discovery-recorded | 2 |
-| claim-recorded | 2 |
+| claim-recorded | 6 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
@@ -247,10 +240,10 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | needs-research | missing | — |
 | EF-LLD | needs-research | missing | — |
 | EF-LLD-REHEARSAL | needs-research | missing | — |
-| EF-ML | approved-needs-source-import | missing | — |
-| EF-ML-CONCEPT-COVERAGE | approved-needs-source-import | missing | — |
-| EF-ML-PRACTICE-PROVENANCE | approved-needs-source-import | missing | — |
-| EF-ML-ROADMAP-MAPPING | approved-needs-source-import | missing | — |
+| EF-ML | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
+| EF-ML-CONCEPT-COVERAGE | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
+| EF-ML-PRACTICE-PROVENANCE | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
+| EF-ML-ROADMAP-MAPPING | approved | claim-recorded | SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE |
 | EF-MOCK | approved-needs-source-import | missing | — |
 | EF-MOCK-PEER-FACILITATION | needs-research | missing | — |
 | EF-OPS | needs-research | missing | — |
@@ -287,6 +280,22 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-COMP-OPENAI-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-UBER-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-WALMART-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-ML-EXPERIMENT-PRE | first-party engineering/science | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-EXPERIMENT-SRM | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-FEAST-PIT | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-FORECASTING | first-party engineering/science | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-GOOGLE-SLO | first-party engineering/science | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-K8S-ROLLOUT | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-KSERVE | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-METRICS | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-MLFLOW-REGISTRY | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-NIST-RMF | standard / RFC | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-RAG | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-RULES | first-party engineering/science | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING |
+| SRC-ML-TECH-DEBT | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING |
+| SRC-ML-TEST-SCORE | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING |
+| SRC-ML-TFDV | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-ML-YOUTUBE-REC | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
 | SRC-SD-AWS-CACHING | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-AWS-COST-OPTIMIZATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-AWS-DMS-CDC | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
@@ -344,8 +353,8 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Availability | Count |
 | --- | ---: |
-| missing | 30 |
-| repository-present | 0 |
+| missing | 24 |
+| repository-present | 6 |
 | external-recorded | 0 |
 
 ### Approval status
@@ -353,10 +362,10 @@ These states describe recorded provenance only; they do not claim source complet
 | Approval status | Count |
 | --- | ---: |
 | unverified | 5 |
-| approved-needs-source-import | 19 |
+| approved-needs-source-import | 13 |
 | needs-current-verification | 4 |
 | requires-founder-approval | 2 |
-| approved | 0 |
+| approved | 6 |
 | excluded | 0 |
 
 | ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |
@@ -376,12 +385,12 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-DSA-ROLE-ROADMAPS | EF-DSA | missing | approved-needs-source-import | — | — | EF-DSA, EF-DSA-CURRICULUM-SHELLS | — | — |
 | RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | missing | unverified | — | — | EF-OPS | — | — |
 | RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE, EF-LLD | — | — |
-| RA-ML-CORE-CONCEPTS | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | — | — |
-| RA-ML-FINAL-SYNTHESIS | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING | — | — |
-| RA-ML-INFRA-MODERN-AI | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
-| RA-ML-RECOMMENDATION-RANKING | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
-| RA-ML-SEARCH-RETRIEVAL-ADVERTISING | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
-| RA-ML-TRUST-PREDICTION-DECISION | EF-ML | missing | approved-needs-source-import | — | — | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | — | — |
+| RA-ML-CORE-CONCEPTS | EF-ML | repository-present | approved | 74a4688763488bcd250cdae38c3e3f27520fabc2055e52fb69ae566d14eb7320 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/core-concepts.md | — |
+| RA-ML-FINAL-SYNTHESIS | EF-ML | repository-present | approved | b366986b89a9ab6e08192f5c86680c53ad2d926536dacdd09fab070af64b0ba6 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/final-synthesis.md | — |
+| RA-ML-INFRA-MODERN-AI | EF-ML | repository-present | approved | a7dbf7158440158b41e93ad2ae21dbc458bfbb184c226d4541898ea41344c8de | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | docs/product-blueprint/research/ml-design/infrastructure-modern-ai.md | — |
+| RA-ML-RECOMMENDATION-RANKING | EF-ML | repository-present | approved | 0a8afedd1c176463732c230052360254e6da04208f9c8577c57f1611f13701e8 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | docs/product-blueprint/research/ml-design/recommendation-ranking.md | — |
+| RA-ML-SEARCH-RETRIEVAL-ADVERTISING | EF-ML | repository-present | approved | 6f899db02d8d3db86cf84af3fc79929df75f48442b1af5896f8e2ff9e3d45b3d | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | docs/product-blueprint/research/ml-design/search-retrieval-advertising.md | — |
+| RA-ML-TRUST-PREDICTION-DECISION | EF-ML | repository-present | approved | 44297d2b303d213533380eddfb1e084d6f282b4cb542287dc3c815bdff30c71e | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | docs/product-blueprint/research/ml-design/trust-prediction-decision.md | — |
 | RA-PLAY-DIAGNOSTIC-PLAN | EF-PLAY | missing | approved-needs-source-import | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
 | RA-PLAY-FINAL-SYNTHESIS | EF-PLAY | missing | approved-needs-source-import | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION | — | — |
 | RA-PLAY-FINAL-WEEK-DEBRIEF | EF-PLAY | missing | approved-needs-source-import | — | — | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | — | — |
@@ -411,12 +420,6 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-DSA-ROLE-ROADMAPS | missing | approved-needs-source-import |
 | RA-LAUNCH-V1-FINISH-PLAN | missing | unverified |
 | RA-LOW-LEVEL-SYSTEMS | missing | unverified |
-| RA-ML-CORE-CONCEPTS | missing | approved-needs-source-import |
-| RA-ML-FINAL-SYNTHESIS | missing | approved-needs-source-import |
-| RA-ML-INFRA-MODERN-AI | missing | approved-needs-source-import |
-| RA-ML-RECOMMENDATION-RANKING | missing | approved-needs-source-import |
-| RA-ML-SEARCH-RETRIEVAL-ADVERTISING | missing | approved-needs-source-import |
-| RA-ML-TRUST-PREDICTION-DECISION | missing | approved-needs-source-import |
 | RA-PLAY-DIAGNOSTIC-PLAN | missing | approved-needs-source-import |
 | RA-PLAY-FINAL-SYNTHESIS | missing | approved-needs-source-import |
 | RA-PLAY-FINAL-WEEK-DEBRIEF | missing | approved-needs-source-import |
