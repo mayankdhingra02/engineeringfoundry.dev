@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "c4fb5f57c8e87d86d9b521a652ebf825d0d131d6",
-  "repository_state_sha256": "994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac274b5e3d510",
+  "repository_sha": "7091b57394bc038ebabd6e00ec6e0e042d2a152e",
+  "repository_state_sha256": "f72a05d511142cc0c04cfa8a39437ab93ce74ee9c8d782fdba0c1825acc6cef9",
   "schema_version": 1,
   "sources": [
     {
@@ -191,6 +191,83 @@
       "title": "Caching challenges and strategies",
       "url": "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/",
       "usage_limits": "Use for cache failure and operating trade-offs, not as a universal provider configuration.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-COST"
+      ],
+      "id": "SRC-SD-AWS-COST-OPTIMIZATION",
+      "notes": "Primary platform guidance for the cost and efficiency lesson.",
+      "published_at": null,
+      "publisher": "AWS Well-Architected",
+      "source_class": "official documentation",
+      "title": "Manage demand and supply resources",
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/manage-demand-and-supply-resources.html",
+      "usage_limits": "Use for demand, supply, and utilization framing; pricing and service-specific limits require current verification.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-BACKFILL"
+      ],
+      "id": "SRC-SD-AWS-DMS-CDC",
+      "notes": "Primary platform documentation for live-change-aware rebuilds.",
+      "published_at": null,
+      "publisher": "AWS",
+      "source_class": "official documentation",
+      "title": "Creating tasks for ongoing replication",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html",
+      "usage_limits": "Use for snapshot-plus-change replication concepts; ordering and consistency guarantees depend on the chosen source and target.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-MIGRATION"
+      ],
+      "id": "SRC-SD-AWS-DMS-OVERVIEW",
+      "notes": "Primary platform documentation for the schema and data migration lesson.",
+      "published_at": null,
+      "publisher": "AWS",
+      "source_class": "official documentation",
+      "title": "High-level view of AWS Database Migration Service",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Introduction.HighLevelView.html",
+      "usage_limits": "Use for migration topology and staged data movement; application compatibility and rollback remain explicit design work.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-BACKFILL",
+        "SD-CLOSURE-MIGRATION"
+      ],
+      "id": "SRC-SD-AWS-DMS-VALIDATION",
+      "notes": "Supports parity gates for migrations and rebuilds.",
+      "published_at": null,
+      "publisher": "AWS",
+      "source_class": "official documentation",
+      "title": "AWS DMS data validation",
+      "url": "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Validating.html",
+      "usage_limits": "Use for source-target validation concepts; validation coverage and resource cost remain design-specific.",
       "verified_at": "2026-09-04",
       "volatility": "periodic"
     },
@@ -431,6 +508,44 @@
         "EF-SD-TOPIC-COVERAGE"
       ],
       "claims_supported": [
+        "SD-CLOSURE-INCIDENT"
+      ],
+      "id": "SRC-SD-GOOGLE-INCIDENT-MANAGEMENT",
+      "notes": "Primary operating-practice source for incident recovery.",
+      "published_at": null,
+      "publisher": "Google SRE",
+      "source_class": "first-party engineering/science",
+      "title": "Incident Management Guide",
+      "url": "https://sre.google/resources/practices-and-processes/incident-management-guide/",
+      "usage_limits": "Use for incident roles and lifecycle guidance; severity and communication policy must match the operating organization.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-INCIDENT"
+      ],
+      "id": "SRC-SD-GOOGLE-POSTMORTEM-CULTURE",
+      "notes": "Supports evidence-led postmortem practice.",
+      "published_at": null,
+      "publisher": "Google SRE",
+      "source_class": "first-party engineering/science",
+      "title": "Postmortem Culture: Learning from Failure",
+      "url": "https://sre.google/workbook/postmortem-culture/",
+      "usage_limits": "Use for blameless learning and action ownership; do not treat one organization's process as universal policy.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
         "SD-PATTERN-FANOUT"
       ],
       "id": "SRC-SD-GOOGLE-PUBSUB",
@@ -462,6 +577,63 @@
       "usage_limits": "Use as first-party operating guidance, not as a universal contractual SLA policy.",
       "verified_at": "2026-09-04",
       "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-OWNERSHIP"
+      ],
+      "id": "SRC-SD-GOOGLE-SRE-ENGAGEMENT",
+      "notes": "Primary operating-practice source for operational ownership.",
+      "published_at": null,
+      "publisher": "Google SRE",
+      "source_class": "first-party engineering/science",
+      "title": "Evolving the SRE Engagement Model",
+      "url": "https://sre.google/sre-book/evolving-sre-engagement-model/",
+      "usage_limits": "Use for service engagement and ownership boundaries; team structure and decision rights remain organization-specific.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-DFS"
+      ],
+      "id": "SRC-SD-HDFS-ARCHITECTURE",
+      "notes": "Primary project documentation for the distributed file systems lesson.",
+      "published_at": null,
+      "publisher": "Apache Hadoop",
+      "source_class": "official documentation",
+      "title": "HDFS Architecture",
+      "url": "https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html",
+      "usage_limits": "Use for namespace, block, replication, and recovery concepts; implementation-specific defaults require current verification.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-PLANES"
+      ],
+      "id": "SRC-SD-KUBERNETES-ARCHITECTURE",
+      "notes": "Primary project documentation for the plane-boundary lesson.",
+      "published_at": null,
+      "publisher": "Kubernetes",
+      "source_class": "official documentation",
+      "title": "Kubernetes cluster architecture",
+      "url": "https://kubernetes.io/docs/concepts/architecture/",
+      "usage_limits": "Use as one concrete control-plane/data-plane architecture; the lesson's separation principle is vendor-neutral.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
     },
     {
       "applies_to": [
@@ -678,6 +850,25 @@
         "EF-SD-TOPIC-COVERAGE"
       ],
       "claims_supported": [
+        "SD-CLOSURE-THREAT"
+      ],
+      "id": "SRC-SD-OWASP-THREAT-MODELING",
+      "notes": "Primary community security guidance for the threat-modeling lesson.",
+      "published_at": null,
+      "publisher": "OWASP",
+      "source_class": "official documentation",
+      "title": "Threat Modeling Cheat Sheet",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html",
+      "usage_limits": "Use for threat-model structure and review practices; it is not a substitute for system-specific security analysis.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
         "SD-PATTERN-CONTENTION"
       ],
       "id": "SRC-SD-POSTGRES-ISOLATION",
@@ -716,6 +907,25 @@
         "EF-SD-TOPIC-COVERAGE"
       ],
       "claims_supported": [
+        "SD-CLOSURE-INCIDENT"
+      ],
+      "id": "SRC-SD-POSTGRES-PITR",
+      "notes": "Supports data-recovery verification examples.",
+      "published_at": null,
+      "publisher": "PostgreSQL",
+      "source_class": "official documentation",
+      "title": "Continuous Archiving and Point-in-Time Recovery",
+      "url": "https://www.postgresql.org/docs/current/continuous-archiving.html",
+      "usage_limits": "Use for PostgreSQL recovery mechanics; recovery objectives, restore testing, and retained history require deployment-specific policy.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
         "SD-PATTERN-READ-SCALE"
       ],
       "id": "SRC-SD-POSTGRES-REPLICATION",
@@ -726,6 +936,25 @@
       "title": "PostgreSQL warm standby and replication",
       "url": "https://www.postgresql.org/docs/current/warm-standby.html",
       "usage_limits": "Use for replication and standby-read mechanics; application freshness and failover policy remain design-specific.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-DISAGGREGATION"
+      ],
+      "id": "SRC-SD-REDSHIFT-MANAGED-STORAGE",
+      "notes": "Primary platform documentation for the storage and compute separation lesson.",
+      "published_at": null,
+      "publisher": "AWS",
+      "source_class": "official documentation",
+      "title": "Amazon Redshift managed storage considerations",
+      "url": "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-considerations.html",
+      "usage_limits": "Use as one implementation example of disaggregated storage and compute; pricing and performance remain service-specific.",
       "verified_at": "2026-09-04",
       "volatility": "periodic"
     },
@@ -842,6 +1071,63 @@
       "usage_limits": "Use for current TLS 1.3 protocol behavior; application identity, authorization, storage encryption, and post-termination plaintext remain separate boundaries.",
       "verified_at": "2026-09-04",
       "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-PAYMENTS"
+      ],
+      "id": "SRC-SD-STRIPE-DISPUTES",
+      "notes": "Supports disputes as a separate long-running economic outcome.",
+      "published_at": null,
+      "publisher": "Stripe",
+      "source_class": "official documentation",
+      "title": "How disputes work",
+      "url": "https://docs.stripe.com/disputes/how-disputes-work",
+      "usage_limits": "Use for dispute lifecycle examples; legal, scheme, and provider obligations require current specialist verification.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-PAYMENTS"
+      ],
+      "id": "SRC-SD-STRIPE-IDEMPOTENCY",
+      "notes": "Supports ambiguous payment-attempt recovery.",
+      "published_at": null,
+      "publisher": "Stripe",
+      "source_class": "official documentation",
+      "title": "Idempotent requests",
+      "url": "https://docs.stripe.com/api/idempotent_requests",
+      "usage_limits": "Use for request retry identity; idempotency does not replace ledger invariants or reconciliation.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-CLOSURE-PAYMENTS"
+      ],
+      "id": "SRC-SD-STRIPE-RECONCILIATION",
+      "notes": "Primary payment-provider documentation for the payment and ledger lesson.",
+      "published_at": null,
+      "publisher": "Stripe",
+      "source_class": "official documentation",
+      "title": "Reporting and reconciliation",
+      "url": "https://docs.stripe.com/plan-integration/get-started/reporting-reconciliation",
+      "usage_limits": "Use for provider reconciliation concepts; accounting treatment and legal obligations require qualified review.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
     }
   ]
 }
