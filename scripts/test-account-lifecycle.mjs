@@ -786,7 +786,8 @@ assert.match(exporter, /collectAccountExportRows[\s\S]*\.range\(from, to\)/, "ex
 for (const subsection of ["diagnostic_settings", "confidence", "priorities", "constraints"]) {
   assert.ok(exporter.includes(subsection), `interview_playbook export omits ${subsection}`);
 }
-assert.ok(exporter.includes('EXPORT_VERSION = "1.5"'), "export version was not bumped for P0.8 account-linked feedback");
+assert.ok(exporter.includes('EXPORT_VERSION = "1.6"'), "export version was not bumped for private DSA practice attempts");
+assert.ok(exporter.includes('collectAccountExportRows("dsa_practice_attempts"'), "export omits private DSA practice attempts");
 assert.ok(exporter.includes('collectAccountExportRows("feedback_submissions"'), "export omits account-linked feedback");
 assert.ok(exporter.includes('collectAccountExportRows("preparation_track_progress"'), "export omits durable ML/Behavioral preparation activity");
 for (const field of ["strength", "improvement", "follow_up_practice", "mock_interview_sessions!inner(user_id)"]) assert.ok(exporter.includes(field), `mock export omits ownership-safe ${field}`);

@@ -21,6 +21,15 @@ export type DsaQuestionProgressEvidenceSource = Readonly<{
   solvedAt: string | null;
 }>;
 
+export type DsaPracticeAttemptEvidenceSource = Readonly<{
+  id: string;
+  questionId: string;
+  status: "draft" | "completed" | "review";
+  mode: "learn" | "recognition" | "untimed" | "timed" | "mixed" | "review";
+  priorExposure: "unseen" | "prompt_seen" | "solution_seen" | "solved_before";
+  completedAt: string | null;
+}>;
+
 function compareSolvedSources(left: DsaQuestionProgressEvidenceSource, right: DsaQuestionProgressEvidenceSource): number {
   return (left.solvedAt ?? "").localeCompare(right.solvedAt ?? "");
 }
@@ -53,4 +62,33 @@ export function dsaQuestionProgressToInterviewEvidence(
       summary: "Self-reported DSA practice marked solved.",
       repeatedError: false,
     }));
+}
+
+/**
+ * Structured attempts remain self-report because Engineering Foundry does not
+ * execute or judge code. Mode and prior exposure are preserved in the stable
+ * evidence identity and summary so fresh transfer never collapses into a
+ * familiar completion. Learn/draft records produce no performance signal.
+ */
+export function dsaPracticeAttemptsToInterviewEvidence(rows: readonly DsaPracticeAttemptEvidenceSource[]): readonly InterviewEvidenceItem[] {
+  return [...rows]
+    .filter((row) => row.status !== "draft" && row.mode !== "learn")
+    .sort((left, right) => left.id.localeCompare(right.id))
+    .map((row) => {
+      const fresh = row.priorExposure === "unseen";
+      const transfer = row.mode === "mixed";
+      const timed = row.mode === "timed";
+      const signal = row.status === "review" ? "mixed" : "positive";
+      const evidenceClass = transfer ? "mixed-set transfer" : timed ? "timed rehearsal" : `${row.mode} practice`;
+      return {
+        id: `dsa-practice-attempt:${row.id}:${row.mode}:${row.priorExposure}`,
+        area: "algorithmic-coding",
+        provenance: "self-report",
+        kind: "practice",
+        signal,
+        observedAt: row.completedAt,
+        summary: `Self-reported ${fresh ? "fresh" : "familiar"} ${evidenceClass}.`,
+        repeatedError: false,
+      } satisfies InterviewEvidenceItem;
+    });
 }

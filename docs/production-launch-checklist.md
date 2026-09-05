@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 52 migrations are recorded, ending at `202609040018_create_ml_design_attempts`
+4. [ ] `supabase migration list --linked` — confirm all 53 migrations are recorded, ending at `202609050001_create_dsa_practice_attempts`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -233,7 +233,7 @@ Use two disposable accounts (User A and User B) against the production origin wi
 
 - [ ] Export succeeds and downloads as a dated JSON attachment
 - [ ] Headers include `Cache-Control: private, no-store` and `X-Robots-Tag: noindex, nofollow`
-- [ ] Export contains User A's data only, has `export_version` `1.5`, includes User A's `preparation_activity` and account-linked feedback only, and contains no credentials, tokens, provider delivery identifiers, or global catalogs
+- [ ] Export contains User A's data only, has `export_version` `1.6`, includes User A's `preparation_activity`, private DSA practice attempts, and account-linked feedback only, and contains no credentials, tokens, provider delivery identifiers, or global catalogs
 - [ ] Request the export more than five times in fifteen minutes — the sixth returns `429` with `Retry-After`
 - [ ] **Delete all cookies, sign in again, and confirm the limit is still in force** (the budget is server-side)
 
@@ -291,6 +291,8 @@ Before deploying the Common Architecture Patterns lesson family, apply `20260904
 Before deploying the Required System Design closure lesson family, apply `202609040017_publish_system_design_required_closure.sql`. Confirm the read-only catalog has exactly 188 concept IDs and that an authenticated disposable account can save and clear progress for `payments-ledgers`; keep hosted verification unchecked until dated evidence exists. App-first remains publicly readable but progress for the ten new IDs fails until migration. A code rollback is safe with the additive catalog rows retained; roll forward rather than deleting catalog rows that may already anchor private progress.
 
 Before enabling saved ML Design attempts, apply `202609040018_create_ml_design_attempts.sql`. With two disposable owners, confirm create/read isolation, exact-revision save and delete behavior, denial of direct writes, and denial of anonymous RPC execution; keep hosted verification unchecked until dated evidence exists. Public tab-only practice remains available before migration, and a code rollback retains private attempts without data loss.
+
+Before enabling signed-in DSA practice worksheets, apply `202609050001_create_dsa_practice_attempts.sql`. With two disposable owners, confirm create/read isolation, exact-revision save behavior, server-derived review reasons, denial of direct writes, and denial of anonymous RPC execution; keep hosted verification unchecked until dated evidence exists. Anonymous timers remain available before migration, and a code rollback retains private attempts without data loss.
 
 ---
 

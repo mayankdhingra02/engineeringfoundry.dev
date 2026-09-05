@@ -1,0 +1,54 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { canonicalDsaQuestions } from "../lib/dsa/catalog.ts";
+import { buildMixedPracticeSet, dsaPracticeCheckpoints, dsaPracticeModeDefinitions, dsaPracticeModes, dsaRubricDimensions, dsaRubricGroups, emptyDsaPracticeAttemptDocument, validateDsaPracticeAttemptDocument } from "../lib/dsa/practice-attempt.ts";
+import { parseDsaAttemptCreateInput, parseDsaAttemptSaveInput, parseDsaAttemptSaveResult } from "../lib/dsa/practice-attempt-action-input.ts";
+import { buildDsaReviewQueue } from "../lib/dsa/practice-review.ts";
+
+const root = process.cwd(); const read = (path) => readFileSync(join(root, path), "utf8");
+assert.deepEqual(dsaPracticeModes, ["learn", "recognition", "untimed", "timed", "mixed", "review"]);
+assert.equal(dsaPracticeModeDefinitions.length, 6);
+assert.ok(dsaPracticeModeDefinitions.find((mode) => mode.id === "learn")?.evidence.includes("not readiness"));
+for (const id of ["recognition", "timed", "mixed"]) assert.equal(dsaPracticeModeDefinitions.find((mode) => mode.id === id)?.labelsHidden, true, `${id} must hide taxonomy labels`);
+assert.ok(dsaPracticeModeDefinitions.find((mode) => mode.id === "timed")?.allowedHints.includes("recorded"));
+assert.equal(dsaRubricDimensions.length, 12);
+assert.equal(dsaRubricGroups.length, 4);
+assert.deepEqual(new Set(dsaRubricGroups.flatMap((group) => group.dimensionIds)), new Set(dsaRubricDimensions.map(([id]) => id)));
+const mixed = buildMixedPracticeSet({}, 3);
+assert.equal(mixed.length, 3);
+assert.equal(new Set(mixed.map((question) => question.patterns[0] ?? question.topics[0])).size, 3);
+assert.ok(mixed.every((question) => canonicalDsaQuestions.includes(question)));
+const document = emptyDsaPracticeAttemptDocument();
+assert.ok(validateDsaPracticeAttemptDocument(document));
+assert.equal(validateDsaPracticeAttemptDocument({ ...document, hints_used: 21 }), null);
+assert.equal(validateDsaPracticeAttemptDocument({ ...document, completed_checkpoints: [...dsaPracticeCheckpoints, "invented"] }), null);
+assert.equal(validateDsaPracticeAttemptDocument({ ...document, self_review: { invented: "strong" } }), null);
+
+const create = new FormData(); create.set("title", "Two Sum transfer"); create.set("mode", "timed"); create.set("duration_minutes", "45"); create.set("prior_exposure", "unseen");
+const created = parseDsaAttemptCreateInput("two-sum", create); assert.ok(created); assert.equal(created.mode, "timed"); assert.equal(created.priorExposure, "unseen");
+const save = new FormData();
+for (const [name, value] of Object.entries({ expected_revision: "2", title: "Two Sum transfer", status: "completed", mode: "mixed", duration_minutes: "", prior_exposure: "unseen", elapsed_seconds: "900", clarification_notes: "", brute_force_notes: "", approach_notes: "", implementation_notes: "", test_notes: "", complexity_notes: "", reflection: "", hints_used: "0", error_recovery: "not_needed", follow_up: "" })) save.set(name, value);
+for (const [id] of dsaRubricDimensions) { save.set(`review_${id}`, ""); save.set(`evidence_${id}`, ""); }
+save.set("checkpoint_clarified", "yes");
+const saved = parseDsaAttemptSaveInput("51515151-5151-4151-8151-515151515151", "two-sum", save); assert.ok(saved); assert.equal(saved.document.completed_checkpoints[0], "clarified");
+assert.deepEqual(parseDsaAttemptSaveResult([{ id: saved.attemptId, question_id: "two-sum", catalog_version: 1, title: saved.title, status: saved.status, mode: saved.mode, duration_minutes: null, prior_exposure: "unseen", elapsed_seconds: 900, revision: 3, document: saved.document }], saved), { status: "saved", revision: 3 });
+const reviewQueue = buildDsaReviewQueue({ "two-sum": { user_id: "", question_id: "two-sum", status: "solved", confidence: "low", bookmarked: false, notes: null, first_attempted_at: null, last_practiced_at: "2026-09-01T10:00:00Z", solved_at: null, created_at: "", updated_at: "" } }, [{ id: "51515151-5151-4151-8151-515151515151", question_id: "two-sum", catalog_version: 1, title: "Two Sum", status: "review", mode: "timed", duration_minutes: 45, prior_exposure: "unseen", elapsed_seconds: 3000, review_reason: "elapsed", revision: 2, completed_at: "2026-09-01T10:00:00Z", created_at: "2026-09-01T09:00:00Z", updated_at: "2026-09-01T10:00:00Z" }]);
+assert.equal(reviewQueue.length, 1); assert.deepEqual(reviewQueue[0].reasons, ["Low self-reported confidence", "Exceeded configured time"]);
+
+const workspace = read("features/dsa/practice/practice-mode-library.tsx"); const panel = read("features/dsa/practice/practice-mode-panel.tsx"); const editor = read("features/dsa/practice/attempt-editor.tsx"); const detail = read("features/dsa/progress/question-detail.tsx"); const browser = read("features/dsa/questions/question-browser.tsx"); const table = read("features/dsa/questions/question-table.tsx"); const route = read("app/dsa/questions/[question]/practice/[attemptId]/page.tsx"); const migration = read("supabase/migrations/202609050001_create_dsa_practice_attempts.sql");
+for (const mode of dsaPracticeModes) assert.ok(workspace.includes(mode), `workspace omits ${mode}`);
+assert.ok(panel.includes("Disable") && panel.includes("Extend") && panel.includes("Pause"), "timed mode lacks accessibility controls");
+assert.ok(panel.includes('mode === "timed" && !signedIn') && panel.includes("Private attempt duration in minutes") && !panel.includes('<label>Mode<select'), "signed-in timed setup renders a running pre-attempt clock or disconnected mode/duration controls");
+assert.ok(detail.includes('mode.labelsHidden ? "Blind practice brief"') && detail.includes("Reveal guided debrief and pattern clues") && detail.includes("{guidedDebrief}"), "hidden-label modes expose solution-shaping guidance before the debrief reveal");
+assert.ok(detail.includes('params.set("mode", practiceMode)') && detail.includes('className="dsa-question-detail-content"') && !detail.includes("<main>"), "question detail drops practice mode context or nests a main landmark");
+assert.ok(workspace.includes('`/dsa/questions?mode=${mode.id}`') && browser.includes("!hideTaxonomyLabels && <TopicQuickFilters") && table.includes("!hideTaxonomyLabels && <th"), "hidden-label mode selection exposes taxonomy in the question browser");
+assert.ok(workspace.includes('anonymousReview') && workspace.includes('Browser-session review — no saved queue'), "anonymous review mode implies an account-backed queue");
+for (const field of ["clarification_notes", "plan_before_code", "test_notes", "complexity_notes", "hints_used", "error_recovery", "prior_exposure"]) assert.ok(editor.includes(field), `attempt editor omits ${field}`);
+assert.ok(editor.includes("Return evidence to Interview Playbook"));
+assert.ok(editor.includes('aria-pressed={!timerVisible}') && editor.includes('"Paused · time display disabled"'), "private timer disable control still exposes a running clock value");
+assert.ok(editor.includes('setDirty(true); setRunning') && editor.includes('setDirty(true); setDuration') && editor.includes('setDirty(true); setRunning(false); setElapsed(0)'), "private timer evidence changes do not activate the unsaved warning");
+assert.ok(editor.includes('className="dsa-attempt-sections"') && !editor.includes("<main>"), "private attempt editor nests a main landmark inside the root main");
+assert.ok(route.includes('robots: { index: false, follow: false }') && route.includes('dynamic = "force-dynamic"'));
+assert.ok(migration.includes("enable row level security") && migration.includes("auth.uid()") && migration.includes("target_expected_revision") && migration.includes("on delete cascade"));
+console.log("DSA practice qualification passed: six modes, deterministic mixed transfer, 12-dimension rubric, private attempts, timer controls, and evidence provenance hold.");

@@ -71,6 +71,7 @@ for (const route of [
   "/behavioral/questions/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed/answers/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed/edit",
   "/system-design/problems/url-shortener/practice/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed",
   "/ml-design/problems/personalized-recommendation/practice/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed",
+  "/dsa/questions/two-sum/practice/1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed",
   "/calendar",
   "/dashboard",
   "/settings/privacy",
@@ -121,6 +122,10 @@ check(
 check(
   "robots disallow covers the ML Design attempt editor",
   PRIVATE_ROBOTS_DISALLOW.includes("/ml-design/problems/*/practice"),
+);
+check(
+  "robots disallow covers the DSA attempt editor",
+  PRIVATE_ROBOTS_DISALLOW.includes("/dsa/questions/*/practice"),
 );
 
 // 6. One canonical classification: no second private-route array anywhere.

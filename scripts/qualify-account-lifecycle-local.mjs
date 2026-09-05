@@ -247,6 +247,8 @@ await check("disposable account can populate every major private workspace", asy
   assert.ifError(answer.error);
   assert.equal(answer.data?.length, 1);
   assert.ifError((await a.client.rpc("save_dsa_question_progress_if_revision", { target_question_id: "two-sum", target_expect_absent: true, target_expected_updated_at: null, target_status: "attempted", target_confidence: "medium", target_bookmarked: true, target_notes: "Private DSA note" })).error);
+  const dsaAttemptDocument = { clarification_notes: "Private clarification", brute_force_notes: "", approach_notes: "Private plan", implementation_notes: "Private implementation", test_notes: "", complexity_notes: "", reflection: "", completed_checkpoints: [], hints_used: 0, error_recovery: "not_needed", self_review: {}, dimension_evidence: {}, follow_up: "" };
+  assert.ifError((await a.client.rpc("create_dsa_practice_attempt", { target_question_id: "two-sum", target_catalog_version: 1, target_title: "Private DSA rehearsal", target_mode: "untimed", target_duration_minutes: null, target_prior_exposure: "prompt_seen", target_document: dsaAttemptDocument })).error);
   assert.ifError((await a.client.rpc("save_system_design_item_progress_if_revision", { target_item_id: "introduction", target_item_type: "concept", target_expect_absent: true, target_expected_updated_at: null, target_status: "reviewed", target_confidence: "medium", target_bookmarked: true, target_notes: "Private System Design note" })).error);
   const document = { functional_requirements: [], non_functional_requirements: [], capacity: { assumptions: [], calculations: [] }, apis: [], data_models: [], high_level_design: "Private design", deep_dives: [], bottlenecks: [], failure_modes: [], tradeoffs: [], follow_ups: [], final_review_notes: "" };
   assert.ifError((await a.client.rpc("create_system_design_attempt", { target_problem_id: "url-shortener", target_application_id: applicationId, target_title: "Phase 8 disposable attempt", target_document: document })).error);
@@ -278,7 +280,7 @@ await check("disposable account can populate every major private workspace", asy
 let exportPayload;
 await check("private JSON export contains owned Phase 1–7 data and excludes secrets", async () => {
   exportPayload = await buildAccountExport({ user: a.user, supabase: a.client });
-  assert.equal(exportPayload.export_version, "1.5");
+  assert.equal(exportPayload.export_version, "1.6");
   assert.equal(exportPayload.applications.length, 1);
   assert.equal(exportPayload.interview_rounds.length, 1);
   assert.equal(exportPayload.interview_preparation.records[0].private_notes, "Private preparation note");
@@ -288,6 +290,7 @@ await check("private JSON export contains owned Phase 1–7 data and excludes se
   assert.equal(exportPayload.behavioral.answers[0].details_to_emphasize, "Private detail to emphasize");
   assert.equal(exportPayload.behavioral.answers[0].details_to_avoid, "Private detail to avoid");
   assert.equal(exportPayload.dsa.question_progress[0].notes, "Private DSA note");
+  assert.equal(exportPayload.dsa.practice_attempts[0].document.implementation_notes, "Private implementation");
   assert.equal(exportPayload.system_design.item_progress[0].notes, "Private System Design note");
   assert.equal(exportPayload.system_design.attempts.length, 1);
   assert.equal(exportPayload.interview_experiences.records[0].id, interviewExperienceId);
@@ -311,7 +314,7 @@ await check("privileged Auth deletion removes identity, private rows, reminders,
   assert.equal(removeTrackedId(createdIds, a.user.id), true, "deleted account was not tracked for cleanup");
   const authLookup = await admin.auth.admin.getUserById(a.user.id);
   assert.ok(authLookup.error || !authLookup.data.user);
-  const tables = ["applications", "interview_rounds", "interview_preparations", "behavioral_custom_questions", "behavioral_stories", "dsa_question_progress", "system_design_item_progress", "system_design_attempts", "user_preparation_preferences", "interview_reminder_preferences", "interview_reminders"];
+  const tables = ["applications", "interview_rounds", "interview_preparations", "behavioral_custom_questions", "behavioral_stories", "dsa_question_progress", "dsa_practice_attempts", "system_design_item_progress", "system_design_attempts", "user_preparation_preferences", "interview_reminder_preferences", "interview_reminders"];
   for (const table of tables) {
     assert.match(table, /^[a-z_]+$/, "cascade check contains an unsafe table identifier");
     const count = queryLocalDatabase(`select count(*) from public.${table} where user_id = :'user_id'::uuid`, { user_id: a.user.id });

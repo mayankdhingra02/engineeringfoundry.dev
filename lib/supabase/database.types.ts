@@ -375,6 +375,49 @@ export type Database = {
         Insert: { id?: string; experience_id: string; position: number; round_type: string; topic_labels?: string[]; process_notes?: string | null };
         Update: Partial<Database["public"]["Tables"]["interview_experience_rounds"]["Insert"]>; Relationships: [{ foreignKeyName: "interview_experience_rounds_experience_id_fkey"; columns: ["experience_id"]; isOneToOne: false; referencedRelation: "interview_experiences"; referencedColumns: ["id"] }];
       };
+      dsa_practice_attempts: {
+        Row: {
+          id: string;
+          user_id: string;
+          question_id: string;
+          catalog_version: number;
+          title: string;
+          status: "draft" | "completed" | "review";
+          mode: "learn" | "recognition" | "untimed" | "timed" | "mixed" | "review";
+          duration_minutes: number | null;
+          prior_exposure: "unseen" | "prompt_seen" | "solution_seen" | "solved_before";
+          elapsed_seconds: number;
+          review_reason: "error" | "elapsed" | "manual" | null;
+          document: Json;
+          revision: number;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          question_id: string;
+          catalog_version?: number;
+          title: string;
+          status?: "draft" | "completed" | "review";
+          mode: "learn" | "recognition" | "untimed" | "timed" | "mixed" | "review";
+          duration_minutes?: number | null;
+          prior_exposure: "unseen" | "prompt_seen" | "solution_seen" | "solved_before";
+          elapsed_seconds?: number;
+          review_reason?: "error" | "elapsed" | "manual" | null;
+          document: Json;
+          revision?: number;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["dsa_practice_attempts"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName: "dsa_practice_attempts_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "users"; referencedColumns: ["id"] },
+          { foreignKeyName: "dsa_practice_attempts_question_id_fkey"; columns: ["question_id"]; isOneToOne: false; referencedRelation: "dsa_question_catalog"; referencedColumns: ["id"] },
+        ];
+      };
       dsa_question_progress: {
         Row: {
           user_id: string;
@@ -1205,6 +1248,32 @@ export type Database = {
         };
         Returns: { question_id: string; updated_at: string }[];
       };
+      create_dsa_practice_attempt: {
+        Args: {
+          target_question_id: string;
+          target_catalog_version: number;
+          target_title: string;
+          target_mode: "learn" | "recognition" | "untimed" | "timed" | "mixed" | "review";
+          target_duration_minutes: number | null;
+          target_prior_exposure: "unseen" | "prompt_seen" | "solution_seen" | "solved_before";
+          target_document: Json;
+        };
+        Returns: string;
+      };
+      save_dsa_practice_attempt: {
+        Args: {
+          target_attempt_id: string;
+          target_expected_revision: number;
+          target_title: string;
+          target_status: "draft" | "completed" | "review";
+          target_mode: "learn" | "recognition" | "untimed" | "timed" | "mixed" | "review";
+          target_duration_minutes: number | null;
+          target_prior_exposure: "unseen" | "prompt_seen" | "solution_seen" | "solved_before";
+          target_elapsed_seconds: number;
+          target_document: Json;
+        };
+        Returns: Database["public"]["Tables"]["dsa_practice_attempts"]["Row"][];
+      };
       set_dsa_question_quick_progress: {
         Args: {
           target_question_id: string;
@@ -1509,6 +1578,7 @@ export type BehavioralStoryTheme = Database["public"]["Tables"]["behavioral_stor
 export type UserPreparationPreferenceRow = Database["public"]["Tables"]["user_preparation_preferences"]["Row"];
 export type DsaProgressRow = Database["public"]["Tables"]["dsa_progress"]["Row"];
 export type DsaQuestionProgressRow = Database["public"]["Tables"]["dsa_question_progress"]["Row"];
+export type DsaPracticeAttemptRow = Database["public"]["Tables"]["dsa_practice_attempts"]["Row"];
 export type SystemDesignProgressRow = Database["public"]["Tables"]["system_design_progress"]["Row"];
 export type SystemDesignItemProgressRow = Database["public"]["Tables"]["system_design_item_progress"]["Row"];
 export type SystemDesignAttemptRow = Database["public"]["Tables"]["system_design_attempts"]["Row"];

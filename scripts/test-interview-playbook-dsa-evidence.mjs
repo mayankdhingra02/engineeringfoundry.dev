@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { dsaQuestionProgressToInterviewEvidence } from "../lib/interview-playbook/dsa-evidence.ts";
+import { dsaPracticeAttemptsToInterviewEvidence, dsaQuestionProgressToInterviewEvidence } from "../lib/interview-playbook/dsa-evidence.ts";
 import { buildInterviewDiagnosticSnapshot } from "../lib/interview-playbook/diagnostic.ts";
 import { summarizeInterviewEvidence } from "../lib/interview-playbook/evidence.ts";
 import { buildInterviewPlaybookPlanningProjection } from "../lib/interview-playbook/planner-integration.ts";
@@ -81,6 +81,17 @@ const duplicateRows = [
 ];
 check("duplicate source records resolve deterministically to one latest self-report", dsaQuestionProgressToInterviewEvidence(duplicateRows).length === 1 && dsaQuestionProgressToInterviewEvidence(duplicateRows)[0].observedAt === "2026-08-18T10:00:00Z");
 
+const attemptEvidence = dsaPracticeAttemptsToInterviewEvidence([
+  { id: "51515151-5151-4151-8151-515151515151", questionId: "two-sum", status: "completed", mode: "timed", priorExposure: "unseen", completedAt: "2026-08-18T11:00:00Z" },
+  { id: "62626262-6262-4262-8262-626262626262", questionId: "merge-intervals", status: "completed", mode: "mixed", priorExposure: "solution_seen", completedAt: "2026-08-18T12:00:00Z" },
+  { id: "73737373-7373-4373-8373-737373737373", questionId: "binary-search", status: "completed", mode: "learn", priorExposure: "unseen", completedAt: "2026-08-18T13:00:00Z" },
+  { id: "84848484-8484-4484-8484-848484848484", questionId: "valid-parentheses", status: "draft", mode: "timed", priorExposure: "unseen", completedAt: null },
+]);
+check("learn and draft attempts do not manufacture performance evidence", attemptEvidence.length === 2);
+check("fresh timed evidence preserves mode and exposure in its identity", attemptEvidence[0].id.endsWith(":timed:unseen") && attemptEvidence[0].summary.includes("fresh timed rehearsal"));
+check("familiar mixed evidence remains distinguishable from unseen transfer", attemptEvidence[1].id.endsWith(":mixed:solution_seen") && attemptEvidence[1].summary.includes("familiar mixed-set transfer"));
+check("structured DSA attempts remain self-report rather than direct observation", attemptEvidence.every((item) => item.provenance === "self-report"));
+
 // Confidence is a separate candidate self-report. It must not silently become
 // either evidence or the Playbook's explicit per-area confidence input.
 const lowConfidenceRows = [{ questionId: "two-sum", status: "solved", solvedAt: "2026-08-17T10:00:00Z", confidence: "low" }];
@@ -129,6 +140,7 @@ for (const forbidden of ["notes", "bookmarked", "confidence", "firstAttemptedAt"
 }
 check("server query is owner-derived", querySource.includes("getAuthenticatedActor") && querySource.includes('.eq("user_id", actor.user.id)'));
 check("server query selects only minimal solved-status fields", querySource.includes('.select("question_id,status,solved_at")') && querySource.includes('.eq("status", "solved")'));
+check("server query selects only minimal structured attempt provenance", querySource.includes('.select("id,question_id,status,mode,prior_exposure,completed_at")') && querySource.includes('.neq("status", "draft")'));
 for (const forbidden of ["notes", "bookmarked", "confidence", "first_attempted_at", "last_practiced_at"]) {
   check(`server query never selects ${forbidden}`, !new RegExp(`select\\([^)]*${forbidden}`).test(querySource));
 }

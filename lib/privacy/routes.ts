@@ -54,6 +54,7 @@ export const PRIVATE_ROUTE_PREFIXES = [
  * private even though `/system-design/problems/<public-slug>` is public.
  */
 export const PRIVATE_ROUTE_PATTERNS: readonly RegExp[] = [
+  /^\/dsa\/questions\/[^/]+\/practice(?:\/|$)/,
   /^\/ml-design\/problems\/[^/]+\/practice(?:\/|$)/,
   /^\/system-design\/problems\/[^/]+\/practice(?:\/|$)/,
 ];
@@ -65,6 +66,7 @@ export const PRIVATE_ROUTE_PATTERNS: readonly RegExp[] = [
  */
 export const PRIVATE_ROBOTS_DISALLOW: readonly string[] = [
   ...PRIVATE_ROUTE_PREFIXES,
+  "/dsa/questions/*/practice",
   "/ml-design/problems/*/practice",
   "/system-design/problems/*/practice",
 ];
