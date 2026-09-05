@@ -26,8 +26,8 @@ select ok(not has_function_privilege('anon', 'public.set_system_design_item_quic
 select ok(has_function_privilege('authenticated', 'public.set_system_design_item_quick_progress(text,text,text)', 'execute'), 'authenticated users can invoke quick System Design progress saves');
 select ok(has_function_privilege('authenticated', 'public.save_system_design_item_progress(text,text,text,text,boolean,text)', 'execute'), 'legacy System Design progress signature remains callable for migration-first fail-safe behavior');
 select ok(not has_function_privilege('authenticated', 'public.set_system_design_item_progress_updated_at()', 'execute'), 'clients cannot execute the monotonic revision trigger directly');
-select is((select count(*)::integer from public.system_design_item_catalog), 173, 'catalog contains every published concept and problem');
-select is((select count(*)::integer from public.system_design_item_catalog where item_type = 'concept'), 146, 'catalog contains published concepts');
+select is((select count(*)::integer from public.system_design_item_catalog), 191, 'catalog contains every published concept and problem');
+select is((select count(*)::integer from public.system_design_item_catalog where item_type = 'concept'), 164, 'catalog contains published concepts');
 select is((select count(*)::integer from public.system_design_item_catalog where item_type = 'design_problem'), 27, 'catalog contains published design problems');
 
 insert into auth.users (id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at)

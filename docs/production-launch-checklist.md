@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 48 migrations are recorded, ending at `202609040014_save_account_preparation_preferences_if_revision`
+4. [ ] `supabase migration list --linked` — confirm all 49 migrations are recorded, ending at `202609040015_publish_system_design_production_engineering`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -283,6 +283,8 @@ Check the production response for any page:
 5. [ ] Re-verify sign-in, dashboard, export, and deletion on production
 6. [ ] Watch Supabase Auth and Postgres logs for the first hours
 7. [ ] Grep application logs for `"level":"error"` events: `account_export_failed`, `account_deletion_failed`, `reminder_worker_failed`, `calendar_export_record_failed`
+
+Before deploying the Production Engineering lesson family, apply `202609040015_publish_system_design_production_engineering.sql`. Confirm the read-only catalog has exactly 164 concept IDs and that an authenticated disposable account can save progress for `observability`; keep hosted verification unchecked until dated evidence exists. App-first remains publicly readable but progress for the 18 new IDs fails until migration. A code rollback is safe with the additive catalog rows retained; roll forward rather than deleting catalog rows that may already anchor private progress.
 
 ---
 
