@@ -63,5 +63,11 @@ export async function moderateInterviewExperienceAction(_: AdminMutationState, f
   revalidatePath("/admin");
   revalidatePath("/admin/interview-experiences");
   revalidatePath("/interview-experiences");
-  return { status: "success", message: INTERVIEW_EXPERIENCE_MODERATION_SAVED_MESSAGE, revision: result.updatedAt };
+  return {
+    status: "success",
+    message: parsed.value.status === "archived"
+      ? "Published report archived. It no longer appears in the public directory."
+      : INTERVIEW_EXPERIENCE_MODERATION_SAVED_MESSAGE,
+    revision: result.updatedAt,
+  };
 }

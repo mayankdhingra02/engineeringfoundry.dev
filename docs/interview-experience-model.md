@@ -4,13 +4,13 @@
 
 Engineering Foundry publishes a reviewed directory of high-level contributor reports and provides an account-backed contribution flow. Public visitors can read only reports that have both an approved lifecycle status and publication consent. The public projection omits author identifiers, moderation metadata, round identifiers and positions, and private round process notes; an authenticated contributor's base rows remain private to that owner.
 
-Signed-in contributors can create a private draft, preview its bounded public-facing fields, submit it for review, edit a draft or a report returned for changes, withdraw an eligible report, and delete an eligible private report. A contributor can choose anonymous public presentation or their Engineering Foundry username, but that choice does not promise perfect anonymity. Reports describe one contributor's experience; they are not verified company policy, a current-process guarantee, or an interview-question bank.
+Signed-in contributors can create a private draft, preview its bounded public-facing fields, submit it for review, edit a draft or a report returned for changes, withdraw an eligible report, and delete an eligible private report. A contributor can choose anonymous public presentation or their Engineering Foundry username. Username attribution is resolved only while the contributor's profile remains public and complete; otherwise the report falls back to anonymous attribution. Neither choice promises perfect anonymity. Reports describe one contributor's experience; they are not verified company policy, a current-process guarantee, or an interview-question bank.
 
 The supported lifecycle is:
 
 `Draft → Submitted → Needs changes → Approved / Rejected`
 
-An approved report may be withdrawn. The schema reserves an archived lifecycle value, but the current contributor and moderation controls do not present an archive action. Moderators review the submitted public-facing content, including preparation lessons and round context, and can approve, reject, or request changes without rewriting it. Contributors see a private review note only when changes are requested. Correction and removal requests use the public contact path.
+An approved report may be withdrawn by its author. Moderators review the submitted public-facing content, including preparation lessons and round context, and can approve, reject, or request changes without rewriting it. A separate published-report view lets an authorized moderator archive the exact reviewed revision with a required private rationale after a correction, removal, freshness, privacy, or safety request. Contributors see a private review note only when changes are requested. Every public report and the directory itself link to the contact pathways for correction, removal, and abuse reporting.
 
 ## Persistence and revision truth
 

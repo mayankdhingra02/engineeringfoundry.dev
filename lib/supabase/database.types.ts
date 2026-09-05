@@ -1015,8 +1015,12 @@ export type Database = {
       };
       moderate_interview_experience: { Args: { target_id: string; next_status: "needs_changes" | "approved" | "rejected"; moderation_note?: string | null }; Returns: boolean };
       moderate_interview_experience_if_revision: {
-        Args: { target_experience_id: string; target_expected_updated_at: string; target_status: "needs_changes" | "approved" | "rejected"; target_moderation_note: string | null };
-        Returns: { experience_id: string; status: "needs_changes" | "approved" | "rejected"; updated_at: string }[];
+        Args: { target_experience_id: string; target_expected_updated_at: string; target_status: "needs_changes" | "approved" | "rejected" | "archived"; target_moderation_note: string | null };
+        Returns: { experience_id: string; status: "needs_changes" | "approved" | "rejected" | "archived"; updated_at: string }[];
+      };
+      list_public_interview_experience_authors: {
+        Args: { target_experience_ids: string[] };
+        Returns: { experience_id: string; username: string }[];
       };
       save_mock_interview_review: { Args: { target_session_id: string; target_track: "dsa" | "system-design" | "low-level-design" | "ml-design" | "behavioral"; target_mode: "solo" | "peer"; target_plan_id: string; target_prompt_id: string; target_rubric_id: string; target_started_at: string; target_elapsed_seconds: number; target_prompt_exposure: "fresh" | "repeated"; target_timing_mode: "suggested" | "extended" | "untimed"; target_hint_policy: "none" | "on-request" | "guided"; target_assistance_state: "unassisted" | "hint-used" | "redirection-used" | "hint-and-redirection"; target_session_outcome: "completed" | "interrupted" | "technical-failure"; target_session_issue: string | null; target_strength: string | null; target_improvement: string | null; target_follow_up_practice: string | null; target_ratings: Json }; Returns: string };
       create_interview_round: {

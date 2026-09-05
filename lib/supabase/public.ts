@@ -40,5 +40,35 @@ export async function listPublicInterviewExperiences({ companyName, limit = 30 }
 
   const { data, error } = await query;
   if (error) return { availability: "unavailable" as const, data: [] };
-  return { availability: "available" as const, data: data ?? [] };
+  const reports = data ?? [];
+  const attributedIds = reports
+    .filter((report) => report.public_identity === "username")
+    .map((report) => report.id);
+  if (!attributedIds.length) {
+    return {
+      availability: "available" as const,
+      data: reports.map((report) => ({
+        ...report,
+        public_author_username: null,
+      })),
+    };
+  }
+
+  const attribution = await client.rpc(
+    "list_public_interview_experience_authors",
+    { target_experience_ids: attributedIds },
+  );
+  if (attribution.error) {
+    return { availability: "unavailable" as const, data: [] };
+  }
+  const usernameByExperience = new Map(
+    (attribution.data ?? []).map((item) => [item.experience_id, item.username]),
+  );
+  return {
+    availability: "available" as const,
+    data: reports.map((report) => ({
+      ...report,
+      public_author_username: usernameByExperience.get(report.id) ?? null,
+    })),
+  };
 }

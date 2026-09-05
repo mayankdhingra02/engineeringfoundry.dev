@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(68);
+select plan(78);
 
 select has_table('public', 'admin_memberships', 'explicit admin membership table exists');
 select has_table('public', 'feedback_submissions', 'private feedback table exists');
@@ -20,11 +20,13 @@ select has_function('public', 'submit_feedback_submission', array['jsonb','text'
 select has_function('public', 'update_feedback_submission', array['uuid','text','text'], 'controlled feedback triage RPC exists');
 select has_function('public', 'update_feedback_submission_if_revision', array['uuid','timestamptz','text','text'], 'revision-checked feedback triage RPC exists');
 select has_function('public', 'moderate_interview_experience_if_revision', array['uuid','timestamptz','text','text'], 'revision-bound experience moderation RPC exists');
+select has_function('public', 'list_public_interview_experience_authors', array['uuid[]'], 'privacy-aware public experience attribution RPC exists');
 select has_function('public', 'export_own_feedback_submissions', array[]::text[], 'actor-derived feedback export RPC exists');
 select ok(has_function_privilege('anon', 'public.submit_feedback_submission(jsonb,text)', 'execute'), 'anonymous users can use only the controlled submit RPC');
 select ok(not has_function_privilege('anon', 'public.update_feedback_submission(uuid,text,text)', 'execute'), 'anonymous users cannot triage feedback');
 select ok(not has_function_privilege('anon', 'public.update_feedback_submission_if_revision(uuid,timestamptz,text,text)', 'execute'), 'anonymous users cannot invoke revision-checked feedback triage');
 select ok(has_function_privilege('authenticated', 'public.update_feedback_submission_if_revision(uuid,timestamptz,text,text)', 'execute'), 'authenticated admins can invoke revision-checked feedback triage behind the database admin check');
+select ok(has_function_privilege('anon', 'public.list_public_interview_experience_authors(uuid[])', 'execute'), 'anonymous public reads can resolve only explicitly public report attribution');
 select ok(has_function_privilege('authenticated', 'public.update_feedback_submission(uuid,text,text)', 'execute'), 'authenticated legacy feedback callers receive the stable retirement error');
 select ok((select prosecdef from pg_proc where oid = 'public.update_feedback_submission_if_revision(uuid,timestamptz,text,text)'::regprocedure), 'revision-checked feedback triage is security definer');
 select is((select provolatile::text from pg_proc where oid = 'public.update_feedback_submission_if_revision(uuid,timestamptz,text,text)'::regprocedure), 'v', 'revision-checked feedback triage is volatile');
@@ -37,6 +39,14 @@ values
   ('b2000000-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'feedback-member-b@example.test', '', now(), '{}', '{}', now(), now()),
   ('c3000000-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'feedback-admin@example.test', '', now(), '{}', '{}', now(), now()),
   ('d4000000-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'feedback-delete@example.test', '', now(), '{}', '{}', now(), now());
+
+update public.profiles
+set username = 'experience-a',
+    display_name = 'Experience A',
+    is_public = true,
+    onboarding_complete = true,
+    onboarding_completed_at = now()
+where id = 'a1000000-0000-4000-8000-000000000001';
 
 set local role anon;
 select lives_ok($$select public.submit_feedback_submission('{"category":"bug","message":"Anonymous report","page_context":"/behavioral/stories/private-id?token=never"}'::jsonb, repeat('a', 64))$$, 'anonymous visitor can submit a private report through the RPC');
@@ -91,7 +101,7 @@ select set_config('test.experience_revision', (select saved.updated_at::text fro
   current_setting('test.experience_id')::uuid, true, null, true,
   'Acme', 'Engineer', null, null, null,
   'A high-level contributor report suitable for moderation with no proprietary interview prompts.',
-  null, 'anonymous', true, '[]'::jsonb
+  null, 'username', true, '[]'::jsonb
 ) as saved), true);
 select is((select status from public.interview_experiences where id = current_setting('test.experience_id')::uuid), 'submitted', 'owner atomically submits an experience into the moderation state');
 
@@ -106,11 +116,42 @@ select lives_ok($$select * from public.moderate_interview_experience_if_revision
 )$$, 'authorized admin can use the revision-bound moderation decision');
 select is((select status from public.interview_experiences where id = current_setting('test.experience_id')::uuid), 'approved', 'admin approval persists without direct table grants');
 select is((select count(*)::integer from public.admin_audit_events where target_type = 'interview_experience'), 1, 'experience moderation writes a minimal audit event');
+select set_config('test.approved_experience_revision', (select updated_at::text from public.interview_experiences where id = current_setting('test.experience_id')::uuid), true);
 
 reset role;
 set local role anon;
 select is((select count(*)::integer from public.interview_experiences), 1, 'only the approved consented experience becomes public');
+select is((select username from public.list_public_interview_experience_authors(array[current_setting('test.experience_id')::uuid])), 'experience-a', 'approved username attribution resolves only from the contributor current public profile');
 select throws_ok($$select count(*) from public.feedback_submissions$$, '42501', null, 'feedback never becomes publicly readable');
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'c3000000-0000-4000-8000-000000000003', true);
+select throws_ok($$select * from public.moderate_interview_experience_if_revision(
+  current_setting('test.experience_id')::uuid,
+  current_setting('test.approved_experience_revision')::timestamptz,
+  'archived',
+  null
+)$$, '23514', 'Invalid interview experience moderation input', 'archive requires a private rationale');
+select is((select count(*)::integer from public.moderate_interview_experience_if_revision(
+  current_setting('test.experience_id')::uuid,
+  current_setting('test.experience_revision')::timestamptz,
+  'archived',
+  'Stale archive request'
+)), 0, 'stale archive cannot hide a newer approved revision');
+select is((select count(*)::integer from public.moderate_interview_experience_if_revision(
+  current_setting('test.experience_id')::uuid,
+  current_setting('test.approved_experience_revision')::timestamptz,
+  'archived',
+  'Archived after a privacy removal request'
+)), 1, 'authorized admin archives the exact approved revision');
+select is((select status from public.interview_experiences where id = current_setting('test.experience_id')::uuid), 'archived', 'archive persists without rewriting the contributor report');
+select is((select count(*)::integer from public.admin_audit_events where target_type = 'interview_experience' and action_type = 'experience_archived' and prior_status = 'approved' and new_status = 'archived'), 1, 'archive writes a minimal lifecycle audit event');
+
+reset role;
+set local role anon;
+select is((select count(*)::integer from public.interview_experiences), 0, 'archived report disappears from public reads immediately');
+select is((select count(*)::integer from public.list_public_interview_experience_authors(array[current_setting('test.experience_id')::uuid])), 0, 'archived reports cannot retain public username attribution');
 
 reset role;
 set local role authenticated;

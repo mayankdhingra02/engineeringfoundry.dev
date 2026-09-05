@@ -13,6 +13,7 @@ import {
   type FormEvent,
 } from "react";
 import {
+  EXPERIENCE_ARCHIVE_STATUS,
   EXPERIENCE_MODERATION_STATUSES,
   FEEDBACK_STATUSES,
   feedbackStatusLabel,
@@ -169,9 +170,11 @@ function moderationDraftSignature(formData: FormData) {
 export function ExperienceModerationForm({
   experienceId,
   revision,
+  mode = "review",
 }: {
   experienceId: string;
   revision: string;
+  mode?: "review" | "archive";
 }) {
   const [state, action, pending] = useActionState(
     moderateInterviewExperienceAction,
@@ -223,7 +226,7 @@ export function ExperienceModerationForm({
     },
     pending,
     changedSinceSubmit,
-    "moderation",
+    mode === "archive" ? "archive" : "moderation",
   );
 
   return (
@@ -240,26 +243,40 @@ export function ExperienceModerationForm({
         name={INTERVIEW_EXPERIENCE_EXPECTED_REVISION_FIELD}
         value={state.revision ?? revision}
       />
-      <label>
-        Moderation decision
-        <select name="status" defaultValue="">
-          <option value="" disabled>
-            Choose a decision
-          </option>
-          {EXPERIENCE_MODERATION_STATUSES.map((status) => (
-            <option value={status} key={status}>
-              {feedbackStatusLabel(status)}
+      {mode === "archive" ? (
+        <>
+          <input type="hidden" name="status" value={EXPERIENCE_ARCHIVE_STATUS} />
+          <p className="admin-rule-note">
+            Archiving removes this report from every public directory without
+            rewriting or deleting the contributor&apos;s original account.
+          </p>
+        </>
+      ) : (
+        <label>
+          Moderation decision
+          <select name="status" defaultValue="">
+            <option value="" disabled>
+              Choose a decision
             </option>
-          ))}
-        </select>
-      </label>
+            {EXPERIENCE_MODERATION_STATUSES.map((status) => (
+              <option value={status} key={status}>
+                {feedbackStatusLabel(status)}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label>
-        Private contributor note <span>Optional</span>
+        {mode === "archive" ? "Private archive rationale" : "Private contributor note"}{" "}
+        <span>{mode === "archive" ? "Required" : "Optional"}</span>
         <textarea
           name="moderation_note"
           maxLength={1000}
           rows={4}
-          placeholder="Explain the moderation decision without rewriting the contributor’s report."
+          required={mode === "archive"}
+          placeholder={mode === "archive"
+            ? "Record the correction, removal, freshness, or safety reason."
+            : "Explain the moderation decision without rewriting the contributor’s report."}
         />
       </label>
       {(pending || displayState.message) && (
@@ -292,14 +309,18 @@ export function ExperienceModerationForm({
             <LoaderCircle size={15} className="spin" />Saving…
           </>
         ) : (
-          "Record decision"
+          mode === "archive" ? "Archive published report" : "Record decision"
         )}
       </button>
     </form>
   );
 }
 
-export function AdminInterviewExperienceQueueUnavailable() {
+export function AdminInterviewExperienceQueueUnavailable({
+  view = "review",
+}: {
+  view?: "review" | "published";
+}) {
   const router = useRouter();
   const [pending, startRetryTransition] = useTransition();
   const retryPending = useRef(false);
@@ -323,12 +344,17 @@ export function AdminInterviewExperienceQueueUnavailable() {
     >
       <strong>
         {pending
-          ? "Reloading the moderation queue…"
-          : "The moderation queue is temporarily unavailable."}
+          ? view === "published"
+            ? "Reloading published reports…"
+            : "Reloading the moderation queue…"
+          : view === "published"
+            ? "Published reports are temporarily unavailable."
+            : "The moderation queue is temporarily unavailable."}
       </strong>
       <p>
-        This does not mean that no reports need review. No moderation action is
-        available until the private queue loads successfully.
+        {view === "published"
+          ? "This does not mean that no reports are public. No archive action is available until the complete published-report view loads successfully."
+          : "This does not mean that no reports need review. No moderation action is available until the private queue loads successfully."}
       </p>
       <button
         className="button button-secondary"
