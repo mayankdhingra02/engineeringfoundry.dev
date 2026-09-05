@@ -64,7 +64,7 @@ const itemPosition = (items, id) => {
 assert.ok(itemPosition(infrastructure, "topic:distributed-consensus") < itemPosition(backend, "topic:distributed-consensus"), "Consensus should move earlier for Infrastructure.");
 assert.ok(itemPosition(data, "topic:kafka") < itemPosition(fullstack, "topic:kafka"), "Kafka should move earlier for Data than Full Stack.");
 for (const id of ["topic:model-serving", "topic:vector-search"]) assert.ok(Number.isFinite(itemPosition(ml, id)), `${id} should appear in the Senior ML plan.`);
-assert.ok(!Number.isFinite(itemPosition(ml, "topic:batch-vs-streaming")), "Coming-soon Batch vs Stream Processing must not be scheduled yet.");
+assert.ok(Number.isFinite(itemPosition(ml, "topic:batch-vs-streaming")), "Published Batch vs Stream Processing should be available to the Senior ML plan.");
 
 const original = generateSystemDesignStudyPlan({ level: "sde2", role: "backend", preparationWindow: "1-week", minutesPerDay: 120 });
 const completedId = flatten(original).find((item) => item.type === "topic").id;

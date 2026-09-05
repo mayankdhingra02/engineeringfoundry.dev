@@ -84,11 +84,14 @@ if (dsaSeeded) assertParity("DSA questions", canonicalDsaQuestions.map((question
 // --- System Design ---------------------------------------------------------
 const sdMigration = read("202608140008_create_system_design_workspace.sql");
 const sdProductionEngineeringMigration = read("202609040015_publish_system_design_production_engineering.sql");
+const sdCommonPatternsMigration = read("202609040016_publish_system_design_common_patterns.sql");
 const sdConceptsSeeded = seededArray(sdMigration, "select id, 'concept' from unnest");
 const sdProductionEngineeringSeeded = seededArray(sdProductionEngineeringMigration, "insert into public.system_design_item_catalog");
+const sdCommonPatternsSeeded = seededArray(sdCommonPatternsMigration, "insert into public.system_design_item_catalog");
 const sdProblemsSeeded = seededArray(sdMigration, "select id, 'design_problem' from unnest");
 check("System Design concept seed was located in its migration", sdConceptsSeeded !== null);
 check("System Design production-engineering seed was located in its migration", sdProductionEngineeringSeeded !== null);
+check("System Design common-pattern seed was located in its migration", sdCommonPatternsSeeded !== null);
 check("System Design problem seed was located in its migration", sdProblemsSeeded !== null);
 
 // Only published concepts are persistable. Unpublished manifest entries are
@@ -97,7 +100,7 @@ check("System Design problem seed was located in its migration", sdProblemsSeede
 const publishedConcepts = systemDesignTopicManifest.filter((topic) => topic.published);
 const unpublishedConcepts = systemDesignTopicManifest.filter((topic) => !topic.published);
 if (sdConceptsSeeded) {
-  const databaseConceptIds = new Set([...sdConceptsSeeded, ...(sdProductionEngineeringSeeded ?? [])]);
+  const databaseConceptIds = new Set([...sdConceptsSeeded, ...(sdProductionEngineeringSeeded ?? []), ...(sdCommonPatternsSeeded ?? [])]);
   assertParity("System Design concepts", publishedConcepts.map((topic) => topic.id), databaseConceptIds);
   const publishedLeak = unpublishedConcepts.filter((topic) => databaseConceptIds.has(topic.id));
   check(

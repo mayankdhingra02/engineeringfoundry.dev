@@ -7,7 +7,7 @@
     "subtopics": 1389,
     "technologyDeepDives": 12,
     "practiceProblems": 60,
-    "publishedTopics": 164,
+    "publishedTopics": 178,
     "publishedPracticeProblems": 27
   },
   "sections": [
@@ -5590,15 +5590,15 @@
         "replication",
         "caching"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "replication",
@@ -5632,15 +5632,15 @@
         "sharding",
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -5673,15 +5673,15 @@
       "prerequisites": [
         "scaling-reads"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-reads"
@@ -5712,15 +5712,15 @@
       "prerequisites": [
         "scaling-writes"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-writes"
@@ -5751,10 +5751,10 @@
       "prerequisites": [
         "pub-sub"
       ],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "interactive",
-      "visualPurpose": "Animate how one write amplifies into subscriber, storage, and delivery work.",
+      "visualPurpose": "Pause one subscriber branch and publish events to observe isolated delivery and backlog growth.",
       "practiceLinks": [
         "/system-design/problems/news-feed"
       ],
@@ -5793,8 +5793,8 @@
       "prerequisites": [
         "fan-out"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "comparison",
       "visualPurpose": null,
       "practiceLinks": [
@@ -5802,8 +5802,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "fan-out"
@@ -5834,15 +5834,15 @@
       "prerequisites": [
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "message-queues",
@@ -5879,15 +5879,15 @@
       "prerequisites": [
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
-      "visualType": "sequence",
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "background-jobs"
@@ -5918,17 +5918,17 @@
       "prerequisites": [
         "event-streaming"
       ],
-      "contentStatus": "researched",
-      "published": false,
-      "visualType": "comparison",
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [
         "/system-design/problems/feature-store"
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "event-streaming",
@@ -5963,15 +5963,15 @@
         "transactions",
         "event-driven-architecture"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "transactions",
@@ -6004,15 +6004,15 @@
         "sharding",
         "partitions"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -6044,15 +6044,15 @@
       "prerequisites": [
         "isolation-levels"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "isolation-levels"
@@ -6084,15 +6084,15 @@
         "saga",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "saga",
@@ -6125,15 +6125,15 @@
         "large-file-uploads",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "large-file-uploads",
@@ -50877,15 +50877,15 @@
         "replication",
         "caching"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "replication",
@@ -50920,15 +50920,15 @@
         "replication",
         "caching"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "replication",
@@ -50963,15 +50963,15 @@
         "replication",
         "caching"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "replication",
@@ -51006,15 +51006,15 @@
         "replication",
         "caching"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "replication",
@@ -51049,15 +51049,15 @@
         "replication",
         "caching"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "replication",
@@ -51092,15 +51092,15 @@
         "sharding",
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -51135,15 +51135,15 @@
         "sharding",
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -51178,15 +51178,15 @@
         "sharding",
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -51221,15 +51221,15 @@
         "sharding",
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -51264,15 +51264,15 @@
         "sharding",
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -51306,15 +51306,15 @@
       "prerequisites": [
         "scaling-reads"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-reads"
@@ -51346,15 +51346,15 @@
       "prerequisites": [
         "scaling-reads"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-reads"
@@ -51386,15 +51386,15 @@
       "prerequisites": [
         "scaling-reads"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-reads"
@@ -51426,15 +51426,15 @@
       "prerequisites": [
         "scaling-reads"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-reads"
@@ -51466,15 +51466,15 @@
       "prerequisites": [
         "scaling-reads"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-reads"
@@ -51506,15 +51506,15 @@
       "prerequisites": [
         "scaling-writes"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-writes"
@@ -51546,15 +51546,15 @@
       "prerequisites": [
         "scaling-writes"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-writes"
@@ -51586,15 +51586,15 @@
       "prerequisites": [
         "scaling-writes"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-writes"
@@ -51626,15 +51626,15 @@
       "prerequisites": [
         "scaling-writes"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-writes"
@@ -51666,15 +51666,15 @@
       "prerequisites": [
         "scaling-writes"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "scaling-writes"
@@ -51706,10 +51706,10 @@
       "prerequisites": [
         "pub-sub"
       ],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "interactive",
-      "visualPurpose": "Animate how one write amplifies into subscriber, storage, and delivery work.",
+      "visualPurpose": "Pause one subscriber branch and publish events to observe isolated delivery and backlog growth.",
       "practiceLinks": [
         "/system-design/problems/news-feed"
       ],
@@ -51749,8 +51749,8 @@
       "prerequisites": [
         "pub-sub"
       ],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -51792,8 +51792,8 @@
       "prerequisites": [
         "pub-sub"
       ],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -51835,8 +51835,8 @@
       "prerequisites": [
         "pub-sub"
       ],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -51878,8 +51878,8 @@
       "prerequisites": [
         "pub-sub"
       ],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -51921,8 +51921,8 @@
       "prerequisites": [
         "fan-out"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "comparison",
       "visualPurpose": null,
       "practiceLinks": [
@@ -51930,8 +51930,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "fan-out"
@@ -51963,8 +51963,8 @@
       "prerequisites": [
         "fan-out"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -51972,8 +51972,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "fan-out"
@@ -52005,8 +52005,8 @@
       "prerequisites": [
         "fan-out"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -52014,8 +52014,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "fan-out"
@@ -52047,8 +52047,8 @@
       "prerequisites": [
         "fan-out"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -52056,8 +52056,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "fan-out"
@@ -52089,8 +52089,8 @@
       "prerequisites": [
         "fan-out"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -52098,8 +52098,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "fan-out"
@@ -52131,15 +52131,15 @@
       "prerequisites": [
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "message-queues",
@@ -52177,15 +52177,15 @@
       "prerequisites": [
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "message-queues",
@@ -52223,15 +52223,15 @@
       "prerequisites": [
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "message-queues",
@@ -52269,15 +52269,15 @@
       "prerequisites": [
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "message-queues",
@@ -52315,15 +52315,15 @@
       "prerequisites": [
         "message-queues"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "message-queues",
@@ -52361,15 +52361,15 @@
       "prerequisites": [
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
-      "visualType": "sequence",
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "background-jobs"
@@ -52401,15 +52401,15 @@
       "prerequisites": [
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "background-jobs"
@@ -52441,15 +52441,15 @@
       "prerequisites": [
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "background-jobs"
@@ -52481,15 +52481,15 @@
       "prerequisites": [
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "background-jobs"
@@ -52521,15 +52521,15 @@
       "prerequisites": [
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "background-jobs"
@@ -52561,17 +52561,17 @@
       "prerequisites": [
         "event-streaming"
       ],
-      "contentStatus": "researched",
-      "published": false,
-      "visualType": "comparison",
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [
         "/system-design/problems/feature-store"
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "event-streaming",
@@ -52606,8 +52606,8 @@
       "prerequisites": [
         "event-streaming"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -52615,8 +52615,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "event-streaming",
@@ -52651,8 +52651,8 @@
       "prerequisites": [
         "event-streaming"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -52660,8 +52660,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "event-streaming",
@@ -52696,8 +52696,8 @@
       "prerequisites": [
         "event-streaming"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -52705,8 +52705,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "event-streaming",
@@ -52741,8 +52741,8 @@
       "prerequisites": [
         "event-streaming"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -52750,8 +52750,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "event-streaming",
@@ -52787,15 +52787,15 @@
         "transactions",
         "event-driven-architecture"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "transactions",
@@ -52829,15 +52829,15 @@
         "transactions",
         "event-driven-architecture"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "transactions",
@@ -52871,15 +52871,15 @@
         "transactions",
         "event-driven-architecture"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "transactions",
@@ -52913,15 +52913,15 @@
         "transactions",
         "event-driven-architecture"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "transactions",
@@ -52955,15 +52955,15 @@
         "transactions",
         "event-driven-architecture"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "transactions",
@@ -52997,15 +52997,15 @@
         "sharding",
         "partitions"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -53039,15 +53039,15 @@
         "sharding",
         "partitions"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -53081,15 +53081,15 @@
         "sharding",
         "partitions"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -53123,15 +53123,15 @@
         "sharding",
         "partitions"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -53165,15 +53165,15 @@
         "sharding",
         "partitions"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sharding",
@@ -53206,15 +53206,15 @@
       "prerequisites": [
         "isolation-levels"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "isolation-levels"
@@ -53246,15 +53246,15 @@
       "prerequisites": [
         "isolation-levels"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "isolation-levels"
@@ -53286,15 +53286,15 @@
       "prerequisites": [
         "isolation-levels"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "isolation-levels"
@@ -53326,15 +53326,15 @@
       "prerequisites": [
         "isolation-levels"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "isolation-levels"
@@ -53366,15 +53366,15 @@
       "prerequisites": [
         "isolation-levels"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "isolation-levels"
@@ -53407,15 +53407,15 @@
         "saga",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "saga",
@@ -53449,15 +53449,15 @@
         "saga",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "saga",
@@ -53491,15 +53491,15 @@
         "saga",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "saga",
@@ -53533,15 +53533,15 @@
         "saga",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "saga",
@@ -53575,15 +53575,15 @@
         "saga",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "saga",
@@ -53617,15 +53617,15 @@
         "large-file-uploads",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "large-file-uploads",
@@ -53659,15 +53659,15 @@
         "large-file-uploads",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "large-file-uploads",
@@ -53701,15 +53701,15 @@
         "large-file-uploads",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "large-file-uploads",
@@ -53743,15 +53743,15 @@
         "large-file-uploads",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "large-file-uploads",
@@ -53785,15 +53785,15 @@
         "large-file-uploads",
         "background-jobs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "large-file-uploads",

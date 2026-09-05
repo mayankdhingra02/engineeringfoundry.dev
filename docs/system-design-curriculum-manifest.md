@@ -12,9 +12,9 @@ This is the content architecture for interview preparation. It intentionally con
 - Must Know: 68
 - Important: 83
 - Advanced: 27
-- Mermaid visuals: 67
-- Sequence visuals: 22
-- Comparison visuals: 29
+- Mermaid visuals: 69
+- Sequence visuals: 21
+- Comparison visuals: 28
 - Custom interactives: 10
 - Practice problems: 60
 
@@ -3175,9 +3175,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 25 minutes
 - Visual: Mermaid
 - Publishing phase: 1
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Must Know, sde2=Must Know, senior=Must Know, staff=Must Know
 - Role relevance: backend=Must Know, fullstack=Must Know, infrastructure=Must Know, data=Must Know, ml=Must Know
 - Prerequisites: `replication`, `caching`
@@ -3197,9 +3197,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 25 minutes
 - Visual: Mermaid
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `sharding`, `message-queues`
@@ -3219,9 +3219,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `scaling-reads`
@@ -3241,9 +3241,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `scaling-writes`
@@ -3261,10 +3261,10 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Route: `/system-design/patterns/fan-out`
 - Priority: Important
 - Estimated time: 25 minutes
-- Visual: Custom interactive — Animate how one write amplifies into subscriber, storage, and delivery work.
+- Visual: Custom interactive — Pause one subscriber branch and publish events to observe isolated delivery and backlog growth.
 - Publishing phase: 2
-- Research status: draft-ready
-- Published: No
+- Research status: published
+- Published: Yes
 - Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
@@ -3285,9 +3285,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 25 minutes
 - Visual: Comparison
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `fan-out`
@@ -3307,9 +3307,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 20 minutes
 - Visual: Mermaid
 - Publishing phase: 1
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Must Know, sde2=Must Know, senior=Must Know, staff=Must Know
 - Role relevance: backend=Must Know, fullstack=Must Know, infrastructure=Must Know, data=Must Know, ml=Must Know
 - Prerequisites: `message-queues`
@@ -3327,11 +3327,11 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Route: `/system-design/patterns/long-running-jobs`
 - Priority: Important
 - Estimated time: 25 minutes
-- Visual: Sequence
+- Visual: Mermaid
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `background-jobs`
@@ -3349,11 +3349,11 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Route: `/system-design/patterns/batch-vs-stream-processing`
 - Priority: Important
 - Estimated time: 25 minutes
-- Visual: Comparison
+- Visual: Mermaid
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Must Know, ml=Must Know
 - Prerequisites: `event-streaming`
@@ -3373,9 +3373,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 25 minutes
 - Visual: Mermaid
 - Publishing phase: 3
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Advanced, sde2=Advanced, senior=Advanced, staff=Advanced
 - Role relevance: backend=Advanced, fullstack=Advanced, infrastructure=Advanced, data=Advanced, ml=Advanced
 - Prerequisites: `transactions`, `event-driven-architecture`
@@ -3395,9 +3395,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `sharding`, `partitions`
@@ -3417,9 +3417,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 25 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `isolation-levels`
@@ -3439,9 +3439,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 25 minutes
 - Visual: Mermaid
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `saga`, `background-jobs`
@@ -3461,9 +3461,9 @@ Connect canonical concepts into repeatable interview moves without duplicating t
 - Estimated time: 25 minutes
 - Visual: Mermaid
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `large-file-uploads`, `background-jobs`
