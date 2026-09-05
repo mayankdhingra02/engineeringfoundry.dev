@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "20e1eafe8261f8a387b83fbd4fe6449413fb66b8",
-  "repository_state_sha256": "b222add9d7743ba015b17ea6d1111ce7feeea40f31eecb4a819a396b1a2d1415",
+  "repository_sha": "1167cbbb538749c48e7e3c6a86ec9cf77148d75a",
+  "repository_state_sha256": "9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61c1a820f32",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1509,16 +1509,20 @@
         "supabase/tests/database/interview_playbook_diagnostic_inputs.test.sql",
         "supabase/tests/database/interview_preparation.test.sql"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/research/interview-playbook/diagnostic-plan.md",
+        "docs/product-blueprint/research/interview-playbook/final-synthesis.md",
+        "docs/product-blueprint/research/interview-playbook/final-week-debrief.md",
+        "docs/product-blueprint/research/interview-playbook/mock-simulations.md",
+        "docs/product-blueprint/research/interview-playbook/round-execution.md",
+        "docs/product-blueprint/research/interview-playbook/scope-boundaries.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-PLAY",
       "kind": "requirement-family",
-      "known_gaps": [
-        "Source methodology and claim mapping are incomplete.",
-        "Not every final-week, interview-day, debrief, and technical-presentation contract is implemented."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Required Playbook closure includes the adaptive private control plane, final-week/day and between-round behavior, private debrief handoff, recruiter follow-up boundaries, sixteen public round guides, ten full dossiers, and reader-facing claim methodology.",
       "owner": "interview-playbook",
       "prerequisite_ids": [
         "EF-BEH",
@@ -1526,7 +1530,7 @@
         "EF-SD"
       ],
       "priority": "required",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-PLAY-DIAGNOSTIC-PLAN",
         "RA-PLAY-FINAL-SYNTHESIS",
@@ -1535,15 +1539,25 @@
         "RA-PLAY-ROUND-EXECUTION",
         "RA-PLAY-SCOPE-BOUNDARIES"
       ],
-      "research_status": "needs-current-verification",
+      "research_status": "approved",
       "route_families": [],
       "routes": [
         "/interview-playbook",
-        "/interview-tips"
+        "/interview-tips",
+        "/interview-tips/methodology",
+        "/interview-tips/rounds"
       ],
       "section": "interview-playbook",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-BEH-OPM-GUIDE",
+        "SRC-BEH-OPM-STRUCTURED",
+        "SRC-COMP-AMAZON-OFFICIAL",
+        "SRC-COMP-MICROSOFT-OFFICIAL",
+        "SRC-PLAY-EEOC-ACCOMMODATION",
+        "SRC-PLAY-MIT-PRESENTATION",
+        "SRC-PLAY-YALE-AFTER-INTERVIEW"
+      ],
+      "status": "implemented",
       "test_commands": [
         "npm run qualify:database",
         "npm run test:application-tracker",
@@ -1566,23 +1580,26 @@
         "components/interview-playbook",
         "lib/interview-playbook"
       ],
-      "content_paths": [],
-      "gap_inventory_ids": [
-        "EF-PLAY-CURRICULUM-DEPTH"
+      "content_paths": [
+        "docs/product-blueprint/research/interview-playbook/diagnostic-plan.md",
+        "docs/product-blueprint/research/interview-playbook/final-synthesis.md",
+        "docs/product-blueprint/research/interview-playbook/final-week-debrief.md",
+        "docs/product-blueprint/research/interview-playbook/mock-simulations.md",
+        "docs/product-blueprint/research/interview-playbook/round-execution.md",
+        "docs/product-blueprint/research/interview-playbook/scope-boundaries.md"
       ],
+      "gap_inventory_ids": [],
       "id": "EF-PLAY-CURRICULUM-DEPTH",
       "kind": "content-gap",
-      "known_gaps": [
-        "Research methodology and master-depth acceptance mapping remain incomplete."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "The public lifecycle framework, adaptive plan contract, privacy boundaries, imported artifacts, and current source hierarchy close the tracked depth gap.",
       "owner": "interview-playbook",
       "prerequisite_ids": [
         "EF-PLAY"
       ],
       "priority": "p1",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-PLAY-DIAGNOSTIC-PLAN",
         "RA-PLAY-FINAL-SYNTHESIS",
@@ -1591,14 +1608,23 @@
         "RA-PLAY-ROUND-EXECUTION",
         "RA-PLAY-SCOPE-BOUNDARIES"
       ],
-      "research_status": "needs-current-verification",
+      "research_status": "approved",
       "route_families": [],
       "routes": [
-        "/interview-tips"
+        "/interview-tips",
+        "/interview-tips/methodology"
       ],
       "section": "interview-playbook",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-BEH-OPM-GUIDE",
+        "SRC-BEH-OPM-STRUCTURED",
+        "SRC-COMP-AMAZON-OFFICIAL",
+        "SRC-COMP-MICROSOFT-OFFICIAL",
+        "SRC-PLAY-EEOC-ACCOMMODATION",
+        "SRC-PLAY-MIT-PRESENTATION",
+        "SRC-PLAY-YALE-AFTER-INTERVIEW"
+      ],
+      "status": "implemented",
       "test_commands": [
         "npm run test:interview-execution-taxonomy",
         "npm run test:interview-playbook-planning"
@@ -1614,35 +1640,43 @@
         "components/interview-playbook/round-execution-dossier.tsx",
         "lib/interview-playbook/dossiers"
       ],
-      "content_paths": [],
-      "gap_inventory_ids": [
-        "EF-PLAY-ROUND-PROVENANCE"
+      "content_paths": [
+        "docs/product-blueprint/research/interview-playbook/final-synthesis.md",
+        "docs/product-blueprint/research/interview-playbook/round-execution.md"
       ],
+      "gap_inventory_ids": [],
       "id": "EF-PLAY-ROUND-PROVENANCE",
       "kind": "content-gap",
-      "known_gaps": [
-        "Nine current dossiers show review dates but no reader-facing source methodology or claim ledger."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Every full dossier renders its reviewed source-grounded, employer-example, and editorial-synthesis claim groups with explicit boundaries.",
       "owner": "interview-playbook",
       "prerequisite_ids": [
         "EF-PLAY"
       ],
       "priority": "p1",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-PLAY-FINAL-SYNTHESIS",
         "RA-PLAY-ROUND-EXECUTION"
       ],
-      "research_status": "needs-current-verification",
+      "research_status": "approved",
       "route_families": [
         "/interview-tips/rounds/[slug]"
       ],
-      "routes": [],
+      "routes": [
+        "/interview-tips/methodology"
+      ],
       "section": "interview-playbook",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-BEH-OPM-GUIDE",
+        "SRC-BEH-OPM-STRUCTURED",
+        "SRC-COMP-AMAZON-OFFICIAL",
+        "SRC-COMP-MICROSOFT-OFFICIAL",
+        "SRC-PLAY-EEOC-ACCOMMODATION",
+        "SRC-PLAY-MIT-PRESENTATION"
+      ],
+      "status": "implemented",
       "test_commands": [
         "npm run test:interview-execution-taxonomy"
       ],
@@ -1654,35 +1688,44 @@
         "A reviewed audience, role scope, source set, examples, and editorial specification precede publication."
       ],
       "code_paths": [
-        "app/interview-tips"
+        "app/interview-tips",
+        "components/interview-playbook/round-execution-dossier.tsx",
+        "lib/interview-playbook/dossiers/technical-presentation.ts",
+        "lib/interview-playbook/source-methodology.ts"
       ],
-      "content_paths": [],
-      "gap_inventory_ids": [
-        "EF-PLAY-TECHNICAL-PRESENTATION"
+      "content_paths": [
+        "docs/product-blueprint/research/interview-playbook/final-synthesis.md",
+        "docs/product-blueprint/research/interview-playbook/round-execution.md"
       ],
+      "gap_inventory_ids": [],
       "id": "EF-PLAY-TECHNICAL-PRESENTATION",
       "kind": "content-gap",
-      "known_gaps": [
-        "The index honestly identifies this role-specific guide as outside current v1."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "The published guide covers audience, purpose, structure, evidence, role-level overlays, questions, recovery, accessibility, integrity, examples, and source methodology.",
       "owner": "interview-playbook",
       "prerequisite_ids": [
         "EF-PLAY"
       ],
       "priority": "p2",
-      "publication_status": "unpublished",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-PLAY-FINAL-SYNTHESIS",
         "RA-PLAY-ROUND-EXECUTION"
       ],
-      "research_status": "needs-research",
+      "research_status": "approved",
       "route_families": [],
-      "routes": [],
+      "routes": [
+        "/interview-tips/rounds/technical-presentation"
+      ],
       "section": "interview-playbook",
-      "source_ledger_ids": [],
-      "status": "placeholder",
+      "source_ledger_ids": [
+        "SRC-BEH-OPM-GUIDE",
+        "SRC-BEH-OPM-STRUCTURED",
+        "SRC-PLAY-EEOC-ACCOMMODATION",
+        "SRC-PLAY-MIT-PRESENTATION"
+      ],
+      "status": "implemented",
       "test_commands": [
         "npm run test:interview-execution-taxonomy"
       ],
@@ -2570,29 +2613,29 @@
       "version_or_hash": "44297d2b303d213533380eddfb1e084d6f282b4cb542287dc3c815bdff30c71e"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-PLAY",
       "id": "RA-PLAY-DIAGNOSTIC-PLAN",
-      "notes": "The original diagnostic and planning evidence contract has not been imported.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis maps the diagnostic, evidence-state, adaptive-plan, deep-link, and explanation contracts to implementation.",
+      "repository_path": "docs/product-blueprint/research/interview-playbook/diagnostic-plan.md",
       "requirement_ids": [
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH"
       ],
       "title": "Engineering Foundry Interview Playbook: Preparation Diagnostic, Readiness Model, and Adaptive Plan Generator",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "a4bb597c68a08db71731a2fd192d84310fb1a4534e2f088c9280a9954dae75e5"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-PLAY",
       "id": "RA-PLAY-FINAL-SYNTHESIS",
-      "notes": "The original final synthesis and audit record have not been imported or verified.",
-      "repository_path": null,
+      "notes": "Implementation-ready closure record reconciles the Required family without moving specialist, company-guide, mock, salary, or hosted-evidence scope into Playbook.",
+      "repository_path": "docs/product-blueprint/research/interview-playbook/final-synthesis.md",
       "requirement_ids": [
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH",
@@ -2600,50 +2643,50 @@
         "EF-PLAY-TECHNICAL-PRESENTATION"
       ],
       "title": "Engineering Foundry Interview Playbook — Final Synthesis and Quality Audit",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "d6c61d05a6769743f0f3c2569df320d73dd6796e086d4a3d80c8ff97caf72f0c"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-PLAY",
       "id": "RA-PLAY-FINAL-WEEK-DEBRIEF",
-      "notes": "The original final-week and debrief research artifact has not been imported.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis maps final-week, day-of, between-round, contingency, private-debrief, follow-up, and outcome-transition behavior.",
+      "repository_path": "docs/product-blueprint/research/interview-playbook/final-week-debrief.md",
       "requirement_ids": [
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH"
       ],
       "title": "Engineering Foundry Interview Playbook: Final Week, Interview Day, Recovery, and Post-Interview Debrief",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "7215959cf70f0e3c211b430d0fbe8a4e5d26ae8903eaaa00944d7f03fb0834ab"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-PLAY",
       "id": "RA-PLAY-MOCK-SIMULATIONS",
-      "notes": "The original simulation and readiness-evidence artifact has not been imported.",
-      "repository_path": null,
+      "notes": "Repository-verifiable synthesis fixes the Playbook prescription and normalized-evidence boundary without absorbing Mock Lab scope.",
+      "repository_path": "docs/product-blueprint/research/interview-playbook/mock-simulations.md",
       "requirement_ids": [
         "EF-MOCK",
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH"
       ],
       "title": "Engineering Foundry Interview Playbook: Mock Interviews, Full-Loop Simulations, and Readiness Evidence",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "65c7ac853b47de1a01177cc7bcda93a587fd05619035c586531a2e020e7e619c"
     },
     {
-      "approval_status": "needs-current-verification",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-PLAY",
       "id": "RA-PLAY-ROUND-EXECUTION",
-      "notes": "Current dossiers do not establish that the original taxonomy, source methodology, or technical-presentation specification is present.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis crosswalks the sixteen-guide taxonomy, ten full dossiers, claim methodology, and published technical-presentation guide.",
+      "repository_path": "docs/product-blueprint/research/interview-playbook/round-execution.md",
       "requirement_ids": [
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH",
@@ -2651,24 +2694,24 @@
         "EF-PLAY-TECHNICAL-PRESENTATION"
       ],
       "title": "Engineering Foundry Interview Playbook: Round-by-Round Interview Execution Playbooks",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "e634a7833bd220c2988e1a97f62f03b268a204dd5cd35bb46e37c6f6b14dd637"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-PLAY",
       "id": "RA-PLAY-SCOPE-BOUNDARIES",
-      "notes": "The original scope and information-architecture artifact has not been imported.",
-      "repository_path": null,
+      "notes": "Repository-verifiable synthesis defines the public/private information architecture and permanent product boundaries.",
+      "repository_path": "docs/product-blueprint/research/interview-playbook/scope-boundaries.md",
       "requirement_ids": [
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH"
       ],
       "title": "Engineering Foundry Interview Playbook: Final Scope, Information Architecture, and Product Boundaries",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "5035f63068078276cfbf89f7f57a4c6e72425195377cdbb24e83d02c5d221d21"
     },
     {
       "approval_status": "needs-current-verification",
