@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "b7f49e4da52ab92965c5af908341df846b4f41f5",
-  "repository_state_sha256": "20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb44968d10ff",
+  "repository_sha": "2f5e0c5eba4fda6f97994b5f0f2dcce9bf03a6c4",
+  "repository_state_sha256": "d3eb1099098527e2df4eeed37898269e150347e0f493152dcf39d846049ccd27",
   "schema_version": 1,
   "sources": [
     {
@@ -848,6 +848,24 @@
       "url": "https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/",
       "usage_limits": "Historical two-stage candidate generation and ranking example; not a claim about a current production system.",
       "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-OPS"
+      ],
+      "claims_supported": [
+        "OPS-REQUIRED-CLOSURE"
+      ],
+      "id": "SRC-OPS-MASTER-GOAL",
+      "notes": "Supports the repository-owned closure synthesis and keeps external gates explicitly separate.",
+      "published_at": null,
+      "publisher": "Engineering Foundry",
+      "source_class": "Engineering Foundry editorial inference",
+      "title": "Engineering Foundry Master Codex Goal",
+      "url": "https://github.com/mayankdhingra02/engineeringfoundry.dev/blob/main/docs/product-blueprint/ENGINEERING_FOUNDRY_MASTER_CODEX_GOAL.md",
+      "usage_limits": "Repository product authority for Required scope, delivery rules, stop conditions, and final reporting. It does not supply production-owner evidence or authorize deployment.",
+      "verified_at": "2026-09-05",
       "volatility": "stable"
     },
     {
