@@ -7,6 +7,7 @@ import {
   validatePublicLinks,
 } from "./validate-public-links.mjs";
 import {
+  buildBehavioralLessonStaticParams,
   buildChallengeStaticParams,
   buildCompanyStaticParams,
   buildDsaStaticParams,
@@ -22,6 +23,7 @@ import {
 } from "../lib/public-route-inventory.ts";
 
 const expectedFiniteFamilies = [
+  "/behavioral/learn/[slug]",
   "/challenges/[slug]",
   "/companies/[slug]",
   "/dsa/[...segments]",
@@ -35,6 +37,7 @@ const expectedFiniteFamilies = [
 ].sort();
 
 const productionFamilyCases = [
+  ["/behavioral/learn/[slug]", buildBehavioralLessonStaticParams, "app/behavioral/learn/[slug]/page.tsx", "buildBehavioralLessonStaticParams"],
   ["/challenges/[slug]", buildChallengeStaticParams, "app/challenges/[slug]/page.tsx", "buildChallengeStaticParams"],
   ["/companies/[slug]", buildCompanyStaticParams, "app/companies/[slug]/page.tsx", "buildCompanyStaticParams"],
   ["/dsa/[...segments]", buildDsaStaticParams, "app/dsa/[...segments]/page.tsx", "buildDsaStaticParams"],
@@ -95,7 +98,7 @@ function expectError(report, pattern) {
 assert.deepEqual(
   finitePublicRouteDefinitions.map((definition) => definition.pagePattern).sort(),
   expectedFiniteFamilies,
-  "the production inventory must register all ten and only the ten current dynamicParams=false public page families",
+  "the production inventory must register all eleven and only the eleven current dynamicParams=false public page families",
 );
 for (const definition of finitePublicRouteDefinitions) {
   assert.ok(definition.paths.length > 0, `${definition.pagePattern} must have concrete production paths`);
