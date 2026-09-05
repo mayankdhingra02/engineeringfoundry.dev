@@ -34,6 +34,11 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Set up Java language-guide compiler
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: temurin
+          java-version: "25"
       - name: Run canonical static lane
         run: npm run qualify:static
 

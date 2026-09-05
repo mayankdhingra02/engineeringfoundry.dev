@@ -14,11 +14,16 @@ if (getCoreRoadmapTopicHref("binary-search") !== "/dsa/roadmap/topic-map?topic=b
 const python = read("content/dsa/languages/python-content.ts");
 const java = read("content/dsa/languages/java-content.ts");
 const combined = `${python}\n${java}`;
+const guideComponent = read("features/dsa/languages/language-guide.tsx");
 const core = read("data/dsa/core-roadmap.ts");
 const coreTopicIds = new Set([...core.matchAll(/\{ id: "([^"]+)", title:/g)].map((match) => match[1]));
 
 for (const language of ["python", "java"]) requireText(combined, `slug: "${language}"`, `Missing ${language} guide data.`);
-for (const section of ["Quick Reference", "Lists / Arrays", "Hash Maps / Sets", "Heap / Priority Queue", "Binary Search", "Common Interview Templates", "Common Interview Mistakes"]) requireText(read("features/dsa/languages/language-guide.tsx") + combined, section, `Language guides lack ${section}.`);
+for (const section of ["Quick Reference", "Lists / Arrays", "Hash Maps / Sets", "Heap / Priority Queue", "Binary Search", "Common Interview Templates", "Common Interview Mistakes"]) requireText(guideComponent + combined, section, `Language guides lack ${section}.`);
+for (const marker of ["runtimeNote", "reviewedAt", "guide.sources", "debuggingChecklist", "interviewerTopics", "guide.exercises", "Return to Interview Playbook"]) requireText(guideComponent, marker, `Language guide component lacks ${marker}.`);
+for (const kind of ["predict", "trace", "repair", "choose", "transfer"]) {
+  if ((combined.match(new RegExp(`kind: "${kind}"`, "g")) ?? []).length !== 2) failures.push(`Both published guides must contain exactly one ${kind} exercise.`);
+}
 for (const template of ["Two Pointers", "Sliding Window", "Binary Search", "BFS", "DFS", "Tree DFS", "Tree BFS", "Backtracking", "Heap / Top K", "Prefix Sum", "Monotonic Stack", "Union Find", "Topological Sort", "1-D Dynamic Programming", "Grid Traversal"]) {
   if ((combined.match(new RegExp(`title: "${template.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`, "g")) ?? []).length < 2) failures.push(`Both guides must include the ${template} template.`);
 }
@@ -45,7 +50,8 @@ try {
     const javaCompile = spawnSync("javac", ["-d", scratch, "scripts/fixtures/LanguageGuideExamples.java"], { encoding: "utf8" });
     if (javaCompile.status !== 0) failures.push(`Representative Java examples did not compile: ${javaCompile.stderr.trim()}`);
   } else {
-    console.warn("Java compile check skipped: a JDK runtime is not available in this environment.");
+    if (process.env.CI) failures.push("Java compile check is mandatory in CI, but javac is unavailable.");
+    else console.warn("Java compile check skipped locally: CI provisions the pinned JDK and requires this check.");
   }
 } finally {
   rmSync(scratch, { recursive: true, force: true });
@@ -57,7 +63,7 @@ const languages = read("data/dsa/languages.ts");
 for (const marker of ['slug: "python"', 'slug: "java"', 'status: "published"']) requireText(languages, marker, `Language metadata lacks ${marker}.`);
 
 const css = read("app/globals.css");
-for (const marker of [".dsa-language-doc-layout", ".dsa-language-code", ".dsa-language-template", ".dsa-language-mistakes", "@media (max-width: 430px)", "prefers-reduced-motion"]) requireText(css, marker, `Language-guide styling lacks ${marker}.`);
+for (const marker of [".dsa-language-doc-layout", ".dsa-language-code", ".dsa-language-template", ".dsa-language-mistakes", ".dsa-language-provenance", ".dsa-language-operating-grid", ".dsa-language-exercises", "@media (max-width: 430px)", "prefers-reduced-motion"]) requireText(css, marker, `Language-guide styling lacks ${marker}.`);
 if (!/\.dsa-language-complexity td:nth-child\(2\),\s*\.dsa-language-mistakes h3\s*\{[^}]*font-size:\s*var\(--type-label\)\s*!important;?[^}]*\}/s.test(css)) failures.push("Language complexity values and mistake headings must retain the 12px readability floor.");
 
 if (failures.length) {

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at": "2026-09-04",
+  "reviewed_at": "2026-09-05",
   "artifacts": [
     {
       "id": "RA-LAUNCH-V1-FINISH-PLAN",
@@ -20,45 +20,45 @@
       "title": "Engineering Foundry DSA for Interviews: Competitive Research and Product Design",
       "family_id": "EF-DSA",
       "requirement_ids": ["EF-DSA", "EF-DSA-CURRICULUM-SHELLS"],
-      "repository_path": null,
+      "repository_path": "docs/product-blueprint/research/dsa/competitive-product-and-practice.md",
       "external_record": null,
-      "version_or_hash": null,
-      "availability": "missing",
-      "approval_status": "approved-needs-source-import",
-      "verified_at": null,
-      "notes": "The synthesis records an approved direction only; the original artifact and source corpus are not repository evidence."
+      "version_or_hash": "e2b6f73712c012ce9fef3c4b803b7ebd5d79c262b159f45b19cadd1548f9090b",
+      "availability": "repository-present",
+      "approval_status": "approved",
+      "verified_at": "2026-09-05",
+      "notes": "Repository synthesis records the reviewed competitive mechanics, exclusions, Engineering Foundry decisions, and acceptance crosswalk used for Required DSA closure."
     },
     {
       "id": "RA-DSA-ROLE-ROADMAPS",
       "title": "Engineering Foundry DSA Roadmaps for SDE I, SDE II, and SDE III+",
       "family_id": "EF-DSA",
       "requirement_ids": ["EF-DSA", "EF-DSA-CURRICULUM-SHELLS"],
-      "repository_path": null,
+      "repository_path": "docs/product-blueprint/research/dsa/role-roadmaps.md",
       "external_record": null,
-      "version_or_hash": null,
-      "availability": "missing",
-      "approval_status": "approved-needs-source-import",
-      "verified_at": null,
-      "notes": "The original roadmap research artifact has not been imported or verified."
+      "version_or_hash": "62ca75813e9d659c2276d40194d770245dbe18c08ecba213062dc15bdb1693e9",
+      "availability": "repository-present",
+      "approval_status": "approved",
+      "verified_at": "2026-09-05",
+      "notes": "Repository synthesis records the reviewed SDE I, SDE II, and SDE III+ emphasis, time-window behavior, and company-overlay boundary."
     },
     {
       "id": "RA-DSA-PYTHON-JAVA-LANGUAGES",
       "title": "Engineering Foundry Python and Java DSA Language Pages",
       "family_id": "EF-DSA",
       "requirement_ids": ["EF-DSA", "EF-DSA-LANGUAGE-COVERAGE"],
-      "repository_path": null,
+      "repository_path": "docs/product-blueprint/research/dsa/python-java-language-guides.md",
       "external_record": null,
-      "version_or_hash": null,
-      "availability": "missing",
-      "approval_status": "approved-needs-source-import",
-      "verified_at": null,
-      "notes": "Published routes do not substitute for the missing original language research artifact and source review."
+      "version_or_hash": "27e1a44c62f8f0b3583c0341816d0ba5844fc0b0ca234eae8a77145f64939fd2",
+      "availability": "repository-present",
+      "approval_status": "approved",
+      "verified_at": "2026-09-05",
+      "notes": "Repository synthesis records the reviewed Python and Java source, runtime, content, and CI compilation contract."
     },
     {
       "id": "RA-DSA-JAVASCRIPT-REQUEST",
       "title": "JavaScript DSA research phase requested for Engineering Foundry",
       "family_id": "EF-DSA",
-      "requirement_ids": ["EF-DSA", "EF-DSA-LANGUAGE-COVERAGE"],
+      "requirement_ids": ["EF-DSA-LANGUAGE-COVERAGE"],
       "repository_path": null,
       "external_record": null,
       "version_or_hash": null,

@@ -5,6 +5,14 @@ export const pythonLanguageGuide: LanguageGuideData = {
   name: "Python",
   label: "Python for Coding Interviews",
   description: "The syntax and standard-library patterns worth remembering before a DSA interview.",
+  runtimeNote: "Portable Python 3.11+ subset; examples parsed in CI with the repository runner. Reviewed against Python 3.14 documentation.",
+  reviewedAt: "September 5, 2026",
+  sources: [
+    { id: "SRC-DSA-PY-DATA", label: "Python data structures", url: "https://docs.python.org/3/tutorial/datastructures.html", supports: "List, tuple, set, dictionary, queue, and ordering semantics." },
+    { id: "SRC-DSA-PY-COLLECTIONS", label: "Python collections", url: "https://docs.python.org/3/library/collections.html", supports: "deque, Counter, and defaultdict behavior and cost boundaries." },
+    { id: "SRC-DSA-PY-HEAPQ", label: "Python heapq", url: "https://docs.python.org/3/library/heapq.html", supports: "Heap invariants, push/pop behavior, and supported max-heap operations." },
+    { id: "SRC-DSA-PY-BISECT", label: "Python bisect", url: "https://docs.python.org/3/library/bisect.html", supports: "Insertion-point semantics and the linear insertion-cost caveat." },
+  ],
   quickReference: [
     { title: "Iteration and ordering", code: `for i, value in enumerate(nums):
     pass
@@ -409,6 +417,27 @@ def visit_grid(grid: list[list[int]], start_row: int, start_col: int) -> set[tup
                 seen.add((nr, nc))
                 queue.append((nr, nc))
     return seen` },
+  ],
+  debuggingChecklist: [
+    "Restate the invariant and trace the smallest failing input before changing code.",
+    "Check aliasing, mutable defaults, slice copies, and whether a nested container shares references.",
+    "Verify every index boundary and whether binary-search intervals are closed or half-open.",
+    "Inspect queue and heap operations for an accidental O(n) front removal or reversed priority.",
+    "Test empty, singleton, duplicate, negative, and depth-heavy inputs; replace recursion when depth is not bounded.",
+  ],
+  interviewerTopics: [
+    "Why dict and set keys must be hashable, and what mutation would invalidate a key model.",
+    "When deque is a better queue than list and when list remains better for indexed access.",
+    "What slicing and repeated string concatenation allocate.",
+    "How tuple ordering affects heap tie-breaking and what happens when payloads are incomparable.",
+    "When recursion depth makes an iterative traversal safer.",
+  ],
+  exercises: [
+    { kind: "predict", title: "Find the alias", prompt: "Predict which cells change after grid = [[0] * 2] * 2; grid[0][1] = 7, and explain why.", answerCheck: "Both rows show 7 in column 1 because the outer list contains two references to the same inner list." },
+    { kind: "trace", title: "Trace one BFS layer", prompt: "Using deque, trace queue and visited state when A connects to B and C and both connect to D. Mark when visited changes.", answerCheck: "Mark on enqueue: start [A]/{A}; after A, [B,C]/{A,B,C}; after B, [C,D]/{A,B,C,D}; C must not enqueue D again." },
+    { kind: "repair", title: "Repair the queue", prompt: "A BFS repeatedly calls items.pop(0). Replace only the queue mechanics and state the complexity change.", answerCheck: "Use collections.deque with popleft; front removal changes from O(n) shifting to approximately O(1)." },
+    { kind: "choose", title: "Choose a container", prompt: "Choose list, set, dict, deque, or heap for membership, stable append order, FIFO removal, and retaining the smallest k boundary.", answerCheck: "Set for membership, list for indexed append order, deque for FIFO, and a bounded max-heap strategy for retaining the smallest k." },
+    { kind: "transfer", title: "Unlabeled transfer", prompt: "Given a stream of events, keep the three highest priorities while preserving a deterministic order among ties. Name the stored tuple and test one tie.", answerCheck: "Use a size-three min-heap with a numeric tie-breaker such as (priority, sequence, event); never let Python compare non-orderable event payloads." },
   ],
   mistakes: [
     { title: "Using pop(0) for a queue", explanation: "It shifts the remaining list and costs O(n). Use deque.popleft()." },

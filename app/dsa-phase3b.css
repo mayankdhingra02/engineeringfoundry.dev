@@ -2,6 +2,7 @@
 .dsa-workspace-brand { color: inherit; }
 .dsa-workspace-brand:hover span { color: var(--accent); }
 .dsa-workspace-sidebar nav { padding-top: 18px; }
+.dsa-workspace-return { margin: auto 8px 0; padding-top: 15px; border-top: 1px solid var(--line); }.dsa-workspace-return a, .dsa-workspace-drawer-return { min-height: 44px; display: flex; align-items: center; gap: 7px; color: var(--accent); font-size: var(--type-label); font-weight: 720; }.dsa-workspace-return p { margin: 7px 0 0; color: var(--muted); font-size: var(--type-label); line-height: 1.55; }.dsa-workspace-drawer-return { margin: 14px 18px 0; padding-top: 10px; border-top: 1px solid var(--line); }
 .dsa-workspace-sidebar nav > ul, .dsa-workspace-drawer nav > ul { gap: 14px; }
 .dsa-workspace-nav-group { min-width: 0; }
 .dsa-workspace-nav-group > .dsa-workspace-primary-link { min-height: 48px; padding: 8px 10px; align-items: start; }
