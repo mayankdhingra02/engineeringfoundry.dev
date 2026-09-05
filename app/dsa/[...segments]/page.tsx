@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (curriculumPage) return createPageMetadata({ title: curriculumPage.title, description: curriculumPage.description ?? `${curriculumPage.title} for coding interview preparation.`, path });
   if (segments.length === 1 && (segments[0] === "questions" || segments[0] === "practice")) return createPageMetadata({ title: "DSA Practice Questions", description: "Search and filter Engineering Foundry's public DSA question metadata by company, difficulty, topic, and source.", path: "/dsa/questions" });
   if (segments.length === 2 && segments[0] === "questions") {
-    const question = getCanonicalDsaQuestion(segments[1]); if (!question) notFound();
+    const question = getCanonicalDsaQuestion(segments[1]); if (!question?.inQuestionBrowser) notFound();
     return createPageMetadata({ title: `${question.title} Practice`, description: `Open public source metadata and record practice for ${question.title}. Account-backed notes are available only when account features are enabled.`, path });
   }
   if (segments.length === 1 && (segments[0] === "companies" || segments[0] === "company-questions")) return createPageMetadata({ title: "Company Tagged Coding Questions", description: "Browse company-specific coding interview preparation pages. Current company associations are clearly labeled demonstration data.", path: "/dsa/companies" });
@@ -142,7 +142,7 @@ async function PracticeRoute({ searchParams, libraryOnly }: { searchParams: Page
 }
 
 async function QuestionDetailRoute({ questionId, searchParams }: { questionId: string; searchParams: PageProps["searchParams"] }) {
-  const question = getCanonicalDsaQuestion(questionId); if (!question) notFound();
+  const question = getCanonicalDsaQuestion(questionId); if (!question?.inQuestionBrowser) notFound();
   const query = await searchParams;
   const state = await getDsaWorkspaceState(query.application);
   return <DsaQuestionDetail question={question} signedIn={state.signedIn} progress={state.progress} applicationId={state.application?.id} companySlug={state.application?.company_slug ?? query.company} accountPlatformAvailable={state.accountPlatformAvailable} />;

@@ -231,13 +231,15 @@
 .dsa-signin-progress { color: var(--accent); font-size: var(--type-label); font-weight: 700; }
 .dsa-roadmap-progress-actions { display: flex; align-items: center; gap: 8px; }
 .dsa-roadmap-progress-actions a, .dsa-roadmap-progress-actions button { min-height: 34px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; color: var(--accent); background: var(--surface); font: inherit; font-size: var(--type-label); font-weight: 720; cursor: pointer; }
-.dsa-question-detail { padding: 34px 0 70px; background: var(--bg); }
+.dsa-question-detail { padding: 34px 0 70px; background: var(--bg); overflow-x: clip; }
 .dsa-question-detail > .page-width { max-width: 1080px; }
 .dsa-question-detail > .page-width > header { margin-top: 18px; padding-bottom: 22px; display: flex; align-items: flex-end; justify-content: space-between; gap: 22px; border-bottom: 1px solid var(--line); }
 .dsa-question-detail header span { color: var(--accent); font: 740 var(--type-label)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
 .dsa-question-detail h1 { margin: 6px 0; font-size: clamp(2rem, 4vw, 3.25rem); letter-spacing: -.04em; }
 .dsa-question-detail header p { margin: 0; color: var(--muted); }
-.dsa-question-detail-grid { margin-top: 24px; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, .5fr); gap: 24px; }
+.dsa-question-detail-grid { margin-top: 24px; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .45fr); gap: 24px; align-items: start; }
+.dsa-question-detail-grid > main, .dsa-question-detail-grid > aside { min-width: 0; display: grid; align-content: start; gap: 14px; }
+.dsa-question-detail-grid > main { min-height: 0; }
 .dsa-question-detail-grid > * > section { padding: 20px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
 .dsa-question-detail-grid h2 { margin: 0 0 6px; font-size: 1.2rem; }
 .dsa-question-detail-grid section > p { color: var(--muted); font-size: var(--type-small); line-height: 1.6; }
@@ -245,6 +247,29 @@
 .dsa-question-detail-grid dl > div { padding: 9px 0; display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); }
 .dsa-question-detail-grid dt, .dsa-question-detail-grid dd { font-size: var(--type-meta); }
 .dsa-question-detail-grid dd { margin: 0; text-transform: capitalize; }
+.dsa-question-brief > p { max-width: 68ch; }
+.dsa-question-brief blockquote { margin: 18px 0 0; padding: 17px 19px; border: 1px solid var(--line); border-radius: 8px; color: var(--text-secondary); background: var(--surface-2); font-size: var(--type-small); line-height: 1.65; }
+.dsa-source-boundary { margin-top: 18px; padding: 14px 16px; display: flex; gap: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.dsa-source-boundary svg { flex: none; margin-top: 2px; color: var(--accent); }
+.dsa-source-boundary p { margin: 0; color: var(--text-secondary); font-size: var(--type-meta); line-height: 1.55; }
+.dsa-source-boundary p, .dsa-question-sequence > li > div, .dsa-question-provenance dd { min-width: 0; overflow-wrap: anywhere; }
+.dsa-recognition-reveal, .dsa-followup-reveal { margin-top: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.dsa-recognition-reveal summary, .dsa-followup-reveal summary { min-height: 44px; padding: 10px 13px; display: flex; align-items: center; gap: 7px; color: var(--accent); font-size: var(--type-meta); font-weight: 740; cursor: pointer; list-style: none; }
+.dsa-recognition-reveal summary::-webkit-details-marker, .dsa-followup-reveal summary::-webkit-details-marker { display: none; }
+.dsa-recognition-reveal[open] summary, .dsa-followup-reveal[open] summary { border-bottom: 1px solid var(--line); }
+.dsa-recognition-reveal > p { margin: 0; padding: 15px; color: var(--text); font-size: var(--type-small); line-height: 1.6; }
+.dsa-question-sequence { margin: 20px 0 0; padding: 0; display: grid; list-style: none; }
+.dsa-question-sequence > li { padding: 17px 0; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 13px; border-top: 1px solid var(--line); }
+.dsa-question-sequence > li > span { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 6px; color: var(--accent); background: var(--surface-2); font: 740 var(--type-label)/1 ui-monospace, monospace; }
+.dsa-question-sequence h3 { margin: 3px 0 7px; font-size: var(--type-body); }
+.dsa-question-sequence p, .dsa-question-sequence li li, .dsa-question-sequence strong { color: var(--text-secondary); font-size: var(--type-meta); line-height: 1.55; }
+.dsa-question-sequence p { margin: 0; }
+.dsa-question-sequence strong { display: block; margin-top: 8px; color: var(--text); }
+.dsa-question-sequence ul { margin: 0; padding-left: 17px; }
+.dsa-followup-reveal ul { margin: 0; padding: 14px 15px; display: grid; gap: 8px; list-style: none; }
+.dsa-followup-reveal li { display: flex; gap: 8px; color: var(--text-secondary); font-size: var(--type-meta); line-height: 1.5; }
+.dsa-followup-reveal li svg { flex: none; margin-top: 2px; color: var(--success); }
+.dsa-question-provenance dd { max-width: 18ch; text-align: right; text-transform: none; }
 .dsa-progress-editor { margin-top: 18px; display: grid; gap: 17px; }
 .dsa-progress-editor fieldset { margin: 0; padding: 0; border: 0; }
 .dsa-progress-editor legend, .dsa-progress-editor > label > span { margin-bottom: 7px; display: block; font-size: var(--type-meta); font-weight: 740; }

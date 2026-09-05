@@ -29,6 +29,18 @@ export interface DSAInterviewQuestion {
   paidOnLeetCode?: boolean;
   metadata?: { notes?: string };
   isSample: boolean;
+  catalogVersion?: string;
+  sourceClass?: "external-reference" | "engineering-foundry-original";
+  roleRelevance?: readonly string[];
+  whyItBelongs?: string;
+  recognitionPrompt?: string;
+  clarifyingQuestions?: readonly string[];
+  bruteForceCheckpoint?: string;
+  complexityTarget?: string;
+  testCasePrompts?: readonly string[];
+  followUpVariants?: readonly string[];
+  interviewBehaviorFocus?: string;
+  originalPrompt?: string;
 }
 
 export interface DSACompany {
