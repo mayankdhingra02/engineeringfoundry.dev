@@ -1,7 +1,9 @@
 # Engineering Foundry v1 Launch Finish Plan
 
-Status: approved repository synthesis  
-Reviewed: 2026-09-05  
+Status: approved repository synthesis
+
+Reviewed: 2026-09-05
+
 Applies to: EF-OPS
 
 ## Decision
