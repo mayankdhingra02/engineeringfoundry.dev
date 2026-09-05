@@ -33,11 +33,11 @@ function find(recommendations, id) {
 }
 
 const representativeCases = [
-  ["sde1", "3-days", undefined, { "focus-now": 10, "learn-next": 12, "skip-for-now": 156 }],
-  ["sde2", "1-week", "backend", { "focus-now": 22, "learn-next": 20, "skip-for-now": 136 }],
-  ["senior", "2-weeks", "infrastructure", { "focus-now": 36, "learn-next": 30, "skip-for-now": 112 }],
-  ["staff", "1-month", "data", { "focus-now": 60, "learn-next": 40, "skip-for-now": 78 }],
-  ["staff", "2-plus-months", "ml", { "focus-now": 100, "learn-next": 40, "skip-for-now": 38 }],
+  ["sde1", "3-days", undefined, { "focus-now": 10, "learn-next": 12, "skip-for-now": 166 }],
+  ["sde2", "1-week", "backend", { "focus-now": 22, "learn-next": 20, "skip-for-now": 146 }],
+  ["senior", "2-weeks", "infrastructure", { "focus-now": 36, "learn-next": 30, "skip-for-now": 122 }],
+  ["staff", "1-month", "data", { "focus-now": 60, "learn-next": 40, "skip-for-now": 88 }],
+  ["staff", "2-plus-months", "ml", { "focus-now": 100, "learn-next": 40, "skip-for-now": 48 }],
 ];
 for (const [level, window, role, counts] of representativeCases) assert.deepEqual(getRecommendationCounts(plan(level, window, role)), counts, `Unexpected quotas for ${level}/${role ?? "general"}/${window}.`);
 
