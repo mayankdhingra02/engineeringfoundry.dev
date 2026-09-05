@@ -2,12 +2,12 @@ import { activeChallenges } from "@/data/challenges";
 import { companies } from "@/data/companies";
 import { dsaTopics } from "@/data/dsa";
 import { dsaCurriculumPages } from "@/data/dsa/curriculum";
+import { foundry75Questions } from "@/data/dsa/foundry-75";
 import { dsaCompanies } from "@/data/dsa/interview-prep";
 import { lowLevelDesignLessons, lowLevelDesignPractice } from "@/data/low-level-design";
 import { activeMlDesignProblems, mlDesignConcepts, mlDesignLegacyProblemSlugs } from "@/data/ml-design";
 import { salaryNegotiationModules } from "@/data/salary-negotiation";
 import { systemDesignLessons } from "@/data/system-design/curriculum";
-import { canonicalDsaQuestions } from "@/lib/dsa/catalog";
 import {
   V1_ROUND_EXECUTION_GUIDES,
   roundExecutionGuideHref,
@@ -137,7 +137,7 @@ const dsaPaths = uniquePaths(
       `/dsa/companies/${company.slug}`,
       `/dsa/company-questions/${company.slug}`,
     ]),
-    ...canonicalDsaQuestions.map((question) => `/dsa/questions/${question.id}`),
+    ...foundry75Questions.map((question) => `/dsa/questions/${question.slug}`),
     "/dsa/questions",
     "/dsa/companies",
     "/dsa/roadmap",

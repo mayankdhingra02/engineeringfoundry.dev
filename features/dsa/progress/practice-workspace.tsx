@@ -41,9 +41,9 @@ export function PracticeWorkspace({ accountPlatformAvailable, signedIn, progress
   const recent = rows.filter((row) => row.last_practiced_at).slice(0, 6);
   const roadmap = getRoadmapProgress(preferredRoadmap, progress);
   const representedCompanies = new Set(dsaInterviewQuestionDatabase.flatMap((question) => question.companies.map((association) => association.companySlug))).size;
-  const title = libraryOnly || !accountPlatformAvailable ? "Practice Questions" : "My Practice";
+  const title = libraryOnly || !accountPlatformAvailable ? "Foundry 75" : "My Practice";
   const description = libraryOnly
-    ? accountPlatformAvailable ? "Search public question metadata and, when signed in, update progress without leaving the library." : "Search public question metadata and open any question for browser-local practice. Account-backed progress is unavailable right now."
+    ? accountPlatformAvailable ? "Search the versioned public core and, when signed in, update progress without leaving the library." : "Search the versioned public core and open any question for browser-local practice. Account-backed progress is unavailable right now."
     : accountPlatformAvailable ? "Resume the highest-priority work, review weak questions, and keep one account-backed record across the library and roadmaps." : "Browse public question metadata and record completion on individual question pages in this browser. Account-backed progress is unavailable right now.";
   return <DSAWorkspacePageLayout eyebrow={libraryOnly ? "Question database" : undefined} title={title} description={description} badge={signedIn ? "Private progress · public questions" : "Public metadata"} meta={`${dsaInterviewQuestionDatabase.length} questions · ${representedCompanies} companies represented`}>
     {application && <aside className="dsa-application-context"><div><span>Preparing for</span><strong>{application.company_name} · {application.role_title}</strong><p>Company context shapes this view. Progress remains global to your account.</p></div><Link href={libraryOnly ? "/dsa/questions" : "/dsa/practice"}>Clear context</Link></aside>}

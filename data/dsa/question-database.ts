@@ -1,5 +1,6 @@
 import { activeQuestions, patternBySlug, topicBySlug } from "@/data/dsa";
 import { sampleCompanyQuestions, type DSAInterviewQuestion, type DSAQuestionSource } from "@/data/dsa/interview-prep";
+import type { Foundry75Question } from "@/data/dsa/foundry-75";
 import type { DsaQuestion } from "@/types";
 
 function sourceFor(question: DsaQuestion): DSAQuestionSource {
@@ -12,7 +13,7 @@ function sourceFor(question: DsaQuestion): DSAQuestionSource {
   };
 }
 
-function toBrowserQuestion(question: DsaQuestion): DSAInterviewQuestion {
+function toBrowserQuestion(question: Foundry75Question): DSAInterviewQuestion {
   return {
     // The repository slug is the durable cross-surface identity. Source-specific
     // display IDs (for example `lc-two-sum`) must never own persisted progress.
@@ -26,17 +27,26 @@ function toBrowserQuestion(question: DsaQuestion): DSAInterviewQuestion {
     sources: [sourceFor(question)],
     metadata: { notes: question.note },
     isSample: false,
+    catalogVersion: question.catalogVersion,
+    sourceClass: question.sourceClass,
+    roleRelevance: question.roleRelevance,
+    whyItBelongs: question.whyItBelongs,
+    recognitionPrompt: question.recognitionPrompt,
+    clarifyingQuestions: question.clarifyingQuestions,
+    bruteForceCheckpoint: question.bruteForceCheckpoint,
+    complexityTarget: question.complexityTarget,
+    testCasePrompts: question.testCasePrompts,
+    followUpVariants: question.followUpVariants,
+    interviewBehaviorFocus: question.interviewBehaviorFocus,
+    originalPrompt: question.originalPrompt,
   };
 }
 
 const sampleByTitle = new Map(sampleCompanyQuestions.map((question) => [question.title.toLowerCase(), question]));
-const existingTitles = new Set(activeQuestions.map((question) => question.title.toLowerCase()));
 
 /**
- * The public question database combines the repository's existing question
- * metadata with a small, explicitly labeled demo layer for company filtering.
- * Demo records replace matching metadata rows so the browser never shows
- * duplicate question titles.
+ * The public browser is the versioned Foundry 75. Demonstration company
+ * associations may decorate matching questions, but never add catalog rows.
  */
 export const dsaInterviewQuestionDatabase: DSAInterviewQuestion[] = [
   ...activeQuestions.map((question) => {
@@ -48,9 +58,6 @@ export const dsaInterviewQuestionDatabase: DSAInterviewQuestion[] = [
       isSample: true,
     } : canonical;
   }),
-  ...sampleCompanyQuestions
-    .filter((question) => !existingTitles.has(question.title.toLowerCase()))
-    .map((question) => ({ ...question, id: question.slug ?? question.id.replace(/^demo-/, "") })),
 ];
 
 const canonicalIds = dsaInterviewQuestionDatabase.map((question) => question.id);

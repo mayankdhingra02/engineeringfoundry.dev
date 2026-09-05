@@ -4,7 +4,7 @@ import { DSAWorkspaceSidebar } from "@/components/dsa-workspace-sidebar";
 import { dsaRoadmapLevels } from "@/data/dsa/level-roadmaps";
 
 export function DSAWorkspaceHeader() {
-  return <header className="dsa-workspace-header"><div><h1>DSA interview preparation</h1><p>Practice interview questions now, or choose a role roadmap when you need a sequence.</p></div><div className="dsa-workspace-actions"><Link className="button" href="/dsa/questions"><ListChecks size={15} />Find a question</Link><Link className="button button-secondary" href="/dsa/roadmap"><Route size={15} />Choose a roadmap</Link></div></header>;
+  return <header className="dsa-workspace-header"><div><h1>DSA interview preparation</h1><p>Practice the finite Foundry 75 now, or choose a role roadmap when you need a sequence.</p></div><div className="dsa-workspace-actions"><Link className="button" href="/dsa/questions"><ListChecks size={15} />Open Foundry 75</Link><Link className="button button-secondary" href="/dsa/roadmap"><Route size={15} />Choose a roadmap</Link></div></header>;
 }
 
 export function DSAWorkspacePageLayout({ eyebrow, title, description, badge, meta, children }: { eyebrow?: string; title: string; description: string; badge?: string; meta?: string; children: React.ReactNode }) {

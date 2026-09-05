@@ -13,19 +13,35 @@ export type CanonicalDsaQuestion = {
   sourceLabel: string;
   sourceUrl: string | null;
   inQuestionBrowser: boolean;
+  catalogVersion?: string;
+  sourceClass?: "external-reference" | "engineering-foundry-original";
+  roleRelevance?: readonly string[];
+  whyItBelongs?: string;
+  recognitionPrompt?: string;
+  clarifyingQuestions?: readonly string[];
+  bruteForceCheckpoint?: string;
+  complexityTarget?: string;
+  testCasePrompts?: readonly string[];
+  followUpVariants?: readonly string[];
+  interviewBehaviorFocus?: string;
+  originalPrompt?: string;
 };
 
 const browserById = new Map(dsaInterviewQuestionDatabase.map((question) => [question.id, question]));
 const roadmapById = new Map(roadmapProblems.map((question) => [question.id, question]));
-const ids = [...new Set([...roadmapById.keys(), ...browserById.keys()])].sort();
+// Retired IDs stay reserved so removing a demonstration or catalog row cannot
+// orphan historical progress or make its identifier reusable.
+const retiredIds = ["no-link"] as const;
+const ids = [...new Set([...roadmapById.keys(), ...browserById.keys(), ...retiredIds])].sort();
 
 export const canonicalDsaQuestions: readonly CanonicalDsaQuestion[] = ids.map((id) => {
   const browser = browserById.get(id);
   const roadmap = roadmapById.get(id);
   const source = browser?.sources.find((candidate) => candidate.url) ?? browser?.sources[0];
+  const retired = retiredIds.includes(id as (typeof retiredIds)[number]);
   return {
     id,
-    title: browser?.title ?? roadmap?.title ?? id,
+    title: browser?.title ?? roadmap?.title ?? (retired ? "Retired catalog record" : id),
     difficulty: browser?.difficulty ?? roadmap?.difficulty ?? "Medium",
     topics: browser?.topics ?? roadmap?.topicTags ?? [],
     patterns: browser?.patterns ?? (roadmap?.pattern ? [roadmap.pattern] : []),
@@ -34,6 +50,18 @@ export const canonicalDsaQuestions: readonly CanonicalDsaQuestion[] = ids.map((i
     sourceLabel: source?.label ?? (roadmap?.source === "leetcode" ? "LeetCode" : "Public source"),
     sourceUrl: source?.url ?? roadmap?.url ?? null,
     inQuestionBrowser: Boolean(browser),
+    catalogVersion: browser?.catalogVersion,
+    sourceClass: browser?.sourceClass,
+    roleRelevance: browser?.roleRelevance,
+    whyItBelongs: browser?.whyItBelongs ?? roadmap?.whyItMatters,
+    recognitionPrompt: browser?.recognitionPrompt,
+    clarifyingQuestions: browser?.clarifyingQuestions,
+    bruteForceCheckpoint: browser?.bruteForceCheckpoint,
+    complexityTarget: browser?.complexityTarget,
+    testCasePrompts: browser?.testCasePrompts,
+    followUpVariants: browser?.followUpVariants ?? roadmap?.followUps,
+    interviewBehaviorFocus: browser?.interviewBehaviorFocus,
+    originalPrompt: browser?.originalPrompt,
   };
 });
 
