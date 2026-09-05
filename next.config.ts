@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { buildSecurityHeaders } from "./lib/security/headers";
+import { mlDesignLegacyProblemSlugs } from "./lib/ml-design-routes";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -30,6 +31,11 @@ const nextConfig: NextConfig = {
       }).map(([source, destination]) => ({
         source: `/system-design/${source}`,
         destination: `/system-design/problems/${destination}`,
+        permanent: true,
+      })),
+      ...Object.entries(mlDesignLegacyProblemSlugs).map(([source, destination]) => ({
+        source: `/ml-design/${source}`,
+        destination: `/ml-design/problems/${destination}`,
         permanent: true,
       })),
       ...[

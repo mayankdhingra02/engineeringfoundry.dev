@@ -34,7 +34,7 @@ import {
 const catalog = {
   dsa: [{ id: "two-sum", title: "Two Sum", href: "/dsa/questions/two-sum" }, { id: "valid-parentheses", title: "Valid Parentheses", href: "/dsa/questions/valid-parentheses" }],
   "system-design": [{ id: "introduction", title: "Introduction", href: "/system-design/start-here/introduction" }],
-  "ml-design": [{ id: "recommendation-system", title: "Recommendation System", href: "/ml-design/recommendation-system" }],
+  "ml-design": [{ id: "ml-problem-recommendation", title: "Personalized Recommendation", href: "/ml-design/problems/personalized-recommendation" }],
   behavioral: [{ id: "beh-conflict", title: "Navigating conflict", href: "/behavioral?question=navigating-conflict" }],
 };
 
@@ -48,10 +48,10 @@ assert.deepEqual(migrateLegacySystemDesignProgress({ "topic:introduction": "comp
 
 let local = emptyLocalPreparationProgress();
 local = recordLocalProgress(local, { track: "dsa", itemId: "two-sum", status: "completed", updatedAt: 100 });
-local = recordLocalProgress(local, { track: "ml-design", itemId: "recommendation-system", status: "in-progress", updatedAt: 200 });
+local = recordLocalProgress(local, { track: "ml-design", itemId: "ml-problem-recommendation", status: "in-progress", updatedAt: 200 });
 let candidates = localContinuationCandidates(local, catalog);
 assert.equal(choosePreparationContinuation([], candidates)?.track, "ml-design", "an in-progress local item should outrank completed navigation");
-assert.equal(choosePreparationContinuation([], candidates)?.href, "/ml-design/recommendation-system");
+assert.equal(choosePreparationContinuation([], candidates)?.href, "/ml-design/problems/personalized-recommendation");
 
 const systemLocal = recordLocalProgress(emptyLocalPreparationProgress(), { track: "system-design", itemId: "introduction", status: "in-progress", updatedAt: 100 });
 assert.equal(choosePreparationContinuation([], localContinuationCandidates(systemLocal, catalog))?.track, "system-design", "System Design continuation must use its canonical item");

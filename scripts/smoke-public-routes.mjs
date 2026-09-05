@@ -10,7 +10,7 @@ export const PUBLIC_ROUTES = [
   "/dsa/languages/choose-a-language", "/dsa/roadmaps", "/dsa/roadmaps/sde-2/60-day", "/dsa/questions/two-sum",
   "/dsa/strategy", "/dsa/interview-strategy", "/dsa/interview-strategy/problem-solving-framework", "/dsa/roadmap?level=sde2", "/system-design/plan",
   "/system-design/problems", "/system-design/problems/url-shortener", "/system-design/practice", "/system-design/fundamentals/caching", "/system-design/patterns/circuit-breaker",
-  "/ml-design/recommendation-system", "/companies/google", "/companies/amazon", "/companies/meta", "/companies/walmart", "/interview-experiences/google",
+  "/ml-design/core-concepts", "/ml-design/core-concepts/product-problem-formulation-baselines", "/ml-design/problems", "/ml-design/problems/personalized-recommendation", "/ml-design/practice", "/ml-design/rubric", "/ml-design/glossary", "/companies/google", "/companies/amazon", "/companies/meta", "/companies/walmart", "/interview-experiences/google",
   "/challenges/bounded-stream-frequency-index", "/robots.txt", "/sitemap.xml",
 ];
 
@@ -33,7 +33,7 @@ export const DISABLED_ACCOUNT_SYSTEM_DESIGN_EXPECTATIONS = [
 
 export const DISABLED_ACCOUNT_PREPARATION_EXPECTATIONS = [
   { route: "/behavioral", marker: "Account saving is unavailable. Public Behavioral practice and the on-page story worksheet remain available." },
-  { route: "/ml-design/recommendation-system", marker: "Account saving is unavailable" },
+  { route: "/ml-design/problems/personalized-recommendation", marker: "Account saving is unavailable" },
 ];
 
 export const UNCONFIGURED_FEEDBACK_EXPECTATION = {
@@ -48,7 +48,7 @@ const ACCOUNT_ROUTES = [
 ];
 
 const NOT_FOUND_ROUTES = [
-  "/dsa/not-a-real-topic", "/dsa/companies/not-a-real-company", "/dsa/company-questions/not-a-real-company", "/dsa/roadmaps/not-a-role/60-day", "/system-design/not-a-real-problem", "/system-design/fundamentals/not-a-real-lesson", "/ml-design/not-a-real-problem",
+  "/dsa/not-a-real-topic", "/dsa/companies/not-a-real-company", "/dsa/company-questions/not-a-real-company", "/dsa/roadmaps/not-a-role/60-day", "/system-design/not-a-real-problem", "/system-design/fundamentals/not-a-real-lesson", "/ml-design/not-a-real-problem", "/ml-design/core-concepts/not-a-real-concept", "/ml-design/problems/not-a-real-problem",
   "/companies/not-a-real-company", "/interview-experiences/not-a-real-company", "/challenges/not-a-real-challenge",
 ];
 
@@ -129,6 +129,10 @@ export async function runPublicRouteAssertions(origin, { fetchImpl = fetch, feed
   const legacyUrlShortener = await request("/system-design/url-shortener", 308);
   if (legacyUrlShortener.response.headers.get("location") !== "/system-design/problems/url-shortener") {
     throw new Error("/system-design/url-shortener does not permanently redirect to the canonical practice problem.");
+  }
+  const legacyRecommendation = await request("/ml-design/recommendation-system", 308);
+  if (legacyRecommendation.response.headers.get("location") !== "/ml-design/problems/personalized-recommendation") {
+    throw new Error("/ml-design/recommendation-system does not permanently redirect to the canonical ML Design dossier.");
   }
 
   const home = await request("/");
