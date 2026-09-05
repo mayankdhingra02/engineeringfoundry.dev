@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-05
-repository_sha: 2f5e0c5eba4fda6f97994b5f0f2dcce9bf03a6c4
-repository_state_sha256: d3eb1099098527e2df4eeed37898269e150347e0f493152dcf39d846049ccd27
+repository_sha: 543fcf2707bfd07cc444d72a2b330a43bf5d9468
+repository_state_sha256: 513cc2cceee7309da960941a99d1fd68f56a8a544bbdac72a4d4460f1a87b19b
 ---
 
 # Engineering Foundry requirement coverage
@@ -376,7 +376,7 @@ None.
 | RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
 | RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | repository-present | approved | 27e1a44c62f8f0b3583c0341816d0ba5844fc0b0ca234eae8a77145f64939fd2 | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | docs/product-blueprint/research/dsa/python-java-language-guides.md | — |
 | RA-DSA-ROLE-ROADMAPS | EF-DSA | repository-present | approved | 62ca75813e9d659c2276d40194d770245dbe18c08ecba213062dc15bdb1693e9 | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS | docs/product-blueprint/research/dsa/role-roadmaps.md | — |
-| RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | repository-present | approved | 26ada5f548bb32f924daea2240203b9ee9875ae1b6eb675144bbb7c8ff57f339 | 2026-09-05 | EF-OPS | docs/product-blueprint/research/governance-and-release/final-required-closure.md | — |
+| RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | repository-present | approved | 545e27018a5d66ba5615c572850b86f8e139744e0994d5b72799898d827c497f | 2026-09-05 | EF-OPS | docs/product-blueprint/research/governance-and-release/final-required-closure.md | — |
 | RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
 | RA-ML-CORE-CONCEPTS | EF-ML | repository-present | approved | 74a4688763488bcd250cdae38c3e3f27520fabc2055e52fb69ae566d14eb7320 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/core-concepts.md | — |
 | RA-ML-FINAL-SYNTHESIS | EF-ML | repository-present | approved | b366986b89a9ab6e08192f5c86680c53ad2d926536dacdd09fab070af64b0ba6 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/final-synthesis.md | — |
