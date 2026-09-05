@@ -391,8 +391,8 @@ export const ROUND_EXECUTION_GUIDES: readonly RoundExecutionGuideSummary[] = [
     slug: "technical-presentation",
     title: "Technical presentation",
     shortTitle: "Technical presentation",
-    treatment: "later",
-    v1: false,
+    treatment: "complete",
+    v1: true,
     description:
       "Confirm the audience, desired outcome, format, and constraints before structuring a role-specific technical presentation.",
     quickReference: {
@@ -401,7 +401,7 @@ export const ROUND_EXECUTION_GUIDES: readonly RoundExecutionGuideSummary[] = [
       biggestTrap: "Spending most of the session on setup without reaching the decision, evidence, or conclusion.",
     },
     ownerBoundary:
-      "The Playbook may later own presentation execution. Project preparation and specialist technical sections own the underlying subject matter.",
+      "The Playbook owns presentation execution, audience calibration, question handling, and recovery. Project preparation and specialist technical sections own the underlying subject matter.",
     relatedHrefs: ["/behavioral", "/mock-interviews"],
   },
 ];

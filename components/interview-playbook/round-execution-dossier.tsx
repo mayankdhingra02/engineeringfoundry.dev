@@ -6,6 +6,10 @@ import type {
   RoundExecutionContentClassification,
   RoundExecutionDossier,
 } from "@/lib/interview-playbook/round-execution-dossiers";
+import {
+  getRoundExecutionClaimMappings,
+  INTERVIEW_PLAYBOOK_SOURCE_BY_ID,
+} from "@/lib/interview-playbook/source-methodology";
 
 const TOC_ITEMS: readonly { id: string; label: string }[] = [
   { id: "evaluate", label: "Evaluate" },
@@ -18,6 +22,7 @@ const TOC_ITEMS: readonly { id: string; label: string }[] = [
   { id: "seniority", label: "Seniority" },
   { id: "environment", label: "Environment" },
   { id: "interactions", label: "Interactions" },
+  { id: "methodology", label: "Methodology" },
   { id: "boundaries", label: "Boundaries" },
 ];
 
@@ -40,12 +45,13 @@ function List({ items }: { items: readonly string[] }) {
 export function RoundExecutionDossierView({ guide, dossier }: { guide: RoundExecutionGuideSummary; dossier: RoundExecutionDossier }) {
   // A dossier authored for a different slug must never render under this guide.
   if (guide.slug !== dossier.slug) return null;
+  const claimMappings = getRoundExecutionClaimMappings(dossier.slug);
 
   return <>
     <section className="section"><div className="page-width">
       <SectionHeading eyebrow="Canonical execution dossier" title={dossier.title} description={dossier.purpose} />
       <div className="feature-card-top"><StatusPill tone="success">Published</StatusPill><span className="demo-label">Last reviewed: {dossier.lastReviewed}</span></div>
-      <nav aria-label="Dossier sections">{TOC_ITEMS.map((item) => <Link className="text-link" href={`#${item.id}`} key={item.id}>{item.label}</Link>)}</nav>
+      <nav aria-label="Dossier sections" className="dossier-toc">{TOC_ITEMS.map((item) => <Link className="text-link" href={`#${item.id}`} key={item.id}>{item.label}</Link>)}</nav>
     </div></section>
 
     <section className="section section-alt" id="evaluate"><div className="page-width">
@@ -179,7 +185,23 @@ export function RoundExecutionDossierView({ guide, dossier }: { guide: RoundExec
       </div>
     </div></section>
 
-    <section className="section" id="boundaries"><div className="page-width">
+    <section className="section" id="methodology"><div className="page-width">
+      <SectionHeading eyebrow="Source methodology" title="What supports this dossier—and what remains editorial guidance." description={`Claim groups were reviewed on ${dossier.lastReviewed}. Sources anchor bounded claims; they do not expose a private employer's rubric or make every coaching example universal.`} />
+      <div className="feature-grid">
+        {claimMappings.map((mapping) => <article className="feature-card" key={mapping.claimGroup}>
+          <div className="feature-card-top"><StatusPill tone={mapping.classification === "source-grounded" ? "accent" : "neutral"}>{mapping.classification.replaceAll("-", " ")}</StatusPill></div>
+          <h3>{mapping.claimGroup}</h3>
+          <p>{mapping.boundary}</p>
+          {mapping.sourceIds.length > 0 ? <ul>{mapping.sourceIds.map((sourceId) => {
+            const source = INTERVIEW_PLAYBOOK_SOURCE_BY_ID.get(sourceId);
+            return <li key={sourceId}>{source ? <a className="text-link" href={source.href} rel="noopener noreferrer" target="_blank">{source.publisher}: {source.title}</a> : sourceId}</li>;
+          })}</ul> : <p><small>No external source asserted; this claim group is labeled as reviewed Engineering Foundry synthesis.</small></p>}
+        </article>)}
+      </div>
+      <Link className="text-link" href="/interview-tips/methodology">Read the complete source hierarchy and reviewed ledger</Link>
+    </div></section>
+
+    <section className="section section-alt" id="boundaries"><div className="page-width">
       <h2>Company and integrity boundaries</h2>
       <div className="feature-grid">
         <article className="feature-card"><h3>Company modifiers</h3><List items={dossier.companyModifierRules} /></article>

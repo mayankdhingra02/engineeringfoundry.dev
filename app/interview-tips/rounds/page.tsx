@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, ClipboardCheck, Code2, LayoutGrid, Users } from "lucide-react";
-import { PageHero, SectionHeading, StatusPill } from "@/components/page-shell";
+import { PageHero, SectionHeading } from "@/components/page-shell";
 import { createPageMetadata } from "@/lib/metadata";
 import {
-  LATER_ROUND_EXECUTION_GUIDES,
   ROUND_EXECUTION_GUIDE_GROUPS,
   getRoundExecutionGuide,
   roundExecutionGuideHref,
@@ -31,8 +30,6 @@ function requireGuide(slug: string): RoundExecutionGuideSummary {
   if (!guide) throw new Error(`Round execution guide catalog is missing an entry for "${slug}".`);
   return guide;
 }
-
-const laterGuide = LATER_ROUND_EXECUTION_GUIDES[0];
 
 export default function RoundExecutionGuidesIndexPage() {
   return <>
@@ -78,17 +75,6 @@ export default function RoundExecutionGuidesIndexPage() {
         </div>
       </div></section>;
     })}
-
-    {laterGuide && <section className="section"><div className="page-width">
-      <SectionHeading eyebrow="Not yet in v1" title="Role-specific later guide" description="Technical presentations appear in some specialized hiring processes but are not part of the default general-software-engineering v1." />
-      <div className="feature-grid">
-        <article className="feature-card">
-          <div className="feature-card-top"><StatusPill tone="neutral">Later</StatusPill></div>
-          <h3>{laterGuide.title}</h3>
-          <p>{laterGuide.description}</p>
-        </article>
-      </div>
-    </div></section>}
 
     <section className="section section-alt"><div className="page-width">
       <p className="prep-privacy">When the signal is unknown, confirm the format with the recruiter instead of guessing from labels such as technical screen, onsite, final, or Bar Raiser.</p>

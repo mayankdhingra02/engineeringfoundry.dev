@@ -24,6 +24,12 @@ import {
   getRoundExecutionDossier,
 } from "../lib/interview-playbook/round-execution-dossiers.ts";
 import {
+  INTERVIEW_PLAYBOOK_SOURCES,
+  INTERVIEW_PLAYBOOK_SOURCE_BY_ID,
+  ROUND_EXECUTION_CLAIMS_BY_SLUG,
+  getRoundExecutionClaimMappings,
+} from "../lib/interview-playbook/source-methodology.ts";
+import {
   buildInterviewRoundStaticParams,
   finitePublicRouteDefinitions,
   indexableFinitePublicRoutes,
@@ -50,11 +56,15 @@ const systemDesignDossierSource = readFileSync(join(root, "lib/interview-playboo
 const mlSystemDesignDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/ml-system-design.ts"), "utf8");
 const behavioralDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/behavioral.ts"), "utf8");
 const projectDeepDiveDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/project-deep-dive.ts"), "utf8");
+const technicalPresentationDossierSource = readFileSync(join(root, "lib/interview-playbook/dossiers/technical-presentation.ts"), "utf8");
 const dossierRegistrySource = readFileSync(join(root, "lib/interview-playbook/dossiers/index.ts"), "utf8");
-const authoredDossierSource = [algorithmicDossierSource, practicalDossierSource, debuggingDossierSource, codeReviewDossierSource, lowLevelDesignDossierSource, systemDesignDossierSource, mlSystemDesignDossierSource, behavioralDossierSource, projectDeepDiveDossierSource].join("\n");
+const authoredDossierSource = [algorithmicDossierSource, practicalDossierSource, debuggingDossierSource, codeReviewDossierSource, lowLevelDesignDossierSource, systemDesignDossierSource, mlSystemDesignDossierSource, behavioralDossierSource, projectDeepDiveDossierSource, technicalPresentationDossierSource].join("\n");
 const allDossierModuleSource = [dossierCompatibilitySource, dossierSchemaSource, authoredDossierSource, dossierRegistrySource].join("\n");
 const dossierComponentSource = readFileSync(join(root, "components/interview-playbook/round-execution-dossier.tsx"), "utf8");
 const roundsDetailPageSourceAfterDossier = readFileSync(join(root, "app/interview-tips/rounds/[slug]/page.tsx"), "utf8");
+const sourceMethodologySource = readFileSync(join(root, "lib/interview-playbook/source-methodology.ts"), "utf8");
+const methodologyPageSource = readFileSync(join(root, "app/interview-tips/methodology/page.tsx"), "utf8");
+const lifecycleGuidanceSource = readFileSync(join(root, "lib/interview-playbook/lifecycle-guidance.ts"), "utf8");
 
 const cases = [];
 const check = (name, ok) => cases.push([name, Boolean(ok)]);
@@ -90,12 +100,12 @@ const REQUIRED_ORDER = [
 check("catalog has exactly 16 entries", ROUND_EXECUTION_GUIDES.length === 16);
 check("catalog slugs are unique", new Set(ROUND_EXECUTION_GUIDES.map((g) => g.slug)).size === ROUND_EXECUTION_GUIDES.length);
 check("catalog order matches the required order exactly", arraysEqual(ROUND_EXECUTION_GUIDES.map((g) => g.slug), REQUIRED_ORDER));
-check("exactly 15 entries have v1: true", ROUND_EXECUTION_GUIDES.filter((g) => g.v1 === true).length === 15);
-check("technical-presentation is the only v1: false entry", ROUND_EXECUTION_GUIDES.filter((g) => g.v1 === false).map((g) => g.slug).join(",") === "technical-presentation");
-check("exactly 12 entries use treatment complete", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "complete").length === 12);
+check("all 16 entries have v1: true", ROUND_EXECUTION_GUIDES.filter((g) => g.v1 === true).length === 16);
+check("no catalog entry remains post-v1", ROUND_EXECUTION_GUIDES.every((g) => g.v1 === true));
+check("exactly 13 entries use treatment complete", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "complete").length === 13);
 check("exactly two entries use treatment focused-variant", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "focused-variant").length === 2);
 check("exactly one entry uses treatment composition-shell", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "composition-shell").length === 1);
-check("exactly one entry uses treatment later", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "later").length === 1);
+check("no entry uses treatment later", ROUND_EXECUTION_GUIDES.filter((g) => g.treatment === "later").length === 0);
 check("no catalog slug contains forbidden substrings", ROUND_EXECUTION_GUIDES.every((g) => !/final|bar-raiser|onsite|mixed-signal/.test(g.slug)));
 check("ROUND_EXECUTION_GUIDE_BY_SLUG resolves every catalog entry", ROUND_EXECUTION_GUIDES.every((g) => ROUND_EXECUTION_GUIDE_BY_SLUG.get(g.slug) === g));
 check("every guide has complete non-empty fields", ROUND_EXECUTION_GUIDES.every((g) =>
@@ -147,7 +157,7 @@ assertResolution("Final System Design", { stage: "final", signals: ["system-desi
 assertResolution("Virtual Onsite — Coding and System Design", { stage: "loop", modality: "live-remote", signals: ["algorithmic-coding", "system-design"], guideSlugs: ["algorithmic-coding", "system-design"], shell: "mixed-signal", needsSignalClarification: false });
 assertResolution("Onsite Project Deep Dive", { stage: "loop", modality: "onsite", signals: ["project-deep-dive"], guideSlugs: ["project-deep-dive"], shell: "mixed-signal", needsSignalClarification: false });
 assertResolution("Technical Presentation", { modality: "presentation", signals: ["technical-presentation"], guideSlugs: ["technical-presentation"], confidence: "explicit" });
-check("Technical Presentation guide is marked v1: false", ROUND_EXECUTION_GUIDE_BY_SLUG.get("technical-presentation").v1 === false);
+check("Technical Presentation guide is published in v1", ROUND_EXECUTION_GUIDE_BY_SLUG.get("technical-presentation").v1 === true);
 
 assertResolution("", {
   rawRoundType: "",
@@ -212,7 +222,7 @@ check("Final with no signal requires clarification", resolveRoundExecution("Fina
 check("Other remains unknown", resolveRoundExecution("Other").confidence === "unknown");
 check("an arbitrary company name remains unknown", resolveRoundExecution("Acme Corporation").confidence === "unknown");
 check("a generic job title remains unknown", resolveRoundExecution("Software Engineer").confidence === "unknown");
-check("Technical Presentation remains post-v1", ROUND_EXECUTION_GUIDE_BY_SLUG.get("technical-presentation").v1 === false);
+check("Technical Presentation is published", ROUND_EXECUTION_GUIDE_BY_SLUG.get("technical-presentation").v1 === true);
 check("no resolution returns a final or bar-raiser guide slug", [
   "Recruiter Screen", "Hiring Manager", "Coding / DSA", "System Design", "Behavioral", "Machine Coding", "Debugging",
   "Domain / Technical", "Bar Raiser", "Take-home", "Onsite / Virtual Onsite", "Other", "Final System Design", "Final",
@@ -267,18 +277,16 @@ const v1CatalogSlugsInOrder = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slu
 
 check("there are exactly four guide groups", ROUND_EXECUTION_GUIDE_GROUPS.length === 4);
 check("group IDs appear in the exact required order", arraysEqual(ROUND_EXECUTION_GUIDE_GROUPS.map((group) => group.id), REQUIRED_GROUP_IDS));
-check("flattened group slugs contain exactly 15 items", flattenedGroupSlugs.length === 15);
+check("flattened group slugs contain exactly 16 items", flattenedGroupSlugs.length === 16);
 check("flattened group slugs contain no duplicates", new Set(flattenedGroupSlugs).size === flattenedGroupSlugs.length);
 check("flattened group slugs exactly equal the v1 catalog slugs in catalog order", arraysEqual(flattenedGroupSlugs, v1CatalogSlugsInOrder));
-check("technical-presentation is absent from every v1 group", !flattenedGroupSlugs.includes("technical-presentation"));
+check("technical-presentation is present in the people-and-collaboration group", ROUND_EXECUTION_GUIDE_GROUPS.find((group) => group.id === "people-collaboration")?.slugs.includes("technical-presentation"));
 check("no group contains final, onsite, bar-raiser, or mixed-signal", !flattenedGroupSlugs.some((slug) => /final|onsite|bar-raiser|mixed-signal/.test(slug)));
 
 // --- V1 and later collections ------------------------------------------
-check("V1_ROUND_EXECUTION_GUIDES contains exactly 15 guides", V1_ROUND_EXECUTION_GUIDES.length === 15);
+check("V1_ROUND_EXECUTION_GUIDES contains exactly 16 guides", V1_ROUND_EXECUTION_GUIDES.length === 16);
 check("every v1 guide has v1 === true", V1_ROUND_EXECUTION_GUIDES.every((guide) => guide.v1 === true));
-check("LATER_ROUND_EXECUTION_GUIDES contains exactly one guide", LATER_ROUND_EXECUTION_GUIDES.length === 1);
-check("the only later guide is technical-presentation", LATER_ROUND_EXECUTION_GUIDES[0]?.slug === "technical-presentation");
-check("the later guide has treatment later", LATER_ROUND_EXECUTION_GUIDES[0]?.treatment === "later");
+check("LATER_ROUND_EXECUTION_GUIDES is empty after publishing technical presentation", LATER_ROUND_EXECUTION_GUIDES.length === 0);
 
 // --- Hrefs -----------------------------------------------------------------
 check("every v1 guide href equals /interview-tips/rounds/{slug}", V1_ROUND_EXECUTION_GUIDES.every((guide) => roundExecutionGuideHref(guide.slug) === `/interview-tips/rounds/${guide.slug}`));
@@ -362,8 +370,7 @@ for (const expected of [
 ]) check(`index page contains: ${expected}`, roundsIndexPageSource.includes(expected));
 check('index page links to "/interview-tips"', roundsIndexPageSource.includes('"/interview-tips"'));
 check('index page links to "/mock-interviews"', roundsIndexPageSource.includes('"/mock-interviews"'));
-check("index page renders the later guide separately", roundsIndexPageSource.includes("LATER_ROUND_EXECUTION_GUIDES"));
-check("index page does not link the technical-presentation later card", !/<Link[^>]*laterGuide/.test(roundsIndexPageSource));
+check("index page no longer renders a post-v1 guide section", !roundsIndexPageSource.includes("LATER_ROUND_EXECUTION_GUIDES"));
 check("index page does not create a generic final/onsite/bar-raiser/mixed-signal card", !/"final"|"onsite"|"bar-raiser"|"mixed-signal"/.test(roundsIndexPageSource));
 check("index page does not calculate readiness or probability", !/readiness|probability/i.test(roundsIndexPageSource));
 check("index page contains no universal minute allocation", !/\b\d+\s*minutes?\b/i.test(roundsIndexPageSource));
@@ -389,7 +396,7 @@ check("detail page does not accept a company, application, round, level, or user
   const paramSlugs = roundStaticParamSlugs;
   check("finite-route definition exactly follows the v1 guide catalog", arraysEqual(roundDefinition?.paths, V1_ROUND_EXECUTION_GUIDES.map((guide) => roundExecutionGuideHref(guide.slug))));
   check("static params exactly follow the v1 guide catalog", arraysEqual(paramSlugs, V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug)));
-  check("detail page's generated params exclude technical-presentation", !paramSlugs.includes("technical-presentation"));
+  check("detail page's generated params include technical-presentation", paramSlugs.includes("technical-presentation"));
   check("detail page's generated params exclude final/onsite/bar-raiser/mixed-signal", !paramSlugs.some((slug) => /final|onsite|bar-raiser|mixed-signal/.test(slug)));
 }
 
@@ -448,8 +455,8 @@ check("interview-playbook.tsx adds no persistence behavior", !interviewPlaybookC
 if (sitemapExists) {
   check("sitemap contains /interview-tips/rounds", sitemapSource.includes('"/interview-tips/rounds"'));
   check("indexable inventory contains every v1 detail route", V1_ROUND_EXECUTION_GUIDES.every((guide) => indexableRoutes.has(roundExecutionGuideHref(guide.slug))));
-  check("sitemap does not manually repeat all 15 slugs", !ROUND_EXECUTION_GUIDES.filter((g) => g.v1).every((g) => sitemapSource.includes(`"/interview-tips/rounds/${g.slug}"`)));
-  check("indexable inventory excludes technical-presentation", !indexableRoutes.has("/interview-tips/rounds/technical-presentation"));
+  check("sitemap does not manually repeat all 16 slugs", !ROUND_EXECUTION_GUIDES.filter((g) => g.v1).every((g) => sitemapSource.includes(`"/interview-tips/rounds/${g.slug}"`)));
+  check("indexable inventory includes technical-presentation", indexableRoutes.has("/interview-tips/rounds/technical-presentation"));
   check("sitemap does not add /interview-playbook", !sitemapSource.includes('"/interview-playbook"'));
   check("indexable inventory excludes final/onsite/bar-raiser/mixed-signal routes", ["final", "onsite", "bar-raiser", "mixed-signal"].every((slug) => !indexableRoutes.has(`/interview-tips/rounds/${slug}`)));
 }
@@ -464,9 +471,10 @@ const systemDesignDossier = ROUND_EXECUTION_DOSSIERS[5];
 const mlSystemDesignDossier = ROUND_EXECUTION_DOSSIERS[6];
 const behavioralDossier = ROUND_EXECUTION_DOSSIERS[7];
 const projectDeepDiveDossier = ROUND_EXECUTION_DOSSIERS[8];
+const technicalPresentationDossier = ROUND_EXECUTION_DOSSIERS[9];
 
-check("ROUND_EXECUTION_DOSSIERS contains exactly nine dossiers", ROUND_EXECUTION_DOSSIERS.length === 9);
-check("the dossier order is exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design, system-design, ml-system-design, behavioral, project-deep-dive", arraysEqual(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug), ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design", "system-design", "ml-system-design", "behavioral", "project-deep-dive"]));
+check("ROUND_EXECUTION_DOSSIERS contains exactly ten dossiers", ROUND_EXECUTION_DOSSIERS.length === 10);
+check("the dossier order includes technical presentation last", arraysEqual(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug), ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design", "system-design", "ml-system-design", "behavioral", "project-deep-dive", "technical-presentation"]));
 check("the first dossier slug is algorithmic-coding", algorithmicCodingDossier?.slug === "algorithmic-coding");
 check("the first dossier status is published", algorithmicCodingDossier?.status === "published");
 check("the second dossier slug is practical-coding", practicalCodingDossier?.slug === "practical-coding");
@@ -485,11 +493,13 @@ check("the eighth dossier slug is behavioral", behavioralDossier?.slug === "beha
 check("the eighth dossier status is published", behavioralDossier?.status === "published");
 check("the ninth dossier slug is project-deep-dive", projectDeepDiveDossier?.slug === "project-deep-dive");
 check("the ninth dossier status is published", projectDeepDiveDossier?.status === "published");
+check("the tenth dossier slug is technical-presentation", technicalPresentationDossier?.slug === "technical-presentation");
+check("the tenth dossier status is published", technicalPresentationDossier?.status === "published");
 check("dossier slugs are unique", new Set(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug)).size === ROUND_EXECUTION_DOSSIERS.length);
 check("every dossier has status published", ROUND_EXECUTION_DOSSIERS.every((dossier) => dossier.status === "published"));
 check("every dossier slug is unique", new Set(ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug)).size === ROUND_EXECUTION_DOSSIERS.length);
 check("every dossier slug is a v1 guide", ROUND_EXECUTION_DOSSIERS.every((dossier) => V1_ROUND_EXECUTION_GUIDES.some((guide) => guide.slug === dossier.slug)));
-check("PUBLISHED_ROUND_EXECUTION_DOSSIERS contains exactly nine dossiers", PUBLISHED_ROUND_EXECUTION_DOSSIERS.length === 9);
+check("PUBLISHED_ROUND_EXECUTION_DOSSIERS contains exactly ten dossiers", PUBLISHED_ROUND_EXECUTION_DOSSIERS.length === 10);
 check('getRoundExecutionDossier("algorithmic-coding") returns the dossier', getRoundExecutionDossier("algorithmic-coding") === algorithmicCodingDossier);
 check('getRoundExecutionDossier("practical-coding") returns the dossier', getRoundExecutionDossier("practical-coding") === practicalCodingDossier);
 check('getRoundExecutionDossier("debugging") returns the dossier', getRoundExecutionDossier("debugging") === debuggingDossier);
@@ -500,7 +510,7 @@ check('getRoundExecutionDossier("ml-system-design") returns the dossier', getRou
 check('getRoundExecutionDossier("behavioral") returns the dossier', getRoundExecutionDossier("behavioral") === behavioralDossier);
 check('getRoundExecutionDossier("project-deep-dive") returns the dossier', getRoundExecutionDossier("project-deep-dive") === projectDeepDiveDossier);
 check('getRoundExecutionDossier("hiring-manager") returns null', getRoundExecutionDossier("hiring-manager") === null);
-check('getRoundExecutionDossier("technical-presentation") returns null', getRoundExecutionDossier("technical-presentation") === null);
+check('getRoundExecutionDossier("technical-presentation") returns the dossier', getRoundExecutionDossier("technical-presentation") === technicalPresentationDossier);
 check('getRoundExecutionDossier("not-a-guide") returns null', getRoundExecutionDossier("not-a-guide") === null);
 check("no dossier exists for a generic final round", getRoundExecutionDossier("final") === null);
 check("no dossier exists for a generic onsite round", getRoundExecutionDossier("onsite") === null);
@@ -515,8 +525,9 @@ check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the sixth dossier", ROUND_EXECUT
 check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the seventh dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("ml-system-design") === mlSystemDesignDossier);
 check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the eighth dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("behavioral") === behavioralDossier);
 check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the ninth dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("project-deep-dive") === projectDeepDiveDossier);
+check("ROUND_EXECUTION_DOSSIER_BY_SLUG resolves the tenth dossier", ROUND_EXECUTION_DOSSIER_BY_SLUG.get("technical-presentation") === technicalPresentationDossier);
 check("every dossier slug exists in V1_ROUND_EXECUTION_GUIDES", ROUND_EXECUTION_DOSSIERS.every((dossier) => V1_ROUND_EXECUTION_GUIDES.some((guide) => guide.slug === dossier.slug)));
-check("no dossier exists for technical-presentation", getRoundExecutionDossier("technical-presentation") === null);
+check("technical-presentation resolves a published dossier", getRoundExecutionDossier("technical-presentation") === technicalPresentationDossier);
 check("the debugging guide retains treatment complete in the canonical taxonomy", ROUND_EXECUTION_GUIDE_BY_SLUG.get("debugging")?.treatment === "complete");
 
 // --- Taxonomy boundary: publishing a dossier does not alter the canonical guide's taxonomy ---
@@ -544,10 +555,10 @@ check("project-deep-dive guide remains v1: true", projectDeepDiveGuide?.v1 === t
   const v1Slugs = V1_ROUND_EXECUTION_GUIDES.map((guide) => guide.slug);
   const dossierBackedSlugs = v1Slugs.filter((slug) => getRoundExecutionDossier(slug) !== null);
   const quickReferenceOnlySlugs = v1Slugs.filter((slug) => getRoundExecutionDossier(slug) === null);
-  check("exactly nine v1 slugs resolve a dossier", dossierBackedSlugs.length === 9);
-  check("the dossier-backed slugs are exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design, system-design, ml-system-design, behavioral, project-deep-dive", arraysEqual([...dossierBackedSlugs].sort(), ["algorithmic-coding", "behavioral", "code-review", "debugging", "low-level-design", "ml-system-design", "practical-coding", "project-deep-dive", "system-design"]));
+  check("exactly ten v1 slugs resolve a dossier", dossierBackedSlugs.length === 10);
+  check("the dossier-backed slugs include every published full dossier", arraysEqual([...dossierBackedSlugs].sort(), ["algorithmic-coding", "behavioral", "code-review", "debugging", "low-level-design", "ml-system-design", "practical-coding", "project-deep-dive", "system-design", "technical-presentation"]));
   check("exactly six v1 slugs remain quick-reference-only", quickReferenceOnlySlugs.length === 6);
-  check("static params are unaffected by dossier coverage (still fifteen v1 guides)", v1Slugs.length === 15);
+  check("static params contain all sixteen v1 guides", v1Slugs.length === 16);
 }
 
 // --- Dossier core content ---------------------------------------------
@@ -999,6 +1010,32 @@ check("project-deep-dive integrity disclaimer about proprietary prompts is prese
 check("project-deep-dive integrity disclaimer about live-assessment assistance is present and intact", d9.integrity.some((statement) => statement.includes("It does not authorize external assistance during a live interview.")));
 check("project-deep-dive integrity confirms story construction and technical curricula remain in their dedicated sections", d9.integrity.some((statement) => statement.includes("Project preparation and story construction remain in Behavioral, while System Design, ML Design, Low-Level Design, implementation, and other technical concepts remain in their dedicated learning and practice sections.")));
 
+const d10 = technicalPresentationDossier;
+check("technical-presentation: reviewed on 2026-09-05", d10.lastReviewed === "2026-09-05");
+check("technical-presentation: purpose, audience variation, setup, and execution flow are substantive", d10.purpose.length > 0 && d10.companyVariation.length >= 4 && d10.beforeRound.length >= 4 && d10.flow.length >= 5);
+check("technical-presentation: every flow step has a complete editorial classification", d10.flow.every((step) => step.title && step.objective && step.actions.length >= 3 && ["widely-applicable", "context-dependent"].includes(step.classification)));
+check("technical-presentation: time framework remains adaptable", d10.timeFrameworks.every((framework) => /adaptable|assumes|context/i.test(framework.assumption)));
+check("technical-presentation: covers questions, uncertainty, fallback, accessibility, and integrity", /question/i.test(JSON.stringify(d10)) && /uncertainty|unknown/i.test(JSON.stringify(d10)) && /fallback/i.test(JSON.stringify(d10)) && /accessib/i.test(JSON.stringify(d10)) && d10.integrity.some((statement) => /does not authorize external assistance during a live interview/i.test(statement)));
+
+// --- Reader-facing source methodology ----------------------------------------
+check("every full dossier has a reviewed claim map", ROUND_EXECUTION_DOSSIERS.every((dossier) => getRoundExecutionClaimMappings(dossier.slug).length >= 4));
+check("claim-map registry covers exactly the ten full dossier slugs", arraysEqual([...ROUND_EXECUTION_CLAIMS_BY_SLUG.keys()].sort(), ROUND_EXECUTION_DOSSIERS.map((dossier) => dossier.slug).sort()));
+check("every mapped source ID resolves in the public Playbook source set", [...ROUND_EXECUTION_CLAIMS_BY_SLUG.values()].flatMap((mappings) => mappings).flatMap((mapping) => mapping.sourceIds).every((sourceId) => INTERVIEW_PLAYBOOK_SOURCE_BY_ID.has(sourceId)));
+check("the source set contains unique IDs and current review dates", new Set(INTERVIEW_PLAYBOOK_SOURCES.map((source) => source.id)).size === INTERVIEW_PLAYBOOK_SOURCES.length && INTERVIEW_PLAYBOOK_SOURCES.every((source) => source.verifiedAt === "2026-09-05"));
+check("technical presentation maps its audience and narrative claim to the MIT source", getRoundExecutionClaimMappings("technical-presentation").some((mapping) => mapping.sourceIds.includes("SRC-PLAY-MIT-PRESENTATION") && /audience/i.test(mapping.claimGroup)));
+check("editorial synthesis is explicit and has no fabricated external citation", getRoundExecutionClaimMappings("algorithmic-coding").some((mapping) => mapping.classification === "editorial-synthesis" && mapping.sourceIds.length === 0));
+check("dossier renderer exposes a methodology anchor and claim mappings", dossierComponentSource.includes('id="methodology"') && dossierComponentSource.includes("getRoundExecutionClaimMappings") && dossierComponentSource.includes('href="/interview-tips/methodology"'));
+check("methodology page renders evidence layers and reviewed sources", methodologyPageSource.includes("EVIDENCE_LAYERS.map(") && methodologyPageSource.includes("INTERVIEW_PLAYBOOK_SOURCES.map(") && methodologyPageSource.includes("No hidden bar") && methodologyPageSource.includes("No universal loop") && methodologyPageSource.includes("No live assistance"));
+check("source methodology stays static and private-data free", !sourceMethodologySource.includes("fetch(") && !sourceMethodologySource.includes("supabase") && !sourceMethodologySource.includes("localStorage"));
+
+// --- Final stretch, contingency, and private-debrief public contract ----------
+for (const marker of ["final-week", "day-before", "interview-day", "between-rounds", "INTERVIEW_CONTINGENCIES", "INTERVIEW_DEBRIEF_GROUPS", "RECRUITER_FOLLOW_UP_TEMPLATES"]) {
+  check(`lifecycle guidance contains ${marker}`, lifecycleGuidanceSource.includes(marker));
+}
+check("public guide renders lifecycle, contingency, debrief, and follow-up sections", ["INTERVIEW_LIFECYCLE_PHASES.map(", "INTERVIEW_CONTINGENCIES.map(", "INTERVIEW_DEBRIEF_GROUPS.map(", "RECRUITER_FOLLOW_UP_TEMPLATES.map("].every((marker) => interviewPlaybookComponentSource.includes(marker)));
+check("public debrief states the private storage boundary", interviewPlaybookComponentSource.includes("Keep the debrief private") && interviewPlaybookComponentSource.includes("public checklist does not save it"));
+check("public lifecycle adds no persistence or new analytics", !lifecycleGuidanceSource.includes("localStorage") && !lifecycleGuidanceSource.includes("supabase") && !lifecycleGuidanceSource.includes("track("));
+
 // --- Project Deep Dive does not become a curriculum ---------------------------------------
 check("project-deep-dive dossier does not become a System Design curriculum", !/\bsystem design (curriculum|technology catalog|textbook)\b/i.test(projectDeepDiveSerialized));
 check("project-deep-dive dossier does not become a Behavioral story-writing curriculum", !/\bbehavioral (story[- ]writing|story writing) curriculum\b/i.test(projectDeepDiveSerialized));
@@ -1020,7 +1057,7 @@ check("project-deep-dive dossier does not create a project score", !/projectScor
 check("project-deep-dive dossier does not implement readiness calculation", !/readinessScore|calculateReadiness/.test(projectDeepDiveDossierSource));
 
 // --- Dossier content integrity ------------------------------------------
-const serializedDossier = JSON.stringify([d, d2, d3, d4, d5, d6, d7, d8, d9]);
+const serializedDossier = JSON.stringify([d, d2, d3, d4, d5, d6, d7, d8, d9, d10]);
 check("dossier does not contain a company name", !/\b(google|meta|amazon|microsoft|apple|netflix)\b/i.test(serializedDossier));
 check("dossier does not contain a proprietary question", !/leaked question|actual interview question|verbatim question/i.test(serializedDossier));
 check("dossier does not contain source code", !/```|function\s*\(|=>\s*\{|;\s*\n\s*(const|let|var)\s/.test(serializedDossier));
@@ -1039,12 +1076,12 @@ for (const forbidden of [
 check("dossier does not instruct generative-AI use during an assessment", !/chatgpt|use an ai tool|use an llm|generative ai/i.test(serializedDossier));
 check("dossier does not claim a universal number of questions", !/\b(exactly|always)\s+\d+\s+(problems?|questions?)\b/i.test(serializedDossier));
 check("dossier does not describe timing ranges as mandatory", !/mandatory (timing|schedule|allocation)|must (spend|take) exactly/i.test(serializedDossier));
-check("every time framework includes an explicit context-dependence assumption", [...d.timeFrameworks, ...d2.timeFrameworks, ...d3.timeFrameworks, ...d4.timeFrameworks, ...d5.timeFrameworks, ...d6.timeFrameworks, ...d7.timeFrameworks, ...d8.timeFrameworks, ...d9.timeFrameworks].every((framework) => /adaptable|assumes|context/i.test(framework.assumption)));
-check("no interaction claims to be a real company transcript", ![...d.interactions, ...d2.interactions, ...d3.interactions, ...d4.interactions, ...d5.interactions, ...d6.interactions, ...d7.interactions, ...d8.interactions, ...d9.interactions].some((example) => /actual transcript|real interview transcript|verbatim transcript/i.test(`${example.scenario} ${example.annotation}`)));
-check("no integrity statement implies legal advice", ![...d.integrity, ...d2.integrity, ...d3.integrity, ...d4.integrity, ...d5.integrity, ...d6.integrity, ...d7.integrity, ...d8.integrity, ...d9.integrity].some((statement) => /legal advice|constitutes legal/i.test(statement)));
+check("every time framework includes an explicit context-dependence assumption", [...d.timeFrameworks, ...d2.timeFrameworks, ...d3.timeFrameworks, ...d4.timeFrameworks, ...d5.timeFrameworks, ...d6.timeFrameworks, ...d7.timeFrameworks, ...d8.timeFrameworks, ...d9.timeFrameworks, ...d10.timeFrameworks].every((framework) => /adaptable|assumes|context/i.test(framework.assumption)));
+check("no interaction claims to be a real company transcript", ![...d.interactions, ...d2.interactions, ...d3.interactions, ...d4.interactions, ...d5.interactions, ...d6.interactions, ...d7.interactions, ...d8.interactions, ...d9.interactions, ...d10.interactions].some((example) => /actual transcript|real interview transcript|verbatim transcript/i.test(`${example.scenario} ${example.annotation}`)));
+check("no integrity statement implies legal advice", ![...d.integrity, ...d2.integrity, ...d3.integrity, ...d4.integrity, ...d5.integrity, ...d6.integrity, ...d7.integrity, ...d8.integrity, ...d9.integrity, ...d10.integrity].some((statement) => /legal advice|constitutes legal/i.test(statement)));
 check("generic role labels are present and allowed", serializedDossier.includes("SDE I") && serializedDossier.includes("SDE II") && serializedDossier.includes("Senior+"));
-check("all nine dossier titles are distinct", new Set([d.title, d2.title, d3.title, d4.title, d5.title, d6.title, d7.title, d8.title, d9.title]).size === 9);
-check("every dossier's integrity section disclaims live-assessment assistance rather than authorizing it", [d, d2, d3, d4, d5, d6, d7, d8, d9].every((dossier) => dossier.integrity.some((statement) => /does not (authorize external assistance during a live interview|provide assistance during a live assessment)/i.test(statement))));
+check("all ten dossier titles are distinct", new Set([d.title, d2.title, d3.title, d4.title, d5.title, d6.title, d7.title, d8.title, d9.title, d10.title]).size === 10);
+check("every dossier's integrity section disclaims live-assessment assistance rather than authorizing it", [d, d2, d3, d4, d5, d6, d7, d8, d9, d10].every((dossier) => dossier.integrity.some((statement) => /does not (authorize external assistance during a live interview|provide assistance during a live assessment)/i.test(statement))));
 check("dossier does not contain a security-exploitation instruction", !/\b(exploit a vulnerability|how to exploit|sql injection payload|privilege escalation technique|bypass authentication)\b/i.test(serializedDossier));
 check("the debugging integrity disclaimer disclaiming exploitation teaching is not misflagged as an exploitation instruction", serializedDossier.toLowerCase().includes("it does not teach exploitation"));
 check("dossier does not duplicate a language or framework curriculum", !/\b(learn (java|python|javascript|typescript|react|django|spring) (syntax|basics)|framework tutorial)\b/i.test(serializedDossier));
@@ -1178,13 +1215,13 @@ check("registry exports ROUND_EXECUTION_DOSSIER_BY_SLUG", dossierRegistrySource.
 check("registry exports PUBLISHED_ROUND_EXECUTION_DOSSIERS", dossierRegistrySource.includes("export const PUBLISHED_ROUND_EXECUTION_DOSSIERS"));
 check("registry exports getRoundExecutionDossier", dossierRegistrySource.includes("export function getRoundExecutionDossier"));
 check("registry re-exports the schema types", dossierRegistrySource.includes("export type {") && dossierRegistrySource.includes('from "./schema.ts"'));
-check("registry re-exports all nine named dossier constants", /export\s*\{\s*algorithmicCodingDossier,\s*practicalCodingDossier,\s*debuggingDossier,\s*codeReviewDossier,\s*lowLevelDesignDossier,\s*systemDesignDossier,\s*mlSystemDesignDossier,\s*behavioralDossier,\s*projectDeepDiveDossier,?\s*\};/.test(dossierRegistrySource));
-check("registry contains exactly nine registry entries", /ROUND_EXECUTION_DOSSIERS[\s\S]{0,60}=\s*\[([\s\S]{0,520}?)\];/.exec(dossierRegistrySource)?.[1]?.split(",").map((entry) => entry.trim()).filter(Boolean).length === 9);
+check("registry re-exports all ten named dossier constants", /export\s*\{\s*algorithmicCodingDossier,\s*practicalCodingDossier,\s*debuggingDossier,\s*codeReviewDossier,\s*lowLevelDesignDossier,\s*systemDesignDossier,\s*mlSystemDesignDossier,\s*behavioralDossier,\s*projectDeepDiveDossier,\s*technicalPresentationDossier,?\s*\};/.test(dossierRegistrySource));
+check("registry contains exactly ten registry entries", /ROUND_EXECUTION_DOSSIERS[\s\S]{0,60}=\s*\[([\s\S]{0,620}?)\];/.exec(dossierRegistrySource)?.[1]?.split(",").map((entry) => entry.trim()).filter(Boolean).length === 10);
 check("registry preserves the other eight imports and exports alongside the new one", ["algorithmicCodingDossier", "practicalCodingDossier", "debuggingDossier", "codeReviewDossier", "lowLevelDesignDossier", "systemDesignDossier", "mlSystemDesignDossier", "behavioralDossier"].every((name) => dossierRegistrySource.includes(name)));
 check("registry adds no fallback dossier", !dossierRegistrySource.includes("fallbackDossier") && !dossierRegistrySource.includes("defaultDossier"));
 check("registry adds no dynamic file discovery", !dossierRegistrySource.includes("readdirSync") && !dossierRegistrySource.includes("readdir(") && !dossierRegistrySource.includes("import.meta.glob"));
 check("registry adds no Hiring Manager dossier", !dossierRegistrySource.includes("hiringManagerDossier"));
-check("registry adds no Technical Presentation dossier", !dossierRegistrySource.includes("technicalPresentationDossier"));
+check("registry includes the Technical Presentation dossier", dossierRegistrySource.includes("technicalPresentationDossier"));
 check("registry adds no generic final/onsite/bar-raiser/mixed-signal dossier", !/slug:\s*"(final|onsite|bar-raiser|mixed-signal)"/.test(dossierRegistrySource));
 
 // --- Dossier module invariants (apply across the whole split module) --------
@@ -1275,11 +1312,11 @@ check("detail page still requires no authentication", !roundsDetailPageSourceAft
 check("detail page still performs no direct Supabase query", !/^import.*supabase/im.test(roundsDetailPageSourceAfterDossier) && !roundsDetailPageSourceAfterDossier.includes(".from("));
 {
   const paramSlugs = roundStaticParamSlugs;
-  check("static params still generate exactly 15 v1 pages", paramSlugs.length === 15);
-  check("technical-presentation still excluded from static params", !paramSlugs.includes("technical-presentation"));
-  check("exactly algorithmic-coding, practical-coding, debugging, code-review, low-level-design, system-design, ml-system-design, behavioral, and project-deep-dive currently resolve a dossier among all v1 slugs", arraysEqual(
+  check("static params generate exactly 16 v1 pages", paramSlugs.length === 16);
+  check("technical-presentation is included in static params", paramSlugs.includes("technical-presentation"));
+  check("all ten published dossier routes resolve", arraysEqual(
     paramSlugs.filter((slug) => getRoundExecutionDossier(slug) !== null).sort(),
-    ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design", "system-design", "ml-system-design", "behavioral", "project-deep-dive"].sort(),
+    ["algorithmic-coding", "practical-coding", "debugging", "code-review", "low-level-design", "system-design", "ml-system-design", "behavioral", "project-deep-dive", "technical-presentation"].sort(),
   ));
   check("exactly six v1 routes remain quick-reference-only (no dossier)", paramSlugs.filter((slug) => getRoundExecutionDossier(slug) === null).length === 6);
   check("code-review still resolves a dossier", getRoundExecutionDossier("code-review") !== null);
@@ -1294,6 +1331,8 @@ check("detail page still performs no direct Supabase query", !/^import.*supabase
   check("behavioral remains a valid v1 route", paramSlugs.includes("behavioral"));
   check("project-deep-dive now resolves a dossier", getRoundExecutionDossier("project-deep-dive") !== null);
   check("project-deep-dive remains a valid v1 route", paramSlugs.includes("project-deep-dive"));
+  check("technical-presentation resolves a dossier", getRoundExecutionDossier("technical-presentation") !== null);
+  check("technical-presentation remains a valid v1 route", paramSlugs.includes("technical-presentation"));
   check("hiring-manager does not resolve a dossier", getRoundExecutionDossier("hiring-manager") === null);
   check("hiring-manager remains a valid v1 route", paramSlugs.includes("hiring-manager"));
   check("a valid v1 route does not require a dossier (six still resolve null)", paramSlugs.filter((slug) => getRoundExecutionDossier(slug) === null).every((slug) => V1_ROUND_EXECUTION_GUIDES.some((guide) => guide.slug === slug)));

@@ -709,12 +709,12 @@
       "url": "https://www.amazon.jobs/content/en/how-we-hire/interview-prep/software-development-topics",
       "source_class": "official company hiring/candidate",
       "published_at": null,
-      "verified_at": "2026-08-21",
+      "verified_at": "2026-09-05",
       "volatility": "periodic",
-      "applies_to": ["EF-COMP", "EF-COMP-GUIDE-COVERAGE"],
-      "claims_supported": [],
-      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
-      "notes": "Repository confidence: High. Applicability: Software-development candidates; exact loop varies."
+      "applies_to": ["EF-COMP", "EF-COMP-GUIDE-COVERAGE", "EF-PLAY", "EF-PLAY-CURRICULUM-DEPTH", "EF-PLAY-ROUND-PROVENANCE"],
+      "claims_supported": ["PLAY-EMPLOYER-TECHNICAL-EXAMPLE"],
+      "usage_limits": "Use as one current employer-scoped example of technical and behavioral preparation; do not generalize its topics, loop, or evaluation process.",
+      "notes": "Repository confidence: High. Applicability: Software-development candidates; exact loop varies and recruiter instructions control."
     },
     {
       "id": "SRC-COMP-ANTHROPIC-OFFICIAL",
@@ -779,12 +779,12 @@
       "url": "https://careers.microsoft.com/v2/global/en/hiring-tips/technical-interviewing.html",
       "source_class": "official company hiring/candidate",
       "published_at": null,
-      "verified_at": "2026-08-21",
+      "verified_at": "2026-09-05",
       "volatility": "periodic",
-      "applies_to": ["EF-COMP", "EF-COMP-GUIDE-COVERAGE"],
-      "claims_supported": [],
-      "usage_limits": "Discovery and provenance record only until claim-level support is audited; paraphrase and reverify before substantive use.",
-      "notes": "Repository confidence: High. Applicability: Technical roles; role-specific technical areas vary."
+      "applies_to": ["EF-COMP", "EF-COMP-GUIDE-COVERAGE", "EF-PLAY", "EF-PLAY-CURRICULUM-DEPTH", "EF-PLAY-ROUND-PROVENANCE"],
+      "claims_supported": ["PLAY-CLARIFY-PLAN-TEST", "PLAY-EMPLOYER-TECHNICAL-EXAMPLE", "PLAY-ACCOMMODATION-ROUTING-EXAMPLE"],
+      "usage_limits": "Use as one current employer-scoped example of clarifying, planning, coding, testing, and accommodation routing; do not generalize its timing, platform, or role coverage.",
+      "notes": "Repository confidence: High. Applicability: Technical roles; role-specific technical areas and current recruiter instructions vary."
     },
     {
       "id": "SRC-COMP-NVIDIA-OFFICIAL",
@@ -888,11 +888,23 @@
     },
     {
       "id": "SRC-BEH-OPM-STRUCTURED", "title": "Structured Interviews", "publisher": "U.S. Office of Personnel Management", "url": "https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
-      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH"], "claims_supported": ["BEH-STRUCTURED-EVIDENCE"], "usage_limits": "Supports job-related competencies, consistent questions, and common evaluation standards; it does not establish one universal employer process.", "notes": "Primary public guidance used for the evidence-first curriculum boundary."
+      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH", "EF-PLAY", "EF-PLAY-CURRICULUM-DEPTH", "EF-PLAY-ROUND-PROVENANCE", "EF-PLAY-TECHNICAL-PRESENTATION"], "claims_supported": ["BEH-STRUCTURED-EVIDENCE", "PLAY-COMPETENCY-EVIDENCE-BOUNDARY"], "usage_limits": "Supports job-related competencies, consistent questions, and common evaluation standards; it does not establish one universal employer process or reveal a private rubric.", "notes": "Primary public guidance used for the evidence-first curriculum and Playbook round-evidence boundary."
     },
     {
       "id": "SRC-BEH-OPM-GUIDE", "title": "Structured Interview Guide", "publisher": "U.S. Office of Personnel Management", "url": "https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/guide/", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
-      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH"], "claims_supported": ["BEH-PROBES-AND-ANCHORS"], "usage_limits": "Supports behavioral examples, proficiency boundaries, follow-up probes, and evidence-based anchors; Engineering Foundry remains a preparation product, not a selection procedure.", "notes": "Primary guidance for descriptive probe and rubric design."
+      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH", "EF-PLAY", "EF-PLAY-CURRICULUM-DEPTH", "EF-PLAY-ROUND-PROVENANCE", "EF-PLAY-TECHNICAL-PRESENTATION"], "claims_supported": ["BEH-PROBES-AND-ANCHORS", "PLAY-FOLLOWUP-EVIDENCE-BOUNDARY"], "usage_limits": "Supports behavioral examples, follow-up probes, and evidence-based anchors; Engineering Foundry remains a preparation product, not a selection procedure.", "notes": "Primary guidance for descriptive probes and the Playbook's evidence-versus-prediction boundary."
+    },
+    {
+      "id": "SRC-PLAY-EEOC-ACCOMMODATION", "title": "Enforcement Guidance on Reasonable Accommodation and Undue Hardship under the ADA", "publisher": "U.S. Equal Employment Opportunity Commission", "url": "https://www.eeoc.gov/laws/guidance/enforcement-guidance-reasonable-accommodation-and-undue-hardship-under-ada#jobapplicants", "source_class": "official documentation", "published_at": "2002-10-17", "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-PLAY", "EF-PLAY-CURRICULUM-DEPTH", "EF-PLAY-ROUND-PROVENANCE", "EF-PLAY-TECHNICAL-PRESENTATION"], "claims_supported": ["PLAY-ACCOMMODATION-ROUTING"], "usage_limits": "U.S.-specific guidance for routing applicant accommodation needs to the employer's current channel; do not make eligibility decisions or generalize across jurisdictions.", "notes": "Primary government boundary source for candidate-facing accommodation routing."
+    },
+    {
+      "id": "SRC-PLAY-MIT-PRESENTATION", "title": "Structuring a Slide Presentation", "publisher": "MIT NSE Communication Lab", "url": "https://mitcommlab.mit.edu/nse/commkit/structuring-a-slide-presentation/", "source_class": "first-party engineering/science", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-PLAY", "EF-PLAY-CURRICULUM-DEPTH", "EF-PLAY-ROUND-PROVENANCE", "EF-PLAY-TECHNICAL-PRESENTATION"], "claims_supported": ["PLAY-PRESENTATION-AUDIENCE", "PLAY-PRESENTATION-MESSAGE", "PLAY-PRESENTATION-EVIDENCE"], "usage_limits": "Use for audience, purpose, central-message, evidence, structure, format, and question planning; interview-specific execution remains a reviewed synthesis and actual assignment instructions control.", "notes": "University technical-communication source anchoring the published technical-presentation dossier."
+    },
+    {
+      "id": "SRC-PLAY-YALE-AFTER-INTERVIEW", "title": "After the Interview", "publisher": "Yale Law School Career Development Office", "url": "https://law.yale.edu/student-life/career-development/students/toolkit-student-job-seekers/interviewing/after-the-interview", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-PLAY", "EF-PLAY-CURRICULUM-DEPTH"], "claims_supported": ["PLAY-POST-INTERVIEW-FACTS", "PLAY-RECRUITER-TIMELINE"], "usage_limits": "Use for prompt factual notes and preserving the employer's stated timeline; do not generalize school-specific conventions into mandatory timing or messaging.", "notes": "Current university career guidance supporting the private debrief and follow-up boundaries."
     },
     {
       "id": "SRC-BEH-GOVUK-SUCCESS", "title": "Success Profiles", "publisher": "UK Cabinet Office", "url": "https://www.gov.uk/government/publications/success-profiles", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",

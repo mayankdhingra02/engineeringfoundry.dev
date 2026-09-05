@@ -33,7 +33,7 @@ import {
 } from "../lib/interview-preparation/task-action-input.ts";
 import { ALL_CHECKLIST_IDS, checklistForRound, modulesForRound, resolveRoundPreparationContext } from "../lib/interview-preparation/model.ts";
 import { resolvePreparationCounts } from "../lib/interview-preparation/preparation-counts.ts";
-import { buildInterviewPlaybookOverview } from "../lib/interview-playbook/overview.ts";
+import { buildInterviewPlaybookOverview, selectLatestCompletedInterviewPlaybookRound } from "../lib/interview-playbook/overview.ts";
 import { resolveInterviewPlaybookTiming } from "../lib/interview-playbook/timing.ts";
 import { isActiveInterviewProcess } from "../lib/applications/insights.ts";
 import { STATIC_STEPS } from "./release-verification-manifest.mjs";
@@ -766,6 +766,7 @@ const case1Overview = overviewOf([
 const case2Completed = makeRound({ id: "round-completed", roundNumber: 1, status: "Completed", result: "Passed", scheduledAt: "2026-08-05T10:00:00.000Z" });
 const case2Upcoming = makeRound({ id: "round-upcoming", roundNumber: 2, status: "Scheduled", scheduledAt: "2026-08-22T10:00:00.000Z" });
 const case2Overview = overviewOf([makeApplication({ rounds: [case2Completed, case2Upcoming] })]);
+const case2DebriefRound = selectLatestCompletedInterviewPlaybookRound(case2Overview.applications);
 const case2CompletedSummary = case2Overview.applications[0].rounds.find((round) => round.id === "round-completed");
 
 // Case 3: a cancelled future round is not primary.
@@ -1150,6 +1151,8 @@ const cases = [
   ["playbook overview: a completed round is excluded from upcomingRounds", !case2Overview.upcomingRounds.some((round) => round.id === "round-completed")],
   ["playbook overview: a completed round is never primary", case2Overview.primaryRound?.id !== "round-completed"],
   ["playbook overview: the future active round is primary instead", case2Overview.primaryRound?.id === "round-upcoming"],
+  ["playbook overview: latest completed round is selected for debrief without affecting primary action", case2DebriefRound?.id === "round-completed"],
+  ["playbook overview: empty applications produce no debrief handoff", selectLatestCompletedInterviewPlaybookRound([]) === null],
   ["playbook overview: a cancelled round is classified cancelled", case3CancelledSummary.state === "cancelled"],
   ["playbook overview: a cancelled round is excluded from upcomingRounds", case3Overview.upcomingRounds.length === 0],
   ["playbook overview: a cancelled-only application has no primary round", case3Overview.primaryRound === null],
@@ -1258,7 +1261,7 @@ const cases = [
   ["playbook page: contains no randomness", !playbookPage.includes("Math.random")],
   ["playbook page: does not reference private notes", !playbookPage.includes("private_notes") && !playbookPage.includes("private notes")],
   ["playbook page: does not reference behavioral story content", !playbookPage.includes("short_summary") && !playbookPage.includes("situation") && !playbookPage.includes("STAR")],
-  ["playbook page: does not reference reflections", !playbookPage.includes("went_well") && !playbookPage.includes("needs_improvement") && !playbookPage.includes("reflection")],
+  ["playbook page: links to the owner-scoped reflection without reading reflection fields", !playbookPage.includes("went_well") && !playbookPage.includes("needs_improvement") && playbookPage.includes("selectLatestCompletedInterviewPlaybookRound") && playbookPage.includes("#debrief")],
   ["playbook page: does not reference interviewer names", !playbookPage.includes("interviewer_name") && !playbookPage.includes("interviewerName")],
   ["playbook page: does not reference meeting links", !playbookPage.includes("meeting_link") && !playbookPage.includes("meetingLink")],
   ["playbook page: does not reference custom task titles", !playbookPage.includes("interview_preparation_custom_tasks") && !playbookPage.includes("customTask")],

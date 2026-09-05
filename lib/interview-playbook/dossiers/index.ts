@@ -20,6 +20,7 @@ import { systemDesignDossier } from "./system-design.ts";
 import { mlSystemDesignDossier } from "./ml-system-design.ts";
 import { behavioralDossier } from "./behavioral.ts";
 import { projectDeepDiveDossier } from "./project-deep-dive.ts";
+import { technicalPresentationDossier } from "./technical-presentation.ts";
 
 export type {
   RoundExecutionContentClassification,
@@ -44,6 +45,7 @@ export {
   mlSystemDesignDossier,
   behavioralDossier,
   projectDeepDiveDossier,
+  technicalPresentationDossier,
 };
 
 export const ROUND_EXECUTION_DOSSIERS: readonly RoundExecutionDossier[] = [
@@ -56,6 +58,7 @@ export const ROUND_EXECUTION_DOSSIERS: readonly RoundExecutionDossier[] = [
   mlSystemDesignDossier,
   behavioralDossier,
   projectDeepDiveDossier,
+  technicalPresentationDossier,
 ];
 
 export const ROUND_EXECUTION_DOSSIER_BY_SLUG: ReadonlyMap<RoundExecutionGuideSlug, RoundExecutionDossier> = new Map(

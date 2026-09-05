@@ -9,6 +9,7 @@ import {
   CalendarDays,
   CircleAlert,
   Compass,
+  FileLock2,
   ListChecks,
   MessagesSquare,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { formatInterviewDate } from "@/lib/applications/format";
 import { requireMemberProfile } from "@/lib/auth/guards";
 import { getInterviewPlaybookOverview } from "@/lib/interview-playbook/queries";
+import { selectLatestCompletedInterviewPlaybookRound } from "@/lib/interview-playbook/overview";
 import type { InterviewPlaybookPreparationCount, InterviewPlaybookRoundSummary } from "@/lib/interview-playbook/overview";
 import { resolveInterviewPlaybookTiming } from "@/lib/interview-playbook/timing";
 import {
@@ -123,6 +125,7 @@ export default async function InterviewPlaybookPage() {
   const firstActiveInterviewProcessWithoutRound = overview.activeInterviewProcesses.find((application) => application.nextRound === null) ?? null;
   const firstPreInterviewApplication = overview.preInterviewApplications[0] ?? null;
   const offerStageApplication = overview.applications.find((application) => application.status === "Offer") ?? null;
+  const debriefRound = selectLatestCompletedInterviewPlaybookRound(overview.applications);
 
   function renderDominantAction() {
     // Branch A: a primary round and its detailed action both exist.
@@ -257,6 +260,22 @@ export default async function InterviewPlaybookPage() {
     {primaryRound && primaryAction && primaryTiming?.guidance ? (
       <InterviewPlaybookFinalPreparationMode guidance={primaryTiming.guidance} round={primaryRound} />
     ) : null}
+
+    {debriefRound && <section className="prep-module" aria-labelledby="playbook-debrief-heading">
+      <header>
+        <FileLock2 size={21} aria-hidden="true" />
+        <div>
+          <h2 id="playbook-debrief-heading">Private debrief</h2>
+          <p>{debriefRound.companyName} · {debriefRound.roundName}</p>
+        </div>
+      </header>
+      <p>Capture facts, interpretation, and learning separately. Keep prompt details abstract, record any technical disruption, and choose one transferable next action.</p>
+      <div>
+        <Link className="button button-secondary" href={`${debriefRound.preparationHref}#debrief`}>Open private reflection</Link>
+        <Link className="text-link" href="/interview-tips#debrief">Review the debrief framework</Link>
+      </div>
+      <p className="prep-privacy">This reflection belongs to the owning round. It is not published as an Interview Experience or used to predict the outcome.</p>
+    </section>}
 
     <InterviewPlaybookDiagnosticInputForm
       hasSavedInputs={diagnosticInputs.hasSavedInputs}
