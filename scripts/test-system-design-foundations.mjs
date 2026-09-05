@@ -11,6 +11,7 @@ const messagingIds = ["sync-vs-async", "message-queues", "producers-consumers", 
 const reliabilityIds = ["failure-thinking", "timeouts", "retries", "exponential-backoff-jitter", "idempotency", "circuit-breaker", "bulkheads", "graceful-degradation", "load-shedding", "backpressure-reliability", "health-checks", "failover", "distributed-locks", "leases-fencing-tokens", "leader-election", "quorums", "distributed-consensus", "raft", "distributed-transactions", "two-phase-commit", "saga", "multi-region", "active-passive-active-active", "disaster-recovery", "rpo-rto", "partial-failure"];
 const productionEngineeringIds = ["observability", "logs", "metrics", "distributed-tracing", "request-ids", "alerts", "slis", "slos", "error-budgets", "authn-authz", "sessions-tokens", "jwt", "oauth-oidc", "tls", "encryption", "secrets-management", "api-abuse-ddos", "tenant-authorization"];
 const architecturePatternIds = ["scaling-reads", "scaling-writes", "read-heavy-systems", "write-heavy-systems", "fan-out", "fanout-read-write", "background-jobs", "long-running-jobs", "batch-vs-streaming", "cqrs", "handling-hot-partitions", "handling-contention", "multi-step-workflows", "large-file-processing"];
+const requiredClosureIds = ["schema-data-migration", "incident-recovery-postmortems", "security-threat-modeling", "cost-efficiency", "operational-ownership", "backfill-rebuild", "control-plane-data-plane", "payments-ledgers", "distributed-file-systems", "storage-compute-separation"];
 const specializedIds = ["full-text-search", "inverted-indexes", "search-engine-concepts", "search-autocomplete", "tries-prefix-search", "geospatial-search", "geohashing", "quadtrees", "notification-delivery", "job-schedulers", "leaderboards", "distributed-counters", "web-crawling", "media-processing", "bloom-filters", "hyperloglog", "count-min-sketch", "collaborative-editing", "operational-transformation", "crdts", "vector-search", "embeddings-infrastructure", "model-serving", "feature-stores", "choosing-specialized-blocks"];
 const technologyIds = ["redis", "kafka-deep-dive", "postgresql", "dynamodb", "elasticsearch", "s3", "cassandra", "rabbitmq", "sqs", "zookeeper", "etcd", "flink-deep-dive"];
 const contentFiles = {
@@ -34,7 +35,7 @@ for (const id of foundationIds) {
 }
 
 const publishedIds = systemDesignTopicManifest.filter((topic) => topic.published).map((topic) => topic.id).sort();
-assert.deepEqual(publishedIds, [...foundationIds, ...networkingIds, ...dataStorageIds, ...cachingIds, ...messagingIds, ...reliabilityIds, ...productionEngineeringIds, ...architecturePatternIds, ...specializedIds, ...technologyIds].sort(), "Only reviewed content families should be published.");
+assert.deepEqual(publishedIds, [...foundationIds, ...networkingIds, ...dataStorageIds, ...cachingIds, ...messagingIds, ...reliabilityIds, ...productionEngineeringIds, ...architecturePatternIds, ...requiredClosureIds, ...specializedIds, ...technologyIds].sort(), "Only reviewed content families should be published.");
 
 const contents = Object.fromEntries(await Promise.all(Object.entries(contentFiles).map(async ([id, file]) => [id, await readFile(file, "utf8")])));
 for (const [id, source] of Object.entries(contents)) {

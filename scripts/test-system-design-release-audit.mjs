@@ -20,6 +20,7 @@ import { cachingSources } from "../content/system-design/caching/sources.ts";
 import { architecturePatternSources } from "../content/system-design/architecture-patterns/sources.ts";
 import { messagingSources } from "../content/system-design/messaging/sources.ts";
 import { productionEngineeringSources } from "../content/system-design/production-engineering/sources.ts";
+import { requiredClosureSources } from "../content/system-design/required-closure/sources.ts";
 import { reliabilitySources } from "../content/system-design/reliability/sources.ts";
 import { specializedSources } from "../content/system-design/specialized/sources.ts";
 import { technologySources } from "../content/system-design/technology/sources.ts";
@@ -56,7 +57,7 @@ assert.ok(systemDesignTopicManifest.every((topic) => topic.practiceProblems.ever
 assert.ok(systemDesignPracticeProblemManifest.every((problem) => [...problem.prerequisites, ...problem.concepts].every((id) => topicIds.has(id))), "Every practice concept must resolve.");
 assert.ok(systemDesignTopicManifest.every((topic) => Number.isInteger(topic.estimatedMinutes) && topic.estimatedMinutes > 0), "Lesson estimates must use positive whole minutes.");
 
-const sourceMaps = [foundationSources, networkingSources, dataStorageSources, cachingSources, messagingSources, reliabilitySources, productionEngineeringSources, architecturePatternSources, specializedSources, technologySources];
+const sourceMaps = [foundationSources, networkingSources, dataStorageSources, cachingSources, messagingSources, reliabilitySources, productionEngineeringSources, architecturePatternSources, requiredClosureSources, specializedSources, technologySources];
 const sourceIds = new Set(sourceMaps.flatMap((sourceMap) => Object.keys(sourceMap)));
 const sourceUrls = [...new Set(sourceMaps.flatMap((sourceMap) => Object.values(sourceMap)).flat().map((source) => source.url))];
 assert.deepEqual(systemDesignTopicManifest.filter((topic) => topic.published && topic.id !== "introduction" && !sourceIds.has(topic.id)).map((topic) => topic.id), [], "Every published technical lesson needs Further Reading coverage.");
@@ -119,9 +120,10 @@ assert.equal(inventory.summary.topics, systemDesignTopicManifest.length, "Invent
 assert.equal(inventory.summary.subtopics, subtopicIds.length, "Inventory subtopic count is stale.");
 assert.equal(inventory.summary.practiceProblems, systemDesignPracticeProblemManifest.length, "Inventory practice count is stale.");
 assert.equal(inventory.summary.publishedTopics, publishedTopicIds.size, "Inventory published count is stale.");
-assert.equal(visuals.mermaidDiagrams, 154, "Visual inventory must include 100 concept diagrams and 54 practice diagrams.");
+assert.equal(visuals.mermaidDiagrams, 164, "Visual inventory must include 110 concept diagrams and 54 practice diagrams.");
 for (const lessonId of ["distributed-tracing", "oauth-oidc", "tls", "api-abuse-ddos"]) assert.ok(visuals.diagrams.some((diagram) => diagram.lessonId === lessonId), `${lessonId} must appear in the visual inventory.`);
 for (const lessonId of ["scaling-reads", "fan-out", "background-jobs", "batch-vs-streaming", "cqrs", "multi-step-workflows", "large-file-processing"]) assert.ok(visuals.diagrams.some((diagram) => diagram.lessonId === lessonId), `${lessonId} must appear in the visual inventory.`);
+for (const lessonId of ["schema-data-migration", "incident-recovery-postmortems", "security-threat-modeling", "cost-efficiency", "operational-ownership", "backfill-rebuild", "control-plane-data-plane", "payments-ledgers", "distributed-file-systems", "storage-compute-separation"]) assert.ok(visuals.diagrams.some((diagram) => diagram.lessonId === lessonId), `${lessonId} must appear in the visual inventory.`);
 assert.ok(visuals.diagrams.every((diagram) => diagram.lessonId && diagram.purpose && diagram.nodes > 0 && diagram.mobileStatus && diagram.darkModeStatus), "Every diagram needs a lesson, purpose, node count, and responsive/theme status.");
 
 const routeSource = readFileSync("app/system-design/[...segments]/page.tsx", "utf8");

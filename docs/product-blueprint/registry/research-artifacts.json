@@ -78,7 +78,7 @@
       "availability": "missing",
       "approval_status": "unverified",
       "verified_at": null,
-      "notes": "The original topic-map research and source corpus have not been imported; the 161-to-178 scope mismatch remains unresolved."
+      "notes": "The original topic-map research and source corpus have not been imported. The separately reviewed 161-to-188 repository crosswalk resolves current Required publication scope but does not substitute for this missing historical artifact."
     },
     {
       "id": "RA-SD-CONTENT-RESEARCH-BLUEPRINT",

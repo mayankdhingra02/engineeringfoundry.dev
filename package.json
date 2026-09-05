@@ -85,6 +85,7 @@
     "test:system-design-reliability": "node --experimental-strip-types --no-warnings scripts/test-system-design-reliability.mjs",
     "test:system-design-production-engineering": "node --experimental-strip-types --no-warnings scripts/test-system-design-production-engineering.mjs",
     "test:system-design-architecture-patterns": "node --experimental-strip-types --no-warnings scripts/test-system-design-architecture-patterns.mjs",
+    "test:system-design-required-closure": "node --experimental-strip-types --no-warnings scripts/test-system-design-required-closure.mjs",
     "test:system-design-topic-crosswalk": "node --experimental-strip-types --no-warnings scripts/test-system-design-topic-crosswalk.mjs",
     "test:system-design-specialized": "node --experimental-strip-types --no-warnings scripts/test-system-design-specialized.mjs",
     "test:system-design-technology": "node --experimental-strip-types --no-warnings scripts/test-system-design-technology.mjs",

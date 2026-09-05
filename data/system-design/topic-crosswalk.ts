@@ -124,19 +124,19 @@ export const systemDesignBlueprintCrosswalk: readonly SystemDesignBlueprintCross
   row("Reliability", "Thundering Herd", "merged", ["cache-stampedes"]),
   row("Reliability", "Dependency Failure and Fallback", "split", ["failure-thinking", "partial-failure"]),
   row("Reliability", "Capacity Planning and Headroom", "split", ["estimation", "core-system-properties"]),
-  row("Reliability", "Schema and Data Migration", "blueprint-only"),
-  row("Reliability", "Incident Recovery and Postmortems", "blueprint-only"),
+  row("Reliability", "Schema and Data Migration", "exact", ["schema-data-migration"]),
+  row("Reliability", "Incident Recovery and Postmortems", "exact", ["incident-recovery-postmortems"]),
 
   row("Observability & Operations", "Logs, Metrics, and Traces", "split", ["observability", "logs", "metrics", "distributed-tracing", "request-ids"]),
   row("Observability & Operations", "SLIs, SLOs, and Error Budgets", "split", ["slis", "slos", "error-budgets"]),
   row("Observability & Operations", "Alerting", "exact", ["alerts"]),
   row("Observability & Operations", "Distributed Monitoring", "merged", ["observability"]),
-  row("Observability & Operations", "Security Threat Modeling", "blueprint-only"),
+  row("Observability & Operations", "Security Threat Modeling", "exact", ["security-threat-modeling"]),
   row("Observability & Operations", "Authentication vs Authorization", "split", ["authn-authz", "sessions-tokens", "jwt", "oauth-oidc", "tenant-authorization"]),
   row("Observability & Operations", "Secrets and Key Management", "split", ["secrets-management", "encryption"]),
   row("Observability & Operations", "Abuse Prevention", "exact", ["api-abuse-ddos"]),
-  row("Observability & Operations", "Cost and Efficiency", "blueprint-only"),
-  row("Observability & Operations", "Operational Ownership", "blueprint-only"),
+  row("Observability & Operations", "Cost and Efficiency", "exact", ["cost-efficiency"]),
+  row("Observability & Operations", "Operational Ownership", "exact", ["operational-ownership"]),
 
   row("Common Patterns", "Scaling Reads", "exact", ["scaling-reads"]),
   row("Common Patterns", "Scaling Writes", "exact", ["scaling-writes"]),
@@ -153,8 +153,8 @@ export const systemDesignBlueprintCrosswalk: readonly SystemDesignBlueprintCross
   row("Common Patterns", "Hot-Key Mitigation", "split", ["handling-hot-partitions", "hot-keys"]),
   row("Common Patterns", "Multi-Region Read/Write", "split", ["multi-region", "active-passive-active-active"]),
   row("Common Patterns", "Graceful Degradation", "merged", ["graceful-degradation"]),
-  row("Common Patterns", "Backfill and Rebuild", "blueprint-only"),
-  row("Common Patterns", "Control Plane vs Data Plane", "blueprint-only"),
+  row("Common Patterns", "Backfill and Rebuild", "exact", ["backfill-rebuild"]),
+  row("Common Patterns", "Control Plane vs Data Plane", "exact", ["control-plane-data-plane"]),
   row("Common Patterns", "Multi-Tenancy", "exact", ["tenant-authorization"]),
 
   row("Specialized Building Blocks", "Full-Text Search", "split", ["full-text-search", "inverted-indexes", "search-engine-concepts"]),
@@ -168,7 +168,7 @@ export const systemDesignBlueprintCrosswalk: readonly SystemDesignBlueprintCross
   row("Specialized Building Blocks", "Web Crawling", "exact", ["web-crawling"]),
   row("Specialized Building Blocks", "Media Processing", "exact", ["media-processing"]),
   row("Specialized Building Blocks", "Collaborative Editing", "split", ["collaborative-editing", "operational-transformation", "crdts"]),
-  row("Specialized Building Blocks", "Payments and Ledgers", "blueprint-only"),
+  row("Specialized Building Blocks", "Payments and Ledgers", "exact", ["payments-ledgers"]),
 
   row("Technology Deep Dives", "Redis", "split", ["redis", "redis-caching"]),
   row("Technology Deep Dives", "Apache Kafka", "split", ["kafka", "kafka-partitions-replication", "kafka-consumer-groups-offsets", "kafka-delivery-guarantees", "kafka-vs-queues", "kafka-deep-dive"]),
@@ -188,9 +188,9 @@ export const systemDesignBlueprintCrosswalk: readonly SystemDesignBlueprintCross
   row("Advanced Topics", "Count-Min Sketch and Heavy Hitters", "exact", ["count-min-sketch"]),
   row("Advanced Topics", "Vector Databases", "exact", ["vector-search"]),
   row("Advanced Topics", "LLM and AI Serving Infrastructure", "split", ["model-serving", "embeddings-infrastructure"]),
-  row("Advanced Topics", "Distributed File Systems", "blueprint-only"),
+  row("Advanced Topics", "Distributed File Systems", "exact", ["distributed-file-systems"]),
   row("Advanced Topics", "Quorum Systems", "exact", ["quorums"]),
-  row("Advanced Topics", "Storage and Compute Separation", "blueprint-only"),
+  row("Advanced Topics", "Storage and Compute Separation", "exact", ["storage-compute-separation"]),
 ];
 
 export const systemDesignRepositoryOnlyTopicIds = ["feature-stores", "choosing-specialized-blocks"] as const;

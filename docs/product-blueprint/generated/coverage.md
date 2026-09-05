@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-04
-repository_sha: c4fb5f57c8e87d86d9b521a652ebf825d0d131d6
-repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac274b5e3d510
+repository_sha: 9427003870c27637d8f2224023878ec8eb1250aa
+repository_state_sha256: 83dc11060a7695d22a67773721c73d8bc2b8c42c2312e3b45062c45a238318d5
 ---
 
 # Engineering Foundry requirement coverage
@@ -13,9 +13,9 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 ## Summary
 
 - Requirements: 34
-- Sources: 45
+- Sources: 60
 - Gap inventory IDs: 18
-- Explicitly unmodeled atomic requirements: 2
+- Explicitly unmodeled atomic requirements: 1
 
 ### Modeled implementation status
 
@@ -23,9 +23,9 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 1 |
-| partial | 24 |
+| partial | 23 |
 | implemented-unverified | 0 |
-| implemented | 2 |
+| implemented | 3 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -35,7 +35,7 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | Priority | Modeled | Unmodeled | Total |
 | --- | ---: | ---: | ---: |
 | required | 13 | 1 | 14 |
-| p1 | 11 | 1 | 12 |
+| p1 | 11 | 0 | 11 |
 | p2 | 5 | 0 | 5 |
 | requires-founder-approval | 2 | 0 | 2 |
 | requires-new-research | 1 | 0 | 1 |
@@ -67,7 +67,7 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | Family | Modeled | Unmodeled | Total |
 | --- | ---: | ---: | ---: |
 | EF-GLOBAL | 2 | 1 | 3 |
-| EF-SD | 3 | 1 | 4 |
+| EF-SD | 3 | 0 | 3 |
 | EF-ML | 4 | 0 | 4 |
 | EF-DSA | 3 | 0 | 3 |
 | EF-BEH | 2 | 0 | 2 |
@@ -103,7 +103,7 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | referrals | 1 | 0 | 1 |
 | salary-negotiation | 1 | 0 | 1 |
 | supporting-routes | 1 | 0 | 1 |
-| system-design | 3 | 1 | 4 |
+| system-design | 3 | 0 | 3 |
 | visualization-lab | 1 | 0 | 1 |
 
 ## Requirement inventory
@@ -138,9 +138,9 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | — | /interview-tips/rounds/[slug] | 0 | 1 | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
 | EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | placeholder | needs-research | unpublished | missing | — | — | 0 | 1 | The index honestly identifies this role-specific guide as outside current v1. |
 | EF-SAL | salary-negotiation | required | partial | needs-current-verification | stale-review | missing | /salary-negotiation | — | 0 | 1 | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
-| EF-SD | system-design | required | partial | needs-research | stale-review | claim-recorded | /system-design/start-here/introduction | — | 35 | 12 | All 178 repository topics are published; the reviewed crosswalk still identifies ten blueprint-only Required outcomes that need publication or an explicit reviewed merged disposition. |
+| EF-SD | system-design | required | implemented | needs-research | stale-review | claim-recorded | /system-design/start-here/introduction | — | 50 | 13 | — |
 | EF-SD-PRACTICE-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | — |
-| EF-SD-TOPIC-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | claim-recorded | — | /system-design/[...segments] | 35 | 8 | — |
+| EF-SD-TOPIC-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | claim-recorded | — | /system-design/[...segments] | 50 | 9 | — |
 | EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 12 | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
 | EF-SUP-REFERRAL-POLICY | referrals | p2 | deferred | needs-current-verification | unpublished | missing | /referrals | — | 0 | 2 | The current local toolkit deliberately directs users to official employer rules and makes no employer-policy claims. |
 | EF-VIZ | visualization-lab | p1 | partial | approved-needs-source-import | unpublished | missing | — | — | 0 | 1 | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
@@ -160,7 +160,6 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-PLAY | modeled | partial | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
 | EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
-| EF-SD | modeled | partial | All 178 repository topics are published; the reviewed crosswalk still identifies ten blueprint-only Required outcomes that need publication or an explicit reviewed merged disposition. |
 | EF-SUP | modeled | partial | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
 | EF-GLOBAL-ATOMIC-COVERAGE | unmodeled | unmodeled | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
 
@@ -177,7 +176,6 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | EF-PLAY-CURRICULUM-DEPTH | modeled | partial | Research methodology and master-depth acceptance mapping remain incomplete. |
 | EF-PLAY-ROUND-PROVENANCE | modeled | partial | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
 | EF-VIZ | modeled | partial | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
-| EF-SD-TAXONOMY-CROSSWALK | unmodeled | unmodeled | A reviewed crosswalk is still required between the blueprint's 161-row target and the repository's 178-topic manifest. |
 
 ## Stale-review items
 
@@ -200,9 +198,9 @@ repository_state_sha256: 994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac27
 | EF-PLAY-CURRICULUM-DEPTH | interview-playbook | needs-current-verification | 0 |
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | needs-current-verification | 0 |
 | EF-SAL | salary-negotiation | needs-current-verification | 0 |
-| EF-SD | system-design | needs-research | 35 |
+| EF-SD | system-design | needs-research | 50 |
 | EF-SD-PRACTICE-COVERAGE | system-design | needs-research | 0 |
-| EF-SD-TOPIC-COVERAGE | system-design | needs-research | 35 |
+| EF-SD-TOPIC-COVERAGE | system-design | needs-research | 50 |
 
 ## External owner gates and blocked items
 
@@ -262,9 +260,9 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-PLAY-ROUND-PROVENANCE | needs-current-verification | missing | — |
 | EF-PLAY-TECHNICAL-PRESENTATION | needs-research | missing | — |
 | EF-SAL | needs-current-verification | missing | — |
-| EF-SD | needs-research | claim-recorded | SRC-SD-AWS-CACHING, SRC-SD-AWS-DYNAMO-PARTITIONS, SRC-SD-AWS-DYNAMO-WRITE-SHARDING, SRC-SD-AWS-IDEMPOTENT-APIS, SRC-SD-AWS-S3-MULTIPART, SRC-SD-AZURE-ASYNC-REPLY, SRC-SD-AZURE-BACKGROUND-JOBS, SRC-SD-AZURE-COMPETING-CONSUMERS, SRC-SD-AZURE-CQRS, SRC-SD-AZURE-SAGA, SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-DATAFLOW, SRC-SD-GOOGLE-DATAFLOW-PLANNING, SRC-SD-GOOGLE-PUBSUB, SRC-SD-GOOGLE-SLO, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-POSTGRES-ISOLATION, SRC-SD-POSTGRES-LOCKING, SRC-SD-POSTGRES-REPLICATION, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846 |
+| EF-SD | needs-research | claim-recorded | SRC-SD-AWS-CACHING, SRC-SD-AWS-COST-OPTIMIZATION, SRC-SD-AWS-DMS-CDC, SRC-SD-AWS-DMS-OVERVIEW, SRC-SD-AWS-DMS-VALIDATION, SRC-SD-AWS-DYNAMO-PARTITIONS, SRC-SD-AWS-DYNAMO-WRITE-SHARDING, SRC-SD-AWS-IDEMPOTENT-APIS, SRC-SD-AWS-S3-MULTIPART, SRC-SD-AZURE-ASYNC-REPLY, SRC-SD-AZURE-BACKGROUND-JOBS, SRC-SD-AZURE-COMPETING-CONSUMERS, SRC-SD-AZURE-CQRS, SRC-SD-AZURE-SAGA, SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-DATAFLOW, SRC-SD-GOOGLE-DATAFLOW-PLANNING, SRC-SD-GOOGLE-INCIDENT-MANAGEMENT, SRC-SD-GOOGLE-POSTMORTEM-CULTURE, SRC-SD-GOOGLE-PUBSUB, SRC-SD-GOOGLE-SLO, SRC-SD-GOOGLE-SRE-ENGAGEMENT, SRC-SD-HDFS-ARCHITECTURE, SRC-SD-KUBERNETES-ARCHITECTURE, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-OWASP-THREAT-MODELING, SRC-SD-POSTGRES-ISOLATION, SRC-SD-POSTGRES-LOCKING, SRC-SD-POSTGRES-PITR, SRC-SD-POSTGRES-REPLICATION, SRC-SD-REDSHIFT-MANAGED-STORAGE, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846, SRC-SD-STRIPE-DISPUTES, SRC-SD-STRIPE-IDEMPOTENCY, SRC-SD-STRIPE-RECONCILIATION |
 | EF-SD-PRACTICE-COVERAGE | needs-research | missing | — |
-| EF-SD-TOPIC-COVERAGE | needs-research | claim-recorded | SRC-SD-AWS-CACHING, SRC-SD-AWS-DYNAMO-PARTITIONS, SRC-SD-AWS-DYNAMO-WRITE-SHARDING, SRC-SD-AWS-IDEMPOTENT-APIS, SRC-SD-AWS-S3-MULTIPART, SRC-SD-AZURE-ASYNC-REPLY, SRC-SD-AZURE-BACKGROUND-JOBS, SRC-SD-AZURE-COMPETING-CONSUMERS, SRC-SD-AZURE-CQRS, SRC-SD-AZURE-SAGA, SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-DATAFLOW, SRC-SD-GOOGLE-DATAFLOW-PLANNING, SRC-SD-GOOGLE-PUBSUB, SRC-SD-GOOGLE-SLO, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-POSTGRES-ISOLATION, SRC-SD-POSTGRES-LOCKING, SRC-SD-POSTGRES-REPLICATION, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846 |
+| EF-SD-TOPIC-COVERAGE | needs-research | claim-recorded | SRC-SD-AWS-CACHING, SRC-SD-AWS-COST-OPTIMIZATION, SRC-SD-AWS-DMS-CDC, SRC-SD-AWS-DMS-OVERVIEW, SRC-SD-AWS-DMS-VALIDATION, SRC-SD-AWS-DYNAMO-PARTITIONS, SRC-SD-AWS-DYNAMO-WRITE-SHARDING, SRC-SD-AWS-IDEMPOTENT-APIS, SRC-SD-AWS-S3-MULTIPART, SRC-SD-AZURE-ASYNC-REPLY, SRC-SD-AZURE-BACKGROUND-JOBS, SRC-SD-AZURE-COMPETING-CONSUMERS, SRC-SD-AZURE-CQRS, SRC-SD-AZURE-SAGA, SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-DATAFLOW, SRC-SD-GOOGLE-DATAFLOW-PLANNING, SRC-SD-GOOGLE-INCIDENT-MANAGEMENT, SRC-SD-GOOGLE-POSTMORTEM-CULTURE, SRC-SD-GOOGLE-PUBSUB, SRC-SD-GOOGLE-SLO, SRC-SD-GOOGLE-SRE-ENGAGEMENT, SRC-SD-HDFS-ARCHITECTURE, SRC-SD-KUBERNETES-ARCHITECTURE, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-OWASP-THREAT-MODELING, SRC-SD-POSTGRES-ISOLATION, SRC-SD-POSTGRES-LOCKING, SRC-SD-POSTGRES-PITR, SRC-SD-POSTGRES-REPLICATION, SRC-SD-REDSHIFT-MANAGED-STORAGE, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846, SRC-SD-STRIPE-DISPUTES, SRC-SD-STRIPE-IDEMPOTENCY, SRC-SD-STRIPE-RECONCILIATION |
 | EF-SUP | not-applicable | not-applicable | — |
 | EF-SUP-REFERRAL-POLICY | needs-current-verification | missing | — |
 | EF-VIZ | approved-needs-source-import | missing | — |
@@ -274,7 +272,6 @@ These states describe recorded provenance only; they do not claim source complet
 | ID | Family | Section | Priority | Reason |
 | --- | --- | --- | --- | --- |
 | EF-GLOBAL-ATOMIC-COVERAGE | EF-GLOBAL | global | required | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
-| EF-SD-TAXONOMY-CROSSWALK | EF-SD | system-design | p1 | A reviewed crosswalk is still required between the blueprint's 161-row target and the repository's 178-topic manifest. |
 
 ## Source records
 
@@ -291,6 +288,10 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-COMP-UBER-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-WALMART-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-SD-AWS-CACHING | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-AWS-COST-OPTIMIZATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-AWS-DMS-CDC | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-AWS-DMS-OVERVIEW | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-AWS-DMS-VALIDATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-AWS-DYNAMO-PARTITIONS | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-AWS-DYNAMO-WRITE-SHARDING | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-AWS-IDEMPOTENT-APIS | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
@@ -303,8 +304,13 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-SD-GOOGLE-ALERTING | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-GOOGLE-DATAFLOW | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-GOOGLE-DATAFLOW-PLANNING | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-GOOGLE-INCIDENT-MANAGEMENT | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-GOOGLE-POSTMORTEM-CULTURE | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-GOOGLE-PUBSUB | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-GOOGLE-SLO | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-GOOGLE-SRE-ENGAGEMENT | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-HDFS-ARCHITECTURE | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-KUBERNETES-ARCHITECTURE | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-NIST-KEY-MANAGEMENT | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-NIST-ZERO-TRUST | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-OIDC-CORE | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
@@ -316,15 +322,21 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-SD-OWASP-MULTI-TENANT | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-OWASP-SECRETS | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-OWASP-SESSION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OWASP-THREAT-MODELING | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-POSTGRES-ISOLATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-POSTGRES-LOCKING | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-POSTGRES-PITR | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-POSTGRES-REPLICATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-REDSHIFT-MANAGED-STORAGE | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-RFC-6749 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-RFC-6750 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-RFC-7519 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-RFC-7636 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-RFC-8725 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-RFC-9846 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-STRIPE-DISPUTES | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-STRIPE-IDEMPOTENCY | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-STRIPE-RECONCILIATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 
 ## Research artifact inputs
 

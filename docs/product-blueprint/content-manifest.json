@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "c4fb5f57c8e87d86d9b521a652ebf825d0d131d6",
-  "repository_state_sha256": "994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac274b5e3d510",
+  "repository_sha": "9427003870c27637d8f2224023878ec8eb1250aa",
+  "repository_state_sha256": "83dc11060a7695d22a67773721c73d8bc2b8c42c2312e3b45062c45a238318d5",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1593,7 +1593,8 @@
         "Private System Design attempt routes reject malformed canonical IDs before member or query work, preserve genuine absent and problem-mismatch not-found outcomes, and propagate owner-scoped query or persisted-document failures through one sanitized unavailable error rather than presenting them as missing attempts.",
         "System Design attempt edits strictly parse one complete canonical runtime worksheet and its loaded integer revision before account work, then accept only an exact correlated one-row result whose revision advances by one; errors, malformed results, and stale zero-row conflicts preserve the current revision and cannot claim a save. Executable parser, result, and pending-edit display-state matrices plus source-integration checks cover draft-preserving manual-submit wiring, synchronous duplicate protection, exact-snapshot truth, atomic live-region semantics, focus-preserving pending/conflict controls, and the conflict-only safe same-attempt recovery link in npm run test:system-design-workspace; rendered draft retention, conflict recovery, focus, and assistive-technology behavior remain browser/manual validation.",
         "Full System Design item-progress edits strictly parse one canonical item/type, complete rich-field snapshot, explicit bookmark presence, and an absent sentinel or persisted revision before account work. The owner-scoped database operation serializes the same item key as status-only quick saves and uses insert-if-absent or timestamp compare-and-swap, so stale full/full, full/quick, and absent/import races cannot silently overwrite a winner; only validated success advances the revision, refreshes, and emits account analytics. Source-integration checks cover the component's draft-preserving manual-submit wiring, duplicate guard, live-region semantics, focus-preserving pending control, and a conflict-only latest-version link whose href is correlated to the canonical public item and whose new-tab attributes are safe; rendered draft retention, conflict recovery, and focus behavior remain browser/manual validation. Executable and source coverage runs in npm run test:system-design-workspace and npm run test:unified-progress, local concurrency/privacy runs in npm run qualify:database, and hosted RPC verification remains an unchecked external-owner step.",
-        "System Design attempt deletion strictly parses the displayed attempt, canonical problem, exact integer revision, and empty action form before account or persistence work, then accepts only a correlated one-row result. Save and delete share an owner/attempt lock, so a concurrent save-versus-delete race has one winner while stale, problem-mismatched, foreign, missing, malformed, and failed deletes preserve the worksheet. The legacy delete fails safely and only the revision-aware confirmation exposes conflict recovery. Executable parser/result and source-integration checks run in npm run test:system-design-workspace; database concurrency, grant, legacy, and owner-privacy evidence runs in npm run qualify:database; hosted races plus rendered confirmation focus and recovery remain unchecked external/browser-manual validation."
+        "System Design attempt deletion strictly parses the displayed attempt, canonical problem, exact integer revision, and empty action form before account or persistence work, then accepts only a correlated one-row result. Save and delete share an owner/attempt lock, so a concurrent save-versus-delete race has one winner while stale, problem-mismatched, foreign, missing, malformed, and failed deletes preserve the worksheet. The legacy delete fails safely and only the revision-aware confirmation exposes conflict recovery. Executable parser/result and source-integration checks run in npm run test:system-design-workspace; database concurrency, grant, legacy, and owner-privacy evidence runs in npm run qualify:database; hosted races plus rendered confirmation focus and recovery remain unchecked external/browser-manual validation.",
+        "All 161 unique Required blueprint topic outcomes map explicitly to 188 published repository lessons; the ten formerly blueprint-only decisions publish as separate decision-first lessons with failure analysis, trade-offs, purposeful diagrams, canonical practice links, and verified first-party sources. All 15 Required practice designs are also published. The focused closure, crosswalk, release-audit, catalog-parity, and database tests close EF-SD without promoting the 33 optional practice ideas into Required scope."
       ],
       "code_paths": [
         "app/globals.css",
@@ -1606,6 +1607,7 @@
         "content/system-design",
         "content/system-design/architecture-patterns",
         "content/system-design/production-engineering",
+        "content/system-design/required-closure",
         "data/system-design/manifest.ts",
         "data/system-design/topic-crosswalk.ts",
         "features/preparation-progress/actions.ts",
@@ -1623,6 +1625,7 @@
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-system-design-architecture-patterns.mjs",
         "scripts/test-system-design-production-engineering.mjs",
+        "scripts/test-system-design-required-closure.mjs",
         "scripts/test-system-design-study-plan.mjs",
         "scripts/test-system-design-topic-crosswalk.mjs",
         "scripts/test-system-design-workspace.mjs",
@@ -1631,6 +1634,7 @@
         "supabase/migrations/202609040010_delete_system_design_attempt_if_revision.sql",
         "supabase/migrations/202609040015_publish_system_design_production_engineering.sql",
         "supabase/migrations/202609040016_publish_system_design_common_patterns.sql",
+        "supabase/migrations/202609040017_publish_system_design_required_closure.sql",
         "supabase/tests/database/preparation_activity_import.test.sql",
         "supabase/tests/database/system_design_workspace.test.sql"
       ],
@@ -1643,11 +1647,9 @@
       "gap_inventory_ids": [],
       "id": "EF-SD",
       "kind": "requirement-family",
-      "known_gaps": [
-        "All 178 repository topics are published; the reviewed crosswalk still identifies ten blueprint-only Required outcomes that need publication or an explicit reviewed merged disposition."
-      ],
+      "known_gaps": [],
       "last_verified_at": "2026-09-04",
-      "notes": "All 15 Required practice designs in Section 6.5 have published walkthroughs; 12 additional P1 designs are also published and 33 optional P1/P2 ideas remain honest unpublished backlog. Do not delete or invent topics to reconcile the 161-to-178 mismatch.",
+      "notes": "Required acceptance is closed without expansion: all 161 unique blueprint topic rows map explicitly to 188 published repository lessons, and all 15 Required practice designs have published walkthroughs. Twelve additional P1 designs are published; 33 optional P1/P2 ideas remain a non-blocking backlog and do not reopen EF-SD.",
       "owner": "system-design",
       "prerequisite_ids": [
         "EF-GLOBAL"
@@ -1666,6 +1668,10 @@
       "section": "system-design",
       "source_ledger_ids": [
         "SRC-SD-AWS-CACHING",
+        "SRC-SD-AWS-COST-OPTIMIZATION",
+        "SRC-SD-AWS-DMS-CDC",
+        "SRC-SD-AWS-DMS-OVERVIEW",
+        "SRC-SD-AWS-DMS-VALIDATION",
         "SRC-SD-AWS-DYNAMO-PARTITIONS",
         "SRC-SD-AWS-DYNAMO-WRITE-SHARDING",
         "SRC-SD-AWS-IDEMPOTENT-APIS",
@@ -1678,8 +1684,13 @@
         "SRC-SD-GOOGLE-ALERTING",
         "SRC-SD-GOOGLE-DATAFLOW",
         "SRC-SD-GOOGLE-DATAFLOW-PLANNING",
+        "SRC-SD-GOOGLE-INCIDENT-MANAGEMENT",
+        "SRC-SD-GOOGLE-POSTMORTEM-CULTURE",
         "SRC-SD-GOOGLE-PUBSUB",
         "SRC-SD-GOOGLE-SLO",
+        "SRC-SD-GOOGLE-SRE-ENGAGEMENT",
+        "SRC-SD-HDFS-ARCHITECTURE",
+        "SRC-SD-KUBERNETES-ARCHITECTURE",
         "SRC-SD-NIST-KEY-MANAGEMENT",
         "SRC-SD-NIST-ZERO-TRUST",
         "SRC-SD-OIDC-CORE",
@@ -1691,17 +1702,23 @@
         "SRC-SD-OWASP-MULTI-TENANT",
         "SRC-SD-OWASP-SECRETS",
         "SRC-SD-OWASP-SESSION",
+        "SRC-SD-OWASP-THREAT-MODELING",
         "SRC-SD-POSTGRES-ISOLATION",
         "SRC-SD-POSTGRES-LOCKING",
+        "SRC-SD-POSTGRES-PITR",
         "SRC-SD-POSTGRES-REPLICATION",
+        "SRC-SD-REDSHIFT-MANAGED-STORAGE",
         "SRC-SD-RFC-6749",
         "SRC-SD-RFC-6750",
         "SRC-SD-RFC-7519",
         "SRC-SD-RFC-7636",
         "SRC-SD-RFC-8725",
-        "SRC-SD-RFC-9846"
+        "SRC-SD-RFC-9846",
+        "SRC-SD-STRIPE-DISPUTES",
+        "SRC-SD-STRIPE-IDEMPOTENCY",
+        "SRC-SD-STRIPE-RECONCILIATION"
       ],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
         "npm run qualify:database",
         "npm run test:canonical-catalog-integrity",
@@ -1711,6 +1728,7 @@
         "npm run test:system-design-practice",
         "npm run test:system-design-production-engineering",
         "npm run test:system-design-release-audit",
+        "npm run test:system-design-required-closure",
         "npm run test:system-design-study-plan",
         "npm run test:system-design-topic-crosswalk",
         "npm run test:system-design-workspace",
@@ -1769,14 +1787,17 @@
         "components/fan-out-demo.tsx",
         "content/system-design/architecture-patterns",
         "content/system-design/production-engineering",
+        "content/system-design/required-closure",
         "data/system-design/manifest.ts",
         "data/system-design/topic-crosswalk.ts",
         "scripts/test-canonical-catalog-integrity.mjs",
         "scripts/test-system-design-architecture-patterns.mjs",
         "scripts/test-system-design-production-engineering.mjs",
+        "scripts/test-system-design-required-closure.mjs",
         "scripts/test-system-design-topic-crosswalk.mjs",
         "supabase/migrations/202609040015_publish_system_design_production_engineering.sql",
         "supabase/migrations/202609040016_publish_system_design_common_patterns.sql",
+        "supabase/migrations/202609040017_publish_system_design_required_closure.sql",
         "supabase/tests/database/system_design_workspace.test.sql"
       ],
       "content_paths": [
@@ -1788,7 +1809,7 @@
       "kind": "content-gap",
       "known_gaps": [],
       "last_verified_at": "2026-09-04",
-      "notes": "Acceptance is closed without expanding the requirement: all 161 unique blueprint rows and all 178 published repository topics now have explicit exact, split, merged, repository-only, or blueprint-only dispositions with research, publication, and route outcomes. The ten blueprint-only Required outcomes remain owned by EF-SD for publication or reviewed merge decisions.",
+      "notes": "Acceptance is closed without expanding the requirement: all 161 unique blueprint rows and all 188 published repository topics have explicit exact, split, merged, or repository-only dispositions with research, publication, and route outcomes; zero blueprint-only Required outcomes remain.",
       "owner": "system-design",
       "prerequisite_ids": [
         "EF-SD"
@@ -1807,6 +1828,10 @@
       "section": "system-design",
       "source_ledger_ids": [
         "SRC-SD-AWS-CACHING",
+        "SRC-SD-AWS-COST-OPTIMIZATION",
+        "SRC-SD-AWS-DMS-CDC",
+        "SRC-SD-AWS-DMS-OVERVIEW",
+        "SRC-SD-AWS-DMS-VALIDATION",
         "SRC-SD-AWS-DYNAMO-PARTITIONS",
         "SRC-SD-AWS-DYNAMO-WRITE-SHARDING",
         "SRC-SD-AWS-IDEMPOTENT-APIS",
@@ -1819,8 +1844,13 @@
         "SRC-SD-GOOGLE-ALERTING",
         "SRC-SD-GOOGLE-DATAFLOW",
         "SRC-SD-GOOGLE-DATAFLOW-PLANNING",
+        "SRC-SD-GOOGLE-INCIDENT-MANAGEMENT",
+        "SRC-SD-GOOGLE-POSTMORTEM-CULTURE",
         "SRC-SD-GOOGLE-PUBSUB",
         "SRC-SD-GOOGLE-SLO",
+        "SRC-SD-GOOGLE-SRE-ENGAGEMENT",
+        "SRC-SD-HDFS-ARCHITECTURE",
+        "SRC-SD-KUBERNETES-ARCHITECTURE",
         "SRC-SD-NIST-KEY-MANAGEMENT",
         "SRC-SD-NIST-ZERO-TRUST",
         "SRC-SD-OIDC-CORE",
@@ -1832,15 +1862,21 @@
         "SRC-SD-OWASP-MULTI-TENANT",
         "SRC-SD-OWASP-SECRETS",
         "SRC-SD-OWASP-SESSION",
+        "SRC-SD-OWASP-THREAT-MODELING",
         "SRC-SD-POSTGRES-ISOLATION",
         "SRC-SD-POSTGRES-LOCKING",
+        "SRC-SD-POSTGRES-PITR",
         "SRC-SD-POSTGRES-REPLICATION",
+        "SRC-SD-REDSHIFT-MANAGED-STORAGE",
         "SRC-SD-RFC-6749",
         "SRC-SD-RFC-6750",
         "SRC-SD-RFC-7519",
         "SRC-SD-RFC-7636",
         "SRC-SD-RFC-8725",
-        "SRC-SD-RFC-9846"
+        "SRC-SD-RFC-9846",
+        "SRC-SD-STRIPE-DISPUTES",
+        "SRC-SD-STRIPE-IDEMPOTENCY",
+        "SRC-SD-STRIPE-RECONCILIATION"
       ],
       "status": "implemented",
       "test_commands": [
@@ -1850,6 +1886,7 @@
         "npm run test:system-design-manifest",
         "npm run test:system-design-production-engineering",
         "npm run test:system-design-release-audit",
+        "npm run test:system-design-required-closure",
         "npm run test:system-design-topic-crosswalk",
         "npm run test:system-design-workspace"
       ],
@@ -2528,7 +2565,7 @@
       "external_record": null,
       "family_id": "EF-SD",
       "id": "RA-SD-CURRICULUM-TOPIC-MAP",
-      "notes": "The original topic-map research and source corpus have not been imported; the 161-to-178 scope mismatch remains unresolved.",
+      "notes": "The original topic-map research and source corpus have not been imported. The separately reviewed 161-to-188 repository crosswalk resolves current Required publication scope but does not substitute for this missing historical artifact.",
       "repository_path": null,
       "requirement_ids": [
         "EF-SD",
@@ -2587,12 +2624,6 @@
       "priority": "required",
       "reason": "The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint.",
       "section": "global"
-    },
-    {
-      "id": "EF-SD-TAXONOMY-CROSSWALK",
-      "priority": "p1",
-      "reason": "A reviewed crosswalk is still required between the blueprint's 161-row target and the repository's 178-topic manifest.",
-      "section": "system-design"
     }
   ]
 }

@@ -3,11 +3,11 @@
   "source": "data/system-design/manifest.ts",
   "summary": {
     "sections": 10,
-    "topics": 178,
-    "subtopics": 1389,
+    "topics": 188,
+    "subtopics": 1465,
     "technologyDeepDives": 12,
     "practiceProblems": 60,
-    "publishedTopics": 178,
+    "publishedTopics": 188,
     "publishedPracticeProblems": 27
   },
   "sections": [
@@ -314,7 +314,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -873,7 +874,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -1339,7 +1341,9 @@
         "idempotency",
         "distributed-locks",
         "distributed-transactions",
+        "schema-data-migration",
         "cqrs",
+        "payments-ledgers",
         "postgresql"
       ]
     },
@@ -1435,6 +1439,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -1492,6 +1497,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -1800,6 +1806,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -2503,6 +2511,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -3451,7 +3460,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -3963,7 +3974,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -4758,7 +4770,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -4848,6 +4861,90 @@
     },
     {
       "type": "topic",
+      "id": "schema-data-migration",
+      "title": "Schema and Data Migration",
+      "slug": "/system-design/patterns/schema-and-data-migration",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "priority": "important",
+      "estimatedMinutes": 30,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "incident-recovery-postmortems",
+      "title": "Incident Recovery and Postmortems",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "priority": "important",
+      "estimatedMinutes": 30,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "topic",
       "id": "observability",
       "title": "Observability",
       "slug": "/system-design/production-engineering/observability",
@@ -4882,7 +4979,8 @@
       "relatedTopics": [
         "logs",
         "metrics",
-        "distributed-tracing"
+        "distributed-tracing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -5082,7 +5180,9 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "metrics"
+        "metrics",
+        "incident-recovery-postmortems",
+        "operational-ownership"
       ]
     },
     {
@@ -5162,7 +5262,9 @@
       },
       "relatedTopics": [
         "slis",
-        "error-budgets"
+        "error-budgets",
+        "cost-efficiency",
+        "operational-ownership"
       ]
     },
     {
@@ -5241,7 +5343,8 @@
         "sessions-tokens",
         "oauth-oidc",
         "secrets-management",
-        "tenant-authorization"
+        "tenant-authorization",
+        "security-threat-modeling"
       ]
     },
     {
@@ -5561,7 +5664,132 @@
       },
       "relatedTopics": [
         "authn-authz",
-        "data-modeling"
+        "data-modeling",
+        "security-threat-modeling"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "security-threat-modeling",
+      "title": "Security Threat Modeling",
+      "slug": "/system-design/production-engineering/security-threat-modeling",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "priority": "must-know",
+      "estimatedMinutes": 30,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "cost-efficiency",
+      "title": "Cost and Efficiency",
+      "slug": "/system-design/production-engineering/cost-and-efficiency",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "priority": "must-know",
+      "estimatedMinutes": 25,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "operational-ownership",
+      "title": "Operational Ownership",
+      "slug": "/system-design/production-engineering/operational-ownership",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "priority": "important",
+      "estimatedMinutes": 25,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -5849,6 +6077,7 @@
         "long-running-jobs",
         "multi-step-workflows",
         "large-file-processing",
+        "backfill-rebuild",
         "job-schedulers",
         "media-processing",
         "model-serving"
@@ -6096,7 +6325,8 @@
       },
       "relatedTopics": [
         "saga",
-        "background-jobs"
+        "background-jobs",
+        "payments-ledgers"
       ]
     },
     {
@@ -6138,6 +6368,88 @@
       "relatedTopics": [
         "large-file-uploads",
         "background-jobs"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "backfill-rebuild",
+      "title": "Backfill and Rebuild",
+      "slug": "/system-design/patterns/backfill-and-rebuild",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "priority": "important",
+      "estimatedMinutes": 25,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "control-plane-data-plane",
+      "title": "Control Plane vs Data Plane",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "priority": "important",
+      "estimatedMinutes": 25,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
       ]
     },
     {
@@ -7184,6 +7496,133 @@
         "geospatial-search",
         "job-schedulers",
         "bloom-filters"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "payments-ledgers",
+      "title": "Payments and Ledgers",
+      "slug": "/system-design/specialized/payments-and-ledgers",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "priority": "must-know",
+      "estimatedMinutes": 35,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "distributed-file-systems",
+      "title": "Distributed File Systems",
+      "slug": "/system-design/specialized/distributed-file-systems",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "priority": "advanced",
+      "estimatedMinutes": 30,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "topic",
+      "id": "storage-compute-separation",
+      "title": "Storage and Compute Separation",
+      "slug": "/system-design/specialized/storage-and-compute-separation",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "priority": "advanced",
+      "estimatedMinutes": 25,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
       ]
     },
     {
@@ -9369,7 +9808,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9440,7 +9880,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9511,7 +9952,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9582,7 +10024,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9653,7 +10096,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9724,7 +10168,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9795,7 +10240,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9866,7 +10312,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -9937,7 +10384,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -10008,7 +10456,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "requirements"
+        "requirements",
+        "cost-efficiency"
       ]
     },
     {
@@ -14581,7 +15030,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -14621,7 +15071,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -14661,7 +15112,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -14701,7 +15153,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -14741,7 +15194,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -14781,7 +15235,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -14821,7 +15276,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -14861,7 +15317,8 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "load-balancing"
+        "load-balancing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -19013,7 +19470,9 @@
         "idempotency",
         "distributed-locks",
         "distributed-transactions",
+        "schema-data-migration",
         "cqrs",
+        "payments-ledgers",
         "postgresql"
       ]
     },
@@ -19064,7 +19523,9 @@
         "idempotency",
         "distributed-locks",
         "distributed-transactions",
+        "schema-data-migration",
         "cqrs",
+        "payments-ledgers",
         "postgresql"
       ]
     },
@@ -19115,7 +19576,9 @@
         "idempotency",
         "distributed-locks",
         "distributed-transactions",
+        "schema-data-migration",
         "cqrs",
+        "payments-ledgers",
         "postgresql"
       ]
     },
@@ -19166,7 +19629,9 @@
         "idempotency",
         "distributed-locks",
         "distributed-transactions",
+        "schema-data-migration",
         "cqrs",
+        "payments-ledgers",
         "postgresql"
       ]
     },
@@ -19217,7 +19682,9 @@
         "idempotency",
         "distributed-locks",
         "distributed-transactions",
+        "schema-data-migration",
         "cqrs",
+        "payments-ledgers",
         "postgresql"
       ]
     },
@@ -19268,7 +19735,9 @@
         "idempotency",
         "distributed-locks",
         "distributed-transactions",
+        "schema-data-migration",
         "cqrs",
+        "payments-ledgers",
         "postgresql"
       ]
     },
@@ -19681,6 +20150,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -19733,6 +20203,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -19785,6 +20256,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -19837,6 +20309,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -19889,6 +20362,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -19941,6 +20415,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -19993,6 +20468,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -20045,6 +20521,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -20097,6 +20574,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -20149,6 +20627,7 @@
         "quorums",
         "multi-region",
         "scaling-reads",
+        "distributed-file-systems",
         "cassandra"
       ]
     },
@@ -20207,6 +20686,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20266,6 +20746,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20325,6 +20806,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20384,6 +20866,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20443,6 +20926,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20502,6 +20986,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20561,6 +21046,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20620,6 +21106,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20679,6 +21166,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20738,6 +21226,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20797,6 +21286,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20856,6 +21346,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20915,6 +21406,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -20974,6 +21466,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -21033,6 +21526,7 @@
         "search-engine-concepts",
         "geospatial-search",
         "distributed-counters",
+        "distributed-file-systems",
         "dynamodb",
         "cassandra"
       ]
@@ -22820,6 +23314,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -22875,6 +23371,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -22930,6 +23428,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -22985,6 +23485,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -23040,6 +23542,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -23095,6 +23599,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -23150,6 +23656,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -23205,6 +23713,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -23260,6 +23770,8 @@
         "data-modeling",
         "large-file-uploads",
         "media-processing",
+        "distributed-file-systems",
+        "storage-compute-separation",
         "s3"
       ]
     },
@@ -28622,6 +29134,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28667,6 +29180,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28712,6 +29226,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28757,6 +29272,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28802,6 +29318,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28847,6 +29364,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28892,6 +29410,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28937,6 +29456,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -28982,6 +29502,7 @@
       "relatedTopics": [
         "caching",
         "consistent-hashing",
+        "storage-compute-separation",
         "redis"
       ]
     },
@@ -36940,7 +37461,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -36982,7 +37505,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37024,7 +37549,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37066,7 +37593,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37108,7 +37637,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37150,7 +37681,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37192,7 +37725,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37234,7 +37769,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37276,7 +37813,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -37318,7 +37857,9 @@
       },
       "relatedTopics": [
         "replication",
-        "event-streaming"
+        "event-streaming",
+        "schema-data-migration",
+        "backfill-rebuild"
       ]
     },
     {
@@ -41511,7 +42052,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -41556,7 +42098,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -41601,7 +42144,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -41646,7 +42190,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -41691,7 +42236,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -41736,7 +42282,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -41781,7 +42328,8 @@
       "relatedTopics": [
         "transactions",
         "retries",
-        "saga"
+        "saga",
+        "payments-ledgers"
       ]
     },
     {
@@ -46595,7 +47143,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -46636,7 +47185,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -46677,7 +47227,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -46718,7 +47269,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -46759,7 +47311,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -46800,7 +47353,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -46841,7 +47395,8 @@
       },
       "relatedTopics": [
         "multi-region",
-        "rpo-rto"
+        "rpo-rto",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -47373,6 +47928,608 @@
     },
     {
       "type": "subtopic",
+      "id": "schema-data-migration-expand-and-contract",
+      "title": "Expand and contract",
+      "slug": "/system-design/patterns/schema-and-data-migration#schema-data-migration-expand-and-contract",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "schema-data-migration",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "schema-data-migration-version-compatibility",
+      "title": "Version compatibility",
+      "slug": "/system-design/patterns/schema-and-data-migration#schema-data-migration-version-compatibility",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "schema-data-migration",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "schema-data-migration-bounded-backfill",
+      "title": "Bounded backfill",
+      "slug": "/system-design/patterns/schema-and-data-migration#schema-data-migration-bounded-backfill",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "schema-data-migration",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "schema-data-migration-change-capture",
+      "title": "Change capture",
+      "slug": "/system-design/patterns/schema-and-data-migration#schema-data-migration-change-capture",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "schema-data-migration",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "schema-data-migration-parity-verification",
+      "title": "Parity verification",
+      "slug": "/system-design/patterns/schema-and-data-migration#schema-data-migration-parity-verification",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "schema-data-migration",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "schema-data-migration-cutover",
+      "title": "Cutover",
+      "slug": "/system-design/patterns/schema-and-data-migration#schema-data-migration-cutover",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "schema-data-migration",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "schema-data-migration-rollback",
+      "title": "Rollback",
+      "slug": "/system-design/patterns/schema-and-data-migration#schema-data-migration-rollback",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "schema-data-migration",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "transactions",
+        "change-data-capture"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "change-data-capture"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "incident-recovery-postmortems-declaration",
+      "title": "Declaration",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems#incident-recovery-postmortems-declaration",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "incident-recovery-postmortems",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "incident-recovery-postmortems-incident-command",
+      "title": "Incident command",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems#incident-recovery-postmortems-incident-command",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "incident-recovery-postmortems",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "incident-recovery-postmortems-mitigation",
+      "title": "Mitigation",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems#incident-recovery-postmortems-mitigation",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "incident-recovery-postmortems",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "incident-recovery-postmortems-recovery-verification",
+      "title": "Recovery verification",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems#incident-recovery-postmortems-recovery-verification",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "incident-recovery-postmortems",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "incident-recovery-postmortems-communication",
+      "title": "Communication",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems#incident-recovery-postmortems-communication",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "incident-recovery-postmortems",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "incident-recovery-postmortems-blameless-learning",
+      "title": "Blameless learning",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems#incident-recovery-postmortems-blameless-learning",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "incident-recovery-postmortems",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "incident-recovery-postmortems-owned-action-items",
+      "title": "Owned action items",
+      "slug": "/system-design/patterns/incident-recovery-and-postmortems#incident-recovery-postmortems-owned-action-items",
+      "section": "Reliability & Distributed Systems",
+      "sectionId": "reliability",
+      "parentTopicId": "incident-recovery-postmortems",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "disaster-recovery",
+        "operational-ownership"
+      ]
+    },
+    {
+      "type": "subtopic",
       "id": "observability-signals",
       "title": "Signals",
       "slug": "/system-design/production-engineering/observability#observability-signals",
@@ -47408,7 +48565,8 @@
       "relatedTopics": [
         "logs",
         "metrics",
-        "distributed-tracing"
+        "distributed-tracing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -47448,7 +48606,8 @@
       "relatedTopics": [
         "logs",
         "metrics",
-        "distributed-tracing"
+        "distributed-tracing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -47488,7 +48647,8 @@
       "relatedTopics": [
         "logs",
         "metrics",
-        "distributed-tracing"
+        "distributed-tracing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -47528,7 +48688,8 @@
       "relatedTopics": [
         "logs",
         "metrics",
-        "distributed-tracing"
+        "distributed-tracing",
+        "control-plane-data-plane"
       ]
     },
     {
@@ -48353,7 +49514,9 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "metrics"
+        "metrics",
+        "incident-recovery-postmortems",
+        "operational-ownership"
       ]
     },
     {
@@ -48393,7 +49556,9 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "metrics"
+        "metrics",
+        "incident-recovery-postmortems",
+        "operational-ownership"
       ]
     },
     {
@@ -48433,7 +49598,9 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "metrics"
+        "metrics",
+        "incident-recovery-postmortems",
+        "operational-ownership"
       ]
     },
     {
@@ -48473,7 +49640,9 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "metrics"
+        "metrics",
+        "incident-recovery-postmortems",
+        "operational-ownership"
       ]
     },
     {
@@ -48513,7 +49682,9 @@
         "needsAdditionalVerification": false
       },
       "relatedTopics": [
-        "metrics"
+        "metrics",
+        "incident-recovery-postmortems",
+        "operational-ownership"
       ]
     },
     {
@@ -48759,7 +49930,9 @@
       },
       "relatedTopics": [
         "slis",
-        "error-budgets"
+        "error-budgets",
+        "cost-efficiency",
+        "operational-ownership"
       ]
     },
     {
@@ -48800,7 +49973,9 @@
       },
       "relatedTopics": [
         "slis",
-        "error-budgets"
+        "error-budgets",
+        "cost-efficiency",
+        "operational-ownership"
       ]
     },
     {
@@ -48841,7 +50016,9 @@
       },
       "relatedTopics": [
         "slis",
-        "error-budgets"
+        "error-budgets",
+        "cost-efficiency",
+        "operational-ownership"
       ]
     },
     {
@@ -48882,7 +50059,9 @@
       },
       "relatedTopics": [
         "slis",
-        "error-budgets"
+        "error-budgets",
+        "cost-efficiency",
+        "operational-ownership"
       ]
     },
     {
@@ -48923,7 +50102,9 @@
       },
       "relatedTopics": [
         "slis",
-        "error-budgets"
+        "error-budgets",
+        "cost-efficiency",
+        "operational-ownership"
       ]
     },
     {
@@ -49124,7 +50305,8 @@
         "sessions-tokens",
         "oauth-oidc",
         "secrets-management",
-        "tenant-authorization"
+        "tenant-authorization",
+        "security-threat-modeling"
       ]
     },
     {
@@ -49165,7 +50347,8 @@
         "sessions-tokens",
         "oauth-oidc",
         "secrets-management",
-        "tenant-authorization"
+        "tenant-authorization",
+        "security-threat-modeling"
       ]
     },
     {
@@ -49206,7 +50389,8 @@
         "sessions-tokens",
         "oauth-oidc",
         "secrets-management",
-        "tenant-authorization"
+        "tenant-authorization",
+        "security-threat-modeling"
       ]
     },
     {
@@ -49247,7 +50431,8 @@
         "sessions-tokens",
         "oauth-oidc",
         "secrets-management",
-        "tenant-authorization"
+        "tenant-authorization",
+        "security-threat-modeling"
       ]
     },
     {
@@ -50679,7 +51864,8 @@
       },
       "relatedTopics": [
         "authn-authz",
-        "data-modeling"
+        "data-modeling",
+        "security-threat-modeling"
       ]
     },
     {
@@ -50721,7 +51907,8 @@
       },
       "relatedTopics": [
         "authn-authz",
-        "data-modeling"
+        "data-modeling",
+        "security-threat-modeling"
       ]
     },
     {
@@ -50763,7 +51950,8 @@
       },
       "relatedTopics": [
         "authn-authz",
-        "data-modeling"
+        "data-modeling",
+        "security-threat-modeling"
       ]
     },
     {
@@ -50805,7 +51993,8 @@
       },
       "relatedTopics": [
         "authn-authz",
-        "data-modeling"
+        "data-modeling",
+        "security-threat-modeling"
       ]
     },
     {
@@ -50847,7 +52036,1024 @@
       },
       "relatedTopics": [
         "authn-authz",
-        "data-modeling"
+        "data-modeling",
+        "security-threat-modeling"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-scope",
+      "title": "Scope",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-scope",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-assets",
+      "title": "Assets",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-assets",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-actors",
+      "title": "Actors",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-actors",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-trust-boundaries",
+      "title": "Trust boundaries",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-trust-boundaries",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-data-flows",
+      "title": "Data flows",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-data-flows",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-abuse-paths",
+      "title": "Abuse paths",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-abuse-paths",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-mitigations",
+      "title": "Mitigations",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-mitigations",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "security-threat-modeling-validation",
+      "title": "Validation",
+      "slug": "/system-design/production-engineering/security-threat-modeling#security-threat-modeling-validation",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "security-threat-modeling",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "authn-authz",
+        "tenant-authorization"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "authn-authz",
+        "tenant-authorization"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-cost-per-useful-unit",
+      "title": "Cost per useful unit",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-cost-per-useful-unit",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-compute",
+      "title": "Compute",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-compute",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-storage",
+      "title": "Storage",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-storage",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-operations",
+      "title": "Operations",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-operations",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-network-transfer",
+      "title": "Network transfer",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-network-transfer",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-headroom",
+      "title": "Headroom",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-headroom",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-attribution",
+      "title": "Attribution",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-attribution",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "cost-efficiency-optimization",
+      "title": "Optimization",
+      "slug": "/system-design/production-engineering/cost-and-efficiency#cost-efficiency-optimization",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "cost-efficiency",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "estimation",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "estimation",
+        "slos"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-service-owner",
+      "title": "Service owner",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-service-owner",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-deploy-and-rollback",
+      "title": "Deploy and rollback",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-deploy-and-rollback",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-monitoring",
+      "title": "Monitoring",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-monitoring",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-on-call",
+      "title": "On-call",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-on-call",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-data-migration",
+      "title": "Data migration",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-data-migration",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-dependency-boundary",
+      "title": "Dependency boundary",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-dependency-boundary",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-handoff",
+      "title": "Handoff",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-handoff",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "operational-ownership-deprecation",
+      "title": "Deprecation",
+      "slug": "/system-design/production-engineering/operational-ownership#operational-ownership-deprecation",
+      "section": "Observability & Security",
+      "sectionId": "observability-security",
+      "parentTopicId": "operational-ownership",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "alerts",
+        "slos"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "alerts",
+        "slos",
+        "incident-recovery-postmortems"
       ]
     },
     {
@@ -52146,6 +54352,7 @@
         "long-running-jobs",
         "multi-step-workflows",
         "large-file-processing",
+        "backfill-rebuild",
         "job-schedulers",
         "media-processing",
         "model-serving"
@@ -52192,6 +54399,7 @@
         "long-running-jobs",
         "multi-step-workflows",
         "large-file-processing",
+        "backfill-rebuild",
         "job-schedulers",
         "media-processing",
         "model-serving"
@@ -52238,6 +54446,7 @@
         "long-running-jobs",
         "multi-step-workflows",
         "large-file-processing",
+        "backfill-rebuild",
         "job-schedulers",
         "media-processing",
         "model-serving"
@@ -52284,6 +54493,7 @@
         "long-running-jobs",
         "multi-step-workflows",
         "large-file-processing",
+        "backfill-rebuild",
         "job-schedulers",
         "media-processing",
         "model-serving"
@@ -52330,6 +54540,7 @@
         "long-running-jobs",
         "multi-step-workflows",
         "large-file-processing",
+        "backfill-rebuild",
         "job-schedulers",
         "media-processing",
         "model-serving"
@@ -53419,7 +55630,8 @@
       },
       "relatedTopics": [
         "saga",
-        "background-jobs"
+        "background-jobs",
+        "payments-ledgers"
       ]
     },
     {
@@ -53461,7 +55673,8 @@
       },
       "relatedTopics": [
         "saga",
-        "background-jobs"
+        "background-jobs",
+        "payments-ledgers"
       ]
     },
     {
@@ -53503,7 +55716,8 @@
       },
       "relatedTopics": [
         "saga",
-        "background-jobs"
+        "background-jobs",
+        "payments-ledgers"
       ]
     },
     {
@@ -53545,7 +55759,8 @@
       },
       "relatedTopics": [
         "saga",
-        "background-jobs"
+        "background-jobs",
+        "payments-ledgers"
       ]
     },
     {
@@ -53587,7 +55802,8 @@
       },
       "relatedTopics": [
         "saga",
-        "background-jobs"
+        "background-jobs",
+        "payments-ledgers"
       ]
     },
     {
@@ -53798,6 +56014,594 @@
       "relatedTopics": [
         "large-file-uploads",
         "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "backfill-rebuild-source-of-truth",
+      "title": "Source of truth",
+      "slug": "/system-design/patterns/backfill-and-rebuild#backfill-rebuild-source-of-truth",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "backfill-rebuild",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "backfill-rebuild-target-version",
+      "title": "Target version",
+      "slug": "/system-design/patterns/backfill-and-rebuild#backfill-rebuild-target-version",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "backfill-rebuild",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "backfill-rebuild-bounded-scan",
+      "title": "Bounded scan",
+      "slug": "/system-design/patterns/backfill-and-rebuild#backfill-rebuild-bounded-scan",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "backfill-rebuild",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "backfill-rebuild-concurrent-changes",
+      "title": "Concurrent changes",
+      "slug": "/system-design/patterns/backfill-and-rebuild#backfill-rebuild-concurrent-changes",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "backfill-rebuild",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "backfill-rebuild-idempotent-batches",
+      "title": "Idempotent batches",
+      "slug": "/system-design/patterns/backfill-and-rebuild#backfill-rebuild-idempotent-batches",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "backfill-rebuild",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "backfill-rebuild-parity",
+      "title": "Parity",
+      "slug": "/system-design/patterns/backfill-and-rebuild#backfill-rebuild-parity",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "backfill-rebuild",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "backfill-rebuild-cutover",
+      "title": "Cutover",
+      "slug": "/system-design/patterns/backfill-and-rebuild#backfill-rebuild-cutover",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "backfill-rebuild",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "important",
+        "staff": "important"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "important",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "change-data-capture",
+        "background-jobs"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "change-data-capture",
+        "background-jobs"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "control-plane-data-plane-desired-state",
+      "title": "Desired state",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane#control-plane-data-plane-desired-state",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "control-plane-data-plane",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "control-plane-data-plane-control-api",
+      "title": "Control API",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane#control-plane-data-plane-control-api",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "control-plane-data-plane",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "control-plane-data-plane-reconciliation",
+      "title": "Reconciliation",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane#control-plane-data-plane-reconciliation",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "control-plane-data-plane",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "control-plane-data-plane-versioned-distribution",
+      "title": "Versioned distribution",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane#control-plane-data-plane-versioned-distribution",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "control-plane-data-plane",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "control-plane-data-plane-serving-path",
+      "title": "Serving path",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane#control-plane-data-plane-serving-path",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "control-plane-data-plane",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "control-plane-data-plane-staleness",
+      "title": "Staleness",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane#control-plane-data-plane-staleness",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "control-plane-data-plane",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "control-plane-data-plane-rollback",
+      "title": "Rollback",
+      "slug": "/system-design/patterns/control-plane-vs-data-plane#control-plane-data-plane-rollback",
+      "section": "Common Architecture Patterns",
+      "sectionId": "architecture-patterns",
+      "parentTopicId": "control-plane-data-plane",
+      "priority": "important",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "important",
+        "sde2": "important",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "important",
+        "fullstack": "important",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "service-discovery",
+        "observability"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "service-discovery",
+        "observability"
       ]
     },
     {
@@ -61960,6 +64764,1046 @@
         "geospatial-search",
         "job-schedulers",
         "bloom-filters"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-payment-intent",
+      "title": "Payment intent",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-payment-intent",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-provider-workflow",
+      "title": "Provider workflow",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-provider-workflow",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-idempotency",
+      "title": "Idempotency",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-idempotency",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-immutable-entries",
+      "title": "Immutable entries",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-immutable-entries",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-balanced-accounting",
+      "title": "Balanced accounting",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-balanced-accounting",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-refunds",
+      "title": "Refunds",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-refunds",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-reconciliation",
+      "title": "Reconciliation",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-reconciliation",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "payments-ledgers-disputes",
+      "title": "Disputes",
+      "slug": "/system-design/specialized/payments-and-ledgers#payments-ledgers-disputes",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "payments-ledgers",
+      "priority": "must-know",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "must-know",
+        "sde2": "must-know",
+        "senior": "must-know",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "must-know",
+        "fullstack": "must-know",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "must-know"
+      },
+      "prerequisites": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "transactions",
+        "idempotency",
+        "multi-step-workflows"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-namespace-metadata",
+      "title": "Namespace metadata",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-namespace-metadata",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-blocks",
+      "title": "Blocks",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-blocks",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-data-nodes",
+      "title": "Data nodes",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-data-nodes",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-replication",
+      "title": "Replication",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-replication",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-failure-domains",
+      "title": "Failure domains",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-failure-domains",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-heartbeats",
+      "title": "Heartbeats",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-heartbeats",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-re-replication",
+      "title": "Re-replication",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-re-replication",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "distributed-file-systems-locality",
+      "title": "Locality",
+      "slug": "/system-design/specialized/distributed-file-systems#distributed-file-systems-locality",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "distributed-file-systems",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "important",
+        "ml": "advanced"
+      },
+      "prerequisites": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "replication",
+        "sharding"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-disaggregated-architecture",
+      "title": "Disaggregated architecture",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-disaggregated-architecture",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "mermaid",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-independent-scaling",
+      "title": "Independent scaling",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-independent-scaling",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-remote-i-o",
+      "title": "Remote I/O",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-remote-i-o",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-hot-cache",
+      "title": "Hot cache",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-hot-cache",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-workload-isolation",
+      "title": "Workload isolation",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-workload-isolation",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-cold-starts",
+      "title": "Cold starts",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-cold-starts",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-bandwidth",
+      "title": "Bandwidth",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-bandwidth",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
+      ]
+    },
+    {
+      "type": "subtopic",
+      "id": "storage-compute-separation-cost",
+      "title": "Cost",
+      "slug": "/system-design/specialized/storage-and-compute-separation#storage-compute-separation-cost",
+      "section": "Specialized Building Blocks",
+      "sectionId": "specialized",
+      "parentTopicId": "storage-compute-separation",
+      "priority": "advanced",
+      "estimatedMinutes": null,
+      "sdeRelevance": {
+        "sde1": "advanced",
+        "sde2": "advanced",
+        "senior": "important",
+        "staff": "must-know"
+      },
+      "roleRelevance": {
+        "backend": "advanced",
+        "fullstack": "advanced",
+        "infrastructure": "must-know",
+        "data": "must-know",
+        "ml": "important"
+      },
+      "prerequisites": [
+        "object-storage",
+        "distributed-caching"
+      ],
+      "contentStatus": "published",
+      "published": true,
+      "visualType": "none",
+      "visualPurpose": null,
+      "practiceLinks": [],
+      "sourceCoverage": {
+        "primarySources": true,
+        "interviewSources": true,
+        "needsAdditionalVerification": false
+      },
+      "relatedTopics": [
+        "object-storage",
+        "distributed-caching"
       ]
     },
     {

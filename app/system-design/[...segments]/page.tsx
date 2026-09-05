@@ -5,6 +5,7 @@ import { SystemDesignPracticeLibrary } from "@/components/system-design-practice
 import { ComingSoonLesson, SystemDesignLessonLayout } from "@/components/system-design-lesson";
 import { CachingLessonContent, cachingLessonIds } from "@/content/system-design/caching";
 import { ArchitecturePatternLessonContent, architecturePatternLessonIds } from "@/content/system-design/architecture-patterns";
+import { RequiredClosureLessonContent, requiredClosureLessonIds } from "@/content/system-design/required-closure";
 import { CoreSystemPropertiesLessonContent } from "@/content/system-design/foundations/core-system-properties";
 import { EstimationLessonContent } from "@/content/system-design/foundations/estimation";
 import { IntroductionLessonContent } from "@/content/system-design/foundations/introduction";
@@ -93,6 +94,7 @@ export default async function SystemDesignContentPage({ params, searchParams }: 
   if (reliabilityLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><ReliabilityLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (productionEngineeringLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><ProductionEngineeringLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (architecturePatternLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><ArchitecturePatternLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
+  if (requiredClosureLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><RequiredClosureLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (specializedLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><SpecializedLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (technologyLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><TechnologyLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   return <ComingSoonLesson lesson={lesson} />;

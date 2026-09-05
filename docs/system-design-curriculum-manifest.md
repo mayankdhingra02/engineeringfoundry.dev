@@ -7,12 +7,12 @@ This is the content architecture for interview preparation. It intentionally con
 ## Summary
 
 - Sections: 10
-- Topics: 178
-- Subtopics: 1389
-- Must Know: 68
-- Important: 83
-- Advanced: 27
-- Mermaid visuals: 69
+- Topics: 188
+- Subtopics: 1465
+- Must Know: 71
+- Important: 88
+- Advanced: 29
+- Mermaid visuals: 79
 - Sequence visuals: 21
 - Comparison visuals: 28
 - Custom interactives: 10
@@ -2768,6 +2768,54 @@ Handle partial failure, overload, coordination, and cross-region correctness.
   - Region failure
   - Failure deep dive
 
+### Schema and Data Migration
+
+- ID: `schema-data-migration`
+- Route: `/system-design/patterns/schema-and-data-migration`
+- Priority: Important
+- Estimated time: 30 minutes
+- Visual: Mermaid
+- Publishing phase: 2
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
+- Role relevance: backend=Must Know, fullstack=Important, infrastructure=Important, data=Must Know, ml=Important
+- Prerequisites: `transactions`, `change-data-capture`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Expand and contract
+  - Version compatibility
+  - Bounded backfill
+  - Change capture
+  - Parity verification
+  - Cutover
+  - Rollback
+
+### Incident Recovery and Postmortems
+
+- ID: `incident-recovery-postmortems`
+- Route: `/system-design/patterns/incident-recovery-and-postmortems`
+- Priority: Important
+- Estimated time: 30 minutes
+- Visual: Mermaid
+- Publishing phase: 2
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
+- Role relevance: backend=Important, fullstack=Important, infrastructure=Must Know, data=Important, ml=Important
+- Prerequisites: `alerts`, `disaster-recovery`, `operational-ownership`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Declaration
+  - Incident command
+  - Mitigation
+  - Recovery verification
+  - Communication
+  - Blameless learning
+  - Owned action items
+
 ## Observability & Security
 
 Make designs diagnosable and protect their architectural trust boundaries.
@@ -3163,6 +3211,81 @@ Make designs diagnosable and protect their architectural trust boundaries.
   - Cache keys
   - Audit
 
+### Security Threat Modeling
+
+- ID: `security-threat-modeling`
+- Route: `/system-design/production-engineering/security-threat-modeling`
+- Priority: Must Know
+- Estimated time: 30 minutes
+- Visual: Mermaid
+- Publishing phase: 1
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Must Know, sde2=Must Know, senior=Must Know, staff=Must Know
+- Role relevance: backend=Must Know, fullstack=Important, infrastructure=Must Know, data=Must Know, ml=Must Know
+- Prerequisites: `authn-authz`, `tenant-authorization`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Scope
+  - Assets
+  - Actors
+  - Trust boundaries
+  - Data flows
+  - Abuse paths
+  - Mitigations
+  - Validation
+
+### Cost and Efficiency
+
+- ID: `cost-efficiency`
+- Route: `/system-design/production-engineering/cost-and-efficiency`
+- Priority: Must Know
+- Estimated time: 25 minutes
+- Visual: Mermaid
+- Publishing phase: 1
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Must Know, sde2=Must Know, senior=Must Know, staff=Must Know
+- Role relevance: backend=Must Know, fullstack=Must Know, infrastructure=Must Know, data=Important, ml=Important
+- Prerequisites: `estimation`, `slos`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Cost per useful unit
+  - Compute
+  - Storage
+  - Operations
+  - Network transfer
+  - Headroom
+  - Attribution
+  - Optimization
+
+### Operational Ownership
+
+- ID: `operational-ownership`
+- Route: `/system-design/production-engineering/operational-ownership`
+- Priority: Important
+- Estimated time: 25 minutes
+- Visual: Mermaid
+- Publishing phase: 2
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Important, sde2=Important, senior=Must Know, staff=Must Know
+- Role relevance: backend=Important, fullstack=Important, infrastructure=Must Know, data=Important, ml=Important
+- Prerequisites: `alerts`, `slos`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Service owner
+  - Deploy and rollback
+  - Monitoring
+  - On-call
+  - Data migration
+  - Dependency boundary
+  - Handoff
+  - Deprecation
+
 ## Common Architecture Patterns
 
 Connect canonical concepts into repeatable interview moves without duplicating their lessons.
@@ -3474,6 +3597,54 @@ Connect canonical concepts into repeatable interview moves without duplicating t
   - Queue
   - Workers
   - Result publication
+
+### Backfill and Rebuild
+
+- ID: `backfill-rebuild`
+- Route: `/system-design/patterns/backfill-and-rebuild`
+- Priority: Important
+- Estimated time: 25 minutes
+- Visual: Mermaid
+- Publishing phase: 2
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
+- Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Must Know, ml=Important
+- Prerequisites: `change-data-capture`, `background-jobs`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Source of truth
+  - Target version
+  - Bounded scan
+  - Concurrent changes
+  - Idempotent batches
+  - Parity
+  - Cutover
+
+### Control Plane vs Data Plane
+
+- ID: `control-plane-data-plane`
+- Route: `/system-design/patterns/control-plane-vs-data-plane`
+- Priority: Important
+- Estimated time: 25 minutes
+- Visual: Mermaid
+- Publishing phase: 2
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Important, sde2=Important, senior=Must Know, staff=Must Know
+- Role relevance: backend=Important, fullstack=Important, infrastructure=Must Know, data=Important, ml=Important
+- Prerequisites: `service-discovery`, `observability`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Desired state
+  - Control API
+  - Reconciliation
+  - Versioned distribution
+  - Serving path
+  - Staleness
+  - Rollback
 
 ## Specialized Building Blocks
 
@@ -4092,6 +4263,81 @@ Add specialized components only when a product requirement justifies them.
   - Probabilistic questions
   - Collaboration
   - Vector and ML boundaries
+
+### Payments and Ledgers
+
+- ID: `payments-ledgers`
+- Route: `/system-design/specialized/payments-and-ledgers`
+- Priority: Must Know
+- Estimated time: 35 minutes
+- Visual: Mermaid
+- Publishing phase: 1
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Must Know, sde2=Must Know, senior=Must Know, staff=Must Know
+- Role relevance: backend=Must Know, fullstack=Must Know, infrastructure=Must Know, data=Must Know, ml=Must Know
+- Prerequisites: `transactions`, `idempotency`, `multi-step-workflows`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Payment intent
+  - Provider workflow
+  - Idempotency
+  - Immutable entries
+  - Balanced accounting
+  - Refunds
+  - Reconciliation
+  - Disputes
+
+### Distributed File Systems
+
+- ID: `distributed-file-systems`
+- Route: `/system-design/specialized/distributed-file-systems`
+- Priority: Advanced
+- Estimated time: 30 minutes
+- Visual: Mermaid
+- Publishing phase: 3
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Advanced, sde2=Advanced, senior=Important, staff=Must Know
+- Role relevance: backend=Advanced, fullstack=Advanced, infrastructure=Must Know, data=Important, ml=Advanced
+- Prerequisites: `object-storage`, `replication`, `sharding`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Namespace metadata
+  - Blocks
+  - Data nodes
+  - Replication
+  - Failure domains
+  - Heartbeats
+  - Re-replication
+  - Locality
+
+### Storage and Compute Separation
+
+- ID: `storage-compute-separation`
+- Route: `/system-design/specialized/storage-and-compute-separation`
+- Priority: Advanced
+- Estimated time: 25 minutes
+- Visual: Mermaid
+- Publishing phase: 3
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
+- Level relevance: sde1=Advanced, sde2=Advanced, senior=Important, staff=Must Know
+- Role relevance: backend=Advanced, fullstack=Advanced, infrastructure=Must Know, data=Must Know, ml=Important
+- Prerequisites: `object-storage`, `distributed-caching`
+- Practice problems: None currently mapped
+- Major subtopics:
+  - Disaggregated architecture
+  - Independent scaling
+  - Remote I/O
+  - Hot cache
+  - Workload isolation
+  - Cold starts
+  - Bandwidth
+  - Cost
 
 ## Technology Deep Dives
 
