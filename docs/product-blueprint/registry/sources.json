@@ -981,6 +981,26 @@
     {
       "id": "SRC-ML-FORECASTING", "title": "Forecasting: Principles and Practice (3rd ed)", "publisher": "OTexts", "url": "https://otexts.com/fpp3/", "source_class": "first-party engineering/science", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
       "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-FORECASTING"], "usage_limits": "Forecast horizons, time-series cross-validation, baselines, accuracy, and probabilistic forecasts.", "notes": "Author-maintained source mapped to forecasting decisions."
+    },
+    {
+      "id": "SRC-SAL-DOL-VETS-2026", "title": "Salary Negotiation Participant Guide", "publisher": "U.S. Department of Labor, Veterans’ Employment and Training Service", "url": "https://www.dol.gov/sites/dolgov/files/VETS/files/SalaryNegotiation_PG_Interactive_Feb2026.pdf", "source_class": "official documentation", "published_at": "2026-02-01", "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-SAL"], "claims_supported": ["SAL-OFFER-PROCESS", "SAL-WRITTEN-TERMS"], "usage_limits": "U.S. general educational starting point for evaluating a complete offer, preparing a supported request, asking for time, and confirming terms in writing; not employer policy or an outcome guarantee.", "notes": "Current first-party anchor for the general negotiation modules."
+    },
+    {
+      "id": "SRC-SAL-DOL-OTHER-COMP", "title": "Other compensation benefits", "publisher": "U.S. Department of Labor", "url": "https://www.dol.gov/general/topic/benefits-other/othercompbenefits", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-SAL"], "claims_supported": ["SAL-COMPONENT-TERMS"], "usage_limits": "U.S. federal overview supporting the boundary that many benefits depend on actual employer agreements; it does not enumerate every benefit or make any term negotiable.", "notes": "Supports document-first package comparison without publishing market bands."
+    },
+    {
+      "id": "SRC-SAL-IRS-STOCK-OPTIONS", "title": "Topic no. 427, Stock options", "publisher": "Internal Revenue Service", "url": "https://www.irs.gov/taxtopics/tc427", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-SAL"], "claims_supported": ["SAL-EQUITY-TAX-BOUNDARY"], "usage_limits": "U.S. federal tax starting point showing that treatment depends on instrument and event timing; not a calculation or recommendation for a particular grant, tax year, state, or country.", "notes": "Supports referring stock-option tax questions to current authoritative and qualified review."
+    },
+    {
+      "id": "SRC-SAL-FTC-NONCOMPETE", "title": "Noncompete Rule", "publisher": "U.S. Federal Trade Commission", "url": "https://www.ftc.gov/legal-library/browse/rules/noncompete-rule", "source_class": "official documentation", "published_at": "2024-04-23", "verified_at": "2026-09-05", "volatility": "volatile",
+      "applies_to": ["EF-SAL"], "claims_supported": ["SAL-NONCOMPETE-CURRENT-STATUS"], "usage_limits": "Supports only the current federal status shown on the live FTC page: the rule is not in effect and is not enforceable. State law and individual agreements remain separate and require current qualified review.", "notes": "Quarterly re-review boundary prevents a superseded federal-rule claim from being generalized."
+    },
+    {
+      "id": "SRC-SAL-USCIS-I765", "title": "Instructions for Application for Employment Authorization", "publisher": "U.S. Citizenship and Immigration Services", "url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr.pdf", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "volatile",
+      "applies_to": ["EF-SAL"], "claims_supported": ["SAL-WORK-AUTHORIZATION-BOUNDARY"], "usage_limits": "Supports only the boundary that work authorization varies by category and documentation. Do not infer an individual’s eligibility, portability, filing requirement, or deadline.", "notes": "Current U.S. starting point; case-specific immigration questions require authoritative and qualified review."
     }
   ]
 }

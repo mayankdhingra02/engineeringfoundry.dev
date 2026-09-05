@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-05
-repository_sha: 30a050d3b798589ad381d3da737d1e074b4e75d0
-repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d07a418b84
+repository_sha: b7f49e4da52ab92965c5af908341df846b4f41f5
+repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb44968d10ff
 ---
 
 # Engineering Foundry requirement coverage
@@ -13,7 +13,7 @@ repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d
 ## Summary
 
 - Requirements: 34
-- Sources: 95
+- Sources: 100
 - Gap inventory IDs: 18
 - Explicitly unmodeled atomic requirements: 1
 
@@ -23,9 +23,9 @@ repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 0 |
-| partial | 7 |
+| partial | 6 |
 | implemented-unverified | 0 |
-| implemented | 20 |
+| implemented | 21 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -46,9 +46,9 @@ repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d
 
 | Research status | Count |
 | --- | ---: |
-| approved | 15 |
+| approved | 16 |
 | approved-needs-source-import | 1 |
-| needs-current-verification | 2 |
+| needs-current-verification | 1 |
 | needs-research | 9 |
 | not-applicable | 7 |
 
@@ -58,8 +58,8 @@ repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d
 | --- | ---: |
 | unpublished | 9 |
 | noindex-draft | 0 |
-| published | 19 |
-| stale-review | 6 |
+| published | 20 |
+| stale-review | 5 |
 | archived | 0 |
 
 ## Requirements by family
@@ -137,7 +137,7 @@ repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d
 | EF-PLAY-CURRICULUM-DEPTH | interview-playbook | p1 | implemented | approved | published | claim-recorded | /interview-tips, /interview-tips/methodology | — | 7 | 2 | — |
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | implemented | approved | published | claim-recorded | /interview-tips/methodology | /interview-tips/rounds/[slug] | 6 | 1 | — |
 | EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | implemented | approved | published | claim-recorded | /interview-tips/rounds/technical-presentation | — | 4 | 1 | — |
-| EF-SAL | salary-negotiation | required | partial | needs-current-verification | stale-review | missing | /salary-negotiation | — | 0 | 1 | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
+| EF-SAL | salary-negotiation | required | implemented | approved | published | claim-recorded | /salary-negotiation | — | 5 | 4 | — |
 | EF-SD | system-design | required | implemented | needs-research | stale-review | claim-recorded | /system-design/start-here/introduction | — | 50 | 13 | — |
 | EF-SD-PRACTICE-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | — |
 | EF-SD-TOPIC-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | claim-recorded | — | /system-design/[...segments] | 50 | 9 | — |
@@ -151,7 +151,6 @@ repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d
 | --- | --- | --- | --- |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
-| EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
 | EF-SUP | modeled | partial | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
 | EF-GLOBAL-ATOMIC-COVERAGE | unmodeled | unmodeled | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
 
@@ -168,7 +167,6 @@ repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d
 | --- | --- | --- | ---: |
 | EF-DSA-CURRICULUM-SHELLS | dsa | approved | 2 |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 8 |
-| EF-SAL | salary-negotiation | needs-current-verification | 0 |
 | EF-SD | system-design | needs-research | 50 |
 | EF-SD-PRACTICE-COVERAGE | system-design | needs-research | 0 |
 | EF-SD-TOPIC-COVERAGE | system-design | needs-research | 50 |
@@ -197,9 +195,9 @@ These states describe recorded provenance only; they do not claim source complet
 | Source record state | Count |
 | --- | ---: |
 | not-applicable | 7 |
-| missing | 9 |
+| missing | 8 |
 | discovery-recorded | 0 |
-| claim-recorded | 18 |
+| claim-recorded | 19 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
@@ -230,7 +228,7 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-PLAY-CURRICULUM-DEPTH | approved | claim-recorded | SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED, SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-PLAY-EEOC-ACCOMMODATION, SRC-PLAY-MIT-PRESENTATION, SRC-PLAY-YALE-AFTER-INTERVIEW |
 | EF-PLAY-ROUND-PROVENANCE | approved | claim-recorded | SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED, SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-PLAY-EEOC-ACCOMMODATION, SRC-PLAY-MIT-PRESENTATION |
 | EF-PLAY-TECHNICAL-PRESENTATION | approved | claim-recorded | SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED, SRC-PLAY-EEOC-ACCOMMODATION, SRC-PLAY-MIT-PRESENTATION |
-| EF-SAL | needs-current-verification | missing | — |
+| EF-SAL | approved | claim-recorded | SRC-SAL-DOL-OTHER-COMP, SRC-SAL-DOL-VETS-2026, SRC-SAL-FTC-NONCOMPETE, SRC-SAL-IRS-STOCK-OPTIONS, SRC-SAL-USCIS-I765 |
 | EF-SD | needs-research | claim-recorded | SRC-SD-AWS-CACHING, SRC-SD-AWS-COST-OPTIMIZATION, SRC-SD-AWS-DMS-CDC, SRC-SD-AWS-DMS-OVERVIEW, SRC-SD-AWS-DMS-VALIDATION, SRC-SD-AWS-DYNAMO-PARTITIONS, SRC-SD-AWS-DYNAMO-WRITE-SHARDING, SRC-SD-AWS-IDEMPOTENT-APIS, SRC-SD-AWS-S3-MULTIPART, SRC-SD-AZURE-ASYNC-REPLY, SRC-SD-AZURE-BACKGROUND-JOBS, SRC-SD-AZURE-COMPETING-CONSUMERS, SRC-SD-AZURE-CQRS, SRC-SD-AZURE-SAGA, SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-DATAFLOW, SRC-SD-GOOGLE-DATAFLOW-PLANNING, SRC-SD-GOOGLE-INCIDENT-MANAGEMENT, SRC-SD-GOOGLE-POSTMORTEM-CULTURE, SRC-SD-GOOGLE-PUBSUB, SRC-SD-GOOGLE-SLO, SRC-SD-GOOGLE-SRE-ENGAGEMENT, SRC-SD-HDFS-ARCHITECTURE, SRC-SD-KUBERNETES-ARCHITECTURE, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-OWASP-THREAT-MODELING, SRC-SD-POSTGRES-ISOLATION, SRC-SD-POSTGRES-LOCKING, SRC-SD-POSTGRES-PITR, SRC-SD-POSTGRES-REPLICATION, SRC-SD-REDSHIFT-MANAGED-STORAGE, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846, SRC-SD-STRIPE-DISPUTES, SRC-SD-STRIPE-IDEMPOTENCY, SRC-SD-STRIPE-RECONCILIATION |
 | EF-SD-PRACTICE-COVERAGE | needs-research | missing | — |
 | EF-SD-TOPIC-COVERAGE | needs-research | claim-recorded | SRC-SD-AWS-CACHING, SRC-SD-AWS-COST-OPTIMIZATION, SRC-SD-AWS-DMS-CDC, SRC-SD-AWS-DMS-OVERVIEW, SRC-SD-AWS-DMS-VALIDATION, SRC-SD-AWS-DYNAMO-PARTITIONS, SRC-SD-AWS-DYNAMO-WRITE-SHARDING, SRC-SD-AWS-IDEMPOTENT-APIS, SRC-SD-AWS-S3-MULTIPART, SRC-SD-AZURE-ASYNC-REPLY, SRC-SD-AZURE-BACKGROUND-JOBS, SRC-SD-AZURE-COMPETING-CONSUMERS, SRC-SD-AZURE-CQRS, SRC-SD-AZURE-SAGA, SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-DATAFLOW, SRC-SD-GOOGLE-DATAFLOW-PLANNING, SRC-SD-GOOGLE-INCIDENT-MANAGEMENT, SRC-SD-GOOGLE-POSTMORTEM-CULTURE, SRC-SD-GOOGLE-PUBSUB, SRC-SD-GOOGLE-SLO, SRC-SD-GOOGLE-SRE-ENGAGEMENT, SRC-SD-HDFS-ARCHITECTURE, SRC-SD-KUBERNETES-ARCHITECTURE, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-OWASP-THREAT-MODELING, SRC-SD-POSTGRES-ISOLATION, SRC-SD-POSTGRES-LOCKING, SRC-SD-POSTGRES-PITR, SRC-SD-POSTGRES-REPLICATION, SRC-SD-REDSHIFT-MANAGED-STORAGE, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846, SRC-SD-STRIPE-DISPUTES, SRC-SD-STRIPE-IDEMPOTENCY, SRC-SD-STRIPE-RECONCILIATION |
@@ -293,6 +291,11 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-PLAY-EEOC-ACCOMMODATION | official documentation | 2026-09-05 | EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-PLAY-MIT-PRESENTATION | first-party engineering/science | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-PLAY-YALE-AFTER-INTERVIEW | official documentation | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH |
+| SRC-SAL-DOL-OTHER-COMP | official documentation | 2026-09-05 | EF-SAL |
+| SRC-SAL-DOL-VETS-2026 | official documentation | 2026-09-05 | EF-SAL |
+| SRC-SAL-FTC-NONCOMPETE | official documentation | 2026-09-05 | EF-SAL |
+| SRC-SAL-IRS-STOCK-OPTIONS | official documentation | 2026-09-05 | EF-SAL |
+| SRC-SAL-USCIS-I765 | official documentation | 2026-09-05 | EF-SAL |
 | SRC-SD-AWS-CACHING | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-AWS-COST-OPTIMIZATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 | SRC-SD-AWS-DMS-CDC | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
@@ -350,8 +353,8 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Availability | Count |
 | --- | ---: |
-| missing | 8 |
-| repository-present | 22 |
+| missing | 7 |
+| repository-present | 23 |
 | external-recorded | 0 |
 
 ### Approval status
@@ -360,9 +363,9 @@ These states describe recorded provenance only; they do not claim source complet
 | --- | ---: |
 | unverified | 5 |
 | approved-needs-source-import | 0 |
-| needs-current-verification | 1 |
+| needs-current-verification | 0 |
 | requires-founder-approval | 2 |
-| approved | 22 |
+| approved | 23 |
 | excluded | 0 |
 
 | ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |
@@ -394,7 +397,7 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-PLAY-MOCK-SIMULATIONS | EF-PLAY | repository-present | approved | 65c7ac853b47de1a01177cc7bcda93a587fd05619035c586531a2e020e7e619c | 2026-09-05 | EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | docs/product-blueprint/research/interview-playbook/mock-simulations.md | — |
 | RA-PLAY-ROUND-EXECUTION | EF-PLAY | repository-present | approved | e634a7833bd220c2988e1a97f62f03b268a204dd5cd35bb46e37c6f6b14dd637 | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION | docs/product-blueprint/research/interview-playbook/round-execution.md | — |
 | RA-PLAY-SCOPE-BOUNDARIES | EF-PLAY | repository-present | approved | 5035f63068078276cfbf89f7f57a4c6e72425195377cdbb24e83d02c5d221d21 | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH | docs/product-blueprint/research/interview-playbook/scope-boundaries.md | — |
-| RA-SAL-SECTION-BLUEPRINT | EF-SAL | missing | needs-current-verification | — | — | EF-SAL | — | — |
+| RA-SAL-SECTION-BLUEPRINT | EF-SAL | repository-present | approved | 4f0f7b4e55cd1aa815544fa55033e5aeab96e0a54becfe9224890a724913ae28 | 2026-09-05 | EF-SAL | docs/product-blueprint/research/salary-negotiation/final-synthesis.md | — |
 | RA-SD-CONTENT-RESEARCH-BLUEPRINT | EF-SD | missing | unverified | — | — | EF-SD, EF-SD-PRACTICE-COVERAGE, EF-SD-TOPIC-COVERAGE | — | — |
 | RA-SD-CURRICULUM-TOPIC-MAP | EF-SD | missing | unverified | — | — | EF-SD, EF-SD-PRACTICE-COVERAGE, EF-SD-TOPIC-COVERAGE | — | — |
 
@@ -407,6 +410,5 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-DSA-JAVASCRIPT-REQUEST | missing | unverified |
 | RA-LAUNCH-V1-FINISH-PLAN | missing | unverified |
 | RA-LOW-LEVEL-SYSTEMS | missing | unverified |
-| RA-SAL-SECTION-BLUEPRINT | missing | needs-current-verification |
 | RA-SD-CONTENT-RESEARCH-BLUEPRINT | missing | unverified |
 | RA-SD-CURRICULUM-TOPIC-MAP | missing | unverified |

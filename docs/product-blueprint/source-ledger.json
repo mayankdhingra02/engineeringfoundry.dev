@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "30a050d3b798589ad381d3da737d1e074b4e75d0",
-  "repository_state_sha256": "e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d07a418b84",
+  "repository_sha": "b7f49e4da52ab92965c5af908341df846b4f41f5",
+  "repository_state_sha256": "20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb44968d10ff",
   "schema_version": 1,
   "sources": [
     {
@@ -914,6 +914,97 @@
       "usage_limits": "Use for prompt factual notes and preserving the employer's stated timeline; do not generalize school-specific conventions into mandatory timing or messaging.",
       "verified_at": "2026-09-05",
       "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SAL"
+      ],
+      "claims_supported": [
+        "SAL-COMPONENT-TERMS"
+      ],
+      "id": "SRC-SAL-DOL-OTHER-COMP",
+      "notes": "Supports document-first package comparison without publishing market bands.",
+      "published_at": null,
+      "publisher": "U.S. Department of Labor",
+      "source_class": "official documentation",
+      "title": "Other compensation benefits",
+      "url": "https://www.dol.gov/general/topic/benefits-other/othercompbenefits",
+      "usage_limits": "U.S. federal overview supporting the boundary that many benefits depend on actual employer agreements; it does not enumerate every benefit or make any term negotiable.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SAL"
+      ],
+      "claims_supported": [
+        "SAL-OFFER-PROCESS",
+        "SAL-WRITTEN-TERMS"
+      ],
+      "id": "SRC-SAL-DOL-VETS-2026",
+      "notes": "Current first-party anchor for the general negotiation modules.",
+      "published_at": "2026-02-01",
+      "publisher": "U.S. Department of Labor, Veterans’ Employment and Training Service",
+      "source_class": "official documentation",
+      "title": "Salary Negotiation Participant Guide",
+      "url": "https://www.dol.gov/sites/dolgov/files/VETS/files/SalaryNegotiation_PG_Interactive_Feb2026.pdf",
+      "usage_limits": "U.S. general educational starting point for evaluating a complete offer, preparing a supported request, asking for time, and confirming terms in writing; not employer policy or an outcome guarantee.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SAL"
+      ],
+      "claims_supported": [
+        "SAL-NONCOMPETE-CURRENT-STATUS"
+      ],
+      "id": "SRC-SAL-FTC-NONCOMPETE",
+      "notes": "Quarterly re-review boundary prevents a superseded federal-rule claim from being generalized.",
+      "published_at": "2024-04-23",
+      "publisher": "U.S. Federal Trade Commission",
+      "source_class": "official documentation",
+      "title": "Noncompete Rule",
+      "url": "https://www.ftc.gov/legal-library/browse/rules/noncompete-rule",
+      "usage_limits": "Supports only the current federal status shown on the live FTC page: the rule is not in effect and is not enforceable. State law and individual agreements remain separate and require current qualified review.",
+      "verified_at": "2026-09-05",
+      "volatility": "volatile"
+    },
+    {
+      "applies_to": [
+        "EF-SAL"
+      ],
+      "claims_supported": [
+        "SAL-EQUITY-TAX-BOUNDARY"
+      ],
+      "id": "SRC-SAL-IRS-STOCK-OPTIONS",
+      "notes": "Supports referring stock-option tax questions to current authoritative and qualified review.",
+      "published_at": null,
+      "publisher": "Internal Revenue Service",
+      "source_class": "official documentation",
+      "title": "Topic no. 427, Stock options",
+      "url": "https://www.irs.gov/taxtopics/tc427",
+      "usage_limits": "U.S. federal tax starting point showing that treatment depends on instrument and event timing; not a calculation or recommendation for a particular grant, tax year, state, or country.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SAL"
+      ],
+      "claims_supported": [
+        "SAL-WORK-AUTHORIZATION-BOUNDARY"
+      ],
+      "id": "SRC-SAL-USCIS-I765",
+      "notes": "Current U.S. starting point; case-specific immigration questions require authoritative and qualified review.",
+      "published_at": null,
+      "publisher": "U.S. Citizenship and Immigration Services",
+      "source_class": "official documentation",
+      "title": "Instructions for Application for Employment Authorization",
+      "url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr.pdf",
+      "usage_limits": "Supports only the boundary that work authorization varies by category and documentation. Do not infer an individual’s eligibility, portability, filing requirement, or deadline.",
+      "verified_at": "2026-09-05",
+      "volatility": "volatile"
     },
     {
       "applies_to": [
