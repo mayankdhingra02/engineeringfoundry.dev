@@ -1,5 +1,17 @@
-export const lowLevelDesignLevels = ["Entry", "Mid", "Senior", "Staff+"] as const;
-export type LowLevelDesignLevel = (typeof lowLevelDesignLevels)[number];
+import {
+  lowLevelDesignLessonContractsBySlug,
+  lowLevelDesignPracticeContractsBySlug,
+  type LowLevelDesignLessonContract,
+  type LowLevelDesignPracticeContract,
+} from "./content-contracts";
+import { lowLevelDesignLevels, type LowLevelDesignLevel } from "./taxonomy";
+
+export {
+  lowLevelDesignRubric,
+  type LowLevelDesignRubricId,
+} from "./content-contracts";
+export { lowLevelDesignLevels, type LowLevelDesignLevel } from "./taxonomy";
+
 export type LowLevelDesignStatus = "published" | "draft";
 
 export type LowLevelDesignSection = {
@@ -12,7 +24,7 @@ export type LowLevelDesignSection = {
   avoidOverengineering: string;
 };
 
-export type LowLevelDesignLesson = {
+type LowLevelDesignLessonCore = {
   id: string;
   slug: string;
   title: string;
@@ -25,7 +37,11 @@ export type LowLevelDesignLesson = {
   relatedLessonSlugs: readonly string[];
 };
 
-export type LowLevelDesignPractice = {
+export type LowLevelDesignLesson = LowLevelDesignLessonCore & Readonly<{
+  contract: LowLevelDesignLessonContract;
+}>;
+
+type LowLevelDesignPracticeCore = {
   id: string;
   slug: string;
   title: string;
@@ -46,6 +62,10 @@ export type LowLevelDesignPractice = {
   solutionApproach: readonly { title: string; content: string }[];
   relatedLessonSlugs: readonly string[];
 };
+
+export type LowLevelDesignPractice = LowLevelDesignPracticeCore & Readonly<{
+  contract: LowLevelDesignPracticeContract;
+}>;
 
 export const lowLevelDesignFramework = [
   ["Clarify", "Confirm the artifact, primary use case, actors, constraints, and what is deliberately out of scope."],
@@ -69,7 +89,7 @@ export const lowLevelDesignInterviewTimeVersion = [
 
 const section = (title: string, explanation: string, example: string, commonMistake: string, tradeoff: string, followUps: string[], avoidOverengineering: string): LowLevelDesignSection => ({ title, explanation, example, commonMistake, tradeoff, followUps, avoidOverengineering });
 
-export const lowLevelDesignLessons: readonly LowLevelDesignLesson[] = [
+const lowLevelDesignLessonCore: readonly LowLevelDesignLessonCore[] = [
   {
     id: "lld-interview-approach", slug: "interview-approach", title: "Approach an LLD interview as a behavior-design exercise", summary: "Turn an ambiguous object-design prompt into a small, testable model rather than a class inventory.", estimatedMinutes: 18, status: "published", levels: lowLevelDesignLevels,
     objectives: ["Separate LLD from distributed System Design and language trivia.", "Use a flexible interview flow without treating it as a timer script.", "Make reasoning visible before implementation details."],
@@ -144,7 +164,13 @@ export const lowLevelDesignLessons: readonly LowLevelDesignLesson[] = [
   },
 ];
 
-export const lowLevelDesignPractice: readonly LowLevelDesignPractice[] = [
+export const lowLevelDesignLessons: readonly LowLevelDesignLesson[] =
+  lowLevelDesignLessonCore.map((lesson) => ({
+    ...lesson,
+    contract: lowLevelDesignLessonContractsBySlug[lesson.slug],
+  }));
+
+const lowLevelDesignPracticeCore: readonly LowLevelDesignPracticeCore[] = [
   {
     id: "parking-allocation", slug: "parking-allocation", title: "Parking allocation with ticket lifecycle", summary: "Allocate a suitable spot, issue a ticket, calculate a fee, and safely release capacity.", status: "published", levels: ["Entry", "Mid", "Senior"],
     prompt: "Design the in-process core of a parking facility that assigns a vehicle to a suitable spot, issues a ticket, calculates payment at exit, and releases the spot.", clarificationQuestions: ["Which vehicle and spot categories matter?", "Can a ticket be lost or paid twice?", "Should fee rules vary by time or vehicle?"], requirements: ["Find a suitable open spot.", "Issue and track an active ticket.", "Reject invalid exit or payment operations.", "Release a spot only after a completed exit."], nonGoals: ["Multi-garage routing", "Distributed payments", "License-plate recognition"], entities: ["ParkingFacility", "ParkingSpot", "Vehicle", "Ticket", "PricingPolicy"], reasoningAreas: ["spot ownership", "ticket state", "fee-policy variation", "exit atomicity"], followUps: ["Add electric-vehicle priority.", "Support lost-ticket handling.", "Allow a reservation before arrival."], commonMistakes: ["Letting callers set spot status directly.", "Releasing a spot before exit payment is resolved.", "Using inheritance for every vehicle type."], extensibilityPrompts: ["How would daily-rate pricing vary?", "Where would a display board read availability?"], concurrencyAndTestability: ["What prevents two arrivals from taking the same spot?", "How would you fake time for fee tests?"], guidance: [{ label: "Start", content: "Drive the model from enter and exit use cases; decide who owns active tickets." }, { label: "Then", content: "Protect the invariant that an occupied spot has one active ticket." }, { label: "Reveal", content: "Extract PricingPolicy only after explaining the fee variation it isolates." }], solutionApproach: [{ title: "Acceptable first cut", content: "ParkingFacility coordinates allocation and exit; ParkingSpot owns occupancy; Ticket owns its lifecycle; a simple PricingPolicy calculates fees." }, { title: "Trade-off", content: "Keep spot selection inside the facility until multiple allocation policies genuinely vary; then introduce a selection strategy." }], relatedLessonSlugs: ["domain-models", "state-lifecycle-errors", "selective-patterns"],
@@ -170,6 +196,12 @@ export const lowLevelDesignPractice: readonly LowLevelDesignPractice[] = [
     prompt: "Design the core workflow for a package that is created, assigned to a courier, picked up, delivered or failed, and can be rescheduled.", clarificationQuestions: ["Which statuses are final?", "Can a package be reassigned?", "What information is required for a failed delivery?"], requirements: ["Represent legal lifecycle transitions.", "Assign and reassign a courier.", "Record a delivery outcome.", "Prevent final packages from being changed."], nonGoals: ["Route optimization", "Courier mobile application", "Global tracking infrastructure"], entities: ["Package", "DeliveryAssignment", "Courier", "DeliveryOutcome", "TransitionPolicy"], reasoningAreas: ["state transitions", "audit-friendly commands", "assignment ownership", "failure data"], followUps: ["Add proof of delivery.", "Allow multi-stop route batching.", "Notify the recipient at each transition."], commonMistakes: ["A free-form status string with no transition guard.", "Making Courier mutate package state directly.", "Deleting failure context after reschedule."], extensibilityPrompts: ["When would Command represent a transition?", "How could notification be an independent reaction?"], concurrencyAndTestability: ["What happens if two couriers accept the same package?", "How can transition rules be tested independently?"], guidance: [{ label: "Start", content: "List final and non-final statuses and the owner of each transition." }, { label: "Then", content: "Represent a failed delivery as an outcome with reason, not merely a status string." }, { label: "Reveal", content: "Command earns its place if transitions need deferred execution or audit-friendly intent objects." }], solutionApproach: [{ title: "Acceptable first cut", content: "Package owns permitted transitions; a DispatchService assigns couriers through a guarded operation; outcome records preserve failure reason." }, { title: "Trade-off", content: "Explicit transitions add code but make invalid lifecycle changes and follow-up behavior much easier to explain." }], relatedLessonSlugs: ["state-lifecycle-errors", "selective-patterns", "responsibilities-ownership"],
   },
 ];
+
+export const lowLevelDesignPractice: readonly LowLevelDesignPractice[] =
+  lowLevelDesignPracticeCore.map((problem) => ({
+    ...problem,
+    contract: lowLevelDesignPracticeContractsBySlug[problem.slug],
+  }));
 
 export const lowLevelDesignLessonsBySlug = new Map(lowLevelDesignLessons.map((lesson) => [lesson.slug, lesson]));
 export const lowLevelDesignPracticeBySlug = new Map(lowLevelDesignPractice.map((problem) => [problem.slug, problem]));

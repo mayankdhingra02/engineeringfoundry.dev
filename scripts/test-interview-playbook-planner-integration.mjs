@@ -275,7 +275,6 @@ for (const nonArea of [
     ["practical-coding", "/interview-tips/rounds/practical-coding"],
     ["debugging", "/interview-tips/rounds/debugging"],
     ["code-review", "/interview-tips/rounds/code-review"],
-    ["low-level-design", "/interview-tips/rounds/low-level-design"],
     ["project-deep-dive", "/interview-tips/rounds/project-deep-dive"],
   ];
   for (const [area, expectedHref] of HREF_CASES) {
@@ -284,6 +283,13 @@ for (const nonArea of [
     const action = projection.actions.find((a) => a.area === area);
     check(`href ownership: ${area} -> ${expectedHref}`, action?.href === expectedHref);
   }
+}
+{
+  const overview = overviewOf([round({ id: "r1", companyName: "Amazon", companySlug: "amazon", roleLevel: "SDE II", executionGuideSlugs: ["low-level-design"], scheduledAt: "2026-08-26T00:00:00Z", timezone: "UTC" })]);
+  const projection = buildInterviewPlaybookPlanningProjection({ overview, now: NOW });
+  const action = projection.actions.find((item) => item.area === "low-level-design");
+  check("LLD baseline handoff configures public round, normalized level, canonical company, and timed mode", action?.href === "/low-level-design/practice?source=playbook&round=low-level-design&level=Mid&company=amazon&mode=timed");
+  check("LLD handoff excludes private application and round ids", !action?.href?.includes("a1") && !action?.href?.includes("r1"));
 }
 {
   const overview = overviewOf([round({ id: "r1", executionGuideSlugs: ["system-design"], scheduledAt: "2026-08-26T00:00:00Z", timezone: "UTC" })]);

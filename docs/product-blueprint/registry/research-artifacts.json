@@ -344,7 +344,7 @@
       "id": "RA-LOW-LEVEL-SYSTEMS",
       "title": "Low-Level Software Interview Preparation: Questions, Problem Sets, Resources, and Study Plans",
       "family_id": "EF-LLD",
-      "requirement_ids": ["EF-DSA-LANGUAGE-COVERAGE", "EF-LLD"],
+      "requirement_ids": ["EF-DSA-LANGUAGE-COVERAGE"],
       "repository_path": null,
       "external_record": null,
       "version_or_hash": null,

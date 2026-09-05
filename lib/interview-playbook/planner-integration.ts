@@ -13,9 +13,9 @@
  * horizon adaptivity only, never demonstrated performance.
  *
  * Pure and dependency-light: no React, Next.js, Supabase, auth, database,
- * `queries.ts`, network, storage, current time, or randomness. May import
- * only `./overview.ts`, `./timing.ts`, `./evidence.ts`, `./diagnostic.ts`,
- * and `./planning.ts`.
+ * `queries.ts`, network, storage, current time, or randomness. It also uses
+ * the pure Low-Level Design URL-state helper so a presented LLD action can
+ * preserve bounded public round modifiers without exposing private ids.
  *
  * Phase 3B1 extends this module with one optional input,
  * `diagnosticInput` — real user-supplied hours/confidence/priorities/
@@ -44,6 +44,7 @@ import {
   type InterviewPlanHorizonBand,
   type InterviewPlanningTarget,
 } from "./planning.ts";
+import { buildLowLevelDesignPlaybookHref, type LowLevelDesignPracticeMode } from "../low-level-design/practice-url-state.ts";
 
 /**
  * `"round-context-only"` — no saved diagnostic input; the neutral Phase 3A
@@ -64,7 +65,9 @@ export type InterviewPlaybookPlanningRoundMetadata = Readonly<{
   roundId: string;
   applicationId: string;
   companyName: string;
+  companySlug: string | null;
   roleTitle: string;
+  roleLevel: string | null;
   roundName: string;
   roundType: string;
   scheduledAt: string | null;
@@ -191,7 +194,9 @@ function buildRoundMetadataMap(
       roundId: round.id,
       applicationId: round.applicationId,
       companyName: round.companyName,
+      companySlug: round.companySlug,
       roleTitle: round.roleTitle,
+      roleLevel: round.roleLevel,
       roundName: round.roundName,
       roundType: round.roundType,
       scheduledAt: round.scheduledAt,
@@ -329,6 +334,12 @@ function actionDescription(action: InterviewPlanAction): string {
   }
 }
 
+function lowLevelDesignModeForAction(kind: InterviewPlanActionKind): LowLevelDesignPracticeMode {
+  if (kind === "baseline-check") return "timed";
+  if (kind === "practice" || kind === "targeted-repair" || kind === "review") return "independent";
+  return "guided";
+}
+
 function actionHref(
   action: InterviewPlanAction,
   roundMetadata: ReadonlyMap<string, InterviewPlaybookPlanningRoundMetadata>,
@@ -352,6 +363,15 @@ function actionHref(
     case "targeted-repair":
     case "practice":
     case "review":
+      if (action.area === "low-level-design") {
+        const firstTargetId = action.targetIds[0];
+        const metadata = firstTargetId ? roundMetadata.get(firstTargetId) : null;
+        return buildLowLevelDesignPlaybookHref({
+          companySlug: metadata?.companySlug ?? null,
+          roleLevel: metadata?.roleLevel ?? null,
+          mode: lowLevelDesignModeForAction(action.kind),
+        });
+      }
       return action.area ? areaHref(action.area) : null;
     case "taper":
     case "rest":

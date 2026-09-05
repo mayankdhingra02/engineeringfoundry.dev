@@ -12,6 +12,8 @@ import type {
   MockTrack,
   SystemDesignProblem,
 } from "@/types";
+import { getLowLevelDesignPracticeSlug } from "./low-level-design-handoffs";
+export { getLowLevelDesignMockPlanSlug, lowLevelDesignPracticeToMockPlanSlug } from "./low-level-design-handoffs";
 import rubricsData from "./rubrics.json";
 import sessionPlansData from "./session-plans.json";
 import lowLevelDesignProblemsData from "./lld-problems.json";
@@ -75,15 +77,6 @@ export const mockSessionPlans = [...sessionPlansData as MockSessionPlan[], ...lo
 export const activeMockSessionPlans = mockSessionPlans.filter((plan) => plan.status === "active");
 export const mockRubrics = rubricsData as MockRubric[];
 
-const lowLevelDesignPracticeHandoffs: Readonly<Record<string, string>> = {
-  "parking-lot": "parking-allocation",
-  "elevator-control": "elevator-dispatch",
-  "vending-machine": "vending-workflow",
-  "amazon-locker-parcel-locker": "package-delivery-lifecycle",
-  "conference-room-booking": "meeting-room-scheduler",
-  "notification-system": "notification-orchestrator",
-};
-
 export type MockReferencedContent = DsaQuestion | SystemDesignProblem | LowLevelDesignMockProblem | MlDesignProblem | BehavioralQuestion;
 
 export function plansForMockTrack(track: MockTrack) {
@@ -109,7 +102,7 @@ export function getMockPreparationHref(plan: MockSessionPlan) {
   if (plan.track === "dsa") return `/dsa?search=${encodeURIComponent((content as DsaQuestion).title)}`;
   if (plan.track === "system-design") return `/system-design/${content.slug}`;
   if (plan.track === "low-level-design") {
-    const practiceSlug = lowLevelDesignPracticeHandoffs[plan.slug];
+    const practiceSlug = getLowLevelDesignPracticeSlug(plan.slug);
     return practiceSlug ? `/low-level-design/practice/${practiceSlug}` : "/low-level-design/practice";
   }
   if (plan.track === "ml-design") return `/ml-design/${content.slug}`;
@@ -117,6 +110,6 @@ export function getMockPreparationHref(plan: MockSessionPlan) {
 }
 
 export function getMockPreparationLinkLabel(plan: MockSessionPlan) {
-  if (plan.track !== "low-level-design" || lowLevelDesignPracticeHandoffs[plan.slug]) return "Practice the exact specialist topic";
+  if (plan.track !== "low-level-design" || getLowLevelDesignPracticeSlug(plan.slug)) return "Practice the exact specialist topic";
   return "Browse Low-Level Design specialist practice";
 }

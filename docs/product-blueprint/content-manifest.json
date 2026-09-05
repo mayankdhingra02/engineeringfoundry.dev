@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "93d99dd98c1e25ef824b34743e13c0cf723bd121",
-  "repository_state_sha256": "008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4083eb0a59",
+  "repository_sha": "30a050d3b798589ad381d3da737d1e074b4e75d0",
+  "repository_state_sha256": "e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d07a418b84",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -866,11 +866,21 @@
     },
     {
       "acceptance_criteria": [
-        "Eight lessons and at least six original practice designs satisfy the reviewed core contract."
+        "Eight distinct lessons and six original practice dossiers each satisfy the complete content contract; the canonical 12-dimension qualitative rubric, Guided/Independent/Timed behavior, self-review-before-example flow, proportional concurrency, tests/evolution, truthful browser/session persistence, exact Mock handoffs, bounded Playbook configuration, System Design/Low-Level Systems boundaries, and desktop/390px keyboard-responsive behavior are qualified."
       ],
       "code_paths": [
+        "app/globals.css",
         "app/low-level-design",
-        "features/low-level-design"
+        "app/sitemap.ts",
+        "data/low-level-design",
+        "data/mock-interviews/low-level-design-handoffs.ts",
+        "features/low-level-design",
+        "lib/global-search.ts",
+        "lib/interview-playbook/planner-integration.ts",
+        "lib/low-level-design/practice-url-state.ts",
+        "scripts/test-interview-playbook-planner-integration.mjs",
+        "scripts/test-low-level-design.mjs",
+        "scripts/test-mock-interview-review.mjs"
       ],
       "content_paths": [
         "docs/low-level-design-v1.md"
@@ -878,42 +888,49 @@
       "gap_inventory_ids": [],
       "id": "EF-LLD",
       "kind": "requirement-family",
-      "known_gaps": [
-        "Source and master acceptance mapping remains unverified.",
-        "A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Required Low-Level Design acceptance is closed. The missing RA-LOW-LEVEL-SYSTEMS artifact remains a separate, explicitly unapproved Low-Level Systems/C++ research boundary and does not reopen the object/domain-design family.",
       "owner": "low-level-design",
       "prerequisite_ids": [
         "EF-GLOBAL"
       ],
       "priority": "required",
-      "publication_status": "stale-review",
-      "research_artifact_ids": [
-        "RA-LOW-LEVEL-SYSTEMS"
+      "publication_status": "published",
+      "research_artifact_ids": [],
+      "research_status": "not-applicable",
+      "route_families": [
+        "/low-level-design/lessons/[slug]",
+        "/low-level-design/practice/[slug]"
       ],
-      "research_status": "needs-research",
-      "route_families": [],
       "routes": [
-        "/low-level-design"
+        "/low-level-design",
+        "/low-level-design/practice",
+        "/low-level-design/rubric"
       ],
       "section": "low-level-design",
       "source_ledger_ids": [],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
-        "npm run test:low-level-design"
+        "npm run lint",
+        "npm run test:interview-playbook-planner-integration",
+        "npm run test:low-level-design",
+        "npm run test:mock-content-validator",
+        "npm run typecheck"
       ],
       "title": "Low-Level Design",
       "visual_ids": []
     },
     {
       "acceptance_criteria": [
-        "An approved rehearsal flow, rubric, persistence boundary, and self-review-versus-evaluator decision precede implementation."
+        "Every published exercise supports Guided, Independent, and Timed rehearsal, a visible session-only timer, exact Mock Lab handoff, and a 12-dimension qualitative self-review before example guidance; persistence/privacy boundaries and the deliberate absence of an employer-correctness evaluator are explicit."
       ],
       "code_paths": [
         "app/low-level-design",
-        "features/low-level-design"
+        "data/low-level-design",
+        "data/mock-interviews/low-level-design-handoffs.ts",
+        "features/low-level-design",
+        "lib/low-level-design/practice-url-state.ts"
       ],
       "content_paths": [
         "docs/low-level-design-v1.md"
@@ -923,30 +940,31 @@
       ],
       "id": "EF-LLD-REHEARSAL",
       "kind": "content-gap",
-      "known_gaps": [
-        "Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "The previously unspecified rehearsal contract is now implemented without an opaque model score: local practice state is ephemeral, Mock Lab reviews remain self-reported evidence, and no employer-correctness claim is made.",
       "owner": "low-level-design",
       "prerequisite_ids": [
         "EF-LLD"
       ],
       "priority": "p1",
-      "publication_status": "unpublished",
+      "publication_status": "published",
       "research_artifact_ids": [],
-      "research_status": "needs-research",
+      "research_status": "not-applicable",
       "route_families": [
         "/low-level-design/practice/[slug]"
       ],
       "routes": [
-        "/low-level-design"
+        "/low-level-design/practice",
+        "/low-level-design/rubric",
+        "/mock-interviews"
       ],
       "section": "low-level-design",
       "source_ledger_ids": [],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
-        "npm run test:low-level-design"
+        "npm run test:low-level-design",
+        "npm run test:mock-content-validator"
       ],
       "title": "Low-Level Design rehearsal",
       "visual_ids": []
@@ -2518,8 +2536,7 @@
       "notes": "This names a Low-Level Systems/C++ research boundary, not approval to expand the existing object-oriented Low-Level Design curriculum.",
       "repository_path": null,
       "requirement_ids": [
-        "EF-DSA-LANGUAGE-COVERAGE",
-        "EF-LLD"
+        "EF-DSA-LANGUAGE-COVERAGE"
       ],
       "title": "Low-Level Software Interview Preparation: Questions, Problem Sets, Resources, and Study Plans",
       "verified_at": null,

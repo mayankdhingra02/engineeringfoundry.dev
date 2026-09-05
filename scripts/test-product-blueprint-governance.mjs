@@ -388,7 +388,6 @@ try {
   }
 
   for (const contradiction of [
-    { requirementId: "EF-LLD", artifactId: "RA-LOW-LEVEL-SYSTEMS", approval: "unverified" },
     { requirementId: "EF-DSA", artifactId: "RA-DSA-JAVASCRIPT-REQUEST", approval: "unverified" },
     { requirementId: "EF-AIB", artifactId: "RA-AIB-MVP-RECOMMENDATION", approval: "requires-founder-approval" },
   ]) {

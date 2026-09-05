@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-05
-repository_sha: 93d99dd98c1e25ef824b34743e13c0cf723bd121
-repository_state_sha256: 008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4083eb0a59
+repository_sha: 30a050d3b798589ad381d3da737d1e074b4e75d0
+repository_state_sha256: e06146cd5c6c1b0e7b024be2d09fad6c129da1d824bdead8b0db65d07a418b84
 ---
 
 # Engineering Foundry requirement coverage
@@ -23,9 +23,9 @@ repository_state_sha256: 008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 0 |
-| partial | 9 |
+| partial | 7 |
 | implemented-unverified | 0 |
-| implemented | 18 |
+| implemented | 20 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -49,17 +49,17 @@ repository_state_sha256: 008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4
 | approved | 15 |
 | approved-needs-source-import | 1 |
 | needs-current-verification | 2 |
-| needs-research | 11 |
-| not-applicable | 5 |
+| needs-research | 9 |
+| not-applicable | 7 |
 
 ### Publication status
 
 | Publication status | Count |
 | --- | ---: |
-| unpublished | 10 |
+| unpublished | 9 |
 | noindex-draft | 0 |
-| published | 17 |
-| stale-review | 7 |
+| published | 19 |
+| stale-review | 6 |
 | archived | 0 |
 
 ## Requirements by family
@@ -123,8 +123,8 @@ repository_state_sha256: 008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4
 | EF-EXP | interview-experiences | required | implemented | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 7 | — |
 | EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 17 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
-| EF-LLD | low-level-design | required | partial | needs-research | stale-review | missing | /low-level-design | — | 0 | 1 | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
-| EF-LLD-REHEARSAL | low-level-design | p1 | partial | needs-research | unpublished | missing | /low-level-design | /low-level-design/practice/[slug] | 0 | 1 | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
+| EF-LLD | low-level-design | required | implemented | not-applicable | published | not-applicable | /low-level-design, /low-level-design/practice, /low-level-design/rubric | /low-level-design/lessons/[slug], /low-level-design/practice/[slug] | 0 | 5 | — |
+| EF-LLD-REHEARSAL | low-level-design | p1 | implemented | not-applicable | published | not-applicable | /low-level-design/practice, /low-level-design/rubric, /mock-interviews | /low-level-design/practice/[slug] | 0 | 2 | — |
 | EF-ML | ml-design | required | implemented | approved | published | claim-recorded | /ml-design, /ml-design/core-concepts, /ml-design/glossary, /ml-design/practice, /ml-design/problems, /ml-design/rubric | /ml-design/core-concepts/[slug], /ml-design/problems/[problem]/practice/[attemptId], /ml-design/problems/[slug] | 16 | 6 | — |
 | EF-ML-CONCEPT-COVERAGE | ml-design | p1 | implemented | approved | published | claim-recorded | /ml-design/core-concepts | /ml-design/core-concepts/[slug] | 16 | 2 | — |
 | EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | implemented | approved | published | claim-recorded | /ml-design/practice, /ml-design/problems | /ml-design/problems/[problem]/practice/[attemptId], /ml-design/problems/[slug] | 16 | 4 | — |
@@ -150,7 +150,6 @@ repository_state_sha256: 008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4
 | ID | Record type | Status | Gap/reason |
 | --- | --- | --- | --- |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
-| EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
 | EF-SUP | modeled | partial | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
@@ -161,7 +160,6 @@ repository_state_sha256: 008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4
 | ID | Record type | Status | Gap/reason |
 | --- | --- | --- | --- |
 | EF-DSA-LANGUAGE-COVERAGE | modeled | partial | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
-| EF-LLD-REHEARSAL | modeled | partial | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
 | EF-VIZ | modeled | partial | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
 
 ## Stale-review items
@@ -170,7 +168,6 @@ repository_state_sha256: 008f6ec403874543e6944cece3a88faaa49e3bc6ef80c39484c6eb4
 | --- | --- | --- | ---: |
 | EF-DSA-CURRICULUM-SHELLS | dsa | approved | 2 |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 8 |
-| EF-LLD | low-level-design | needs-research | 0 |
 | EF-SAL | salary-negotiation | needs-current-verification | 0 |
 | EF-SD | system-design | needs-research | 50 |
 | EF-SD-PRACTICE-COVERAGE | system-design | needs-research | 0 |
@@ -199,8 +196,8 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Source record state | Count |
 | --- | ---: |
-| not-applicable | 5 |
-| missing | 11 |
+| not-applicable | 7 |
+| missing | 9 |
 | discovery-recorded | 0 |
 | claim-recorded | 18 |
 
@@ -219,8 +216,8 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-EXP | not-applicable | not-applicable | — |
 | EF-GLOBAL | not-applicable | not-applicable | — |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | needs-research | missing | — |
-| EF-LLD | needs-research | missing | — |
-| EF-LLD-REHEARSAL | needs-research | missing | — |
+| EF-LLD | not-applicable | not-applicable | — |
+| EF-LLD-REHEARSAL | not-applicable | not-applicable | — |
 | EF-ML | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
 | EF-ML-CONCEPT-COVERAGE | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
 | EF-ML-PRACTICE-PROVENANCE | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
@@ -384,7 +381,7 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | repository-present | approved | 27e1a44c62f8f0b3583c0341816d0ba5844fc0b0ca234eae8a77145f64939fd2 | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | docs/product-blueprint/research/dsa/python-java-language-guides.md | — |
 | RA-DSA-ROLE-ROADMAPS | EF-DSA | repository-present | approved | 62ca75813e9d659c2276d40194d770245dbe18c08ecba213062dc15bdb1693e9 | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS | docs/product-blueprint/research/dsa/role-roadmaps.md | — |
 | RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | missing | unverified | — | — | EF-OPS | — | — |
-| RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE, EF-LLD | — | — |
+| RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
 | RA-ML-CORE-CONCEPTS | EF-ML | repository-present | approved | 74a4688763488bcd250cdae38c3e3f27520fabc2055e52fb69ae566d14eb7320 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/core-concepts.md | — |
 | RA-ML-FINAL-SYNTHESIS | EF-ML | repository-present | approved | b366986b89a9ab6e08192f5c86680c53ad2d926536dacdd09fab070af64b0ba6 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/final-synthesis.md | — |
 | RA-ML-INFRA-MODERN-AI | EF-ML | repository-present | approved | a7dbf7158440158b41e93ad2ae21dbc458bfbb184c226d4541898ea41344c8de | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE | docs/product-blueprint/research/ml-design/infrastructure-modern-ai.md | — |
