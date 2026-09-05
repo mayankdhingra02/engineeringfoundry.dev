@@ -8,9 +8,8 @@ import { QuestionList } from "@/components/question-list";
 import { CompanyGuideV1Workspace, type CompanyGuidePublicExperience } from "@/features/company-guides/company-guide-v1";
 import { getCompany } from "@/data/companies";
 import { priorityCompanyGuideBySlug } from "@/data/company-guides/v1";
-import { amazonGuide, googleGuide, metaGuide, walmartGuide } from "@/data/company-guides";
-import type { CompanyInterviewGuide } from "@/data/company-guides";
 import { questionsForCompany } from "@/data/dsa";
+import { accountPlatformStatus } from "@/lib/config/capabilities";
 import { createPageMetadata } from "@/lib/metadata";
 import { buildCompanyStaticParams } from "@/lib/public-route-inventory";
 import { listPublicInterviewExperiences } from "@/lib/supabase/public";
@@ -18,14 +17,13 @@ import { listPublicInterviewExperiences } from "@/lib/supabase/public";
 export const dynamic = "force-dynamic";
 export const dynamicParams = false;
 export function generateStaticParams() { return buildCompanyStaticParams(); }
-const matureGuides: Partial<Record<string, CompanyInterviewGuide>> = { amazon: amazonGuide, google: googleGuide, meta: metaGuide, walmart: walmartGuide };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params; const company = getCompany(slug); if (!company) notFound();
-  if (slug === "amazon") return createPageMetadata({ title: "Amazon SDE Interview Guide 2026 — SDE I, II & III", description: "Prepare for Amazon SDE I, SDE II, and Senior SDE interviews with round breakdowns, coding topics, system design, Leadership Principles, reported questions, and preparation roadmaps.", path: "/companies/amazon" });
-  if (slug === "google") return createPageMetadata({ title: "Google Software Engineer Interview Guide 2026 — L3, L4 & L5", description: "Prepare for Google L3, L4, and L5 software engineering interviews with coding patterns, interview-round breakdowns, system design, Googliness & Leadership, reported questions, and preparation roadmaps.", path: "/companies/google" });
-  if (slug === "meta") return createPageMetadata({ title: "Meta Software Engineer Interview Guide 2026 — E3, E4 & E5", description: "Prepare for Meta E3, E4, and E5 software engineering interviews with coding questions, system design, behavioral preparation, recent interview experiences, and level-specific roadmaps.", path: "/companies/meta" });
-  if (slug === "walmart") return createPageMetadata({ title: "Walmart Software Engineer Interview Guide 2026", description: "Prepare for Walmart Global Tech software engineering interviews with coding questions, LLD, system design, backend fundamentals, recent interview experiences, and level-specific preparation roadmaps.", path: "/companies/walmart" });
+  if (slug === "amazon") return createPageMetadata({ title: "Amazon Software Development Interview Guide 2026", description: "Current official Amazon software-development preparation guidance, evidence limits, recruiter checks, and exact transferable practice routes.", path: "/companies/amazon" });
+  if (slug === "google") return createPageMetadata({ title: "Google Technical Interview Guide 2026", description: "Current official Google virtual-interview tool guidance, evidence limits, recruiter checks, and exact transferable practice routes.", path: "/companies/google" });
+  if (slug === "meta") return createPageMetadata({ title: "Meta Engineering Interview Preparation Hub 2026", description: "A neutral, source-aware Meta preparation hub that avoids claiming a universal engineering loop and routes to transferable practice.", path: "/companies/meta" });
+  if (slug === "walmart") return createPageMetadata({ title: "Walmart Global Tech Interview Preparation Hub 2026", description: "A cautious, source-aware Walmart preparation hub that preserves role and location uncertainty and routes to transferable practice.", path: "/companies/walmart" });
   return createPageMetadata({ title: `${company.name} Engineering Interview Preparation Guide`, description: `A neutral ${company.name} preparation hub with general DSA, System Design, behavioral, reviewed experience, and attributed company-specific resources.`, path: `/companies/${company.slug}` });
 }
 
@@ -40,8 +38,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
   const interviewGuide = priorityCompanyGuideBySlug[company.slug];
   if (interviewGuide) {
     const result = await listPublicInterviewExperiences({ companyName: company.name, limit: 6 });
-    const matureGuide = matureGuides[company.slug];
-    return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} /><CompanyGuideV1Workspace experienceAvailability={result.availability} guide={interviewGuide} experiences={result.data as unknown as CompanyGuidePublicExperience[]} matureGuide={matureGuide} /></>;
+    return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} /><CompanyGuideV1Workspace accountPlatformAvailable={accountPlatformStatus().available} experienceAvailability={result.availability} guide={interviewGuide} experiences={result.data as unknown as CompanyGuidePublicExperience[]} /></>;
   }
   const associatedQuestions = questionsForCompany(company.slug);
   return <><AnalyticsEventOnMount event="company_page_viewed" properties={{ company_slug: company.slug, company_name: company.name }} />

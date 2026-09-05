@@ -12,10 +12,10 @@ const questionBank = fs.readFileSync("features/company-guides/question-bank.tsx"
 const evidenceBadge = fs.readFileSync("features/company-guides/evidence-badge.tsx", "utf8");
 
 assert.match(route, /priorityCompanyGuideBySlug/, "Priority company guides must use the shared P0.4 registry");
-assert.match(route, /Amazon SDE Interview Guide 2026/, "Amazon must have dedicated SEO metadata");
-assert.match(route, /Google Software Engineer Interview Guide 2026/, "Google must have dedicated SEO metadata");
-assert.match(route, /Meta Software Engineer Interview Guide 2026/, "Meta must have dedicated SEO metadata");
-assert.match(route, /Walmart Software Engineer Interview Guide 2026/, "Walmart must have dedicated SEO metadata");
+assert.match(route, /Amazon Software Development Interview Guide 2026/, "Amazon must have dedicated truthful SEO metadata");
+assert.match(route, /Google Technical Interview Guide 2026/, "Google must have dedicated truthful SEO metadata");
+assert.match(route, /Meta Engineering Interview Preparation Hub 2026/, "Meta neutral hub must have dedicated truthful SEO metadata");
+assert.match(route, /Walmart Global Tech Interview Preparation Hub 2026/, "Walmart neutral hub must have dedicated truthful SEO metadata");
 assert.match(workspace, /guide\.defaultLevel/, "each company must provide its own default level lens");
 assert.ok(workspace.indexOf('id="levels"') < workspace.indexOf('id="overview"'), "level choice must appear before the comparison overview");
 assert.match(workspace, /company-level-summary-grid.*role="group".*aria-pressed.*chooseLevel/s, "top level cards must be interactive selectors");
