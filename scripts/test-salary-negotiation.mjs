@@ -16,7 +16,9 @@ import {
 const source = fs.readFileSync("data/salary-negotiation/index.ts", "utf8");
 const entryRoute = fs.readFileSync("app/salary-negotiation/page.tsx", "utf8");
 const moduleRoute = fs.readFileSync("app/salary-negotiation/[slug]/page.tsx", "utf8");
+const moduleView = fs.readFileSync("features/salary-negotiation/module-view.tsx", "utf8");
 const worksheet = fs.readFileSync("features/salary-negotiation/offer-comparison-worksheet.tsx", "utf8");
+const editableScripts = fs.readFileSync("features/salary-negotiation/editable-scripts.tsx", "utf8");
 const sourceNotes = fs.readFileSync("features/salary-negotiation/source-notes.tsx", "utf8");
 const styles = fs.readFileSync("app/globals.css", "utf8");
 const search = fs.readFileSync("lib/global-search.ts", "utf8");
@@ -42,6 +44,10 @@ for (const item of salaryNegotiationModules) {
     assert.ok(section.cautions.length >= 2, `${item.slug}/${section.title} needs caveats`);
   }
 }
+const scriptTitles = salaryNegotiationModules.flatMap((module) => module.scripts.map((item) => item.title));
+for (const requiredTitle of ["Initial counter", "Low-offer clarification", "No competing offer", "Competing-offer disclosure", "Level discussion", "Sign-on request", "Equity request", "Deadline extension", "Remote or geography question", "Raise or promotion conversation", "Best offer response"]) {
+  assert.ok(scriptTitles.includes(requiredTitle), `message examples must cover ${requiredTitle}`);
+}
 assert.match(source, /You can negotiate without bluffing/, "honest leverage must explicitly reject bluffing");
 assert.match(source, /fake competing offers[\s\S]*altered offer letters/i, "anti-fabrication boundary must cover offers and documents");
 assert.match(source, /Private-company equity may ultimately be worth zero/, "startup equity uncertainty must be explicit");
@@ -66,6 +72,10 @@ for (const field of ["source.jurisdiction", "source.volatility", "source.verifie
 assert.match(sourceNotes, /target="_blank" rel="noopener noreferrer"/, "external source links must isolate the opener");
 assert.match(entryRoute, /SalaryNegotiationSourceNotes[\s\S]*salaryNegotiationSources/, "the landing page must publish the complete source and freshness record");
 assert.match(research, /FTC[\s\S]*not in effect and is not enforceable[\s\S]*2026-12-05[\s\S]*2027-03-05/s, "the approved synthesis must record current volatile status and review windows");
+assert.match(moduleView, /EditableNegotiationScripts/, "module pages must use the editable script surface");
+assert.match(editableScripts, /useState\(script\.template\)[\s\S]*<textarea[\s\S]*onChange=/, "published examples must be genuinely editable");
+assert.match(editableScripts, /draftRef\.current\?\.focus\(\)[\s\S]*draftRef\.current\?\.select\(\)/, "script copy failure must focus and select the edited draft");
+assert.doesNotMatch(editableScripts, /localStorage|sessionStorage|fetch\(|supabase|searchParams|router\.|track\(/i, "edited module scripts must stay in memory and out of persistence, navigation, and analytics");
 
 const transparent = calculateOfferComparison({ label: "A", baseSalary: 180000, targetBonus: 30000, targetBonusGuaranteed: false, signOn: 25000, equityGrantValue: 160000, vestingYears: 4, otherGuaranteedCompensation: 5000 });
 assert.equal(transparent.firstYearGuaranteedCash, 210000, "target bonus must not silently count as guaranteed cash");

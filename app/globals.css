@@ -65,6 +65,7 @@
 .salary-sources.compact > div { grid-template-columns: 1fr; }
 .salary-sources.compact article { border-right: 0; }
 .salary-sources.compact article:not(:last-child) { border-bottom: 1px solid var(--line); }
+.salary-script-editor { display: grid; gap: 7px; margin-top: 11px; color: var(--text-secondary); font-size: 11.5px; font-weight: 700; }.salary-script-editor textarea { width: 100%; box-sizing: border-box; min-height: 118px; padding: 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--text-secondary); font: inherit; font-size: 13px; font-weight: 450; line-height: 1.65; resize: vertical; }.salary-scripts article footer { display: flex; align-items: center; gap: 12px; margin-top: 10px; }.salary-scripts article footer > span { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
 
 @media (max-width: 620px) {
   .salary-source-shell { padding-block: 45px; }
@@ -77,6 +78,8 @@
   .salary-offer-fields input, .salary-offer-fields textarea, .salary-builder-fields textarea, .salary-checkbox { min-height: 44px; }
   .salary-checkbox input { min-height: 20px; }
   .salary-related a, .salary-pager a, .salary-breadcrumbs a { min-height: 44px; }
+  .salary-scripts article footer { align-items: stretch; flex-direction: column; }
+  .salary-script-editor textarea, .salary-scripts article footer .button { min-height: 44px; }
 }
 
 
