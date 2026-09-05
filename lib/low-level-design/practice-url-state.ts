@@ -1,5 +1,5 @@
-import { priorityCompanySlugs } from "@/data/company-guides/v1";
-import { lowLevelDesignLevels, type LowLevelDesignLevel } from "@/data/low-level-design";
+import { priorityCompanySlugs } from "../../data/company-guides/v1.ts";
+import { lowLevelDesignLevels, type LowLevelDesignLevel } from "../../data/low-level-design/taxonomy.ts";
 
 export const lowLevelDesignPracticeModes = ["guided", "independent", "timed"] as const;
 export type LowLevelDesignPracticeMode = (typeof lowLevelDesignPracticeModes)[number];

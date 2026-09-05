@@ -4,14 +4,14 @@ import {
   type LowLevelDesignLessonContract,
   type LowLevelDesignPracticeContract,
 } from "./content-contracts";
+import { lowLevelDesignLevels, type LowLevelDesignLevel } from "./taxonomy";
 
 export {
   lowLevelDesignRubric,
   type LowLevelDesignRubricId,
 } from "./content-contracts";
+export { lowLevelDesignLevels, type LowLevelDesignLevel } from "./taxonomy";
 
-export const lowLevelDesignLevels = ["Entry", "Mid", "Senior", "Staff+"] as const;
-export type LowLevelDesignLevel = (typeof lowLevelDesignLevels)[number];
 export type LowLevelDesignStatus = "published" | "draft";
 
 export type LowLevelDesignSection = {
