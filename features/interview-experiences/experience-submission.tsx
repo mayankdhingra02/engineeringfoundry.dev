@@ -47,6 +47,12 @@ const emptyDraft: ExperienceDraft = {
   roundType: "",
   topics: [],
 };
+
+function ownerHistoryHref(page: number) {
+  return page > 1
+    ? `/interview-experiences?submissions_page=${page}#your-experiences`
+    : "/interview-experiences#your-experiences";
+}
 const editableStatuses = new Set(["draft", "needs_changes", "withdrawn"]);
 
 function draftSignature(draft: ExperienceDraft) {
@@ -387,6 +393,7 @@ export function ExperienceSubmission({
   }
 
   const owned = ownerState.items;
+  const ownerPageOutOfRange = ownerState.page > ownerState.totalPages;
   const preview = input;
   const displayState = resolveInterviewExperienceDisplayState(
     messageState,
@@ -576,10 +583,34 @@ export function ExperienceSubmission({
       </p>
 
       <section className="experience-owned" aria-labelledby="your-experiences">
-        <h2 id="your-experiences">Your latest submissions</h2>
-        {owned.length ? (
+        <h2 id="your-experiences">Your submissions</h2>
+        {ownerPageOutOfRange ? (
+          <div className="experience-directory-empty">
+            <div>
+              <strong>This page no longer contains saved reports.</strong>
+              <p>
+                A report may have moved or been removed. Your current form is
+                unchanged.
+              </p>
+              <Link
+                className="button button-secondary"
+                href={ownerHistoryHref(ownerState.totalPages)}
+                aria-disabled={pending}
+                onClick={(event) => {
+                  if (mutationPending.current) event.preventDefault();
+                }}
+              >
+                Return to the last available page
+              </Link>
+            </div>
+          </div>
+        ) : owned.length ? (
           <>
-            <p className="muted">Showing up to {ownerState.limit} most recently updated reports. Pagination is not available yet.</p>
+            <p className="muted">
+              Showing {(ownerState.page - 1) * ownerState.limit + 1}–
+              {(ownerState.page - 1) * ownerState.limit + owned.length} of{" "}
+              {ownerState.totalCount} private reports, newest first.
+            </p>
             <ul>
               {owned.map((item) => (
                 <li key={item.id}>
@@ -596,6 +627,40 @@ export function ExperienceSubmission({
                 </li>
               ))}
             </ul>
+            {ownerState.totalPages > 1 && (
+              <nav
+                className="experience-pagination"
+                aria-label="Your submission pages"
+              >
+                {ownerState.page > 1 && (
+                  <Link
+                    className="button button-secondary"
+                    href={ownerHistoryHref(ownerState.page - 1)}
+                    aria-disabled={pending}
+                    onClick={(event) => {
+                      if (mutationPending.current) event.preventDefault();
+                    }}
+                  >
+                    Previous
+                  </Link>
+                )}
+                <span aria-current="page">
+                  Page {ownerState.page} of {ownerState.totalPages}
+                </span>
+                {ownerState.page < ownerState.totalPages && (
+                  <Link
+                    className="button button-secondary"
+                    href={ownerHistoryHref(ownerState.page + 1)}
+                    aria-disabled={pending}
+                    onClick={(event) => {
+                      if (mutationPending.current) event.preventDefault();
+                    }}
+                  >
+                    Next
+                  </Link>
+                )}
+              </nav>
+            )}
           </>
         ) : (
           <div className="experience-directory-empty">
