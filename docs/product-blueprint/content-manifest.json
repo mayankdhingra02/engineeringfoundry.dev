@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "1167cbbb538749c48e7e3c6a86ec9cf77148d75a",
-  "repository_state_sha256": "9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61c1a820f32",
+  "repository_sha": "5599ad21d1db0ae135ade7e4ac96ef43df2991c2",
+  "repository_state_sha256": "0fd1d828dc604f8513a0fe5f516b04794d404502418a6d9143344b0752775639",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1243,50 +1243,63 @@
     },
     {
       "acceptance_criteria": [
-        "Local practice packets and self-review keep private session material within documented boundaries.",
-        "Validated public configuration follows direct links and history while private session material never enters shared URLs and is retired when configuration changes.",
-        "Mock review persistence accepts only exact, canonical catalog-backed session input before account availability, actor lookup, or RPC work; client-side source contracts reject incomplete reviews, prevent duplicate saves, preserve newer edits and sessions from stale results, expose accessible pending and result status, and emit saved-review analytics only after confirmed persistence using the request's canonical identifiers. Executable parser and source-integration coverage is attributed to npm run test:mock-interview-review."
+        "Published guided, timed or untimed solo, and bring-your-own-peer packets use canonical original prompts, text-equivalent controls, revealable guidance, structured qualitative rubrics, and honest unavailable labels for AI-led, expert-led, company-shaped, mini-loop, and full-loop formats.",
+        "Public track, prompt, and mode configuration follows direct links and Back/Forward while all private conditions, timer state, ratings, and notes stay out of shared URLs and are retired on traversal or reload; extended and untimed practice preserve the complete experience.",
+        "Exact catalog-backed persistence records evaluator mode, fresh or repeated exposure, configured timing and hint policy, actual assistance, and completed, interrupted, or technical-failure outcome before owner-scoped RPC work. Peer-entered marks remain unverified self-report; repeated or incomplete sessions stay in history with unknown capability signal, and every debrief returns to the exact specialist exercise when published or the exact specialist area plus the Interview Playbook without a global score or hiring prediction."
       ],
       "code_paths": [
+        "app/globals.css",
         "app/mock-interviews",
         "components/mock-interview-lab.tsx",
         "data/mock-interviews",
+        "lib/interview-playbook/mock-evidence-query.ts",
+        "lib/interview-playbook/mock-evidence.ts",
         "lib/mock-interviews/review-input.ts",
+        "lib/mock-interviews/session-conditions.ts",
         "lib/mock-interviews/url-state.ts",
+        "lib/supabase/database.types.ts",
+        "scripts/test-interview-playbook-mock-evidence.mjs",
         "scripts/test-mock-interview-review.mjs",
-        "scripts/test-practice-url-state.mjs"
+        "scripts/test-practice-url-state.mjs",
+        "supabase/migrations/202609050002_record_mock_session_conditions.sql",
+        "supabase/tests/database/mock_interview_reviews.test.sql"
       ],
       "content_paths": [
-        "docs/mock-interview-model.md"
+        "docs/mock-interview-model.md",
+        "docs/product-blueprint/research/behavioral/practice-followups-and-feedback.md",
+        "docs/product-blueprint/research/interview-playbook/mock-simulations.md"
       ],
       "gap_inventory_ids": [],
       "id": "EF-MOCK",
       "kind": "requirement-family",
-      "known_gaps": [
-        "Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.",
-        "Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Required Mock Lab acceptance is closed across 72 canonical plans and five tracks without absorbing the separately deferred peer marketplace: supported practice formats, conditions, provenance, disruption-safe evidence, private persistence, accessible timing alternatives, history reset, and specialist/Playbook handoffs are published and tested.",
       "owner": "mock-interviews",
       "prerequisite_ids": [
         "EF-PLAY"
       ],
       "priority": "required",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-BEH-PRACTICE-MOCK-FEEDBACK",
         "RA-PLAY-MOCK-SIMULATIONS"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "approved",
       "route_families": [],
       "routes": [
         "/mock-interviews"
       ],
       "section": "mock-interviews",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-BEH-OPM-GUIDE",
+        "SRC-BEH-OPM-STRUCTURED",
+        "SRC-PLAY-EEOC-ACCOMMODATION"
+      ],
+      "status": "implemented",
       "test_commands": [
+        "npm run qualify:database",
+        "npm run test:interview-playbook-mock-evidence",
         "npm run test:mock-content-validator",
         "npm run test:mock-interview-review",
         "npm run test:practice-url-state",

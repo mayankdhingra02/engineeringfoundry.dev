@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "1167cbbb538749c48e7e3c6a86ec9cf77148d75a",
-  "repository_state_sha256": "9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61c1a820f32",
+  "repository_sha": "5599ad21d1db0ae135ade7e4ac96ef43df2991c2",
+  "repository_state_sha256": "0fd1d828dc604f8513a0fe5f516b04794d404502418a6d9143344b0752775639",
   "schema_version": 1,
   "sources": [
     {
@@ -66,6 +66,7 @@
       "applies_to": [
         "EF-BEH",
         "EF-BEH-CURRICULUM-DEPTH",
+        "EF-MOCK",
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH",
         "EF-PLAY-ROUND-PROVENANCE",
@@ -90,6 +91,7 @@
       "applies_to": [
         "EF-BEH",
         "EF-BEH-CURRICULUM-DEPTH",
+        "EF-MOCK",
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH",
         "EF-PLAY-ROUND-PROVENANCE",
@@ -825,6 +827,7 @@
     },
     {
       "applies_to": [
+        "EF-MOCK",
         "EF-PLAY",
         "EF-PLAY-CURRICULUM-DEPTH",
         "EF-PLAY-ROUND-PROVENANCE",
