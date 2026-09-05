@@ -12,6 +12,7 @@ import { RequirementsLessonContent } from "@/content/system-design/foundations/r
 import { DataStorageLessonContent, dataStorageLessonIds } from "@/content/system-design/data-storage";
 import { NetworkingLessonContent, networkingLessonIds } from "@/content/system-design/networking";
 import { MessagingLessonContent, messagingLessonIds } from "@/content/system-design/messaging";
+import { ProductionEngineeringLessonContent, productionEngineeringLessonIds } from "@/content/system-design/production-engineering";
 import { ReliabilityLessonContent, reliabilityLessonIds } from "@/content/system-design/reliability";
 import { SpecializedLessonContent, specializedLessonIds } from "@/content/system-design/specialized";
 import { TechnologyLessonContent, technologyLessonIds } from "@/content/system-design/technology";
@@ -89,6 +90,7 @@ export default async function SystemDesignContentPage({ params, searchParams }: 
   if (dataStorageLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><DataStorageLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (messagingLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><MessagingLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (reliabilityLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><ReliabilityLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
+  if (productionEngineeringLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><ProductionEngineeringLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (specializedLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><SpecializedLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   if (technologyLessonIds.has(lesson.id)) return <SystemDesignLessonLayout lesson={lesson}><TechnologyLessonContent lessonId={lesson.id} /></SystemDesignLessonLayout>;
   return <ComingSoonLesson lesson={lesson} />;

@@ -7,7 +7,7 @@
     "subtopics": 1389,
     "technologyDeepDives": 12,
     "practiceProblems": 60,
-    "publishedTopics": 146,
+    "publishedTopics": 164,
     "publishedPracticeProblems": 27
   },
   "sections": [
@@ -4869,8 +4869,8 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
@@ -4910,15 +4910,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -4950,8 +4950,8 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -4959,8 +4959,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -4993,15 +4993,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "sequence",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability"
@@ -5032,15 +5032,15 @@
       "prerequisites": [
         "logs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "logs"
@@ -5071,15 +5071,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics"
@@ -5110,15 +5110,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics",
@@ -5150,15 +5150,15 @@
       "prerequisites": [
         "slis"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slis",
@@ -5190,15 +5190,15 @@
       "prerequisites": [
         "slos"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slos"
@@ -5227,15 +5227,15 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens",
@@ -5269,15 +5269,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "comparison",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -5309,15 +5309,15 @@
       "prerequisites": [
         "sessions-tokens"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens"
@@ -5349,15 +5349,15 @@
         "authn-authz",
         "http"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "sequence",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -5389,15 +5389,15 @@
       "prerequisites": [
         "http"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "sequence",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "http",
@@ -5429,15 +5429,15 @@
       "prerequisites": [
         "tls"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "comparison",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "tls"
@@ -5468,15 +5468,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz"
@@ -5508,15 +5508,15 @@
         "rate-limiting",
         "cdn"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "rate-limiting",
@@ -5549,15 +5549,15 @@
         "authn-authz",
         "data-modeling"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -47395,8 +47395,8 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
@@ -47435,8 +47435,8 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
@@ -47475,8 +47475,8 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
@@ -47515,8 +47515,8 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "draft-ready",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
@@ -47557,15 +47557,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47598,15 +47598,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47639,15 +47639,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47680,15 +47680,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47721,15 +47721,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47762,8 +47762,8 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -47771,8 +47771,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47806,8 +47806,8 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -47815,8 +47815,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47850,8 +47850,8 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -47859,8 +47859,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47894,8 +47894,8 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -47903,8 +47903,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47938,8 +47938,8 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [
@@ -47947,8 +47947,8 @@
       ],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability",
@@ -47982,15 +47982,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "sequence",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability"
@@ -48022,15 +48022,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability"
@@ -48062,15 +48062,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability"
@@ -48102,15 +48102,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability"
@@ -48142,15 +48142,15 @@
       "prerequisites": [
         "observability"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "observability"
@@ -48182,15 +48182,15 @@
       "prerequisites": [
         "logs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "logs"
@@ -48222,15 +48222,15 @@
       "prerequisites": [
         "logs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "logs"
@@ -48262,15 +48262,15 @@
       "prerequisites": [
         "logs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "logs"
@@ -48302,15 +48302,15 @@
       "prerequisites": [
         "logs"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "logs"
@@ -48342,15 +48342,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics"
@@ -48382,15 +48382,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics"
@@ -48422,15 +48422,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics"
@@ -48462,15 +48462,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics"
@@ -48502,15 +48502,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics"
@@ -48542,15 +48542,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics",
@@ -48583,15 +48583,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics",
@@ -48624,15 +48624,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics",
@@ -48665,15 +48665,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics",
@@ -48706,15 +48706,15 @@
       "prerequisites": [
         "metrics"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "metrics",
@@ -48747,15 +48747,15 @@
       "prerequisites": [
         "slis"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slis",
@@ -48788,15 +48788,15 @@
       "prerequisites": [
         "slis"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slis",
@@ -48829,15 +48829,15 @@
       "prerequisites": [
         "slis"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slis",
@@ -48870,15 +48870,15 @@
       "prerequisites": [
         "slis"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slis",
@@ -48911,15 +48911,15 @@
       "prerequisites": [
         "slis"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slis",
@@ -48952,15 +48952,15 @@
       "prerequisites": [
         "slos"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slos"
@@ -48992,15 +48992,15 @@
       "prerequisites": [
         "slos"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slos"
@@ -49032,15 +49032,15 @@
       "prerequisites": [
         "slos"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slos"
@@ -49072,15 +49072,15 @@
       "prerequisites": [
         "slos"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "slos"
@@ -49110,15 +49110,15 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens",
@@ -49151,15 +49151,15 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens",
@@ -49192,15 +49192,15 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens",
@@ -49233,15 +49233,15 @@
         "ml": "must-know"
       },
       "prerequisites": [],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens",
@@ -49276,15 +49276,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "comparison",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49317,15 +49317,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49358,15 +49358,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49399,15 +49399,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49440,15 +49440,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49481,15 +49481,15 @@
       "prerequisites": [
         "sessions-tokens"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens"
@@ -49521,15 +49521,15 @@
       "prerequisites": [
         "sessions-tokens"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens"
@@ -49561,15 +49561,15 @@
       "prerequisites": [
         "sessions-tokens"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens"
@@ -49601,15 +49601,15 @@
       "prerequisites": [
         "sessions-tokens"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens"
@@ -49641,15 +49641,15 @@
       "prerequisites": [
         "sessions-tokens"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "sessions-tokens"
@@ -49682,15 +49682,15 @@
         "authn-authz",
         "http"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "sequence",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49724,15 +49724,15 @@
         "authn-authz",
         "http"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49766,15 +49766,15 @@
         "authn-authz",
         "http"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49808,15 +49808,15 @@
         "authn-authz",
         "http"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49850,15 +49850,15 @@
         "authn-authz",
         "http"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -49891,15 +49891,15 @@
       "prerequisites": [
         "http"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "sequence",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "http",
@@ -49932,15 +49932,15 @@
       "prerequisites": [
         "http"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "http",
@@ -49973,15 +49973,15 @@
       "prerequisites": [
         "http"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "http",
@@ -50014,15 +50014,15 @@
       "prerequisites": [
         "http"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "http",
@@ -50055,15 +50055,15 @@
       "prerequisites": [
         "http"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "http",
@@ -50096,15 +50096,15 @@
       "prerequisites": [
         "tls"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "comparison",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "tls"
@@ -50136,15 +50136,15 @@
       "prerequisites": [
         "tls"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "tls"
@@ -50176,15 +50176,15 @@
       "prerequisites": [
         "tls"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "tls"
@@ -50216,15 +50216,15 @@
       "prerequisites": [
         "tls"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "tls"
@@ -50256,15 +50256,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz"
@@ -50296,15 +50296,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz"
@@ -50336,15 +50336,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz"
@@ -50376,15 +50376,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz"
@@ -50416,15 +50416,15 @@
       "prerequisites": [
         "authn-authz"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz"
@@ -50457,15 +50457,15 @@
         "rate-limiting",
         "cdn"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "mermaid",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "rate-limiting",
@@ -50499,15 +50499,15 @@
         "rate-limiting",
         "cdn"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "rate-limiting",
@@ -50541,15 +50541,15 @@
         "rate-limiting",
         "cdn"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "rate-limiting",
@@ -50583,15 +50583,15 @@
         "rate-limiting",
         "cdn"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "rate-limiting",
@@ -50625,15 +50625,15 @@
         "rate-limiting",
         "cdn"
       ],
-      "contentStatus": "needs-research",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
-        "primarySources": false,
+        "primarySources": true,
         "interviewSources": true,
-        "needsAdditionalVerification": true
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "rate-limiting",
@@ -50667,15 +50667,15 @@
         "authn-authz",
         "data-modeling"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -50709,15 +50709,15 @@
         "authn-authz",
         "data-modeling"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -50751,15 +50751,15 @@
         "authn-authz",
         "data-modeling"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -50793,15 +50793,15 @@
         "authn-authz",
         "data-modeling"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",
@@ -50835,15 +50835,15 @@
         "authn-authz",
         "data-modeling"
       ],
-      "contentStatus": "researched",
-      "published": false,
+      "contentStatus": "published",
+      "published": true,
       "visualType": "none",
       "visualPurpose": null,
       "practiceLinks": [],
       "sourceCoverage": {
         "primarySources": true,
-        "interviewSources": false,
-        "needsAdditionalVerification": true
+        "interviewSources": true,
+        "needsAdditionalVerification": false
       },
       "relatedTopics": [
         "authn-authz",

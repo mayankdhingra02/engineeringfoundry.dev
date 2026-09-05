@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
-  "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "8e2bee151395197103445a5c6316ff546291a880",
-  "repository_state_sha256": "e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e1b0b6a5a4",
+  "generated_or_reviewed_at": "2026-09-04",
+  "repository_sha": "c6b955f0f96839f8ed64b128484f43c2965e783b",
+  "repository_state_sha256": "723d6be7d837fd60cd1f381ae361d29c39ac694c4443f54b24cf950dfed8757a",
   "schema_version": 1,
   "sources": [
     {
@@ -174,6 +174,367 @@
       "usage_limits": "Discovery and provenance record only until claim-level support is audited; do not infer a universal process across locations or organizations.",
       "verified_at": "2026-08-21",
       "volatility": "volatile"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-SLO-CONTROL"
+      ],
+      "id": "SRC-SD-GOOGLE-ALERTING",
+      "notes": "Supports symptom-led paging and budget-consumption examples.",
+      "published_at": null,
+      "publisher": "Google SRE Workbook",
+      "source_class": "first-party engineering/science",
+      "title": "Alerting on SLOs",
+      "url": "https://sre.google/workbook/alerting-on-slos/",
+      "usage_limits": "Use for burn-rate and SLO-alerting reasoning; examples require adaptation to the system's actual window and traffic.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-SLO-CONTROL"
+      ],
+      "id": "SRC-SD-GOOGLE-SLO",
+      "notes": "Supports user-centered SLI and SLO decision framing.",
+      "published_at": null,
+      "publisher": "Google SRE",
+      "source_class": "first-party engineering/science",
+      "title": "Service Level Objectives",
+      "url": "https://sre.google/sre-book/service-level-objectives/",
+      "usage_limits": "Use as first-party operating guidance, not as a universal contractual SLA policy.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-KEY-LIFECYCLE"
+      ],
+      "id": "SRC-SD-NIST-KEY-MANAGEMENT",
+      "notes": "Authoritative key-management guidance.",
+      "published_at": "2020-05-01",
+      "publisher": "NIST",
+      "source_class": "standard / RFC",
+      "title": "NIST SP 800-57 Part 1 Rev. 5: Recommendation for Key Management",
+      "url": "https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final",
+      "usage_limits": "Use for key-management lifecycle principles; algorithm selection and compliance requirements need current system-specific review.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-AUTH-BOUNDARY"
+      ],
+      "id": "SRC-SD-NIST-ZERO-TRUST",
+      "notes": "Authoritative government architecture guidance.",
+      "published_at": "2023-09-01",
+      "publisher": "NIST",
+      "source_class": "standard / RFC",
+      "title": "NIST SP 800-207A: A Zero Trust Architecture Model for Access Control in Cloud-Native Applications",
+      "url": "https://csrc.nist.gov/pubs/sp/800/207/a/final",
+      "usage_limits": "Use for resource-centric access-control architecture, not as a product certification or a substitute for application threat modeling.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-OAUTH-OIDC"
+      ],
+      "id": "SRC-SD-OIDC-CORE",
+      "notes": "Current errata-integrated core specification.",
+      "published_at": null,
+      "publisher": "OpenID Foundation",
+      "source_class": "standard / RFC",
+      "title": "OpenID Connect Core 1.0 incorporating errata set 2",
+      "url": "https://openid.net/specs/openid-connect-core-1_0-errata2.html",
+      "usage_limits": "Use for the OIDC identity layer and ID-token validation; do not conflate ID tokens with access tokens.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-OBS-SIGNALS"
+      ],
+      "id": "SRC-SD-OTEL-LOGS",
+      "notes": "Primary project specification.",
+      "published_at": null,
+      "publisher": "OpenTelemetry",
+      "source_class": "official documentation",
+      "title": "OpenTelemetry logging specification",
+      "url": "https://opentelemetry.io/docs/specs/otel/logs/",
+      "usage_limits": "Use for the logging signal and data-model boundary; avoid implying every backend implements the specification identically.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-OBS-SIGNALS"
+      ],
+      "id": "SRC-SD-OTEL-OVERVIEW",
+      "notes": "Primary project specification used by the production-engineering lesson family.",
+      "published_at": null,
+      "publisher": "OpenTelemetry",
+      "source_class": "official documentation",
+      "title": "OpenTelemetry specification overview",
+      "url": "https://opentelemetry.io/docs/specs/otel/overview/",
+      "usage_limits": "Use for OpenTelemetry signal, context, collection, and interoperability semantics; reverify version-sensitive SDK behavior.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-ABUSE-LAYERS"
+      ],
+      "id": "SRC-SD-OWASP-API-SECURITY",
+      "notes": "Current OWASP API risk taxonomy at review time.",
+      "published_at": "2023-01-01",
+      "publisher": "OWASP",
+      "source_class": "official documentation",
+      "title": "OWASP API Security Top 10 — 2023",
+      "url": "https://owasp.org/API-Security/editions/2023/en/0x11-t10/",
+      "usage_limits": "Use for API threat categories and architecture prompts, not as evidence that a specific implementation is secure.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-AUTH-BOUNDARY"
+      ],
+      "id": "SRC-SD-OWASP-AUTHORIZATION",
+      "notes": "Application authorization guidance.",
+      "published_at": null,
+      "publisher": "OWASP",
+      "source_class": "official documentation",
+      "title": "Authorization Cheat Sheet",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html",
+      "usage_limits": "Use as defensive architecture guidance; concrete policy must be derived from the application's resources and actions.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-ABUSE-LAYERS"
+      ],
+      "id": "SRC-SD-OWASP-DOS",
+      "notes": "Resource-exhaustion guidance.",
+      "published_at": null,
+      "publisher": "OWASP",
+      "source_class": "official documentation",
+      "title": "Denial of Service Cheat Sheet",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html",
+      "usage_limits": "Use for layered denial-of-service mitigation; capacity, fail-open behavior, and provider controls require system-specific verification.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-AUTH-BOUNDARY"
+      ],
+      "id": "SRC-SD-OWASP-MULTI-TENANT",
+      "notes": "End-to-end multi-tenant boundary guidance.",
+      "published_at": null,
+      "publisher": "OWASP",
+      "source_class": "official documentation",
+      "title": "Multi-Tenant Security Cheat Sheet",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html",
+      "usage_limits": "Use for tenant-isolation design prompts; actual isolation guarantees require system-specific negative tests and operational controls.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-KEY-LIFECYCLE"
+      ],
+      "id": "SRC-SD-OWASP-SECRETS",
+      "notes": "Secrets lifecycle guidance.",
+      "published_at": null,
+      "publisher": "OWASP",
+      "source_class": "official documentation",
+      "title": "Secrets Management Cheat Sheet",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html",
+      "usage_limits": "Use for secret lifecycle and operational controls; product-specific vault and rotation behavior requires current provider verification.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-SESSION-BEARER"
+      ],
+      "id": "SRC-SD-OWASP-SESSION",
+      "notes": "Application session guidance.",
+      "published_at": null,
+      "publisher": "OWASP",
+      "source_class": "official documentation",
+      "title": "Session Management Cheat Sheet",
+      "url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html",
+      "usage_limits": "Use for session lifecycle and browser threat guidance; framework and provider behavior must be verified separately.",
+      "verified_at": "2026-09-04",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-OAUTH-OIDC"
+      ],
+      "id": "SRC-SD-RFC-6749",
+      "notes": "Protocol-role source for OAuth delegation.",
+      "published_at": "2012-10-01",
+      "publisher": "IETF",
+      "source_class": "standard / RFC",
+      "title": "RFC 6749: The OAuth 2.0 Authorization Framework",
+      "url": "https://www.rfc-editor.org/rfc/rfc6749.html",
+      "usage_limits": "Read with current OAuth security best-current-practice guidance; do not present obsolete grant recommendations as current advice.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-SESSION-BEARER"
+      ],
+      "id": "SRC-SD-RFC-6750",
+      "notes": "Protocol source for possession-based bearer authority.",
+      "published_at": "2012-10-01",
+      "publisher": "IETF",
+      "source_class": "standard / RFC",
+      "title": "RFC 6750: OAuth 2.0 Bearer Token Usage",
+      "url": "https://www.rfc-editor.org/rfc/rfc6750.html",
+      "usage_limits": "Use for bearer-token semantics and threats; application authorization and revocation policy remain separate design work.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-JWT-VERIFY"
+      ],
+      "id": "SRC-SD-RFC-7519",
+      "notes": "Claims-format source.",
+      "published_at": "2015-05-01",
+      "publisher": "IETF",
+      "source_class": "standard / RFC",
+      "title": "RFC 7519: JSON Web Token",
+      "url": "https://www.rfc-editor.org/rfc/rfc7519.html",
+      "usage_limits": "Use for JWT structure and registered claims; pair with RFC 8725 for current security guidance.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-OAUTH-OIDC"
+      ],
+      "id": "SRC-SD-RFC-7636",
+      "notes": "Protocol source for PKCE.",
+      "published_at": "2015-09-01",
+      "publisher": "IETF",
+      "source_class": "standard / RFC",
+      "title": "RFC 7636: Proof Key for Code Exchange",
+      "url": "https://www.rfc-editor.org/rfc/rfc7636.html",
+      "usage_limits": "Use for authorization-code interception protection; it does not replace redirect, state, issuer, client, or token validation.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-JWT-VERIFY"
+      ],
+      "id": "SRC-SD-RFC-8725",
+      "notes": "Current JWT best-current-practice source.",
+      "published_at": "2020-02-01",
+      "publisher": "IETF",
+      "source_class": "standard / RFC",
+      "title": "RFC 8725: JSON Web Token Best Current Practices",
+      "url": "https://www.rfc-editor.org/rfc/rfc8725.html",
+      "usage_limits": "Use for JWT validation threats and mutually exclusive validation rules; deployment policy must still name issuer, audience, purpose, and keys.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-SD",
+        "EF-SD-TOPIC-COVERAGE"
+      ],
+      "claims_supported": [
+        "SD-TLS-BOUNDARY"
+      ],
+      "id": "SRC-SD-RFC-9846",
+      "notes": "Obsoletes RFC 8446 and anchors the current TLS lesson.",
+      "published_at": "2026-06-01",
+      "publisher": "IETF",
+      "source_class": "standard / RFC",
+      "title": "RFC 9846: The Transport Layer Security Protocol Version 1.3",
+      "url": "https://www.rfc-editor.org/rfc/rfc9846.html",
+      "usage_limits": "Use for current TLS 1.3 protocol behavior; application identity, authorization, storage encryption, and post-termination plaintext remain separate boundaries.",
+      "verified_at": "2026-09-04",
+      "volatility": "stable"
     }
   ]
 }

@@ -49,6 +49,7 @@ const migration = readFileSync(new URL("../supabase/migrations/202608140008_crea
 const validationMigration = readFileSync(new URL("../supabase/migrations/202608140010_enforce_system_design_attempt_document_shape.sql", import.meta.url), "utf8");
 const progressRevisionMigration = readFileSync(new URL("../supabase/migrations/202609030006_save_system_design_item_progress_if_revision.sql", import.meta.url), "utf8");
 const attemptDeleteMigration = readFileSync(new URL("../supabase/migrations/202609040010_delete_system_design_attempt_if_revision.sql", import.meta.url), "utf8");
+const productionEngineeringMigration = readFileSync(new URL("../supabase/migrations/202609040015_publish_system_design_production_engineering.sql", import.meta.url), "utf8");
 const databaseTest = readFileSync(new URL("../supabase/tests/database/system_design_workspace.test.sql", import.meta.url), "utf8");
 const persistenceQualifier = readFileSync(new URL("../scripts/qualify-persistence-local.mjs", import.meta.url), "utf8");
 const securityQualifier = readFileSync(new URL("../scripts/qualify-security-local.mjs", import.meta.url), "utf8");
@@ -146,9 +147,9 @@ function deleteActionForm(entries = []) {
   return form;
 }
 
-check(canonicalSystemDesignConceptIds.size === 146, "published concept catalog stays canonical");
+check(canonicalSystemDesignConceptIds.size === 164, "published concept catalog stays canonical");
 check(canonicalSystemDesignProblemIds.size === 27, "published problem catalog stays canonical");
-check(canonicalSystemDesignItemIds.size === 173, "namespaced combined catalog preserves shared concept/problem IDs");
+check(canonicalSystemDesignItemIds.size === 191, "namespaced combined catalog preserves shared concept/problem IDs");
 check(canonicalSystemDesignProblemIds.has("url-shortener"), "foundation problem is canonical");
 check(canonicalSystemDesignConceptIds.has("capacity-estimation") === false, "route slugs cannot spoof concept IDs");
 check(canonicalSystemDesignConceptIds.has("estimation"), "durable concept ID is canonical");
@@ -528,6 +529,10 @@ const gapTarget = chooseSystemDesignContinueTarget([], [], continueCatalog);
 check(gapTarget?.kind === "item" && gapTarget.title === "Start with Caching", "Continue has a deterministic curriculum-gap fallback");
 
 check(migration.includes("system_design_item_catalog"), "migration creates canonical catalog");
+for (const id of ["observability", "logs", "metrics", "distributed-tracing", "request-ids", "alerts", "slis", "slos", "error-budgets", "authn-authz", "sessions-tokens", "jwt", "oauth-oidc", "tls", "encryption", "secrets-management", "api-abuse-ddos", "tenant-authorization"]) {
+  check(productionEngineeringMigration.includes(`'${id}'`), `production-engineering migration publishes canonical concept ${id}`);
+}
+check(productionEngineeringMigration.includes("on conflict (id, item_type) do nothing"), "production-engineering catalog publication is idempotent");
 check(migration.includes("system_design_item_progress"), "migration creates private progress");
 check(migration.includes("system_design_attempts"), "migration creates attempts");
 check(migration.includes("foreign key (application_id, user_id)"), "attempt application uses composite ownership");

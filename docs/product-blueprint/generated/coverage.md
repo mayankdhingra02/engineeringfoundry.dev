@@ -1,9 +1,9 @@
 ---
 schema_version: 1
 blueprint_version: 1.0
-generated_or_reviewed_at: 2026-09-02
-repository_sha: 8e2bee151395197103445a5c6316ff546291a880
-repository_state_sha256: e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e1b0b6a5a4
+generated_or_reviewed_at: 2026-09-04
+repository_sha: c6b955f0f96839f8ed64b128484f43c2965e783b
+repository_state_sha256: 723d6be7d837fd60cd1f381ae361d29c39ac694c4443f54b24cf950dfed8757a
 ---
 
 # Engineering Foundry requirement coverage
@@ -13,7 +13,7 @@ repository_state_sha256: e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e
 ## Summary
 
 - Requirements: 34
-- Sources: 10
+- Sources: 29
 - Gap inventory IDs: 18
 - Explicitly unmodeled atomic requirements: 2
 
@@ -23,9 +23,9 @@ repository_state_sha256: e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 1 |
-| partial | 26 |
+| partial | 25 |
 | implemented-unverified | 0 |
-| implemented | 0 |
+| implemented | 1 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -138,9 +138,9 @@ repository_state_sha256: e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | p1 | partial | needs-current-verification | stale-review | missing | — | /interview-tips/rounds/[slug] | 0 | 1 | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
 | EF-PLAY-TECHNICAL-PRESENTATION | interview-playbook | p2 | placeholder | needs-research | unpublished | missing | — | — | 0 | 1 | The index honestly identifies this role-specific guide as outside current v1. |
 | EF-SAL | salary-negotiation | required | partial | needs-current-verification | stale-review | missing | /salary-negotiation | — | 0 | 1 | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
-| EF-SD | system-design | required | partial | needs-research | stale-review | missing | /system-design/start-here/introduction | — | 0 | 8 | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
-| EF-SD-PRACTICE-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | 27 of 60 walkthroughs are published; 33 remain researched and unpublished. |
-| EF-SD-TOPIC-COVERAGE | system-design | p1 | partial | needs-research | stale-review | missing | — | /system-design/[...segments] | 0 | 2 | 32 of 178 repository topics remain unpublished.; The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking. |
+| EF-SD | system-design | required | partial | needs-research | stale-review | claim-recorded | /system-design/start-here/introduction | — | 19 | 11 | 164 of 178 topics are published; 14 architecture-pattern topics remain unpublished.; The reviewed crosswalk identifies ten blueprint-only outcomes that still require publication or an explicit merged disposition. |
+| EF-SD-PRACTICE-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | — |
+| EF-SD-TOPIC-COVERAGE | system-design | p1 | partial | needs-research | stale-review | claim-recorded | — | /system-design/[...segments] | 19 | 7 | 14 of 178 repository topics remain unpublished; all are in the architecture-patterns family.; Ten blueprint rows have no repository lesson and remain explicit blueprint-only outcomes. |
 | EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 12 | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
 | EF-SUP-REFERRAL-POLICY | referrals | p2 | deferred | needs-current-verification | unpublished | missing | /referrals | — | 0 | 2 | The current local toolkit deliberately directs users to official employer rules and makes no employer-policy claims. |
 | EF-VIZ | visualization-lab | p1 | partial | approved-needs-source-import | unpublished | missing | — | — | 0 | 1 | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
@@ -160,7 +160,7 @@ repository_state_sha256: e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-PLAY | modeled | partial | Source methodology and claim mapping are incomplete.; Not every final-week, interview-day, debrief, and technical-presentation contract is implemented. |
 | EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
-| EF-SD | modeled | partial | 146 of 178 topics are published; 32 remain unpublished.; 27 of 60 practice walkthroughs are published; 33 remain unpublished.; The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk. |
+| EF-SD | modeled | partial | 164 of 178 topics are published; 14 architecture-pattern topics remain unpublished.; The reviewed crosswalk identifies ten blueprint-only outcomes that still require publication or an explicit merged disposition. |
 | EF-SUP | modeled | partial | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
 | EF-GLOBAL-ATOMIC-COVERAGE | unmodeled | unmodeled | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
 
@@ -176,8 +176,7 @@ repository_state_sha256: e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e
 | EF-ML-ROADMAP-MAPPING | modeled | partial | Eight static stages have no approved mapping to concept IDs and practice records. |
 | EF-PLAY-CURRICULUM-DEPTH | modeled | partial | Research methodology and master-depth acceptance mapping remain incomplete. |
 | EF-PLAY-ROUND-PROVENANCE | modeled | partial | Nine current dossiers show review dates but no reader-facing source methodology or claim ledger. |
-| EF-SD-PRACTICE-COVERAGE | modeled | partial | 27 of 60 walkthroughs are published; 33 remain researched and unpublished. |
-| EF-SD-TOPIC-COVERAGE | modeled | partial | 32 of 178 repository topics remain unpublished.; The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking. |
+| EF-SD-TOPIC-COVERAGE | modeled | partial | 14 of 178 repository topics remain unpublished; all are in the architecture-patterns family.; Ten blueprint rows have no repository lesson and remain explicit blueprint-only outcomes. |
 | EF-VIZ | modeled | partial | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
 | EF-SD-TAXONOMY-CROSSWALK | unmodeled | unmodeled | A reviewed crosswalk is still required between the blueprint's 161-row target and the repository's 178-topic manifest. |
 
@@ -202,9 +201,9 @@ repository_state_sha256: e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e
 | EF-PLAY-CURRICULUM-DEPTH | interview-playbook | needs-current-verification | 0 |
 | EF-PLAY-ROUND-PROVENANCE | interview-playbook | needs-current-verification | 0 |
 | EF-SAL | salary-negotiation | needs-current-verification | 0 |
-| EF-SD | system-design | needs-research | 0 |
+| EF-SD | system-design | needs-research | 19 |
 | EF-SD-PRACTICE-COVERAGE | system-design | needs-research | 0 |
-| EF-SD-TOPIC-COVERAGE | system-design | needs-research | 0 |
+| EF-SD-TOPIC-COVERAGE | system-design | needs-research | 19 |
 
 ## External owner gates and blocked items
 
@@ -230,9 +229,9 @@ These states describe recorded provenance only; they do not claim source complet
 | Source record state | Count |
 | --- | ---: |
 | not-applicable | 5 |
-| missing | 27 |
+| missing | 25 |
 | discovery-recorded | 2 |
-| claim-recorded | 0 |
+| claim-recorded | 2 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
@@ -264,9 +263,9 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-PLAY-ROUND-PROVENANCE | needs-current-verification | missing | — |
 | EF-PLAY-TECHNICAL-PRESENTATION | needs-research | missing | — |
 | EF-SAL | needs-current-verification | missing | — |
-| EF-SD | needs-research | missing | — |
+| EF-SD | needs-research | claim-recorded | SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-SLO, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846 |
 | EF-SD-PRACTICE-COVERAGE | needs-research | missing | — |
-| EF-SD-TOPIC-COVERAGE | needs-research | missing | — |
+| EF-SD-TOPIC-COVERAGE | needs-research | claim-recorded | SRC-SD-GOOGLE-ALERTING, SRC-SD-GOOGLE-SLO, SRC-SD-NIST-KEY-MANAGEMENT, SRC-SD-NIST-ZERO-TRUST, SRC-SD-OIDC-CORE, SRC-SD-OTEL-LOGS, SRC-SD-OTEL-OVERVIEW, SRC-SD-OWASP-API-SECURITY, SRC-SD-OWASP-AUTHORIZATION, SRC-SD-OWASP-DOS, SRC-SD-OWASP-MULTI-TENANT, SRC-SD-OWASP-SECRETS, SRC-SD-OWASP-SESSION, SRC-SD-RFC-6749, SRC-SD-RFC-6750, SRC-SD-RFC-7519, SRC-SD-RFC-7636, SRC-SD-RFC-8725, SRC-SD-RFC-9846 |
 | EF-SUP | not-applicable | not-applicable | — |
 | EF-SUP-REFERRAL-POLICY | needs-current-verification | missing | — |
 | EF-VIZ | approved-needs-source-import | missing | — |
@@ -292,6 +291,25 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-COMP-OPENAI-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-UBER-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-WALMART-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-SD-GOOGLE-ALERTING | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-GOOGLE-SLO | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-NIST-KEY-MANAGEMENT | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-NIST-ZERO-TRUST | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OIDC-CORE | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OTEL-LOGS | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OTEL-OVERVIEW | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OWASP-API-SECURITY | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OWASP-AUTHORIZATION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OWASP-DOS | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OWASP-MULTI-TENANT | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OWASP-SECRETS | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-OWASP-SESSION | official documentation | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-RFC-6749 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-RFC-6750 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-RFC-7519 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-RFC-7636 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-RFC-8725 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
+| SRC-SD-RFC-9846 | standard / RFC | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
 
 ## Research artifact inputs
 
