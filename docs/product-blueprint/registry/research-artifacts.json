@@ -332,13 +332,13 @@
       "title": "Software-Engineering Interview Deep Research: priority companies",
       "family_id": "EF-COMP",
       "requirement_ids": ["EF-COMP", "EF-COMP-GUIDE-COVERAGE"],
-      "repository_path": null,
+      "repository_path": "docs/product-blueprint/research/company-guides/priority-company-guides.md",
       "external_record": null,
-      "version_or_hash": null,
-      "availability": "missing",
-      "approval_status": "needs-current-verification",
-      "verified_at": null,
-      "notes": "Ten official discovery URLs are recorded separately; the original cross-company research and claim mappings are not present."
+      "version_or_hash": "2e2aae33b9150fe2478fb9b4960bee91c02fd88d4a6e506491155202496ca5c8",
+      "availability": "repository-present",
+      "approval_status": "approved",
+      "verified_at": "2026-09-05",
+      "notes": "Current official-source synthesis maps all ten priority routes to atomic public claims, neutral-hub boundaries, review dates, exact handoffs, and claim-level freshness operations."
     },
     {
       "id": "RA-LOW-LEVEL-SYSTEMS",

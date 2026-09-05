@@ -83,7 +83,7 @@ const indexableRoutes = new Set(indexableFinitePublicRoutes);
 for (const lesson of lowLevelDesignLessons) assert.equal(indexableRoutes.has(`/low-level-design/lessons/${lesson.slug}`), lesson.status === "published", `${lesson.slug} sitemap publication must follow lesson status`);
 for (const problem of lowLevelDesignPractice) assert.equal(indexableRoutes.has(`/low-level-design/practice/${problem.slug}`), problem.status === "published", `${problem.slug} sitemap publication must follow practice status`);
 assert.match(search, /lowLevelDesignLessons[\s\S]*lowLevelDesignPractice/, "global search must index published lessons and practice designs");
-assert.match(companyData, /id: "lld"[\s\S]*href: "\/low-level-design"/, "company-guide LLD domain must point to canonical LLD curriculum");
+assert.match(companyData, /id: "lld"[\s\S]*href: "\/low-level-design\/practice"/, "company-guide LLD domain must point to the canonical public practice library");
 assert.match(companyWorkspace, /href="\/low-level-design"[\s\S]*Open the Low-Level Design curriculum/, "mature company guides must link to canonical LLD curriculum");
 assert.match(playbook, /slug: "low-level-design"[\s\S]*relatedHrefs: \["\/low-level-design", "\/low-level-design\/practice", "\/mock-interviews"\]/, "Playbook LLD dossier must link to curriculum and practice without changing evidence semantics");
 console.log("Low-Level Design v1 qualification passed: curriculum, practice, boundaries, discovery, integrations, and scoring safeguards hold.");

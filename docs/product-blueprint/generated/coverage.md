@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-05
-repository_sha: 2d482ac8bde14a39646025f683bad9313caf5ebc
-repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a4afbda6e5
+repository_sha: 72331b1ab0184f8a3054e87784a7fafd8fa2bdde
+repository_state_sha256: 3dd37f760762cd3761ee40471e9acb40b6d7cb64589f76123d9cb755612b22f5
 ---
 
 # Engineering Foundry requirement coverage
@@ -23,9 +23,9 @@ repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 0 |
-| partial | 12 |
+| partial | 10 |
 | implemented-unverified | 0 |
-| implemented | 15 |
+| implemented | 17 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -46,9 +46,9 @@ repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a
 
 | Research status | Count |
 | --- | ---: |
-| approved | 13 |
+| approved | 15 |
 | approved-needs-source-import | 1 |
-| needs-current-verification | 4 |
+| needs-current-verification | 2 |
 | needs-research | 11 |
 | not-applicable | 5 |
 
@@ -58,8 +58,8 @@ repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a
 | --- | ---: |
 | unpublished | 10 |
 | noindex-draft | 0 |
-| published | 15 |
-| stale-review | 9 |
+| published | 17 |
+| stale-review | 7 |
 | archived | 0 |
 
 ## Requirements by family
@@ -115,8 +115,8 @@ repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a
 | EF-AIB-KIDS | ai-for-kids | excluded | excluded | not-applicable | unpublished | not-applicable | — | — | 0 | 0 | Explicitly excluded from the current product scope. |
 | EF-BEH | behavioral | required | implemented | approved | published | claim-recorded | /behavioral, /behavioral/learn, /behavioral/practice, /behavioral/questions, /behavioral/review, /behavioral/stories, /behavioral/workspace | — | 5 | 7 | — |
 | EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | implemented | approved | published | claim-recorded | /behavioral/learn, /behavioral/practice, /behavioral/review | — | 5 | 4 | — |
-| EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | claim-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
-| EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | claim-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
+| EF-COMP | company-guides | required | implemented | approved | published | claim-recorded | /companies | — | 10 | 2 | — |
+| EF-COMP-GUIDE-COVERAGE | company-guides | p1 | implemented | approved | published | claim-recorded | — | /companies/[slug] | 10 | 2 | — |
 | EF-DSA | dsa | required | implemented | approved | published | claim-recorded | /dsa, /dsa/companies, /dsa/languages, /dsa/patterns, /dsa/practice, /dsa/questions, /dsa/roadmap, /dsa/roadmap/topic-map, /dsa/roadmaps, /dsa/strategy, /dsa/study-plans | /dsa/[...segments], /dsa/questions/[question]/practice/[attemptId] | 11 | 12 | — |
 | EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved | stale-review | claim-recorded | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 2 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | claim-recorded | /dsa/languages | /dsa/languages/[slug] | 8 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
@@ -149,7 +149,6 @@ repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a
 
 | ID | Record type | Status | Gap/reason |
 | --- | --- | --- | --- |
-| EF-COMP | modeled | partial | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
@@ -162,7 +161,6 @@ repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a
 
 | ID | Record type | Status | Gap/reason |
 | --- | --- | --- | --- |
-| EF-COMP-GUIDE-COVERAGE | modeled | partial | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
 | EF-DSA-LANGUAGE-COVERAGE | modeled | partial | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-LLD-REHEARSAL | modeled | partial | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
 | EF-VIZ | modeled | partial | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
@@ -171,8 +169,6 @@ repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a
 
 | ID | Section | Research status | Sources |
 | --- | --- | --- | ---: |
-| EF-COMP | company-guides | needs-current-verification | 10 |
-| EF-COMP-GUIDE-COVERAGE | company-guides | needs-current-verification | 10 |
 | EF-DSA-CURRICULUM-SHELLS | dsa | approved | 2 |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 8 |
 | EF-LLD | low-level-design | needs-research | 0 |
@@ -216,8 +212,8 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-AIB-KIDS | not-applicable | not-applicable | — |
 | EF-BEH | approved | claim-recorded | SRC-BEH-AMAZON-INTERVIEW, SRC-BEH-EEOC-SELECTION, SRC-BEH-GOVUK-SUCCESS, SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED |
 | EF-BEH-CURRICULUM-DEPTH | approved | claim-recorded | SRC-BEH-AMAZON-INTERVIEW, SRC-BEH-EEOC-SELECTION, SRC-BEH-GOVUK-SUCCESS, SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED |
-| EF-COMP | needs-current-verification | claim-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
-| EF-COMP-GUIDE-COVERAGE | needs-current-verification | claim-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
+| EF-COMP | approved | claim-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
+| EF-COMP-GUIDE-COVERAGE | approved | claim-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
 | EF-DSA | approved | claim-recorded | SRC-DSA-ALGOMONSTER-ROADMAP, SRC-DSA-JAVA-ARRAYDEQUE, SRC-DSA-JAVA-JLS, SRC-DSA-JAVA-PRIORITYQUEUE, SRC-DSA-JAVA-UTIL, SRC-DSA-LEETCODE-EXPLORE, SRC-DSA-PY-BISECT, SRC-DSA-PY-COLLECTIONS, SRC-DSA-PY-DATA, SRC-DSA-PY-HEAPQ, SRC-DSA-TECH-HANDBOOK-PLAN |
 | EF-DSA-CURRICULUM-SHELLS | approved | claim-recorded | SRC-DSA-ALGOMONSTER-ROADMAP, SRC-DSA-TECH-HANDBOOK-PLAN |
 | EF-DSA-LANGUAGE-COVERAGE | needs-research | claim-recorded | SRC-DSA-JAVA-ARRAYDEQUE, SRC-DSA-JAVA-JLS, SRC-DSA-JAVA-PRIORITYQUEUE, SRC-DSA-JAVA-UTIL, SRC-DSA-PY-BISECT, SRC-DSA-PY-COLLECTIONS, SRC-DSA-PY-DATA, SRC-DSA-PY-HEAPQ |
@@ -262,15 +258,15 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-BEH-OPM-GUIDE | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-BEH-OPM-STRUCTURED | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-COMP-AMAZON-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE |
-| SRC-COMP-ANTHROPIC-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
-| SRC-COMP-ATLASSIAN-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
-| SRC-COMP-GOOGLE-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
-| SRC-COMP-META-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-ANTHROPIC-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-ATLASSIAN-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-GOOGLE-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-META-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-MICROSOFT-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE |
-| SRC-COMP-NVIDIA-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
-| SRC-COMP-OPENAI-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
-| SRC-COMP-UBER-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
-| SRC-COMP-WALMART-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-NVIDIA-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-OPENAI-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-UBER-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-COMP-WALMART-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-DSA-ALGOMONSTER-ROADMAP | pedagogy/pain-point source | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS |
 | SRC-DSA-JAVA-ARRAYDEQUE | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
 | SRC-DSA-JAVA-JLS | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
@@ -358,8 +354,8 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Availability | Count |
 | --- | ---: |
-| missing | 9 |
-| repository-present | 21 |
+| missing | 8 |
+| repository-present | 22 |
 | external-recorded | 0 |
 
 ### Approval status
@@ -368,9 +364,9 @@ These states describe recorded provenance only; they do not claim source complet
 | --- | ---: |
 | unverified | 5 |
 | approved-needs-source-import | 0 |
-| needs-current-verification | 2 |
+| needs-current-verification | 1 |
 | requires-founder-approval | 2 |
-| approved | 21 |
+| approved | 22 |
 | excluded | 0 |
 
 | ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |
@@ -383,7 +379,7 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-BEH-PRACTICE-MOCK-FEEDBACK | EF-BEH | repository-present | approved | 2c044da4b64e42e48da6c7a1ee8c3828971cbdd90b208cd31d58545119e7a35b | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK | docs/product-blueprint/research/behavioral/practice-followups-and-feedback.md | — |
 | RA-BEH-RUBRICS-SENIORITY | EF-BEH | repository-present | approved | f0dcda04a7fb3b9d800ab7fa97dafbb8f66736d32ab21822cc2c485bf1b99440 | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH | docs/product-blueprint/research/behavioral/rubrics-and-seniority.md | — |
 | RA-BEH-STORY-BANK-EXAMPLES | EF-BEH | repository-present | approved | ae5d8bbc7eb2af1cfbe5784adce61861843dd73f5da9d06f60b1732f6b4d7e85 | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH | docs/product-blueprint/research/behavioral/story-bank-and-examples.md | — |
-| RA-COMP-PRIORITY-COMPANIES | EF-COMP | missing | needs-current-verification | — | — | EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
+| RA-COMP-PRIORITY-COMPANIES | EF-COMP | repository-present | approved | 2e2aae33b9150fe2478fb9b4960bee91c02fd88d4a6e506491155202496ca5c8 | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE | docs/product-blueprint/research/company-guides/priority-company-guides.md | — |
 | RA-DSA-COMPETITIVE-RESEARCH | EF-DSA | repository-present | approved | e2b6f73712c012ce9fef3c4b803b7ebd5d79c262b159f45b19cadd1548f9090b | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS | docs/product-blueprint/research/dsa/competitive-product-and-practice.md | — |
 | RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
 | RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | repository-present | approved | 27e1a44c62f8f0b3583c0341816d0ba5844fc0b0ca234eae8a77145f64939fd2 | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | docs/product-blueprint/research/dsa/python-java-language-guides.md | — |
@@ -412,7 +408,6 @@ These states describe recorded provenance only; they do not claim source complet
 | --- | --- | --- |
 | RA-AIB-LEARNING-STRATEGY | missing | requires-founder-approval |
 | RA-AIB-MVP-RECOMMENDATION | missing | requires-founder-approval |
-| RA-COMP-PRIORITY-COMPANIES | missing | needs-current-verification |
 | RA-DSA-JAVASCRIPT-REQUEST | missing | unverified |
 | RA-LAUNCH-V1-FINISH-PLAN | missing | unverified |
 | RA-LOW-LEVEL-SYSTEMS | missing | unverified |

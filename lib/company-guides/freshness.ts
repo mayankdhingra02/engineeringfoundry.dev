@@ -1,16 +1,21 @@
 import type { CompanyGuideV1 } from "@/data/company-guides/v1";
 
+/** Retained as the default for periodic sources; each claim carries its own review-by date. */
 export const COMPANY_GUIDE_REVIEW_AFTER_DAYS = 180;
 
 export type CompanyGuideFreshness = {
   slug: string;
   company: string;
-  verifiedAt: string;
+  claimId: string;
+  claimText: string;
+  section: string;
+  sourceTitle: string;
   sourceUrl: string;
+  verifiedAt: string;
+  reviewBy: string;
   confidence: string;
   applicability: string;
-  ageDays: number;
-  status: "recent" | "review_soon" | "review_due";
+  status: "current" | "review_soon" | "review_due" | "needs_review" | "conflicting";
 };
 
 function utcDay(value: string) {
@@ -18,14 +23,38 @@ function utcDay(value: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-/** Read-only review reminder; it never mutates source-backed public guide data. */
+/** Read-only claim queue; it never mutates or silently unpublishes source-backed guide data. */
 export function companyGuideFreshness(guides: readonly CompanyGuideV1[], now = new Date()) {
   const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  return guides.map((guide): CompanyGuideFreshness => {
-    const verified = utcDay(guide.verifiedAt) ?? today;
-    const ageDays = Math.max(0, Math.floor((today - verified) / 86_400_000));
-    const status = ageDays >= COMPANY_GUIDE_REVIEW_AFTER_DAYS ? "review_due" : ageDays >= COMPANY_GUIDE_REVIEW_AFTER_DAYS - 30 ? "review_soon" : "recent";
-    const source = guide.sources[0];
-    return { slug: guide.slug, company: guide.company, verifiedAt: guide.verifiedAt, sourceUrl: source?.url ?? "", confidence: source?.confidence ?? "Limited", applicability: source?.applicability ?? "Not specified", ageDays, status };
+  return guides.flatMap((guide): CompanyGuideFreshness[] => {
+    const sources = new Map(guide.sources.map((source) => [source.id, source]));
+    return guide.claims.map((claim) => {
+      const source = sources.get(claim.sourceId);
+      const reviewBy = utcDay(claim.reviewBy) ?? today;
+      const daysUntilReview = Math.floor((reviewBy - today) / 86_400_000);
+      const status = claim.editorialStatus === "conflicting"
+        ? "conflicting"
+        : claim.editorialStatus === "needs-review" || !source
+          ? "needs_review"
+          : daysUntilReview <= 0
+            ? "review_due"
+            : daysUntilReview <= 30
+              ? "review_soon"
+              : "current";
+      return {
+        slug: guide.slug,
+        company: guide.company,
+        claimId: claim.id,
+        claimText: claim.text,
+        section: claim.section,
+        sourceTitle: source?.title ?? "Missing source",
+        sourceUrl: source?.url ?? "",
+        verifiedAt: claim.verifiedAt,
+        reviewBy: claim.reviewBy,
+        confidence: claim.confidence,
+        applicability: claim.applicability,
+        status,
+      };
+    });
   });
 }

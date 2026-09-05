@@ -115,7 +115,7 @@
     "test:dsa-languages": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-dsa-languages.mjs",
     "test:dsa-strategy": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-dsa-strategy.mjs",
     "test:company-interview-guide": "node scripts/test-company-interview-guide.mjs",
-    "test:company-guides": "node scripts/test-company-guides.mjs",
+    "test:company-guides": "node --experimental-strip-types --no-warnings scripts/test-company-guides.mjs",
     "test:public-routes": "node scripts/smoke-public-routes.mjs",
     "test:public-routes:hosted": "node scripts/smoke-public-routes.mjs --hosted",
     "test:public-route-smoke": "node scripts/test-public-route-smoke.mjs",

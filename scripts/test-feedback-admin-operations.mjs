@@ -607,7 +607,7 @@ for (const marker of [
   "revision: result.updatedAt",
 ]) assert.ok(feedbackTriageAction.includes(marker), `feedback triage action lacks ${marker}`);
 for (const marker of ["robots", "force-dynamic", "requireAdminActor"]) assert.ok(adminLayout.includes(marker), `admin layout is missing private-route ${marker}`);
-for (const marker of ["Feedback requiring triage", "Experiences requiring moderation", "Company guides requiring review", "Operational configuration"]) assert.ok(adminHome.includes(marker), `admin home is missing ${marker}`);
+for (const marker of ["Feedback requiring triage", "Experiences requiring moderation", "Company claims requiring review", "Operational configuration"]) assert.ok(adminHome.includes(marker), `admin home is missing ${marker}`);
 assert.equal((adminHome.match(/resolveAdminCountResult/g) ?? []).length, 3, "admin dashboard does not resolve both private counts through the strict boundary");
 assert.ok(!adminHome.includes(".count ?? 0"), "admin dashboard still converts failed private counts to zero");
 assert.ok(errorPage.includes('role="alert"') && errorPage.includes("onClick={retry}"), "admin private-read failures lack the inherited accessible retry boundary");
@@ -693,9 +693,10 @@ assert.ok(supportingRequirement.acceptance_criteria.some((criterion) => criterio
 
 const now = new Date("2027-02-17T12:00:00Z");
 const freshness = companyGuideFreshness(priorityCompanyGuides, now);
-assert.equal(freshness.length, 10, "all ten priority company guides must appear in operations");
+assert.equal(freshness.length, priorityCompanyGuides.reduce((count, guide) => count + guide.claims.length, 0), "every priority company claim must appear in operations");
 assert.ok(freshness.every((item) => item.sourceUrl.startsWith("https://")), "company freshness copies or loses an authoritative source URL");
-assert.equal(freshness[0].status, "review_due", "freshness threshold is not deterministic");
+assert.ok(freshness.every((item) => item.status === "review_due"), "explicit claim review dates are not deterministic");
+for (const field of ["claimId", "claimText", "sourceTitle", "verifiedAt", "reviewBy", "applicability"]) assert.ok(freshness.every((item) => item[field]), `company claim freshness is missing ${field}`);
 assert.equal(COMPANY_GUIDE_REVIEW_AFTER_DAYS, 180, "freshness reminder threshold drifted");
 assert.ok(!Object.hasOwn(priorityCompanyGuides[0], "freshness"), "freshness operation mutates public guide content");
 
