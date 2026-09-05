@@ -1,4 +1,5 @@
 export const salaryNegotiationLevels = ["Entry", "Mid", "Senior", "Staff+"] as const;
+export { getSalaryNegotiationSources, salaryNegotiationSources, type SalaryNegotiationSource } from "./sources.ts";
 export type SalaryNegotiationLevel = (typeof salaryNegotiationLevels)[number];
 export type SalaryNegotiationStatus = "published" | "draft";
 

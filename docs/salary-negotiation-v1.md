@@ -25,3 +25,9 @@ Existing Applications records already have an `Offer` status. When a user has ac
 ## Content boundary
 
 The modules explain package anatomy, level/scope, timing, honest leverage, counters, startup equity diligence, raises/promotions, and remote/written terms. They explicitly reject fabricated offers, altered documents, false deadlines, and invented recruiter statements. Company guides remain interview-preparation guides; this section does not infer compensation from their level mappings or publish salary bands.
+
+## Sources and freshness
+
+The reviewed implementation record is `docs/product-blueprint/research/salary-negotiation/final-synthesis.md`. Public source cards show the supporting first-party source, jurisdiction, claim boundary, verification date, review-by date, and volatility. The cards do not turn U.S. guidance into a worldwide rule or replace the actual written agreement.
+
+The FTC and USCIS records are volatile and must be rechecked by 2026-12-05. The DOL and IRS records are periodic and must be rechecked by 2027-03-05. If a current-status statement misses its review date, remove it or mark it unavailable until reverified; static ethical negotiation guidance does not inherit freshness from an expired legal source.

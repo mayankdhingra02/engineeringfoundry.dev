@@ -358,13 +358,13 @@
       "title": "Salary Negotiation: Research-Backed Website Section Blueprint",
       "family_id": "EF-SAL",
       "requirement_ids": ["EF-SAL"],
-      "repository_path": null,
+      "repository_path": "docs/product-blueprint/research/salary-negotiation/final-synthesis.md",
       "external_record": null,
-      "version_or_hash": null,
-      "availability": "missing",
-      "approval_status": "needs-current-verification",
-      "verified_at": null,
-      "notes": "Existing modules do not substitute for the missing original research, freshness, legal, and editorial record."
+      "version_or_hash": "4f0f7b4e55cd1aa815544fa55033e5aeab96e0a54becfe9224890a724913ae28",
+      "availability": "repository-present",
+      "approval_status": "approved",
+      "verified_at": "2026-09-05",
+      "notes": "Current official-source synthesis defines bounded U.S. legal/tax starting points, public source-card fields, expiry behavior, and the privacy-preserving product contract without creating personalized advice."
     },
     {
       "id": "RA-AIB-MVP-RECOMMENDATION",
