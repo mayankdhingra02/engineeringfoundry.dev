@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "2d482ac8bde14a39646025f683bad9313caf5ebc",
-  "repository_state_sha256": "32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a4afbda6e5",
+  "repository_sha": "0d3a102bc6919e44caafa28a3da1f1acf0ca86de",
+  "repository_state_sha256": "fee09410117757fe900c752f6f7d84d573a9f21873d054a3ecc0c5be0d135fca",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -271,34 +271,40 @@
     },
     {
       "acceptance_criteria": [
-        "Priority guides preserve attributable sources, review dates, uncertainty, and public-safe handoffs."
+        "Ten priority routes publish sourced guides or honest neutral hubs; every factual process statement exposes source class, applicability, source date when available, verification and review dates, confidence, uncertainty, and editorial limits. Official claims, approved candidate reports, Engineering Foundry recommendations, and application-private recruiter confirmations stay visually and operationally distinct; private facts override only that application, public-safe specialist handoffs remain usable without accounts, and stale, missing, or conflicting evidence enters a claim-level admin review state without silent refresh."
       ],
       "code_paths": [
+        "app/admin/company-freshness/page.tsx",
+        "app/admin/page.tsx",
         "app/companies",
+        "app/globals.css",
         "data/company-guides/v1.ts",
-        "lib/company-guides/freshness.ts"
+        "features/company-guides/company-guide-v1.tsx",
+        "lib/admin/operations.ts",
+        "lib/company-guides/freshness.ts",
+        "scripts/test-company-guides.mjs",
+        "scripts/test-feedback-admin-operations.mjs"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/research/company-guides/priority-company-guides.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-COMP",
       "kind": "requirement-family",
-      "known_gaps": [
-        "Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.",
-        "Four guides also have mature legacy modules; internal complete labels do not establish master completion."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": "Source records below preserve repository provenance only; claims_supported remains empty pending claim-level audit.",
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Required Company Guide acceptance is closed across ten routes. Current official sources support atomic claims where evidence exists; Meta and Walmart stay explicit neutral hubs where a universal technical loop is not established. Unaudited legacy modules remain preserved in the repository but are not published inside the normalized guides.",
       "owner": "company-guides",
       "prerequisite_ids": [
         "EF-GLOBAL"
       ],
       "priority": "required",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-BEH-COMPANY-GUIDES",
         "RA-COMP-PRIORITY-COMPANIES"
       ],
-      "research_status": "needs-current-verification",
+      "research_status": "approved",
       "route_families": [],
       "routes": [
         "/companies"
@@ -316,7 +322,7 @@
         "SRC-COMP-UBER-OFFICIAL",
         "SRC-COMP-WALMART-OFFICIAL"
       ],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
         "npm run test:company-guides",
         "npm run test:company-interview-guide"
@@ -326,34 +332,36 @@
     },
     {
       "acceptance_criteria": [
-        "Every published company claim resolves to current attributable evidence or is clearly labeled as editorial recommendation or candidate report."
+        "Every published company claim resolves to a current attributable official source or is labeled as Engineering Foundry inference; approved candidate reports and private recruiter-confirmed application facts remain separate, unsupported sections are absent, and review-by dates feed a claim-level freshness queue."
       ],
       "code_paths": [
+        "app/admin/company-freshness/page.tsx",
         "app/companies/[slug]/page.tsx",
-        "data/company-guides/v1.ts"
+        "data/company-guides/v1.ts",
+        "features/company-guides/company-guide-v1.tsx",
+        "lib/company-guides/freshness.ts",
+        "scripts/test-company-guides.mjs"
       ],
-      "content_paths": [],
-      "gap_inventory_ids": [
-        "EF-COMP-GUIDE-COVERAGE"
+      "content_paths": [
+        "docs/product-blueprint/research/company-guides/priority-company-guides.md"
       ],
+      "gap_inventory_ids": [],
       "id": "EF-COMP-GUIDE-COVERAGE",
       "kind": "content-gap",
-      "known_gaps": [
-        "Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "The ten Required routes are the approved release set; P1 company expansion remains separate and does not reopen this closed provenance gap.",
       "owner": "company-guides",
       "prerequisite_ids": [
         "EF-COMP"
       ],
       "priority": "p1",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-BEH-COMPANY-GUIDES",
         "RA-COMP-PRIORITY-COMPANIES"
       ],
-      "research_status": "needs-current-verification",
+      "research_status": "approved",
       "route_families": [
         "/companies/[slug]"
       ],
@@ -371,7 +379,7 @@
         "SRC-COMP-UBER-OFFICIAL",
         "SRC-COMP-WALMART-OFFICIAL"
       ],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
         "npm run test:company-guides",
         "npm run test:company-interview-guide"
@@ -2413,20 +2421,20 @@
       "version_or_hash": "ae5d8bbc7eb2af1cfbe5784adce61861843dd73f5da9d06f60b1732f6b4d7e85"
     },
     {
-      "approval_status": "needs-current-verification",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-COMP",
       "id": "RA-COMP-PRIORITY-COMPANIES",
-      "notes": "Ten official discovery URLs are recorded separately; the original cross-company research and claim mappings are not present.",
-      "repository_path": null,
+      "notes": "Current official-source synthesis maps all ten priority routes to atomic public claims, neutral-hub boundaries, review dates, exact handoffs, and claim-level freshness operations.",
+      "repository_path": "docs/product-blueprint/research/company-guides/priority-company-guides.md",
       "requirement_ids": [
         "EF-COMP",
         "EF-COMP-GUIDE-COVERAGE"
       ],
       "title": "Software-Engineering Interview Deep Research: priority companies",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "2e2aae33b9150fe2478fb9b4960bee91c02fd88d4a6e506491155202496ca5c8"
     },
     {
       "approval_status": "approved",
