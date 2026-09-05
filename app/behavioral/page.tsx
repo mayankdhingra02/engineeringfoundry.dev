@@ -5,7 +5,7 @@ import { createPageMetadata } from "@/lib/metadata";
 
 export const metadata = createPageMetadata({
   title: "Behavioral Interview Questions & Practice",
-  description: "Practice 35 original behavioral interview prompts with STAR plus reflection, story selection, answer guidance, and realistic follow-ups.",
+  description: "Learn through 16 evidence-first lessons and practice 48 original behavioral interview prompts with private story and answer tools.",
   path: "/behavioral",
   image: "/og-interview-prep.png",
   imageAlt: "Engineering Foundry behavioral practice, interview playbook, and verified resources",

@@ -1,5 +1,6 @@
 import { activeChallenges } from "@/data/challenges";
 import { companies } from "@/data/companies";
+import { behavioralLessons } from "@/data/behavioral/lessons";
 import { dsaPatterns, dsaTopics } from "@/data/dsa";
 import { dsaCurriculumPages } from "@/data/dsa/curriculum";
 import { foundry75Questions } from "@/data/dsa/foundry-75";
@@ -32,6 +33,7 @@ export type FinitePublicPagePattern =
   | "/low-level-design/lessons/[slug]"
   | "/low-level-design/practice/[slug]"
   | "/challenges/[slug]"
+  | "/behavioral/learn/[slug]"
   | "/system-design/[...segments]"
   | "/interview-tips/rounds/[slug]"
   | "/ml-design/[...segments]"
@@ -91,6 +93,11 @@ const lowLevelDesignPracticePaths = uniquePaths(
 const challengePaths = uniquePaths(
   activeChallenges.map((challenge) => `/challenges/${challenge.slug}`),
   "/challenges/[slug]",
+);
+
+const behavioralLessonPaths = uniquePaths(
+  behavioralLessons.map((lesson) => `/behavioral/learn/${lesson.slug}`),
+  "/behavioral/learn/[slug]",
 );
 
 const systemDesignPaths = uniquePaths(
@@ -159,6 +166,7 @@ export const finitePublicRouteDefinitions: readonly FinitePublicRouteDefinition[
   { pagePattern: "/low-level-design/lessons/[slug]", paths: lowLevelDesignLessonPaths },
   { pagePattern: "/low-level-design/practice/[slug]", paths: lowLevelDesignPracticePaths },
   { pagePattern: "/challenges/[slug]", paths: challengePaths },
+  { pagePattern: "/behavioral/learn/[slug]", paths: behavioralLessonPaths },
   { pagePattern: "/system-design/[...segments]", paths: systemDesignPaths },
   { pagePattern: "/interview-tips/rounds/[slug]", paths: interviewRoundPaths },
   { pagePattern: "/ml-design/[...segments]", paths: mlDesignPaths },
@@ -194,6 +202,7 @@ export const indexableFinitePublicRoutes = uniquePaths(
       .map((module) => `/salary-negotiation/${module.slug}`),
     ...canonicalMlDesignPaths,
     ...challengePaths,
+    ...behavioralLessonPaths,
     ...interviewRoundPaths,
   ],
   "indexable finite public routes",
@@ -232,6 +241,10 @@ export function buildLowLevelDesignPracticeStaticParams() {
 
 export function buildChallengeStaticParams() {
   return singleSegmentParams(challengePaths, "slug");
+}
+
+export function buildBehavioralLessonStaticParams() {
+  return singleSegmentParams(behavioralLessonPaths, "slug");
 }
 
 export function buildSystemDesignStaticParams() {

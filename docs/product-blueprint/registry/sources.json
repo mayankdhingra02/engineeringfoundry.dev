@@ -887,6 +887,26 @@
       "applies_to": ["EF-DSA", "EF-DSA-LANGUAGE-COVERAGE"], "claims_supported": ["DSA-JAVA-PRIORITYQUEUE"], "usage_limits": "PriorityQueue ordering, head semantics, comparator behavior, null restriction, and documented operation costs.", "notes": "Primary source for Java heap direction and comparator guidance."
     },
     {
+      "id": "SRC-BEH-OPM-STRUCTURED", "title": "Structured Interviews", "publisher": "U.S. Office of Personnel Management", "url": "https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH"], "claims_supported": ["BEH-STRUCTURED-EVIDENCE"], "usage_limits": "Supports job-related competencies, consistent questions, and common evaluation standards; it does not establish one universal employer process.", "notes": "Primary public guidance used for the evidence-first curriculum boundary."
+    },
+    {
+      "id": "SRC-BEH-OPM-GUIDE", "title": "Structured Interview Guide", "publisher": "U.S. Office of Personnel Management", "url": "https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/guide/", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH"], "claims_supported": ["BEH-PROBES-AND-ANCHORS"], "usage_limits": "Supports behavioral examples, proficiency boundaries, follow-up probes, and evidence-based anchors; Engineering Foundry remains a preparation product, not a selection procedure.", "notes": "Primary guidance for descriptive probe and rubric design."
+    },
+    {
+      "id": "SRC-BEH-GOVUK-SUCCESS", "title": "Success Profiles", "publisher": "UK Cabinet Office", "url": "https://www.gov.uk/government/publications/success-profiles", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "periodic",
+      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH"], "claims_supported": ["BEH-ROLE-RELATIVE-EVIDENCE"], "usage_limits": "Supports role-relative behaviors, experience, and technical evidence; framework-specific terminology is not generalized to all employers.", "notes": "Primary framework source for separating evidence types and contextual scope."
+    },
+    {
+      "id": "SRC-BEH-EEOC-SELECTION", "title": "Questions and Answers to Clarify and Provide a Common Interpretation of the Uniform Guidelines on Employee Selection Procedures", "publisher": "U.S. Equal Employment Opportunity Commission", "url": "https://www.eeoc.gov/laws/guidance/questions-and-answers-clarify-and-provide-common-interpretation-uniform-guidelines", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-05", "volatility": "stable",
+      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH"], "claims_supported": ["BEH-JOB-RELATED-BOUNDARY"], "usage_limits": "Supports the boundary that selection procedures should remain job-related and validated; it is not legal advice and does not validate Engineering Foundry as an employer selection test.", "notes": "Primary boundary source for excluding personality folklore and unsupported inference."
+    },
+    {
+      "id": "SRC-BEH-AMAZON-INTERVIEW", "title": "Interview loop preparation", "publisher": "Amazon Jobs", "url": "https://www.amazon.jobs/content/en-gb/how-we-hire/interview-loop", "source_class": "official company hiring/candidate", "published_at": null, "verified_at": "2026-09-05", "volatility": "volatile",
+      "applies_to": ["EF-BEH", "EF-BEH-CURRICULUM-DEPTH"], "claims_supported": ["BEH-COMPANY-MODIFIER-EXAMPLE"], "usage_limits": "First-party example of company-specific behavioral-question and STAR preparation guidance only; no universal process, exact-question, frequency, hidden-policy, or outcome claim.", "notes": "Used to demonstrate a sourced company modifier while canonical story facts remain unchanged."
+    },
+    {
       "id": "SRC-ML-RULES", "title": "Rules of Machine Learning", "publisher": "Google for Developers", "url": "https://developers.google.com/machine-learning/guides/rules-of-ml", "source_class": "first-party engineering/science", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
       "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-ROADMAP-MAPPING", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-RULES"], "usage_limits": "Baselines, instrumentation, launch sequencing, and production iteration guidance.", "notes": "Primary source mapped to the published ML Design curriculum."
     },

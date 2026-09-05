@@ -16,7 +16,7 @@ export const STATIC_STEPS = [
     "test:referral-privacy", "test:challenge-privacy", "test:recognition-integrity",
     "test:experience-privacy", "test:experience-integrity", "test:interview-experiences-v1", "test:public-route-smoke",
     "test:public-launch-integrity", "test:auth-foundation", "test:application-tracker",
-    "test:behavioral-workspace", "test:behavioral-v1-polish", "test:analytics-launch-evidence",
+    "test:behavioral-workspace", "test:behavioral-v1-polish", "test:behavioral-curriculum", "test:behavioral-required-closure", "test:analytics-launch-evidence",
     "test:v1-launch-readiness", "test:release-record", "validate:product-blueprint", "test:product-blueprint-governance",
     "test:feedback-admin-operations", "test:interview-preparation-hub",
     "test:interview-execution-taxonomy", "test:interview-playbook-diagnostic",

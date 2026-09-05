@@ -96,7 +96,9 @@ export function BehavioralPractice({ accountPlatformAvailable }: { accountPlatfo
 
   return <>
     <PageHero eyebrow="Behavioral interview practice" title="Build adaptable stories—not memorized scripts." description="Start with real stories, cover the question categories they can answer, tailor truthful framing, then rehearse the version you need.">
-      <a className="button" href="#explorer">Explore 35 prompts <ArrowRight size={16} /></a>
+      <Link className="button" href="/behavioral/learn">Start the 16-lesson path <ArrowRight size={16} /></Link>
+      <Link className="button button-secondary" href="/behavioral/practice">Run an evidence-gap drill</Link>
+      <a className="button button-secondary" href="#explorer">Explore 48 prompts</a>
       {accountPlatformAvailable
         ? <Link className="button button-secondary" href="/behavioral/workspace">Open private story workspace</Link>
         : <a className="button button-secondary" href="#story-inventory">Review the on-page story worksheet</a>}
@@ -129,11 +131,12 @@ export function BehavioralPractice({ accountPlatformAvailable }: { accountPlatfo
     <section className="section section-alt behavioral-practice-section" id="practice"><div className="page-width">
       <SectionHeading eyebrow="Practice mode" title="Attempt the answer before revealing the scaffolding." description="There is no timer, saved answer, or official response length. Practice aloud, then inspect the signals and likely follow-ups." action={<button type="button" className="button button-secondary" onClick={randomize} aria-label="Choose another random behavioral prompt"><RefreshCw size={15} /> Random prompt</button>} />
       <article className="behavioral-prompt-card">
-        <div className="behavioral-prompt-meta"><span>{selected.category}</span><span>{selected.scope.join(" · ")}</span></div>
+        <div className="behavioral-prompt-meta"><span>{selected.category}</span><span>{selected.scope.join(" · ")}</span><span>Reviewed {selected.editorialReviewDate}</span></div>
         <MessageSquareQuote size={25} aria-hidden="true" />
         <h2>{selected.prompt}</h2>
         <p>Pause here. Pick one truthful experience, identify your responsibility, and answer in your own words before opening any guidance.</p>
         <div className="behavioral-signal-list">{selected.signals.map((signal) => <span key={signal}>{signal}</span>)}</div>
+        <p className="behavioral-prompt-privacy">{selected.privacyWarning}</p>
       </article>
       <PreparationActivityControl track="behavioral" itemId={selected.id} noun="prompt practice" accountPlatformAvailable={accountPlatformAvailable} />
       <div className="behavioral-reveals">
@@ -141,6 +144,7 @@ export function BehavioralPractice({ accountPlatformAvailable }: { accountPlatfo
         <details onToggle={(event) => trackReveal("follow_ups", event.currentTarget.open)}><summary><span>02</span><div><strong>Reveal possible follow-ups</strong><small>Questions that test ownership and judgment</small></div></summary><ul>{selected.followUps.map((item) => <li key={item}><CheckCircle2 size={14} />{item}</li>)}</ul></details>
         <details onToggle={(event) => trackReveal("common_mistakes", event.currentTarget.open)}><summary><span>03</span><div><strong>Review common mistakes</strong><small>Ways this answer can lose specificity or credibility</small></div></summary><ul>{selected.commonMistakes.map((item) => <li key={item}><CheckCircle2 size={14} />{item}</li>)}</ul></details>
       </div>
+      <div className="behavioral-practice-handoff"><div><strong>Ready for a live follow-up?</strong><span>Mark the evidence gaps you heard, then work through one adaptive probe at a time.</span></div><Link className="button" href={`/behavioral/practice?question=${selected.slug}`}>Start follow-up drill <ArrowRight size={15} /></Link><Link href="/behavioral/review">Review all 11 dimensions</Link></div>
     </div></section>
 
     <section className="section"><div className="page-width behavioral-review-grid">
