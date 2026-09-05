@@ -21,6 +21,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getMockPreparationHref,
+  getMockPreparationLinkLabel,
   getMockRubric,
   mockTrackLabels,
   plansForMockTrack,
@@ -37,9 +38,27 @@ import {
   parseMockInterviewUrlState,
   type MockInterviewUrlState,
 } from "@/lib/mock-interviews/url-state";
+import {
+  DEFAULT_MOCK_SESSION_CONDITIONS,
+  MOCK_ASSISTANCE_STATES,
+  MOCK_ASSISTANCE_STATE_LABELS,
+  MOCK_HINT_POLICIES,
+  MOCK_HINT_POLICY_LABELS,
+  MOCK_PROMPT_EXPOSURES,
+  MOCK_PROMPT_EXPOSURE_LABELS,
+  MOCK_SESSION_OUTCOMES,
+  MOCK_SESSION_OUTCOME_LABELS,
+  MOCK_TIMING_MODES,
+  MOCK_TIMING_MODE_LABELS,
+  mockEvaluatorProvenanceLabel,
+  type MockAssistanceState,
+  type MockSessionConditions,
+  type MockSessionOutcome,
+} from "@/lib/mock-interviews/session-conditions";
 import type {
   BehavioralQuestion,
   DsaQuestion,
+  LowLevelDesignMockProblem,
   MlDesignProblem,
   MockPracticeMode,
   MockSessionPlan,
@@ -59,6 +78,7 @@ const missingRatingMessage = "Add at least one rating before saving this private
 const unconfirmedSaveMessage = "We could not confirm whether your review was saved. Check your connection before trying again.";
 const dirtyReviewMessage = "Your latest changes are not saved.";
 const staleSavedReviewMessage = "Your earlier review was saved. Save again to include your latest changes.";
+const missingIssueMessage = "Describe the interruption or technical issue before saving this review.";
 
 // Next can retain client-state snapshots for native history entries. Keep the
 // privacy epoch outside those snapshots so a traversed entry cannot revive an
@@ -114,7 +134,7 @@ function promptText(plan: MockSessionPlan) {
   if (!content) return "This prompt is currently unavailable.";
   if (plan.track === "dsa") return (content as DsaQuestion).originalPrompt ?? "This original prompt is currently unavailable.";
   if (plan.track === "behavioral") return (content as BehavioralQuestion).prompt;
-  return (content as SystemDesignProblem | MlDesignProblem).prompt;
+  return (content as SystemDesignProblem | LowLevelDesignMockProblem | MlDesignProblem).prompt;
 }
 
 function promptContext(plan: MockSessionPlan) {
@@ -128,7 +148,7 @@ function promptContext(plan: MockSessionPlan) {
     const question = content as BehavioralQuestion;
     return { label: `${question.category} · Original Engineering Foundry prompt`, summary: "Use a truthful experience and keep confidential details out of the answer.", tags: question.scope };
   }
-  const problem = content as SystemDesignProblem | MlDesignProblem;
+  const problem = content as SystemDesignProblem | LowLevelDesignMockProblem | MlDesignProblem;
   return { label: `${problem.difficulty} · Original Engineering Foundry prompt`, summary: problem.summary, tags: problem.domains };
 }
 
@@ -143,6 +163,10 @@ function revealGuidance(plan: MockSessionPlan) {
   if (plan.track === "system-design") {
     const problem = content as SystemDesignProblem;
     return [...problem.clarifyingQuestions.slice(0, 3), ...problem.keyTradeoffs.slice(0, 2)];
+  }
+  if (plan.track === "low-level-design") {
+    const problem = content as LowLevelDesignMockProblem;
+    return [...problem.clarificationQuestions, ...problem.keyTradeoffs];
   }
   if (plan.track === "ml-design") {
     const problem = content as MlDesignProblem;
@@ -174,6 +198,10 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
   const [linkCopyState, setLinkCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [saveMessage, setSaveMessage] = useState(defaultSaveMessage);
+  const [sessionConditions, setSessionConditions] = useState<MockSessionConditions>(DEFAULT_MOCK_SESSION_CONDITIONS);
+  const [assistanceState, setAssistanceState] = useState<MockAssistanceState>("unassisted");
+  const [sessionOutcome, setSessionOutcome] = useState<MockSessionOutcome>("completed");
+  const [sessionIssue, setSessionIssue] = useState("");
   const sessionId = useRef<string | null>(null);
   const startedAt = useRef<string | null>(null);
   const sessionGeneration = useRef(0);
@@ -188,7 +216,7 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
   const rubric = getMockRubric(selectedPlan.rubric_id)!;
   const context = promptContext(selectedPlan);
 
-  const resetPrivateSession = useCallback(() => {
+  const resetPrivateSession = useCallback((resetConditions = true) => {
     mockPrivateSessionActive = false;
     sessionGeneration.current += 1;
     setActiveSessionConfigurationKey(null);
@@ -201,6 +229,10 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
     setLinkCopyState("idle");
     setSaveState("idle");
     setSaveMessage(defaultSaveMessage);
+    setAssistanceState("unassisted");
+    setSessionOutcome("completed");
+    setSessionIssue("");
+    if (resetConditions) setSessionConditions(DEFAULT_MOCK_SESSION_CONDITIONS);
     sessionId.current = null;
     startedAt.current = null;
     reviewRevision.current = 0;
@@ -273,11 +305,11 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
   }
 
   function startSession() {
-    resetPrivateSession();
+    resetPrivateSession(false);
     mockPrivateSessionActive = true;
     setActiveSessionConfigurationKey(configurationKey);
     setActiveSessionTraversalVersion(mockHistoryTraversalVersion);
-    setTimerState("running");
+    setTimerState(sessionConditions.timingMode === "untimed" ? "idle" : "running");
     sessionId.current = crypto.randomUUID();
     startedAt.current = new Date().toISOString();
     const properties = analyticsProperties(selectedPlan, mode);
@@ -302,6 +334,11 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
       setSaveMessage(missingRatingMessage);
       return;
     }
+    if (sessionOutcome !== "completed" && !sessionIssue.trim()) {
+      setSaveState("failed");
+      setSaveMessage(missingIssueMessage);
+      return;
+    }
     if (!accountPlatformAvailable || !sessionId.current || !startedAt.current) return;
     const savingGeneration = sessionGeneration.current;
     const savingSessionId = sessionId.current;
@@ -313,7 +350,7 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
     setSaveState("saving");
     setSaveMessage("Saving private review…");
     try {
-      const result = await saveMockInterviewReview({ sessionId: savingSessionId, track: selectedPlan.track, mode, planId: selectedPlan.id, promptId: selectedPlan.content_reference.id, rubricId: selectedPlan.rubric_id, startedAt: savingStartedAt, elapsedSeconds, strength: notes.strength, improvement: notes.improvement, followUp: notes.followUp, ratings: ratingsForSave });
+      const result = await saveMockInterviewReview({ sessionId: savingSessionId, track: selectedPlan.track, mode, planId: selectedPlan.id, promptId: selectedPlan.content_reference.id, rubricId: selectedPlan.rubric_id, startedAt: savingStartedAt, elapsedSeconds, promptExposure: sessionConditions.promptExposure, timingMode: sessionConditions.timingMode, hintPolicy: sessionConditions.hintPolicy, assistanceState, sessionOutcome, sessionIssue, strength: notes.strength, improvement: notes.improvement, followUp: notes.followUp, ratings: ratingsForSave });
       if (result.ok) track("mock_review_saved", analyticsProperties(selectedPlan, mode));
       if (savingGeneration !== sessionGeneration.current || savingSessionId !== sessionId.current || pendingSaveRequestId.current !== requestId) return;
       if (!result.ok) {
@@ -358,12 +395,22 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
     const feedback = [
       `Engineering Foundry practice feedback — ${selectedPlan.title}`,
       `${mockTrackLabels[selectedTrack]} · ${mode === "solo" ? "Solo practice" : "Peer practice"}`,
+      `Evaluator provenance: ${mockEvaluatorProvenanceLabel(mode)}`,
+      `Prompt exposure: ${MOCK_PROMPT_EXPOSURE_LABELS[sessionConditions.promptExposure]}`,
+      `Timing: ${MOCK_TIMING_MODE_LABELS[sessionConditions.timingMode]}`,
+      `Hint policy: ${MOCK_HINT_POLICY_LABELS[sessionConditions.hintPolicy]}`,
+      `Actual assistance: ${MOCK_ASSISTANCE_STATE_LABELS[assistanceState]}`,
+      `Session result: ${MOCK_SESSION_OUTCOME_LABELS[sessionOutcome]}`,
+      ...(sessionIssue.trim() ? [`Session issue: ${sessionIssue.trim()}`] : []),
       "",
       ...rubricLines,
       "",
       `Strength: ${notes.strength || "—"}`,
       `One improvement: ${notes.improvement || "—"}`,
       `Follow-up practice: ${notes.followUp || "—"}`,
+      "",
+      `Specialist remediation: ${window.location.origin}${getMockPreparationHref(selectedPlan)}`,
+      `Return to Interview Playbook: ${window.location.origin}/interview-playbook`,
       "",
       "Personal practice notes only—not an employer score or hiring prediction.",
     ].join("\n");
@@ -391,29 +438,52 @@ export function MockInterviewLab({ accountPlatformAvailable }: { accountPlatform
           <button type="button" className={mode === "peer" ? "selected" : ""} aria-pressed={mode === "peer"} onClick={() => chooseMode("peer")} disabled={sessionActive}><Users size={19} /><span><strong>Practice with a peer</strong><small>Candidate packet, interviewer packet, timing, and feedback.</small></span></button>
         </fieldset>
         <div className="mock-prompt-picker"><label htmlFor="mock-prompt">3. Prompt</label><div><select id="mock-prompt" value={selectedPlan.slug} onChange={(event) => choosePlan(event.target.value)} disabled={sessionActive} aria-describedby="selected-prompt-description">{availablePlans.map((plan) => <option value={plan.slug} key={plan.id}>{plan.title}</option>)}</select><button type="button" className="button button-secondary" onClick={randomize} disabled={sessionActive} aria-label={`Choose a random ${mockTrackLabels[selectedTrack]} prompt`}><RefreshCw size={15} />Random prompt</button></div><p id="selected-prompt-description" aria-live="polite"><strong>Selected:</strong> {selectedPlan.title} · {selectedPlan.recommended_minutes.min}–{selectedPlan.recommended_minutes.max} suggested minutes</p></div>
-        <div className="mock-builder-actions"><button id="mock-start-practice" type="button" className="button" onClick={startSession} disabled={sessionActive}><Play size={15} />Start practice</button><button type="button" className="button button-secondary" onClick={copySessionLink}><Clipboard size={15} />Copy session link</button><span role="status">{linkCopyState === "copied" ? "Link copied." : linkCopyState === "failed" ? "Could not copy the link." : "Only track, prompt, and mode are included."}</span></div>
+        <fieldset className="mock-condition-grid"><legend>4. Session conditions</legend>
+          <label htmlFor="mock-prompt-exposure"><span>Prior exposure</span><select id="mock-prompt-exposure" value={sessionConditions.promptExposure} disabled={sessionActive} onChange={(event) => setSessionConditions((current) => ({ ...current, promptExposure: event.target.value as MockSessionConditions["promptExposure"] }))}>{MOCK_PROMPT_EXPOSURES.map((value) => <option key={value} value={value}>{MOCK_PROMPT_EXPOSURE_LABELS[value]}</option>)}</select><small>Repeated prompts remain practice, not fresh evidence.</small></label>
+          <label htmlFor="mock-timing-mode"><span>Timing</span><select id="mock-timing-mode" value={sessionConditions.timingMode} disabled={sessionActive} onChange={(event) => setSessionConditions((current) => ({ ...current, timingMode: event.target.value as MockSessionConditions["timingMode"] }))}>{MOCK_TIMING_MODES.map((value) => <option key={value} value={value}>{MOCK_TIMING_MODE_LABELS[value]}</option>)}</select><small>Extended and untimed paths are first-class options.</small></label>
+          <label htmlFor="mock-hint-policy"><span>Hint policy</span><select id="mock-hint-policy" value={sessionConditions.hintPolicy} disabled={sessionActive} onChange={(event) => setSessionConditions((current) => ({ ...current, hintPolicy: event.target.value as MockSessionConditions["hintPolicy"] }))}>{MOCK_HINT_POLICIES.map((value) => <option key={value} value={value}>{MOCK_HINT_POLICY_LABELS[value]}</option>)}</select><small>Record actual hint or redirection use in the review.</small></label>
+        </fieldset>
+        <p className="mock-accessibility-note"><ShieldCheck size={16} /><span><strong>Text-equivalent by default.</strong> No voice or camera is required. Choose extended or untimed practice when timing would make the session less representative.</span></p>
+        <div className="mock-builder-actions"><button id="mock-start-practice" type="button" className="button" onClick={startSession} disabled={sessionActive}><Play size={15} />Start practice</button><button type="button" className="button button-secondary" onClick={copySessionLink}><Clipboard size={15} />Copy session link</button><span role="status">{linkCopyState === "copied" ? "Link copied." : linkCopyState === "failed" ? "Could not copy the link." : "The link includes only track, prompt, and mode; session conditions stay private."}</span></div>
       </div>
     </div></section>
 
     {sessionActive && <section className="section section-alt mock-workspace-section" id="session-workspace"><div className="page-width">
-      <div className="mock-session-heading"><div><span className="section-kicker">Active session · {mode === "solo" ? "Solo" : "Peer"}</span><h2>{selectedPlan.title}</h2><p>{mockTrackLabels[selectedTrack]} · Suggested practice format: {selectedPlan.recommended_minutes.min}–{selectedPlan.recommended_minutes.max} minutes</p></div><button type="button" className="button button-secondary" onClick={resetPrivateSession}><RotateCcw size={15} />Start another session</button></div>
+      <div className="mock-session-heading"><div><span className="section-kicker">Active session · {mode === "solo" ? "Solo" : "Peer"}</span><h2>{selectedPlan.title}</h2><p>{mockTrackLabels[selectedTrack]} · Suggested practice format: {selectedPlan.recommended_minutes.min}–{selectedPlan.recommended_minutes.max} minutes</p></div><button type="button" className="button button-secondary" onClick={() => resetPrivateSession()}><RotateCcw size={15} />Start another session</button></div>
 
-      <div className="mock-timer" role="timer" aria-label={`Session timer, ${formatTime(elapsedSeconds)} elapsed`}><div><Clock3 size={20} /><span><small>Elapsed time</small><strong aria-live="off">{formatTime(elapsedSeconds)}</strong></span></div><p>Use the clock as a guide; exact timing is not mandatory.</p><div className="mock-timer-controls">{timerState !== "running" && <button type="button" className="button" onClick={() => setTimerState("running")} aria-label={timerState === "paused" ? "Resume session timer" : "Start session timer"}><Play size={14} />{timerState === "paused" ? "Resume" : "Start"}</button>}{timerState === "running" && <button type="button" className="button" onClick={() => setTimerState("paused")} aria-label="Pause session timer"><Pause size={14} />Pause</button>}<button type="button" className="button button-secondary" onClick={() => { setElapsedSeconds(0); setTimerState("idle"); }} aria-label="Reset session timer"><RotateCcw size={14} />Reset</button></div></div>
+      <dl className="mock-session-context" aria-label="Recorded session conditions">
+        <div><dt>Evaluator</dt><dd>{mockEvaluatorProvenanceLabel(mode)}</dd></div>
+        <div><dt>Exposure</dt><dd>{MOCK_PROMPT_EXPOSURE_LABELS[sessionConditions.promptExposure]}</dd></div>
+        <div><dt>Timing</dt><dd>{MOCK_TIMING_MODE_LABELS[sessionConditions.timingMode]}</dd></div>
+        <div><dt>Hint policy</dt><dd>{MOCK_HINT_POLICY_LABELS[sessionConditions.hintPolicy]}</dd></div>
+      </dl>
+
+      {sessionConditions.timingMode === "untimed" ? <div className="mock-timer mock-timer-untimed"><div><Clock3 size={20} /><span><small>Timing mode</small><strong>Untimed</strong></span></div><p>No clock is running. The same prompt, packets, reflection, and evidence labels remain available.</p></div> : <div className="mock-timer" role="timer" aria-label={`Session timer, ${formatTime(elapsedSeconds)} elapsed`}><div><Clock3 size={20} /><span><small>Elapsed time</small><strong aria-live="off">{formatTime(elapsedSeconds)}</strong></span></div><p>{sessionConditions.timingMode === "extended" ? "Extended timing is recorded; pause whenever needed." : "Use the clock as a guide; exact timing is not mandatory."}</p><div className="mock-timer-controls">{timerState !== "running" && <button type="button" className="button" onClick={() => setTimerState("running")} aria-label={timerState === "paused" ? "Resume session timer" : "Start session timer"}><Play size={14} />{timerState === "paused" ? "Resume" : "Start"}</button>}{timerState === "running" && <button type="button" className="button" onClick={() => setTimerState("paused")} aria-label="Pause session timer"><Pause size={14} />Pause</button>}<button type="button" className="button button-secondary" onClick={() => { setElapsedSeconds(0); setTimerState("idle"); }} aria-label="Reset session timer"><RotateCcw size={14} />Reset</button></div></div>}
 
       <div className="mock-packet-grid">
         <article className="mock-candidate-packet"><header><span className="icon-well"><UserRound size={20} /></span><div><small>Candidate packet</small><h2>Start here—guidance stays hidden.</h2></div></header><div className="mock-prompt-meta"><span>{context.label}</span>{context.tags.map((tag) => <b key={tag}>{tag}</b>)}</div><h3>{promptText(selectedPlan)}</h3><p>{context.summary}</p><div className="mock-expectations"><strong>Interview expectations</strong><ul>{selectedPlan.candidate_instructions.map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul></div></article>
         <aside className="mock-timing-card"><small>Suggested session structure</small><ol>{selectedPlan.sections.map((section, index) => <li key={section.id}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{section.title}</strong><small>About {section.minutes} min</small></div></li>)}</ol><p>This is an Engineering Foundry practice format, not an official employer standard.</p></aside>
       </div>
 
-      {mode === "solo" ? <details className="mock-guidance" onToggle={(event) => trackGuidance("solo_guidance", event.currentTarget.open)}><summary><span><Sparkles size={18} /></span><div><strong>Reveal solo practice guidance</strong><small>Open only after you have made an initial attempt.</small></div></summary><ul>{revealGuidance(selectedPlan).map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></details> : <details className="mock-guidance mock-interviewer-packet" onToggle={(event) => trackGuidance("interviewer_packet", event.currentTarget.open)}><summary><span><MessageSquareText size={18} /></span><div><strong>Open interviewer packet</strong><small>Candidate: hand the screen to your peer before opening.</small></div></summary><div className="mock-interviewer-body"><section><h3>Follow-ups and facilitation</h3><ul>{selectedPlan.interviewer_instructions.map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul></section><section><h3>Observe these dimensions</h3><ul>{rubric.dimensions.map((dimension) => <li key={dimension.id}><strong>{dimension.label}</strong><span>{dimension.description}</span></li>)}</ul></section><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></div></details>}
+      {mode === "solo" ? <details className="mock-guidance" onToggle={(event) => trackGuidance("solo_guidance", event.currentTarget.open)}><summary><span><Sparkles size={18} /></span><div><strong>Reveal solo practice guidance</strong><small>{sessionConditions.hintPolicy === "none" ? "Your no-hints policy is recorded. Opening this changes actual assistance, not the policy you began with." : sessionConditions.hintPolicy === "guided" ? "Guided practice allows planned support; record what you actually use." : "Open after an initial attempt or when you choose to request a hint."}</small></div></summary><ul>{revealGuidance(selectedPlan).map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></details> : <details className="mock-guidance mock-interviewer-packet" onToggle={(event) => trackGuidance("interviewer_packet", event.currentTarget.open)}><summary><span><MessageSquareText size={18} /></span><div><strong>Open interviewer packet</strong><small>Candidate: hand the screen to your peer before opening. Record any hint or redirection used.</small></div></summary><div className="mock-interviewer-body"><section><h3>Follow-ups and facilitation</h3><ul>{selectedPlan.interviewer_instructions.map((item) => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul></section><section><h3>Observe these dimensions</h3><ul>{rubric.dimensions.map((dimension) => <li key={dimension.id}><strong>{dimension.label}</strong><span>{dimension.description}</span></li>)}</ul></section><Link href={getMockPreparationHref(selectedPlan)}>Open the full practice page after this session <ArrowRight size={14} /></Link></div></details>}
 
       <section className="mock-feedback"><SectionHeading eyebrow="Qualitative reflection" title={mode === "solo" ? "Review your reasoning, not a predicted outcome." : "Give specific feedback without pretending to make a hiring decision."} description={rubric.disclaimer} />
         <p className="session-only-banner"><ShieldCheck size={17} /><span>{accountPlatformAvailable ? <><strong>Private until you save.</strong> Ratings and notes stay in browser memory until you explicitly save this review. Saved ratings are self-report evidence; saved reflections remain private and never determine evidence.</> : <><strong>Private in this session.</strong> Ratings and notes stay in browser memory and are not sent to an account service in this configuration. Copy feedback to keep them yourself.</>}</span></p>
+        <details className="mock-reflection-prompts"><summary>Use the structured debrief prompts</summary><ol><li>What requirement or constraint did you clarify first?</li><li>Where did your reasoning become less clear?</li><li>Which tradeoff did you make explicit?</li><li>What did the evaluator need to redirect?</li><li>What evidence supports the strongest rubric mark?</li><li>What would you change on a fresh prompt?</li><li>Did timing or a technical issue distort this attempt?</li><li>What exact specialist drill should come next?</li></ol></details>
         <div className="mock-rubric">{rubric.dimensions.map((dimension) => <fieldset key={dimension.id}><legend><strong>{dimension.label}</strong><span>{dimension.description}</span></legend><div>{ratings.map((rating) => <label key={rating}><input type="radio" name={`rubric-${dimension.id}`} value={rating} checked={marks[dimension.id] === rating} onChange={() => { markReviewEdited(); setMarks((current) => ({ ...current, [dimension.id]: rating })); }} /><span><i aria-hidden="true" />{rating}</span></label>)}</div></fieldset>)}</div>
+        <div className="mock-review-conditions">
+          <fieldset><legend>Session result</legend>{MOCK_SESSION_OUTCOMES.map((value) => <label key={value}><input type="radio" name="mock-session-outcome" value={value} checked={sessionOutcome === value} onChange={() => { markReviewEdited(); setSessionOutcome(value); if (value === "completed") setSessionIssue(""); }} /><span>{MOCK_SESSION_OUTCOME_LABELS[value]}</span></label>)}</fieldset>
+          <fieldset><legend>Actual assistance</legend>{MOCK_ASSISTANCE_STATES.map((value) => <label key={value}><input type="radio" name="mock-assistance-state" value={value} checked={assistanceState === value} onChange={() => { markReviewEdited(); setAssistanceState(value); }} /><span>{MOCK_ASSISTANCE_STATE_LABELS[value]}</span></label>)}</fieldset>
+        </div>
+        {sessionOutcome !== "completed" && <label className="mock-session-issue" htmlFor="mock-session-issue"><span>{sessionOutcome === "technical-failure" ? "What failed technically?" : "Why was the session interrupted?"}</span><textarea id="mock-session-issue" value={sessionIssue} maxLength={5000} required onChange={(event) => { markReviewEdited(); setSessionIssue(event.target.value); }} placeholder="Record enough context so this attempt is not mistaken for capability evidence." /></label>}
         <div className="mock-notes"><label><span>Strength</span><textarea value={notes.strength} maxLength={5000} onChange={(event) => { markReviewEdited(); setNotes((current) => ({ ...current, strength: event.target.value })); }} placeholder="What worked well?" /></label><label><span>One improvement</span><textarea value={notes.improvement} maxLength={5000} onChange={(event) => { markReviewEdited(); setNotes((current) => ({ ...current, improvement: event.target.value })); }} placeholder="What is one concrete adjustment?" /></label><label><span>Follow-up practice</span><textarea value={notes.followUp} maxLength={5000} onChange={(event) => { markReviewEdited(); setNotes((current) => ({ ...current, followUp: event.target.value })); }} placeholder="What should the next session focus on?" /></label></div>
+        <section className="mock-evidence-summary" aria-labelledby="mock-evidence-heading"><div><small>Evidence summary</small><h3 id="mock-evidence-heading">The conditions travel with the review.</h3></div><dl><div><dt>Source</dt><dd>{mockEvaluatorProvenanceLabel(mode)}</dd></div><div><dt>Prompt</dt><dd>{MOCK_PROMPT_EXPOSURE_LABELS[sessionConditions.promptExposure]}</dd></div><div><dt>Assistance</dt><dd>{MOCK_ASSISTANCE_STATE_LABELS[assistanceState]}</dd></div><div><dt>Result</dt><dd>{MOCK_SESSION_OUTCOME_LABELS[sessionOutcome]}</dd></div></dl><p>{sessionConditions.promptExposure === "repeated" || sessionOutcome !== "completed" ? "This review stays in your history, but it does not increase or reduce capability evidence because the prompt was repeated or the session did not complete." : "A completed fresh-prompt review can inform your practice evidence. It is still qualitative self-report—not a global score, pass probability, or hiring decision."}</p></section>
+        <nav className="mock-handoff" aria-label="Continue after this mock"><Link href={getMockPreparationHref(selectedPlan)}>{getMockPreparationLinkLabel(selectedPlan)} <ArrowRight size={14} /></Link><Link href="/interview-playbook">Return to the Interview Playbook <ArrowRight size={14} /></Link></nav>
         <div className="mock-feedback-actions"><button type="button" className="button" onClick={copyFeedback}><Clipboard size={15} />Copy feedback</button>{accountPlatformAvailable && <button type="button" className="button button-secondary" onClick={savePracticeReview} aria-disabled={saveState === "saving"} aria-describedby="mock-review-save-status"><ShieldCheck size={15} />{saveState === "saving" ? "Saving review…" : "Save practice review"}</button>}<span id="mock-review-save-status" role="status" aria-live="polite" aria-atomic="true">{!accountPlatformAvailable ? "Private saving is unavailable in this public configuration. Copy feedback to keep it yourself." : saveMessage}</span><span role="status">{copyState === "copied" ? "Feedback copied to your clipboard." : copyState === "failed" ? "Clipboard access failed; your review is still available here." : "Notes are private and never used to determine evidence."}</span></div>
       </section>
     </div></section>}
+
+    <section className="section"><div className="page-width"><SectionHeading eyebrow="Practice formats" title="Know what this lab can—and cannot—run." description="Labels describe the product that exists today. Unavailable formats are never presented as selectable practice." /><div className="mock-format-availability"><div><strong>Available now</strong><ul><li><CheckCircle2 size={15} /><span><b>Guided practice</b> — planned support with actual assistance recorded.</span></li><li><CheckCircle2 size={15} /><span><b>Timed or untimed solo rehearsal</b> — one original prompt and private self-review.</span></li><li><CheckCircle2 size={15} /><span><b>Peer-led structured mock</b> — bring your own peer; evaluator identity is not verified.</span></li></ul></div><div><strong>Not available in this release</strong><ul><li>AI-led single-round mock</li><li>Coach- or expert-led session</li><li>Company-shaped simulation</li><li>Mini-loop or full-loop simulation</li></ul></div></div></div></section>
 
     <section className="section"><div className="page-width mock-peer-boundary"><div><SectionHeading eyebrow="Peer practice boundary" title="Bring a peer you already have—or ask the community." description="Engineering Foundry supplies the packets and structure in this phase. It does not automatically match users, schedule sessions, guarantee availability, or verify interviewers." /><a className="button" href={siteConfig.discordUrl} target="_blank" rel="noopener noreferrer" onClick={() => track("mock_community_clicked", { placement: "mock_interview_lab" })}>Find peers in the community <ExternalLink size={15} /></a></div><aside><StatusPill tone="accent">Coming later</StatusPill><h3>Experienced interviewer practice</h3><p>Matching, verified interviewer profiles, bookings, payments, and a marketplace are intentionally not part of this release.</p></aside></div></section>
   </>;

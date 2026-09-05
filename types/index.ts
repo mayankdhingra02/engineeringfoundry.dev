@@ -319,9 +319,23 @@ export interface MlDesignProblem {
   source: DesignSource;
 }
 
-export type MockTrack = "dsa" | "system-design" | "ml-design" | "behavioral";
+export type MockTrack = "dsa" | "system-design" | "low-level-design" | "ml-design" | "behavioral";
 export type MockPracticeMode = "solo" | "peer";
-export type MockContentKind = "dsa-question" | "system-design-problem" | "ml-design-problem" | "behavioral-question";
+export type MockContentKind = "dsa-question" | "system-design-problem" | "low-level-design-problem" | "ml-design-problem" | "behavioral-question";
+
+export interface LowLevelDesignMockProblem {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  difficulty: DesignDifficulty;
+  domains: string[];
+  prompt: string;
+  clarificationQuestions: string[];
+  keyTradeoffs: string[];
+  status: DesignContentStatus;
+  source: DesignSource;
+}
 
 export interface MockSessionPlan {
   id: string;

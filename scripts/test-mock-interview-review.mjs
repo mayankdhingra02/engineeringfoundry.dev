@@ -27,6 +27,12 @@ function validInput(plan = activeMockSessionPlans[0], overrides = {}) {
     rubricId: plan.rubric_id,
     startedAt: "2026-09-03T12:34:56.789Z",
     elapsedSeconds: 120,
+    promptExposure: "fresh",
+    timingMode: "suggested",
+    hintPolicy: "on-request",
+    assistanceState: "unassisted",
+    sessionOutcome: "completed",
+    sessionIssue: "",
     strength: "Clear framing",
     improvement: "State the tradeoff earlier",
     followUp: "Repeat with a stricter timebox",
@@ -127,7 +133,20 @@ for (const elapsedSeconds of [-1, 0.5, 2_147_483_648, Number.MAX_SAFE_INTEGER, N
   mustReject(validInput(undefined, { elapsedSeconds }), `Review input must reject non-int4 elapsed value ${String(elapsedSeconds)}.`);
 }
 
-for (const field of ["strength", "improvement", "followUp"]) {
+for (const [field, values] of [
+  ["promptExposure", ["fresh", "repeated"]],
+  ["timingMode", ["suggested", "extended", "untimed"]],
+  ["hintPolicy", ["none", "on-request", "guided"]],
+  ["assistanceState", ["unassisted", "hint-used", "redirection-used", "hint-and-redirection"]],
+  ["sessionOutcome", ["completed"]],
+]) for (const value of values) assert.ok(parseMockInterviewReviewInput(validInput(undefined, { [field]: value }), validationInstant).ok, `Canonical ${field} ${value} must parse.`);
+for (const [field, value] of [["promptExposure", "unknown"], ["timingMode", "strict"], ["hintPolicy", "always"], ["assistanceState", "ai"], ["sessionOutcome", "failed"]]) mustReject(validInput(undefined, { [field]: value }), `Review input must reject invalid ${field}.`);
+for (const sessionOutcome of ["interrupted", "technical-failure"]) {
+  assert.ok(parseMockInterviewReviewInput(validInput(undefined, { sessionOutcome, sessionIssue: "Connection dropped." }), validationInstant).ok, `${sessionOutcome} must parse with an explicit issue.`);
+  mustReject(validInput(undefined, { sessionOutcome, sessionIssue: "  " }), `${sessionOutcome} must require an explicit issue.`);
+}
+
+for (const field of ["sessionIssue", "strength", "improvement", "followUp"]) {
   assert.ok(parseMockInterviewReviewInput(validInput(undefined, { [field]: "x".repeat(5_000) }), validationInstant).ok, `${field} must accept the documented 5,000-character boundary.`);
   for (const value of ["x".repeat(5_001), "before\0after", null, false, 1, {}, []]) {
     mustReject(validInput(undefined, { [field]: value }), `${field} must reject invalid or over-limit reflection text.`);
@@ -194,9 +213,11 @@ for (const marker of [
   'reason: "persistence-failed"',
   'reason: "saved"',
 ]) assert.ok(actionBody.includes(marker), `The action is missing stable result contract ${marker}.`);
+for (const marker of ["target_prompt_exposure", "target_timing_mode", "target_hint_policy", "target_assistance_state", "target_session_outcome", "target_session_issue"]) assert.ok(actionBody.includes(marker), `The RPC payload is missing recorded session condition ${marker}.`);
 
 const component = read("components/mock-interview-lab.tsx");
 const styles = read("app/globals.css");
+const mockContent = read("data/mock-interviews/index.ts");
 const saveStart = component.indexOf("async function savePracticeReview()");
 const saveEnd = component.indexOf("function trackGuidance", saveStart);
 const saveBody = component.slice(saveStart, saveEnd);
@@ -233,12 +254,21 @@ for (const marker of [
   "Your latest changes are not saved.",
   "markReviewEdited(); setMarks",
   "markReviewEdited(); setNotes",
+  "Describe the interruption or technical issue before saving this review.",
+  'className="mock-review-conditions"',
+  'className="mock-evidence-summary"',
+  "The conditions travel with the review.",
+  "AI-led single-round mock",
+  "Company-shaped simulation",
   "maxLength={5000}",
   'aria-disabled={saveState === "saving"}',
   'aria-describedby="mock-review-save-status"',
   'id="mock-review-save-status" role="status" aria-live="polite" aria-atomic="true"',
 ]) assert.ok(component.includes(marker), `The client review contract is missing ${marker}.`);
 assert.ok(styles.includes('.mock-feedback-actions .button[aria-disabled="true"]') && styles.includes('.mock-feedback-actions .button-secondary[aria-disabled="true"]:hover'), "The pending save trigger must retain a distinct non-hovering visual state while it remains focusable.");
+for (const marker of ['"parking-lot": "parking-allocation"', '"elevator-control": "elevator-dispatch"', '"vending-machine": "vending-workflow"', '"conference-room-booking": "meeting-room-scheduler"', '"notification-system": "notification-orchestrator"', 'return practiceSlug ? `/low-level-design/practice/${practiceSlug}` : "/low-level-design/practice"', 'return "Browse Low-Level Design specialist practice"']) assert.ok(mockContent.includes(marker), `The LLD remediation handoff is missing ${marker}.`);
+assert.ok(component.includes("getMockPreparationLinkLabel(selectedPlan)"), "The Mock debrief must not claim an exact LLD exercise when only the specialist area is available.");
+assert.ok(styles.includes('.mock-rubric label > span { min-height: 44px; }'), "Mobile rubric choices must preserve the 44px interaction floor.");
 assert.equal((saveBody.match(/track\("mock_review_saved"/g) ?? []).length, 1, "A successful review must have exactly one analytics emission point.");
 for (const privateField of ["strength", "improvement", "followUp", "ratings", "elapsedSeconds", "startedAt", "sessionId"]) {
   const analyticsCall = saveBody.slice(analyticsIndex, identityGuardIndex);
