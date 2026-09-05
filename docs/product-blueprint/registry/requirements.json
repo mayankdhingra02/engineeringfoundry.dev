@@ -413,7 +413,7 @@
       "research_status": "approved",
       "publication_status": "published",
       "routes": [],
-      "source_ledger_ids": [],
+      "source_ledger_ids": ["SRC-OPS-MASTER-GOAL"],
       "research_artifact_ids": ["RA-LAUNCH-V1-FINISH-PLAN"],
       "prerequisite_ids": ["EF-GLOBAL"],
       "code_paths": [".github/workflows/ci.yml", ".github/workflows/codeql.yml", "scripts/canonical-content-url.mjs", "scripts/product-blueprint-governance.mjs", "scripts/release-record.mjs", "scripts/release-verification-manifest.mjs", "scripts/test-analytics-launch-evidence.mjs", "scripts/test-content-validator.mjs", "scripts/test-interview-content-validator.mjs", "scripts/test-release-record.mjs", "scripts/test-v1-launch-readiness.mjs", "scripts/validate-content.mjs", "scripts/validate-impact-ledger.mjs", "scripts/validate-interview-content.mjs"],
