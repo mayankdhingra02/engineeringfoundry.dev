@@ -119,7 +119,11 @@ function mermaidNodeCount(chart) {
 
 const conceptDiagramInventory = contentFiles.flatMap((path) => {
   const source = readFileSync(path, "utf8");
-  return [...source.matchAll(/<MermaidDiagram\s+chart=\{([^}]+)\}\s+title="([^"]+)"\s+description="([^"]+)"\s*\/>/g)].map((match, occurrence) => {
+  const matches = [
+    ...source.matchAll(/<MermaidDiagram\s+chart=\{([^}]+)\}\s+title="([^"]+)"\s+description="([^"]+)"\s*\/>/g),
+    ...source.matchAll(/diagram:\s*\{\s*chart:\s*([^,]+),\s*title:\s*"([^"]+)",\s*description:\s*"([^"]+)"\s*\}/g),
+  ].sort((left, right) => (left.index ?? 0) - (right.index ?? 0));
+  return matches.map((match, occurrence) => {
     const before = source.slice(0, match.index);
     const functionMatches = [...before.matchAll(/export function\s+([A-Za-z0-9_]+)/g)];
     const functionName = functionMatches.at(-1)?.[1] ?? "unknown";

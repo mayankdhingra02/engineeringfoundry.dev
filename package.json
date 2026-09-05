@@ -83,6 +83,7 @@
     "test:system-design-caching": "node --experimental-strip-types --no-warnings scripts/test-system-design-caching.mjs",
     "test:system-design-messaging": "node --experimental-strip-types --no-warnings scripts/test-system-design-messaging.mjs",
     "test:system-design-reliability": "node --experimental-strip-types --no-warnings scripts/test-system-design-reliability.mjs",
+    "test:system-design-production-engineering": "node --experimental-strip-types --no-warnings scripts/test-system-design-production-engineering.mjs",
     "test:system-design-specialized": "node --experimental-strip-types --no-warnings scripts/test-system-design-specialized.mjs",
     "test:system-design-technology": "node --experimental-strip-types --no-warnings scripts/test-system-design-technology.mjs",
     "test:system-design-practice": "node --experimental-strip-types --no-warnings scripts/test-system-design-practice.mjs",

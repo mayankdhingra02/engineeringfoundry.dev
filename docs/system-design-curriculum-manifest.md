@@ -2780,8 +2780,8 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: draft-ready
-- Published: No
+- Research status: published
+- Published: Yes
 - Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Must Know, staff=Must Know
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Must Know, data=Must Know, ml=Must Know
@@ -2801,9 +2801,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 15 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `observability`
@@ -2823,9 +2823,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 15 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `observability`
@@ -2845,9 +2845,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Sequence
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `observability`
@@ -2867,9 +2867,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 10 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `logs`
@@ -2888,9 +2888,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 15 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `metrics`
@@ -2910,9 +2910,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 15 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `metrics`
@@ -2932,9 +2932,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `slis`
@@ -2954,9 +2954,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 3
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Advanced, sde2=Advanced, senior=Important, staff=Must Know
 - Role relevance: backend=Advanced, fullstack=Advanced, infrastructure=Advanced, data=Advanced, ml=Advanced
 - Prerequisites: `slos`
@@ -2975,9 +2975,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 1
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Must Know, sde2=Must Know, senior=Must Know, staff=Must Know
 - Role relevance: backend=Must Know, fullstack=Must Know, infrastructure=Must Know, data=Must Know, ml=Must Know
 - Prerequisites: None
@@ -2996,9 +2996,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Comparison
 - Publishing phase: 2
-- Research status: needs-research
-- Published: No
-- Source coverage: primary=no, interview=yes, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `authn-authz`
@@ -3018,9 +3018,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: needs-research
-- Published: No
-- Source coverage: primary=no, interview=yes, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `sessions-tokens`
@@ -3040,9 +3040,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 25 minutes
 - Visual: Sequence
 - Publishing phase: 3
-- Research status: needs-research
-- Published: No
-- Source coverage: primary=no, interview=yes, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Advanced, sde2=Advanced, senior=Advanced, staff=Advanced
 - Role relevance: backend=Advanced, fullstack=Advanced, infrastructure=Advanced, data=Advanced, ml=Advanced
 - Prerequisites: `authn-authz`, `http`
@@ -3062,9 +3062,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Sequence
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `http`
@@ -3084,9 +3084,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 15 minutes
 - Visual: Comparison
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `tls`
@@ -3105,9 +3105,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 15 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `authn-authz`
@@ -3127,9 +3127,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 20 minutes
 - Visual: Mermaid
 - Publishing phase: 2
-- Research status: needs-research
-- Published: No
-- Source coverage: primary=no, interview=yes, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Important, staff=Important
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `rate-limiting`, `cdn`
@@ -3149,9 +3149,9 @@ Make designs diagnosable and protect their architectural trust boundaries.
 - Estimated time: 25 minutes
 - Visual: Text only
 - Publishing phase: 2
-- Research status: researched
-- Published: No
-- Source coverage: primary=yes, interview=no, verification pending=yes
+- Research status: published
+- Published: Yes
+- Source coverage: primary=yes, interview=yes, verification pending=no
 - Level relevance: sde1=Important, sde2=Important, senior=Must Know, staff=Must Know
 - Role relevance: backend=Important, fullstack=Important, infrastructure=Important, data=Important, ml=Important
 - Prerequisites: `authn-authz`, `data-modeling`

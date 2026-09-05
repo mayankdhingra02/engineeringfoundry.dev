@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "mermaidDiagrams": 141,
+  "mermaidDiagrams": 145,
   "diagrams": [
     {
       "id": "distributed-caching-1",
@@ -558,6 +558,58 @@
       "description": "A browser asks a recursive resolver. On a cache miss, that resolver consults authoritative DNS, returns an address or endpoint, and may cache the answer for its remaining TTL.",
       "nodes": 13,
       "sourceFile": "content/system-design/networking/transport.tsx",
+      "mobileStatus": "shared responsive scroll/scale container",
+      "darkModeStatus": "theme-aware Mermaid renderer"
+    },
+    {
+      "id": "oauth-oidc-1",
+      "lessonId": "oauth-oidc",
+      "lesson": "OAuth / OIDC",
+      "route": "/system-design/production-engineering/oauth-oidc",
+      "diagramType": "sequence",
+      "purpose": "Authorization code flow with PKCE",
+      "description": "A client sends a user to an authorization server with state and a PKCE challenge. The client validates the returned state, exchanges the authorization code with the verifier, and sends the resulting access token only to the intended resource server.",
+      "nodes": 16,
+      "sourceFile": "content/system-design/production-engineering/identity-security.tsx",
+      "mobileStatus": "shared responsive scroll/scale container",
+      "darkModeStatus": "theme-aware Mermaid renderer"
+    },
+    {
+      "id": "distributed-tracing-1",
+      "lessonId": "distributed-tracing",
+      "lesson": "Distributed Tracing",
+      "route": "/system-design/production-engineering/distributed-tracing",
+      "diagramType": "sequence",
+      "purpose": "Trace context across an order request",
+      "description": "A client request enters an API and passes trace context through order and payment services. Each service records a child span, so the final trace shows the ordered call path and where latency accumulated.",
+      "nodes": 8,
+      "sourceFile": "content/system-design/production-engineering/observability-signals.tsx",
+      "mobileStatus": "shared responsive scroll/scale container",
+      "darkModeStatus": "theme-aware Mermaid renderer"
+    },
+    {
+      "id": "tls-1",
+      "lessonId": "tls",
+      "lesson": "TLS",
+      "route": "/system-design/production-engineering/tls",
+      "diagramType": "sequence",
+      "purpose": "TLS termination creates an explicit trust boundary",
+      "description": "A client authenticates a TLS endpoint before sending encrypted application data. After termination, the platform starts a separately protected internal connection to the application service, making both hops and the plaintext boundary explicit.",
+      "nodes": 9,
+      "sourceFile": "content/system-design/production-engineering/platform-security.tsx",
+      "mobileStatus": "shared responsive scroll/scale container",
+      "darkModeStatus": "theme-aware Mermaid renderer"
+    },
+    {
+      "id": "api-abuse-ddos-2",
+      "lessonId": "api-abuse-ddos",
+      "lesson": "API Abuse / DDoS",
+      "route": "/system-design/production-engineering/api-abuse-ddos",
+      "diagramType": "flowchart",
+      "purpose": "Layer abuse controls before scarce work",
+      "description": "Client traffic passes through edge validation, identity and quota checks, application authorization, and a bounded work queue before reaching a protected dependency. Each layer emits abuse telemetry so operators can distinguish blocked traffic from user-visible failures.",
+      "nodes": 23,
+      "sourceFile": "content/system-design/production-engineering/platform-security.tsx",
       "mobileStatus": "shared responsive scroll/scale container",
       "darkModeStatus": "theme-aware Mermaid renderer"
     },
