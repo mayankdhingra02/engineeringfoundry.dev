@@ -75,7 +75,7 @@ requireText(profile, "if (!isAccountPlatformAvailable()) return <AccountUnavaila
 for (const file of [
   "app/dsa/[...segments]/page.tsx",
   "app/system-design/[...segments]/page.tsx",
-  "app/ml-design/[slug]/page.tsx",
+  "app/ml-design/[...segments]/page.tsx",
   "app/companies/[slug]/page.tsx",
   "app/interview-experiences/[company]/page.tsx",
   "app/challenges/[slug]/page.tsx",

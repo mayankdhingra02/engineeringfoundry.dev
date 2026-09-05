@@ -37,9 +37,10 @@ const redirects = new Map([
   ["/system-design", "/system-design/start-here/introduction"],
   ["/system-design/introduction", "/system-design/start-here/introduction"],
   ["/system-design/url-shortener", "/system-design/problems/url-shortener"],
+  ["/ml-design/recommendation-system", "/ml-design/problems/personalized-recommendation"],
 ]);
 const accountRoutePattern = /^(?:\/signin|\/signup|\/forgot-password|\/reset-password|\/onboarding|\/dashboard|\/settings\/profile|\/applications(?:\/|$)|\/behavioral\/(?:workspace|questions|stories)(?:\/|$)|\/u\/not-a-qualified-profile$)/;
-const notFoundRoutePattern = /not-a-(?:real-(?:topic|company|problem|lesson|challenge)|role)/;
+const notFoundRoutePattern = /not-a-(?:real-(?:topic|company|problem|lesson|challenge|concept)|role)/;
 let omittedSystemDesignMarkerRoute = null;
 let leakedSystemDesignHandoffRoute = null;
 let omittedPreparationMarkerRoute = null;
@@ -159,8 +160,8 @@ try {
   leakedSystemDesignHandoffRoute = "/system-design/start-here/introduction";
   await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /exposes disabled System Design account handoff/, "hosted smoke must reject a disabled-account sign-in handoff");
   leakedSystemDesignHandoffRoute = null;
-  omittedPreparationMarkerRoute = "/ml-design/recommendation-system";
-  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/ml-design\/recommendation-system lacks the disabled-account preparation state/, "hosted smoke must reject a missing server-rendered preparation disabled marker");
+  omittedPreparationMarkerRoute = "/ml-design/problems/personalized-recommendation";
+  await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/ml-design\/problems\/personalized-recommendation lacks the disabled-account preparation state/, "hosted smoke must reject a missing server-rendered preparation disabled marker");
   omittedPreparationMarkerRoute = null;
   leakedPreparationHandoffRoute = "/behavioral";
   await assert.rejects(runPublicRouteAssertions(origin, { fetchImpl: fixtureFetch }), /\/behavioral exposes disabled preparation account handoff/, "hosted smoke must reject disabled Behavioral workspace and sign-in handoffs");

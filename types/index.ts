@@ -177,6 +177,8 @@ export interface DesignRoadmapStage {
   title: string;
   summary: string;
   topics: string[];
+  conceptIds?: string[];
+  problemIds?: string[];
 }
 
 export interface DesignConcept {
@@ -188,6 +190,36 @@ export interface DesignConcept {
   useWhen: string;
   tradeoff: string;
   commonMistake: string;
+}
+
+export interface MlDesignConcept extends DesignConcept {
+  level: DesignDifficulty | "Cross-cutting";
+  learningObjective: string;
+  scenario: string;
+  mentalModel: string;
+  interviewImpact: string;
+  prerequisites: string[];
+  systemDesignPrerequisites: Array<{ title: string; href: string }>;
+  mechanism: string[];
+  alternatives: string[];
+  productConsequences: string[];
+  operationalConsequences: string[];
+  failureModes: string[];
+  workedExample: string[];
+  exercise: { prompt: string; expected: string };
+  interviewerProbes: string[];
+  levelOverlays: {
+    entry: string;
+    mid: string;
+    senior: string;
+    role: string;
+  };
+  riskCallout: string;
+  relatedProblemSlugs: string[];
+  decisionTrigger: string;
+  visual: { title: string; steps: string[]; note?: string };
+  sourceIds: string[];
+  lastReviewed: string;
 }
 
 export interface SystemDesignProblem {
@@ -242,6 +274,23 @@ export interface MlDesignProblem {
   tradeoffs: string[];
   extensions: string[];
   interviewChecklist: string[];
+  family: string;
+  clarifyingQuestions: string[];
+  decisionUnit: string;
+  scaleAndConstraints: string[];
+  datasetPlan: string[];
+  offlineArchitecture: string[];
+  onlineArchitecture: string[];
+  capacityReliability: string[];
+  rollout: string[];
+  responsibleMl: string[];
+  alternatives: string[];
+  seniorExtensions: string[];
+  variants: string[];
+  visual: { title: string; steps: string[]; note?: string };
+  rubricEmphasis: string[];
+  sourceIds: string[];
+  lastReviewed: string;
   status: DesignContentStatus;
   source: DesignSource;
 }

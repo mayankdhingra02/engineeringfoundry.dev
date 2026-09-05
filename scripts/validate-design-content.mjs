@@ -17,7 +17,7 @@ const difficulties = new Set(["Foundation", "Intermediate", "Advanced"]);
 const statuses = new Set(["active", "needs_review"]);
 const systemDomains = new Set(["Web", "Messaging", "Storage", "Streaming", "Search", "Infrastructure", "Real-time", "Data Platform", "Reliability"]);
 const systemPatterns = new Set(["Caching", "Sharding", "Replication", "Async Processing", "Fan-out", "Rate Limiting", "Pub/Sub", "Consistent Hashing", "CDN", "Event Sourcing", "Search Index", "Object Storage", "Leader Election", "Idempotency", "Backpressure"]);
-const mlDomains = new Set(["Recommendation", "Ranking", "Risk", "Trust & Safety", "Search", "NLP", "Generative AI", "Advertising"]);
+const mlDomains = new Set(["Recommendation", "Ranking", "Risk", "Trust & Safety", "Search", "NLP", "Generative AI", "Advertising", "Prediction", "Forecasting", "ML Infrastructure"]);
 
 const unique = (items, field, label) => {
   const values = items.map((item) => item[field]);
@@ -85,12 +85,17 @@ for (const problem of mlProblems) {
   for (const field of ["productGoal", "predictionTarget", "successMetrics", "dataSources", "labeling", "features", "baseline", "modelDiscussion", "training", "evaluation", "serving", "monitoring", "feedbackLoop", "failureModes", "tradeoffs", "extensions", "interviewChecklist"]) {
     check(nonEmptyList(problem[field]), `ML Design problem ${problem.id} must include ${field}`);
   }
+  for (const field of ["clarifyingQuestions", "scaleAndConstraints", "datasetPlan", "offlineArchitecture", "onlineArchitecture", "capacityReliability", "rollout", "responsibleMl", "alternatives", "seniorExtensions", "variants", "rubricEmphasis", "sourceIds"]) {
+    check(nonEmptyList(problem[field]), `ML Design problem ${problem.id} must include ${field}`);
+  }
+  check(nonEmptyString(problem.family) && nonEmptyString(problem.decisionUnit) && nonEmptyString(problem.lastReviewed), `ML Design problem ${problem.id} must include family, decisionUnit, and lastReviewed`);
+  check(nonEmptyString(problem.visual?.title) && nonEmptyList(problem.visual?.steps), `ML Design problem ${problem.id} must include a valid visual`);
 }
 
 check(systemProblems.filter((problem) => problem.status === "active").length >= 8, "System Design must include at least 8 active problems");
-check(mlProblems.filter((problem) => problem.status === "active").length >= 6, "ML Design must include at least 6 active problems");
+check(mlProblems.filter((problem) => problem.status === "active").length === 13, "ML Design must include exactly 13 active problems");
 check(systemConcepts.length >= 10, "System Design must include at least 10 concepts");
-check(mlConcepts.length >= 8, "ML Design must include at least 8 concepts");
+check(mlConcepts.length === 20, "ML Design must include exactly 20 concepts");
 
 if (errors.length) {
   console.error(`Design content validation failed with ${errors.length} error${errors.length === 1 ? "" : "s"}:`);

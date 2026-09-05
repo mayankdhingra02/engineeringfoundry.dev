@@ -1,10 +1,58 @@
 [
-  {"id":"ml-stage-framing","slug":"problem-framing","order":1,"title":"Problem Framing","summary":"Translate a product need into a measurable prediction or decision.","topics":["product objective","prediction target","constraints","non-ML baseline"]},
-  {"id":"ml-stage-metrics","slug":"metrics","order":2,"title":"Metrics","summary":"Separate offline model quality, online impact, and system guardrails.","topics":["offline metrics","online metrics","guardrail metrics","segment analysis"]},
-  {"id":"ml-stage-data","slug":"data","order":3,"title":"Data","summary":"Design labels and features without leaking future information.","topics":["collection","labels","leakage","feature quality","train-serve consistency"]},
-  {"id":"ml-stage-modeling","slug":"modeling","order":4,"title":"Modeling","summary":"Start with a baseline and add complexity only where evidence supports it.","topics":["baselines","model families","objective functions","evaluation"]},
-  {"id":"ml-stage-training","slug":"training-systems","order":5,"title":"Training Systems","summary":"Make experiments and retraining repeatable, observable, and recoverable.","topics":["pipelines","experimentation","reproducibility","retraining"]},
-  {"id":"ml-stage-serving","slug":"serving","order":6,"title":"Serving","summary":"Meet prediction freshness and latency needs safely in production.","topics":["batch vs online","latency","feature serving","deployment and rollback"]},
-  {"id":"ml-stage-monitoring","slug":"monitoring","order":7,"title":"Monitoring","summary":"Detect system degradation before business outcomes arrive.","topics":["drift","quality proxies","latency","feedback loops","retraining triggers"]},
-  {"id":"ml-stage-modern-systems","slug":"modern-ml-systems","order":8,"title":"Modern ML Systems","summary":"Apply the framework to retrieval, ranking, embeddings, and generative systems.","topics":["recommendation","ranking","embeddings","retrieval","LLM and RAG systems"]}
+  {
+    "id": "ml-stage-framing", "slug": "problem-framing", "order": 1, "title": "Problem Framing",
+    "summary": "Translate a product need into a measurable prediction or decision.",
+    "topics": ["product objective", "prediction target", "constraints", "non-ML baseline"],
+    "conceptIds": ["ml-concept-formulation", "ml-concept-objectives"],
+    "problemIds": ["ml-problem-fraud", "ml-problem-eta"]
+  },
+  {
+    "id": "ml-stage-metrics", "slug": "metrics", "order": 2, "title": "Metrics",
+    "summary": "Separate offline model quality, online impact, and system guardrails.",
+    "topics": ["offline metrics", "online metrics", "guardrail metrics", "segment analysis"],
+    "conceptIds": ["ml-concept-objectives", "ml-concept-offline-evaluation", "ml-concept-calibration"],
+    "problemIds": ["ml-problem-search-ranking", "ml-problem-demand"]
+  },
+  {
+    "id": "ml-stage-data", "slug": "data", "order": 3, "title": "Data",
+    "summary": "Design labels and features without leaking future information.",
+    "topics": ["collection", "labels", "leakage", "feature quality", "train-serve consistency"],
+    "conceptIds": ["ml-concept-data", "ml-concept-labels", "ml-concept-datasets", "ml-concept-features", "ml-concept-imbalance"],
+    "problemIds": ["ml-problem-recommendation", "ml-problem-fraud", "ml-problem-demand"]
+  },
+  {
+    "id": "ml-stage-modeling", "slug": "modeling", "order": 4, "title": "Modeling",
+    "summary": "Start with a baseline and add complexity only where evidence supports it.",
+    "topics": ["baselines", "model families", "objective functions", "evaluation"],
+    "conceptIds": ["ml-concept-formulation", "ml-concept-embeddings", "ml-concept-offline-evaluation", "ml-concept-calibration"],
+    "problemIds": ["ml-problem-recommendation", "ml-problem-search-ranking", "ml-problem-eta"]
+  },
+  {
+    "id": "ml-stage-training", "slug": "training-systems", "order": 5, "title": "Training Systems",
+    "summary": "Make experiments and retraining repeatable, observable, and recoverable.",
+    "topics": ["pipelines", "experimentation", "reproducibility", "retraining"],
+    "conceptIds": ["ml-concept-pipelines", "ml-concept-feature-store", "ml-concept-deployment"],
+    "problemIds": ["ml-problem-feature-store", "ml-problem-training-platform"]
+  },
+  {
+    "id": "ml-stage-serving", "slug": "serving", "order": 6, "title": "Serving",
+    "summary": "Meet prediction freshness and latency needs safely in production.",
+    "topics": ["batch vs online", "latency", "feature serving", "deployment and rollback"],
+    "conceptIds": ["ml-concept-inference-modes", "ml-concept-serving", "ml-concept-deployment", "ml-concept-reliability"],
+    "problemIds": ["ml-problem-inference", "ml-problem-fraud", "ml-problem-rag"]
+  },
+  {
+    "id": "ml-stage-monitoring", "slug": "monitoring", "order": 7, "title": "Monitoring",
+    "summary": "Detect system degradation before business outcomes arrive.",
+    "topics": ["drift", "quality proxies", "latency", "feedback loops", "retraining triggers"],
+    "conceptIds": ["ml-concept-monitoring", "ml-concept-feedback", "ml-concept-reliability", "ml-concept-responsible"],
+    "problemIds": ["ml-problem-feed-ranking", "ml-problem-trust-safety", "ml-problem-fraud"]
+  },
+  {
+    "id": "ml-stage-modern-systems", "slug": "modern-ml-systems", "order": 8, "title": "Modern ML Systems",
+    "summary": "Apply the framework to retrieval, ranking, embeddings, and generative systems.",
+    "topics": ["recommendation", "ranking", "embeddings", "retrieval", "LLM and RAG systems"],
+    "conceptIds": ["ml-concept-embeddings", "ml-concept-experimentation", "ml-concept-feedback", "ml-concept-responsible"],
+    "problemIds": ["ml-problem-recommendation", "ml-problem-feed-ranking", "ml-problem-search-ranking", "ml-problem-autocomplete", "ml-problem-ads", "ml-problem-rag"]
+  }
 ]

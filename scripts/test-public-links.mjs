@@ -29,7 +29,7 @@ const expectedFiniteFamilies = [
   "/interview-tips/rounds/[slug]",
   "/low-level-design/lessons/[slug]",
   "/low-level-design/practice/[slug]",
-  "/ml-design/[slug]",
+  "/ml-design/[...segments]",
   "/salary-negotiation/[slug]",
   "/system-design/[...segments]",
 ].sort();
@@ -42,7 +42,7 @@ const productionFamilyCases = [
   ["/interview-tips/rounds/[slug]", buildInterviewRoundStaticParams, "app/interview-tips/rounds/[slug]/page.tsx", "buildInterviewRoundStaticParams"],
   ["/low-level-design/lessons/[slug]", buildLowLevelDesignLessonStaticParams, "app/low-level-design/lessons/[slug]/page.tsx", "buildLowLevelDesignLessonStaticParams"],
   ["/low-level-design/practice/[slug]", buildLowLevelDesignPracticeStaticParams, "app/low-level-design/practice/[slug]/page.tsx", "buildLowLevelDesignPracticeStaticParams"],
-  ["/ml-design/[slug]", buildMlDesignStaticParams, "app/ml-design/[slug]/page.tsx", "buildMlDesignStaticParams"],
+  ["/ml-design/[...segments]", buildMlDesignStaticParams, "app/ml-design/[...segments]/page.tsx", "buildMlDesignStaticParams"],
   ["/salary-negotiation/[slug]", buildSalaryNegotiationStaticParams, "app/salary-negotiation/[slug]/page.tsx", "buildSalaryNegotiationStaticParams"],
   ["/system-design/[...segments]", buildSystemDesignStaticParams, "app/system-design/[...segments]/page.tsx", "buildSystemDesignStaticParams"],
 ];
@@ -129,7 +129,18 @@ assert.equal(matchesPagePattern("/catalog/[...segments]", "/catalog"), false);
 assert.equal(matchesPagePattern("/u/[username]", "/u/person"), true);
 assert.equal(matchesPagePattern("/u/[username]", "/u/person/extra"), false);
 assert.equal(matchesPagePattern("/catalog/items/[id]/attempt/[attemptId]", "/catalog/items//attempt/attempt"), false);
-assert.deepEqual(publicRedirectSourcePaths, ["/sign-in", "/sign-up", "/dsa/interview-strategy"]);
+assert.deepEqual(publicRedirectSourcePaths, [
+  "/sign-in",
+  "/sign-up",
+  "/dsa/interview-strategy",
+  "/ml-design/recommendation-system",
+  "/ml-design/search-ranking",
+  "/ml-design/fraud-detection",
+  "/ml-design/spam-abuse-detection",
+  "/ml-design/feed-ranking",
+  "/ml-design/semantic-search",
+  "/ml-design/rag-knowledge-assistant",
+]);
 
 expectValid(validateSynthetic({
   sourceEntries: [{

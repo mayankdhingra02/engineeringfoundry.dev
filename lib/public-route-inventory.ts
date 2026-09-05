@@ -4,7 +4,7 @@ import { dsaTopics } from "@/data/dsa";
 import { dsaCurriculumPages } from "@/data/dsa/curriculum";
 import { dsaCompanies } from "@/data/dsa/interview-prep";
 import { lowLevelDesignLessons, lowLevelDesignPractice } from "@/data/low-level-design";
-import { activeMlDesignProblems } from "@/data/ml-design";
+import { activeMlDesignProblems, mlDesignConcepts, mlDesignLegacyProblemSlugs } from "@/data/ml-design";
 import { salaryNegotiationModules } from "@/data/salary-negotiation";
 import { systemDesignLessons } from "@/data/system-design/curriculum";
 import { canonicalDsaQuestions } from "@/lib/dsa/catalog";
@@ -12,7 +12,16 @@ import {
   V1_ROUND_EXECUTION_GUIDES,
   roundExecutionGuideHref,
 } from "@/lib/interview-playbook/round-execution-presentation";
-import { mlDesignProblemHref } from "@/lib/ml-design-routes";
+import {
+  ML_DESIGN_CONCEPTS_ROOT,
+  ML_DESIGN_GLOSSARY,
+  ML_DESIGN_PRACTICE_ROOT,
+  ML_DESIGN_PROBLEMS_ROOT,
+  ML_DESIGN_RUBRIC,
+  legacyMlDesignProblemHref,
+  mlDesignConceptHref,
+  mlDesignProblemHref,
+} from "@/lib/ml-design-routes";
 
 export type PublicRoutePath = `/${string}`;
 
@@ -25,7 +34,7 @@ export type FinitePublicPagePattern =
   | "/challenges/[slug]"
   | "/system-design/[...segments]"
   | "/interview-tips/rounds/[slug]"
-  | "/ml-design/[slug]"
+  | "/ml-design/[...segments]"
   | "/dsa/[...segments]";
 
 export type FinitePublicRouteDefinition = Readonly<{
@@ -97,9 +106,27 @@ const interviewRoundPaths = uniquePaths(
   "/interview-tips/rounds/[slug]",
 );
 
+const canonicalMlDesignPaths = uniquePaths(
+  [
+    ML_DESIGN_CONCEPTS_ROOT,
+    ML_DESIGN_PROBLEMS_ROOT,
+    ML_DESIGN_PRACTICE_ROOT,
+    ML_DESIGN_RUBRIC,
+    ML_DESIGN_GLOSSARY,
+    ...mlDesignConcepts.map((concept) => mlDesignConceptHref(concept.slug)),
+    ...activeMlDesignProblems.map((problem) => mlDesignProblemHref(problem.slug)),
+  ],
+  "/ml-design/[...segments]",
+);
+
+const legacyMlDesignPaths = uniquePaths(
+  Object.keys(mlDesignLegacyProblemSlugs).map(legacyMlDesignProblemHref),
+  "legacy ML Design redirects",
+);
+
 const mlDesignPaths = uniquePaths(
-  activeMlDesignProblems.map((problem) => mlDesignProblemHref(problem.slug)),
-  "/ml-design/[slug]",
+  [...canonicalMlDesignPaths, ...legacyMlDesignPaths],
+  "/ml-design/[...segments]",
 );
 
 const dsaPaths = uniquePaths(
@@ -133,12 +160,12 @@ export const finitePublicRouteDefinitions: readonly FinitePublicRouteDefinition[
   { pagePattern: "/challenges/[slug]", paths: challengePaths },
   { pagePattern: "/system-design/[...segments]", paths: systemDesignPaths },
   { pagePattern: "/interview-tips/rounds/[slug]", paths: interviewRoundPaths },
-  { pagePattern: "/ml-design/[slug]", paths: mlDesignPaths },
+  { pagePattern: "/ml-design/[...segments]", paths: mlDesignPaths },
   { pagePattern: "/dsa/[...segments]", paths: dsaPaths },
 ];
 
 export const publicRedirectSourcePaths: readonly PublicRoutePath[] = uniquePaths(
-  ["/sign-in", "/sign-up", "/dsa/interview-strategy"],
+  ["/sign-in", "/sign-up", "/dsa/interview-strategy", ...legacyMlDesignPaths],
   "public redirect sources",
 );
 
@@ -163,7 +190,7 @@ export const indexableFinitePublicRoutes = uniquePaths(
     ...salaryNegotiationModules
       .filter((module) => module.status === "published")
       .map((module) => `/salary-negotiation/${module.slug}`),
-    ...mlDesignPaths,
+    ...canonicalMlDesignPaths,
     ...challengePaths,
     ...interviewRoundPaths,
   ],
@@ -214,7 +241,7 @@ export function buildInterviewRoundStaticParams() {
 }
 
 export function buildMlDesignStaticParams() {
-  return singleSegmentParams(mlDesignPaths, "slug");
+  return catchAllParams(mlDesignPaths, "/ml-design/");
 }
 
 export function buildDsaStaticParams() {
