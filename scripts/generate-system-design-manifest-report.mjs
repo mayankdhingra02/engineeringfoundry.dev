@@ -120,28 +120,30 @@ function mermaidNodeCount(chart) {
 const conceptDiagramInventory = contentFiles.flatMap((path) => {
   const source = readFileSync(path, "utf8");
   const matches = [
-    ...source.matchAll(/<MermaidDiagram\s+chart=\{([^}]+)\}\s+title="([^"]+)"\s+description="([^"]+)"\s*\/>/g),
-    ...source.matchAll(/diagram:\s*\{\s*chart:\s*([^,]+),\s*title:\s*"([^"]+)",\s*description:\s*"([^"]+)"\s*\}/g),
+    ...[...source.matchAll(/<MermaidDiagram\s+chart=\{([^}]+)\}\s+title="([^"]+)"\s+description="([^"]+)"\s*\/>/g)].map((match) => ({ index: match.index, chartExpression: match[1], title: match[2], description: match[3] })),
+    ...[...source.matchAll(/diagram:\s*\{\s*chart:\s*([^,]+),\s*title:\s*"([^"]+)",\s*description:\s*"([^"]+)"\s*\}/g)].map((match) => ({ index: match.index, chartExpression: match[1], title: match[2], description: match[3] })),
+    ...[...source.matchAll(/diagram:\s*\{\s*title:\s*"([^"]+)",\s*description:\s*"([^"]+)",\s*chart:\s*(`[^`]*`|[A-Za-z][A-Za-z0-9_]*)\s*\}/g)].map((match) => ({ index: match.index, chartExpression: match[3], title: match[1], description: match[2] })),
   ].sort((left, right) => (left.index ?? 0) - (right.index ?? 0));
   return matches.map((match, occurrence) => {
     const before = source.slice(0, match.index);
     const functionMatches = [...before.matchAll(/export function\s+([A-Za-z0-9_]+)/g)];
     const functionName = functionMatches.at(-1)?.[1] ?? "unknown";
-    const topicId = functionToTopicId.get(functionName) ?? null;
+    const specId = [...before.matchAll(/\bid:\s*"([^"]+)"/g)].at(-1)?.[1];
+    const topicId = functionToTopicId.get(functionName) ?? (specId && systemDesignTopicManifest.some((item) => item.id === specId) ? specId : null);
     const topic = topicId ? systemDesignTopicManifest.find((item) => item.id === topicId) : undefined;
-    const chartExpression = match[1].trim();
+    const chartExpression = match.chartExpression.trim();
     const chartMatch = /^[A-Za-z][A-Za-z0-9_]*$/.test(chartExpression)
       ? source.match(new RegExp(`const\\s+${chartExpression}\\s*=\\s*\\\`([\\s\\S]*?)\\\`;`))
       : null;
-    const chart = chartMatch?.[1] ?? null;
+    const chart = chartMatch?.[1] ?? (/^`[\s\S]*`$/.test(chartExpression) ? chartExpression.slice(1, -1) : null);
     return {
       id: `${topicId ?? functionName}-${occurrence + 1}`,
       lessonId: topicId,
       lesson: topic?.title ?? functionName,
       route: topic?.slug ?? null,
       diagramType: chart?.includes("sequenceDiagram") ? "sequence" : chart?.includes("stateDiagram") ? "state" : "flowchart",
-      purpose: match[2],
-      description: match[3],
+      purpose: match.title,
+      description: match.description,
       nodes: mermaidNodeCount(chart),
       sourceFile: relative(".", path),
       mobileStatus: "shared responsive scroll/scale container",

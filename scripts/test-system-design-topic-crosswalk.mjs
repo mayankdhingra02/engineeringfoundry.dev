@@ -6,11 +6,11 @@ import {
 import { systemDesignTopicManifest } from "../data/system-design/manifest.ts";
 
 const expectedBlueprintRows = 161;
-const expectedRepositoryTopics = 178;
-const expectedBlueprintOnlyRows = 10;
+const expectedRepositoryTopics = 188;
+const expectedBlueprintOnlyRows = 0;
 
 assert.equal(systemDesignBlueprintCrosswalk.length, expectedBlueprintRows, "The crosswalk must represent every Section 6.4 blueprint row exactly once.");
-assert.equal(systemDesignTopicManifest.length, expectedRepositoryTopics, "The reviewed repository side of the crosswalk must remain the 178-topic manifest.");
+assert.equal(systemDesignTopicManifest.length, expectedRepositoryTopics, "The reviewed repository side of the crosswalk must remain the 188-topic manifest.");
 
 const blueprintKeys = systemDesignBlueprintCrosswalk.map(({ area, topic }) => `${area}::${topic}`);
 assert.equal(new Set(blueprintKeys).size, blueprintKeys.length, "Blueprint area/topic rows must be unique.");
@@ -31,8 +31,8 @@ for (const id of accountedRepositoryIds) {
 for (const topic of systemDesignTopicManifest) assert.ok(accountedRepositoryIds.has(topic.id), `${topic.id} is absent from the reviewed crosswalk.`);
 
 const blueprintOnly = systemDesignBlueprintCrosswalk.filter((entry) => entry.disposition === "blueprint-only");
-assert.equal(blueprintOnly.length, expectedBlueprintOnlyRows, "The ten blueprint-only outcomes must remain explicit until product content closes them.");
+assert.equal(blueprintOnly.length, expectedBlueprintOnlyRows, "Every Required blueprint row must now resolve to published repository content.");
 assert.ok(blueprintOnly.every((entry) => entry.repositoryTopicIds.length === 0), "Blueprint-only rows cannot claim a repository route.");
 assert.ok(systemDesignBlueprintCrosswalk.filter((entry) => entry.disposition !== "blueprint-only").every((entry) => entry.repositoryTopicIds.length > 0), "Mapped rows need at least one repository topic.");
 
-console.log(`System Design topic crosswalk passed: ${expectedBlueprintRows} blueprint rows reconcile to ${expectedRepositoryTopics} repository topics, with ${expectedBlueprintOnlyRows} explicit blueprint-only outcomes.`);
+console.log(`System Design topic crosswalk passed: ${expectedBlueprintRows} blueprint rows reconcile to ${expectedRepositoryTopics} repository topics with no blueprint-only Required outcomes.`);
