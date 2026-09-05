@@ -6,6 +6,7 @@ import {
   INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT,
   resolveAdminInterviewExperienceQueue,
   resolveOwnedInterviewExperienceHistory,
+  type AdminInterviewExperienceView,
 } from "./private-state";
 
 export async function getOwnedInterviewExperienceHistory(
@@ -33,21 +34,27 @@ export async function getOwnedInterviewExperienceHistory(
 export async function getAdminInterviewExperienceQueue(
   actor: AuthenticatedActor,
   page: number,
+  view: AdminInterviewExperienceView = "review",
 ) {
   const from = (page - 1) * INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT;
-  const result = await actor.supabase
+  const baseQuery = actor.supabase
     .from("interview_experiences")
     .select(
       "id,status,company_name,role_title,role_level,region,interview_date,summary,preparation_lessons,public_identity,publication_consent,submitted_at,updated_at,review_note,interview_experience_rounds(position,round_type,topic_labels,process_notes)",
       { count: "exact" },
-    )
-    .in("status", ["submitted", "needs_changes"])
-    .order("submitted_at", { ascending: true, nullsFirst: false })
+    );
+  const scopedQuery = view === "published"
+    ? baseQuery.eq("status", "approved").eq("publication_consent", true)
+    : baseQuery.in("status", ["submitted", "needs_changes"]);
+  const orderedQuery = view === "published"
+    ? scopedQuery.order("updated_at", { ascending: false })
+    : scopedQuery.order("submitted_at", { ascending: true, nullsFirst: false });
+  const result = await orderedQuery
     .order("id", { ascending: true })
     .range(from, from + INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT - 1);
   return resolveAdminInterviewExperienceQueue({
     data: result.data,
     error: result.error,
     count: result.count,
-  }, page);
+  }, page, view);
 }

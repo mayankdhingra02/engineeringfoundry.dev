@@ -436,6 +436,8 @@ export function ExperienceSubmission({
             <div><dt>Level</dt><dd>{preview.roleLevel || "Not provided"}</dd></div>
             <div><dt>Region</dt><dd>{preview.region.trim() || "Not provided"}</dd></div>
             <div><dt>Process stage</dt><dd>{preview.roundType || "Not provided"}</dd></div>
+            <div><dt>Topic families</dt><dd>{preview.topics.length ? preview.topics.join(" · ") : "Not provided"}</dd></div>
+            <div><dt>Public identity</dt><dd>{preview.publicIdentity === "anonymous" ? "Anonymous" : "Public profile username, when available"}</dd></div>
           </dl>
           <h4>High-level process summary</h4>
           <p>{preview.summary.trim() || "Not provided"}</p>
@@ -556,7 +558,7 @@ export function ExperienceSubmission({
           <fieldset className="experience-safety-checklist">
             <legend>Publication choices</legend>
             <label><input type="radio" checked={input.publicIdentity === "anonymous"} onChange={() => update("publicIdentity", "anonymous")} /><span>Publish anonymously</span></label>
-            <label><input type="radio" checked={input.publicIdentity === "username"} onChange={() => update("publicIdentity", "username")} /><span>Show my Engineering Foundry username if approved</span></label>
+            <label><input type="radio" checked={input.publicIdentity === "username"} onChange={() => update("publicIdentity", "username")} /><span>Show my username if approved and my public profile remains available; otherwise publish anonymously</span></label>
             <label><input type="checkbox" checked={input.publicationConsent} onChange={(event) => update("publicationConsent", event.target.checked)} /><span>I confirm this is my own account, I have removed exact proprietary questions and personal/confidential information, and I consent to review and publication if approved.</span></label>
           </fieldset>
           <div className="experience-generate-row">

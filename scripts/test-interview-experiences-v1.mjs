@@ -19,6 +19,7 @@ import {
   INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT,
   INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT,
   resolveAdminInterviewExperienceQueue,
+  resolveAdminInterviewExperienceView,
   resolveInterviewExperiencePage,
   resolveOwnedInterviewExperienceHistory,
 } from "../lib/interview-experiences/private-state.ts";
@@ -31,6 +32,8 @@ const read = (path) => fs.readFileSync(path, "utf8");
 const migration = read("supabase/migrations/202608220001_create_interview_experiences_v1.sql");
 const columnPrivacyMigration = read("supabase/migrations/202608230003_restrict_public_interview_experience_columns.sql");
 const revisionMigration = read("supabase/migrations/202609040003_save_interview_experience_if_revision.sql");
+const archiveMigration = read("supabase/migrations/202609050003_archive_interview_experiences.sql");
+const adminDatabaseTest = read("supabase/tests/database/feedback_admin_operations.test.sql");
 const experienceDatabaseTest = read("supabase/tests/database/interview_experiences_v1.test.sql");
 const persistenceQualifier = read("scripts/qualify-persistence-local.mjs");
 const securityQualifier = read("scripts/qualify-security-local.mjs");
@@ -161,12 +164,13 @@ const moderationForm = ({ id = validId, revision = validRevision, status = "appr
   value.set("moderation_note", note);
   return value;
 };
-for (const status of ["needs_changes", "approved", "rejected"]) {
+for (const status of ["needs_changes", "approved", "rejected", "archived"]) {
   const result = parseInterviewExperienceModerationInput(moderationForm({ id: validId.toUpperCase(), status }));
   expect(result.ok && result.value.id === validId && result.value.status === status && result.value.note === "safe note", `Moderation must parse exact ${status} with a normalized UUID and trimmed note.`);
 }
 const blankModeration = parseInterviewExperienceModerationInput(moderationForm({ note: "  " }));
 expect(blankModeration.ok && blankModeration.value.note === null, "A blank optional moderation note must become null.");
+expect(!parseInterviewExperienceModerationInput(moderationForm({ status: "archived", note: "  " })).ok, "Archiving a published report must require a private rationale.");
 for (const input of [null, {}, [], "form", 1]) expect(!parseInterviewExperienceModerationInput(input).ok, "Moderation input must be FormData.");
 for (const field of ["experience_id", INTERVIEW_EXPERIENCE_EXPECTED_REVISION_FIELD, "status", "moderation_note"]) {
   const missing = moderationForm();
@@ -207,6 +211,7 @@ expect(resolveInterviewExperienceDisplayState(idleState, true, true, "submit").m
 expect(resolveInterviewExperienceDisplayState(idleState, true, true, "withdraw").message === "Withdrawing your submission…", "Pending withdraw copy must be exact.");
 expect(resolveInterviewExperienceDisplayState(idleState, true, true, "delete").message === "Deleting your submission…", "Pending delete copy must be exact.");
 expect(resolveInterviewExperienceDisplayState(idleState, true, true, "moderation").message === "Saving moderation decision…", "Pending moderation copy must be exact.");
+expect(resolveInterviewExperienceDisplayState(idleState, true, true, "archive").message === "Archiving the published report…", "Pending archive copy must name the public removal action.");
 expect(resolveInterviewExperienceDisplayState(successState, false, true, "draft").message === INTERVIEW_EXPERIENCE_EARLIER_DRAFT_SAVED_MESSAGE, "A changed draft must report that only the earlier snapshot saved.");
 expect(resolveInterviewExperienceDisplayState(successState, false, true, "submit").message === INTERVIEW_EXPERIENCE_EARLIER_SUBMISSION_SAVED_MESSAGE, "A changed submitted draft must not claim the newer edits were submitted.");
 expect(resolveInterviewExperienceDisplayState(successState, false, true, "withdraw").message === INTERVIEW_EXPERIENCE_EARLIER_WITHDRAW_SAVED_MESSAGE, "A changed withdrawn draft must say the lifecycle action applied while current edits remain unsaved.");
@@ -219,6 +224,9 @@ const ownerRound = { position: 2, round_type: "System Design", topic_labels: ["C
 const ownerRow = { id: validId.toUpperCase(), status: "draft", company_name: "Example", role_title: "Engineer", role_level: null, region: null, interview_date: null, summary: "Draft", preparation_lessons: null, public_identity: "anonymous", publication_consent: false, updated_at: validRevision, review_note: null, interview_experience_rounds: [ownerRound, { ...ownerRound, position: 1, round_type: "Coding" }] };
 for (const [value, expected] of [[undefined, 1], ["1", 1], ["2", 2], ["100000", 100000], ["0", 1], ["-1", 1], ["1.0", 1], ["+1", 1], [" 2", 1], ["100001", 1], [2, 1], [["2"], 1]]) {
   expect(resolveInterviewExperiencePage(value) === expected, `Page input ${String(value)} must resolve to ${expected}.`);
+}
+for (const [value, expected] of [[undefined, "review"], ["review", "review"], ["published", "published"], ["Published", "review"], [["published"], "review"]]) {
+  expect(resolveAdminInterviewExperienceView(value) === expected, `Admin view input ${String(value)} must resolve to ${expected}.`);
 }
 const ownerReady = resolveOwnedInterviewExperienceHistory({ data: [ownerRow], error: null, count: 1 }, 1);
 expect(ownerReady.status === "ready" && ownerReady.limit === INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT && ownerReady.page === 1 && ownerReady.totalCount === 1 && ownerReady.totalPages === 1 && ownerReady.items[0].id === validId && ownerReady.items[0].interview_experience_rounds.map((round) => round.position).join(",") === "1,2", "Owner history must normalize IDs, order rounds, and retain exact page metadata for a valid private snapshot.");
@@ -242,6 +250,9 @@ for (const status of ["submitted", "needs_changes"]) {
   expect(ready.status === "ready" && ready.limit === INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT && ready.page === 1 && ready.totalCount === 1 && ready.totalPages === 1 && ready.items[0].preparation_lessons === adminRow.preparation_lessons && ready.items[0].public_identity === "username", `Admin queue must preserve every public-facing field and exact count for ${status} moderation.`);
 }
 expect(resolveAdminInterviewExperienceQueue({ data: [], error: null, count: 0 }, 1).status === "ready", "A genuine empty moderation queue must stay ready.");
+const publishedReady = resolveAdminInterviewExperienceQueue({ data: [{ ...adminRow, status: "approved" }], error: null, count: 1 }, 1, "published");
+expect(publishedReady.status === "ready" && publishedReady.items[0].status === "approved", "The published-report administration view must accept only approved report rows.");
+expect(resolveAdminInterviewExperienceQueue({ data: [adminRow], error: null, count: 1 }, 1, "published").status === "unavailable", "The published-report view must fail closed if a review-queue row crosses scopes.");
 const adminFirstPageRows = Array.from({ length: INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT }, (_, index) => ({ ...adminRow, id: experienceIdAt(index + 1) }));
 const adminFirstPage = resolveAdminInterviewExperienceQueue({ data: adminFirstPageRows, error: null, count: 101 }, 1);
 const adminSecondPage = resolveAdminInterviewExperienceQueue({ data: [{ ...adminRow, id: experienceIdAt(101) }], error: null, count: 101 }, 2);
@@ -268,6 +279,7 @@ for (const internalColumn of ["id", "position", "process_notes"]) expect(!new Re
 for (const marker of ['import "server-only"', "createClient", "persistSession: false", "autoRefreshToken: false", "detectSessionInUrl: false"]) expect(publicClient.includes(marker), `Public database client is missing ${marker}.`);
 expect(!publicClient.includes('from "next/headers"') && !publicClient.includes("cookies()") && !publicClient.includes("createServerClient"), "Public report reads must never inherit an authenticated request session.");
 expect(publicClient.includes("listPublicInterviewExperiences") && publicClient.includes('eq("status", "approved")') && publicClient.includes('eq("publication_consent", true)'), "Public report helper must keep the approved and consented boundary.");
+for (const marker of ["list_public_interview_experience_authors", "target_experience_ids: attributedIds", "public_author_username", 'availability: "unavailable" as const']) expect(publicClient.includes(marker), `Public username attribution must fail closed with the report directory: ${marker}.`);
 expect(page.includes("listPublicInterviewExperiences") && !page.includes("const [publicResult, ownResult] = actor ?"), "Public directory query must not be conditional on an authenticated actor.");
 expect(page.includes("actorState") && page.includes("getOwnedInterviewExperienceHistory(actorState.actor, ownerPage)") && page.includes('{ status: "anonymous" as const }') && page.includes('{ status: "unavailable" as const }'), "Private history must stay behind the verified account/actor boundary and distinguish unavailable from anonymous through the strict paginated production query helper.");
 expect(!page.includes('.from("interview_experiences")') && !page.includes("publicResult.data ?? []") === false, "The route must delegate private-history access instead of issuing a second raw table query.");
@@ -317,6 +329,7 @@ for (const marker of ["target_experience_id: parsed.value.id", "target_expected_
 
 expect(queries.includes('.eq("author_id", actor.user.id)') && queries.includes("resolveOwnedInterviewExperienceHistory") && queries.includes("INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT") && queries.includes('{ count: "exact" }') && queries.includes(".range(from, from + INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT - 1)"), "Owner history query must be explicitly owner-scoped, exactly counted, stably paginated, and strictly resolved.");
 expect(queries.includes('.in("status", ["submitted", "needs_changes"])') && queries.includes("resolveAdminInterviewExperienceQueue") && queries.includes("INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT") && queries.includes(".range(from, from + INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT - 1)"), "Moderation queue query must be lifecycle-scoped, exactly counted, stably paginated, and strictly resolved.");
+expect(queries.includes('view === "published"') && queries.includes('.eq("status", "approved")') && queries.includes('.eq("publication_consent", true)') && queries.includes('resolveAdminInterviewExperienceQueue({') && queries.includes('}, page, view)'), "Published-report administration must use an approved-and-consented query with view-correlated runtime parsing.");
 for (const marker of ['.order("updated_at", { ascending: false })', '.order("submitted_at", { ascending: true, nullsFirst: false })', '.order("id", { ascending: true })']) expect(queries.includes(marker), `Private pagination needs deterministic ordering: ${marker}.`);
 for (const field of ["preparation_lessons", "public_identity", "publication_consent", "interview_experience_rounds(position,round_type,topic_labels,process_notes)"]) expect(queries.includes(field), `Moderation projection must include public-facing ${field}.`);
 expect(privateState.includes("resolveOwnedInterviewExperienceHistory") && privateState.includes("resolveAdminInterviewExperienceQueue") && privateState.includes('return { status: "unavailable" }'), "Private query failures and malformed rows must resolve to explicit unavailable states.");
@@ -327,7 +340,8 @@ expect(!form.includes("Pagination is not available yet.") && !form.includes("You
 for (const marker of ["searchParams", "resolveInterviewExperiencePage", "submissions_page", "getOwnedInterviewExperienceHistory(actorState.actor, ownerPage)"]) expect(page.includes(marker), `Owner history route pagination is missing ${marker}.`);
 expect(!page.includes("redirect("), "Owner history revalidation must not redirect and discard a locally preserved in-flight draft.");
 expect(adminPage.includes('queue.status === "unavailable"') && adminPage.includes("AdminInterviewExperienceQueueUnavailable") && adminForms.includes("This does not mean that no reports need review."), "Failed moderation queries must not render a false empty queue.");
-for (const marker of ["searchParams", "resolveInterviewExperiencePage", "moderationQueueHref", "page > queue.totalPages", 'aria-label="Interview Experience moderation pages"', 'aria-current="page"', "queue.totalCount", "Previous", "Next"]) expect(adminPage.includes(marker), `Moderation queue pagination is missing ${marker}.`);
+for (const marker of ["searchParams", "resolveInterviewExperiencePage", "moderationQueueHref", "page > queue.totalPages", "Interview Experience moderation pages", 'aria-current="page"', "queue.totalCount", "Previous", "Next"]) expect(adminPage.includes(marker), `Moderation queue pagination is missing ${marker}.`);
+for (const marker of ["resolveAdminInterviewExperienceView", "Published reports", "Published interview experiences", 'mode={publishedView ? "archive" : "review"}', "No approved, consented reports are currently public."]) expect(adminPage.includes(marker), `Published-report archive operations are missing ${marker}.`);
 expect(!adminPage.includes("Work these reports before relying on this view as the complete queue."), "Moderation must not retain obsolete first-page incompleteness copy.");
 for (const marker of ["experience.preparation_lessons", "Preparation lessons", "experience.public_identity", "Public attribution:", "experience.publication_consent", "Submitted round context"]) expect(adminPage.includes(marker), `Moderators must see every public-facing submitted field: ${marker}.`);
 
@@ -341,7 +355,9 @@ expect(moderationParserIndex >= 0 && moderationParserIndex < moderationActorInde
 for (const marker of ["target_experience_id: parsed.value.id", "target_expected_updated_at: parsed.value.expectedUpdatedAt", "target_status: parsed.value.status", "target_moderation_note: parsed.value.note", "conflict: true", "revision: result.updatedAt"]) expect(moderationAction.includes(marker), `Moderation CAS wiring is missing ${marker}.`);
 expect(!moderationAction.includes('rpc("moderate_interview_experience"'), "Production moderation must not invoke the retired legacy RPC.");
 
-for (const marker of ["Save private draft", "Submit for review", "Withdraw", "Delete", "publicationConsent", "exact proprietary questions", "editableStatuses", "inputFromOwnedExperience(item)", "Cancel edit", "Preview report", "Return to edit", "This is not public yet", "preview.publicationConsent"]) expect(form.includes(marker), `Submission UI is missing ${marker}.`);
+for (const marker of ["Save private draft", "Submit for review", "Withdraw", "Delete", "publicationConsent", "exact proprietary questions", "editableStatuses", "inputFromOwnedExperience(item)", "Cancel edit", "Preview report", "Return to edit", "This is not public yet", "preview.publicationConsent", "Topic families", "Public identity"]) expect(form.includes(marker), `Submission UI is missing ${marker}.`);
+for (const marker of ["public_author_username", '`/u/${experience.public_author_username}`', "Published anonymously", "Request correction, removal, or safety review", 'href="/contact"']) expect(directory.includes(marker), `Every public report must expose truthful attribution and its correction, removal, and safety path: ${marker}.`);
+for (const marker of ["Request a correction, removal, or safety review", "unsafe, abusive", "A moderator can archive it without silently rewriting"]) expect(page.includes(marker), `Directory-level correction and abuse guidance is missing ${marker}.`);
 expect(form.includes('editableStatuses.has(item.status) && <button') && !form.includes('submitted", "approved"'), "Only draft, needs_changes, and withdrawn reports may enter edit mode.");
 for (const marker of ["inputRef", "mutationPending", "submittedDraftSignature", "changedSinceSubmit", "draftSignature(inputRef.current)", "setChangedSinceSubmit(changed)", "revision: result.revision", "resolveInterviewExperienceDisplayState", 'aria-busy={pending}', 'aria-disabled={pending}', 'aria-atomic="true"', 'rel="noopener noreferrer"', "Review latest in a new tab"]) expect(form.includes(marker), `Draft-safe contribution wiring is missing ${marker}.`);
 expect((form.match(/if \(mutationPending\.current\) return;/g) ?? []).length >= 3 && form.includes("if (mutationPending.current || !editableStatuses.has(item.status)) return") && (form.match(/if \(!mutationPending\.current\) setView/g) ?? []).length >= 2, "Save, management, edit, cancel, and preview/return handlers must share the synchronous same-tick mutation guard.");
@@ -355,6 +371,7 @@ expect(/\.experience-submission \.button\[aria-disabled="true"\][\s\S]*?\.admin-
 expect(/\.experience-pagination\s*\{[^}]*display:\s*flex[^}]*border-top:/s.test(globalStyles) && /@media \(max-width: 760px\)[\s\S]*?\.experience-pagination\s*\{[^}]*justify-content:\s*space-between/s.test(globalStyles), "Owner pagination needs a compact desktop treatment and responsive mobile spacing.");
 
 for (const marker of ["submissionPending", "submittedDraftSignature", "changedSinceSubmit", "event.preventDefault()", "new FormData(event.currentTarget)", "setChangedSinceSubmit(false)", "startTransition(() => action(formData))", "resolveInterviewExperienceDisplayState", 'name={INTERVIEW_EXPERIENCE_EXPECTED_REVISION_FIELD}', 'value={state.revision ?? revision}', 'aria-busy={pending}', 'aria-disabled={pending}', 'aria-atomic="true"', 'href="/admin/interview-experiences"', 'target="_blank"', 'rel="noopener noreferrer"']) expect(adminForms.includes(marker), `Draft-safe moderation wiring is missing ${marker}.`);
+for (const marker of ["EXPERIENCE_ARCHIVE_STATUS", 'mode === "archive"', "Private archive rationale", 'required={mode === "archive"}', "Archive published report", "No archive action is available until the complete published-report view loads successfully."]) expect(adminForms.includes(marker), `Archive form safety is missing ${marker}.`);
 const adminSubmit = sourceBetween(adminForms, "const submit = (event: FormEvent<HTMLFormElement>) =>", "const displayState");
 expect(adminSubmit.indexOf("event.preventDefault()") >= 0 && adminSubmit.indexOf("event.preventDefault()") < adminSubmit.indexOf("if (submissionPending.current) return") && adminSubmit.indexOf("if (submissionPending.current) return") < adminSubmit.indexOf("submissionPending.current = true") && adminSubmit.indexOf("submissionPending.current = true") < adminSubmit.indexOf("new FormData(event.currentTarget)") && adminSubmit.indexOf("new FormData(event.currentTarget)") < adminSubmit.indexOf("startTransition(() => action(formData))"), "Moderation manual submit must prevent native reset, synchronously reject duplicates, snapshot fields, then dispatch the action.");
 
@@ -369,6 +386,8 @@ for (const rpc of ["save_interview_experience_if_revision(uuid,boolean,timestamp
   expect(revisionMigration.includes(`revoke all on function public.${rpc}`) && revisionMigration.includes(`grant execute on function public.${rpc}`), `Revision RPC ${rpc} needs explicit deny-then-authenticated grant handling.`);
 }
 for (const marker of ["Revision-checked interview experience saving is required", "Revision-checked interview experience submission is required", "Revision-checked interview experience management is required", "Revision-checked interview experience moderation is required", "using errcode = '0A000'"]) expect(revisionMigration.includes(marker), `Legacy mutation fail-safe is missing ${marker}.`);
+for (const marker of ["target_status not in ('needs_changes', 'approved', 'rejected', 'archived')", "target_status = 'archived' and normalized_note is null", "target_status = 'archived'", "prior_status <> 'approved'", "experience_archived", "prior_status", "new_status", "list_public_interview_experience_authors", "experience.public_identity = 'username'", "profile.is_public", "profile.onboarding_complete", "revoke all on function public.moderate_interview_experience_if_revision", "grant execute on function public.moderate_interview_experience_if_revision"]) expect(archiveMigration.includes(marker), `Archive and attribution lifecycle migration is missing ${marker}.`);
+for (const marker of ["archive requires a private rationale", "stale archive cannot hide a newer approved revision", "authorized admin archives the exact approved revision", "archived report disappears from public reads immediately"]) expect(adminDatabaseTest.includes(marker), `Database qualification is missing ${marker}.`);
 expect(experienceDatabaseTest.includes("select plan(50);") && experienceDatabaseTest.includes("revision-checked aggregate save exists") && experienceDatabaseTest.includes("stale withdraw returns zero") && experienceDatabaseTest.includes("exact revision delete returns a bounded deleted result"), "Focused pgTAP must cover the frozen revision aggregate, conflict, and lifecycle contract.");
 for (const marker of ["concurrent Interview Experience full saves commit one coherent parent and round snapshot", "concurrent Interview Experience save and submit preserve one desired aggregate state", "concurrent Interview Experience resubmit and moderation cannot approve unseen content"]) expect(persistenceQualifier.includes(marker), `Persistence qualification is missing ${marker}.`);
 for (const marker of ["Interview Experience revision RPCs deny anonymous callers", "Interview Experience aggregate derives its owner and retires split mutation paths", "foreign and missing Interview Experience revision targets are indistinguishable"]) expect(securityQualifier.includes(marker), `Security qualification is missing ${marker}.`);

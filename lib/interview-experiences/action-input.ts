@@ -34,6 +34,7 @@ const moderationStatuses = new Set<unknown>([
   "needs_changes",
   "approved",
   "rejected",
+  "archived",
 ]);
 const roundTypeLabels = new Set(experienceRoundTypes.map((item) => item.label));
 const topicLabels = new Set(experienceTopics.map((item) => item.label));
@@ -47,7 +48,7 @@ export const INTERVIEW_EXPERIENCE_INVALID_INPUT_ERROR =
 export const INTERVIEW_EXPERIENCE_INVALID_MANAGEMENT_ERROR =
   "That submission action is not valid.";
 export const INTERVIEW_EXPERIENCE_INVALID_MODERATION_ERROR =
-  "Choose an allowed moderation decision.";
+  "Choose an allowed decision. Archiving a published report also requires a private rationale.";
 export const INTERVIEW_EXPERIENCE_SAVE_UNAVAILABLE_ERROR =
   "Interview experience saving is unavailable in this configuration.";
 export const INTERVIEW_EXPERIENCE_MANAGEMENT_UNAVAILABLE_ERROR =
@@ -99,7 +100,8 @@ export type ExperienceManagementAction = "withdraw" | "delete";
 export type ExperienceModerationStatus =
   | "needs_changes"
   | "approved"
-  | "rejected";
+  | "rejected"
+  | "archived";
 export type InterviewExperienceStatus =
   | "draft"
   | "submitted"
@@ -416,7 +418,8 @@ export function parseInterviewExperienceModerationInput(
     !isCanonicalInterviewExperienceId(id) ||
     !isCanonicalInterviewExperienceRevision(expectedUpdatedAt) ||
     !moderationStatuses.has(status) ||
-    note === undefined
+    note === undefined ||
+    (status === "archived" && !note)
   ) {
     return { ok: false };
   }
@@ -471,13 +474,21 @@ export function resolveInterviewExperienceDisplayState(
   actionState: InterviewExperienceDisplayState,
   pending: boolean,
   changedSinceSubmit: boolean,
-  context: "draft" | "submit" | "withdraw" | "delete" | "moderation",
+  context:
+    | "draft"
+    | "submit"
+    | "withdraw"
+    | "delete"
+    | "moderation"
+    | "archive",
 ): InterviewExperienceDisplayState {
   if (pending) {
     return {
       status: "pending",
       message:
-        context === "moderation"
+        context === "archive"
+          ? "Archiving the published report…"
+          : context === "moderation"
           ? "Saving moderation decision…"
           : context === "withdraw"
             ? "Withdrawing your submission…"
@@ -492,7 +503,9 @@ export function resolveInterviewExperienceDisplayState(
     return {
       status: "success",
       message:
-        context === "moderation"
+        context === "archive"
+          ? "An earlier archive decision was saved. Your current note was not included."
+          : context === "moderation"
           ? INTERVIEW_EXPERIENCE_EARLIER_MODERATION_SAVED_MESSAGE
           : context === "withdraw"
             ? INTERVIEW_EXPERIENCE_EARLIER_WITHDRAW_SAVED_MESSAGE

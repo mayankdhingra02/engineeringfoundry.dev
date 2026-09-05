@@ -21,6 +21,7 @@ const MODERATION_STATUSES = new Set<unknown>([
   "submitted",
   "needs_changes",
 ]);
+const PUBLISHED_STATUSES = new Set<unknown>(["approved"]);
 const ROLE_LEVELS = new Set<unknown>([
   null,
   "Entry",
@@ -61,7 +62,7 @@ export type AdminInterviewExperienceRound = OwnedInterviewExperienceRound &
 
 export type AdminInterviewExperience = Readonly<{
   id: string;
-  status: "submitted" | "needs_changes";
+  status: "submitted" | "needs_changes" | "approved";
   company_name: string;
   role_title: string;
   role_level: string | null;
@@ -102,6 +103,8 @@ export type AdminInterviewExperienceQueue =
       totalPages: number;
     }>
   | Readonly<{ status: "unavailable" }>;
+
+export type AdminInterviewExperienceView = "review" | "published";
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -218,6 +221,12 @@ export function resolveInterviewExperiencePage(value: unknown): number {
     : 1;
 }
 
+export function resolveAdminInterviewExperienceView(
+  value: unknown,
+): AdminInterviewExperienceView {
+  return value === "published" ? "published" : "review";
+}
+
 function resolvePaginatedRows(
   value: unknown,
   page: number,
@@ -304,7 +313,10 @@ function parseOwnerRow(value: unknown): OwnedInterviewExperience | null {
   };
 }
 
-function parseAdminRow(value: unknown): AdminInterviewExperience | null {
+function parseAdminRow(
+  value: unknown,
+  view: AdminInterviewExperienceView,
+): AdminInterviewExperience | null {
   if (!isPlainRecord(value)) return null;
   const expected = [
     "id",
@@ -324,10 +336,12 @@ function parseAdminRow(value: unknown): AdminInterviewExperience | null {
     "interview_experience_rounds",
   ] as const;
   const rounds = parseRounds(value.interview_experience_rounds, true);
+  const allowedStatuses =
+    view === "published" ? PUBLISHED_STATUSES : MODERATION_STATUSES;
   if (
     !hasExactKeys(value, expected) ||
     !isCanonicalInterviewExperienceId(value.id) ||
-    !MODERATION_STATUSES.has(value.status) ||
+    !allowedStatuses.has(value.status) ||
     !isBoundedText(value.company_name, 120, false) ||
     !isBoundedText(value.role_title, 160, false) ||
     !ROLE_LEVELS.has(value.role_level) ||
@@ -347,7 +361,7 @@ function parseAdminRow(value: unknown): AdminInterviewExperience | null {
   }
   return {
     id: value.id.toLowerCase(),
-    status: value.status as "submitted" | "needs_changes",
+    status: value.status as "submitted" | "needs_changes" | "approved",
     company_name: value.company_name,
     role_title: value.role_title,
     role_level: value.role_level as string | null,
@@ -394,6 +408,7 @@ export function resolveOwnedInterviewExperienceHistory(
 export function resolveAdminInterviewExperienceQueue(
   result: unknown,
   page = 1,
+  view: AdminInterviewExperienceView = "review",
 ): AdminInterviewExperienceQueue {
   const resolved = resolvePaginatedRows(
     result,
@@ -401,7 +416,7 @@ export function resolveAdminInterviewExperienceQueue(
     INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT,
   );
   if (!resolved) return { status: "unavailable" };
-  const rows = resolved.data.map(parseAdminRow);
+  const rows = resolved.data.map((row) => parseAdminRow(row, view));
   if (rows.some((row) => row === null)) return { status: "unavailable" };
   const items = rows as AdminInterviewExperience[];
   if (new Set(items.map((item) => item.id)).size !== items.length) {

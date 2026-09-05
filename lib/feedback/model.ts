@@ -9,6 +9,7 @@ export const FEEDBACK_CATEGORIES = [
 
 export const FEEDBACK_STATUSES = ["new", "triaged", "planned", "resolved", "closed", "spam"] as const;
 export const EXPERIENCE_MODERATION_STATUSES = ["needs_changes", "approved", "rejected"] as const;
+export const EXPERIENCE_ARCHIVE_STATUS = "archived" as const;
 
 export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number]["id"];
 export type FeedbackStatus = (typeof FEEDBACK_STATUSES)[number];
