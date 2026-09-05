@@ -76,7 +76,7 @@ export function MlSourceList({ sourceIds }: { sourceIds: readonly string[] }) {
   return <section className="ml-sources" aria-labelledby="ml-sources-title">
     <h2 id="ml-sources-title">Sources and review notes</h2>
     <p>These sources support the technical claims on this page. Product-specific examples remain Engineering Foundry teaching scenarios.</p>
-    <ul>{sources.map((source) => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer">{source.title}<ExternalLink size={13} aria-hidden="true" /></a><span>{source.publisher} · {source.sourceClass} · reviewed {source.reviewedAt}</span><p>{source.use}</p></li>)}</ul>
+    <ul>{sources.map((source) => <li key={source.id}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}<ExternalLink size={13} aria-hidden="true" /></a><span>{source.publisher} · {source.sourceClass} · reviewed {source.reviewedAt}</span><p>{source.use}</p></li>)}</ul>
   </section>;
 }
 
