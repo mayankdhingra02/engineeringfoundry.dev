@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "c6b955f0f96839f8ed64b128484f43c2965e783b",
-  "repository_state_sha256": "723d6be7d837fd60cd1f381ae361d29c39ac694c4443f54b24cf950dfed8757a",
+  "repository_sha": "c4fb5f57c8e87d86d9b521a652ebf825d0d131d6",
+  "repository_state_sha256": "994516a18418945a1656a8bde3422a5bb2910dc635dec5d07adac274b5e3d510",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1599,10 +1599,12 @@
         "app/globals.css",
         "app/system-design",
         "app/system-design/problems/[slug]/practice/[attemptId]/page.tsx",
+        "components/fan-out-demo.tsx",
         "components/system-design-focus-planner.tsx",
         "components/system-design-practice-library.tsx",
         "components/system-design-sidebar.tsx",
         "content/system-design",
+        "content/system-design/architecture-patterns",
         "content/system-design/production-engineering",
         "data/system-design/manifest.ts",
         "data/system-design/topic-crosswalk.ts",
@@ -1619,6 +1621,7 @@
         "scripts/smoke-public-routes.mjs",
         "scripts/test-canonical-catalog-integrity.mjs",
         "scripts/test-public-route-smoke.mjs",
+        "scripts/test-system-design-architecture-patterns.mjs",
         "scripts/test-system-design-production-engineering.mjs",
         "scripts/test-system-design-study-plan.mjs",
         "scripts/test-system-design-topic-crosswalk.mjs",
@@ -1627,6 +1630,7 @@
         "supabase/migrations/202609030006_save_system_design_item_progress_if_revision.sql",
         "supabase/migrations/202609040010_delete_system_design_attempt_if_revision.sql",
         "supabase/migrations/202609040015_publish_system_design_production_engineering.sql",
+        "supabase/migrations/202609040016_publish_system_design_common_patterns.sql",
         "supabase/tests/database/preparation_activity_import.test.sql",
         "supabase/tests/database/system_design_workspace.test.sql"
       ],
@@ -1640,8 +1644,7 @@
       "id": "EF-SD",
       "kind": "requirement-family",
       "known_gaps": [
-        "164 of 178 topics are published; 14 architecture-pattern topics remain unpublished.",
-        "The reviewed crosswalk identifies ten blueprint-only outcomes that still require publication or an explicit merged disposition."
+        "All 178 repository topics are published; the reviewed crosswalk still identifies ten blueprint-only Required outcomes that need publication or an explicit reviewed merged disposition."
       ],
       "last_verified_at": "2026-09-04",
       "notes": "All 15 Required practice designs in Section 6.5 have published walkthroughs; 12 additional P1 designs are also published and 33 optional P1/P2 ideas remain honest unpublished backlog. Do not delete or invent topics to reconcile the 161-to-178 mismatch.",
@@ -1662,7 +1665,20 @@
       ],
       "section": "system-design",
       "source_ledger_ids": [
+        "SRC-SD-AWS-CACHING",
+        "SRC-SD-AWS-DYNAMO-PARTITIONS",
+        "SRC-SD-AWS-DYNAMO-WRITE-SHARDING",
+        "SRC-SD-AWS-IDEMPOTENT-APIS",
+        "SRC-SD-AWS-S3-MULTIPART",
+        "SRC-SD-AZURE-ASYNC-REPLY",
+        "SRC-SD-AZURE-BACKGROUND-JOBS",
+        "SRC-SD-AZURE-COMPETING-CONSUMERS",
+        "SRC-SD-AZURE-CQRS",
+        "SRC-SD-AZURE-SAGA",
         "SRC-SD-GOOGLE-ALERTING",
+        "SRC-SD-GOOGLE-DATAFLOW",
+        "SRC-SD-GOOGLE-DATAFLOW-PLANNING",
+        "SRC-SD-GOOGLE-PUBSUB",
         "SRC-SD-GOOGLE-SLO",
         "SRC-SD-NIST-KEY-MANAGEMENT",
         "SRC-SD-NIST-ZERO-TRUST",
@@ -1675,6 +1691,9 @@
         "SRC-SD-OWASP-MULTI-TENANT",
         "SRC-SD-OWASP-SECRETS",
         "SRC-SD-OWASP-SESSION",
+        "SRC-SD-POSTGRES-ISOLATION",
+        "SRC-SD-POSTGRES-LOCKING",
+        "SRC-SD-POSTGRES-REPLICATION",
         "SRC-SD-RFC-6749",
         "SRC-SD-RFC-6750",
         "SRC-SD-RFC-7519",
@@ -1687,6 +1706,7 @@
         "npm run qualify:database",
         "npm run test:canonical-catalog-integrity",
         "npm run test:public-route-smoke",
+        "npm run test:system-design-architecture-patterns",
         "npm run test:system-design-manifest",
         "npm run test:system-design-practice",
         "npm run test:system-design-production-engineering",
@@ -1746,30 +1766,29 @@
       ],
       "code_paths": [
         "app/system-design/[...segments]/page.tsx",
+        "components/fan-out-demo.tsx",
+        "content/system-design/architecture-patterns",
         "content/system-design/production-engineering",
         "data/system-design/manifest.ts",
         "data/system-design/topic-crosswalk.ts",
         "scripts/test-canonical-catalog-integrity.mjs",
+        "scripts/test-system-design-architecture-patterns.mjs",
         "scripts/test-system-design-production-engineering.mjs",
         "scripts/test-system-design-topic-crosswalk.mjs",
         "supabase/migrations/202609040015_publish_system_design_production_engineering.sql",
+        "supabase/migrations/202609040016_publish_system_design_common_patterns.sql",
         "supabase/tests/database/system_design_workspace.test.sql"
       ],
       "content_paths": [
         "docs/system-design-content-inventory.json",
         "docs/system-design-content-research-blueprint.md"
       ],
-      "gap_inventory_ids": [
-        "EF-SD-TOPIC-COVERAGE"
-      ],
+      "gap_inventory_ids": [],
       "id": "EF-SD-TOPIC-COVERAGE",
       "kind": "content-gap",
-      "known_gaps": [
-        "14 of 178 repository topics remain unpublished; all are in the architecture-patterns family.",
-        "Ten blueprint rows have no repository lesson and remain explicit blueprint-only outcomes."
-      ],
+      "known_gaps": [],
       "last_verified_at": "2026-09-04",
-      "notes": "The numeric mismatch is reconciled: 161 unique blueprint rows map to all 178 repository topics through exact, split, merged, repository-only, or blueprint-only dispositions. Publication gaps remain owned by EF-SD and do not reopen taxonomy reconciliation.",
+      "notes": "Acceptance is closed without expanding the requirement: all 161 unique blueprint rows and all 178 published repository topics now have explicit exact, split, merged, repository-only, or blueprint-only dispositions with research, publication, and route outcomes. The ten blueprint-only Required outcomes remain owned by EF-SD for publication or reviewed merge decisions.",
       "owner": "system-design",
       "prerequisite_ids": [
         "EF-SD"
@@ -1787,7 +1806,20 @@
       "routes": [],
       "section": "system-design",
       "source_ledger_ids": [
+        "SRC-SD-AWS-CACHING",
+        "SRC-SD-AWS-DYNAMO-PARTITIONS",
+        "SRC-SD-AWS-DYNAMO-WRITE-SHARDING",
+        "SRC-SD-AWS-IDEMPOTENT-APIS",
+        "SRC-SD-AWS-S3-MULTIPART",
+        "SRC-SD-AZURE-ASYNC-REPLY",
+        "SRC-SD-AZURE-BACKGROUND-JOBS",
+        "SRC-SD-AZURE-COMPETING-CONSUMERS",
+        "SRC-SD-AZURE-CQRS",
+        "SRC-SD-AZURE-SAGA",
         "SRC-SD-GOOGLE-ALERTING",
+        "SRC-SD-GOOGLE-DATAFLOW",
+        "SRC-SD-GOOGLE-DATAFLOW-PLANNING",
+        "SRC-SD-GOOGLE-PUBSUB",
         "SRC-SD-GOOGLE-SLO",
         "SRC-SD-NIST-KEY-MANAGEMENT",
         "SRC-SD-NIST-ZERO-TRUST",
@@ -1800,6 +1832,9 @@
         "SRC-SD-OWASP-MULTI-TENANT",
         "SRC-SD-OWASP-SECRETS",
         "SRC-SD-OWASP-SESSION",
+        "SRC-SD-POSTGRES-ISOLATION",
+        "SRC-SD-POSTGRES-LOCKING",
+        "SRC-SD-POSTGRES-REPLICATION",
         "SRC-SD-RFC-6749",
         "SRC-SD-RFC-6750",
         "SRC-SD-RFC-7519",
@@ -1807,10 +1842,11 @@
         "SRC-SD-RFC-8725",
         "SRC-SD-RFC-9846"
       ],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
         "npm run qualify:database",
         "npm run test:canonical-catalog-integrity",
+        "npm run test:system-design-architecture-patterns",
         "npm run test:system-design-manifest",
         "npm run test:system-design-production-engineering",
         "npm run test:system-design-release-audit",

@@ -3907,6 +3907,25 @@ button.flow-card { cursor: pointer; }
 .sd-consumer-demo > output span { margin-top: 3px; color: var(--muted); font-size: 11px; }
 .sd-consumer-demo .sd-table-scroll { background: var(--surface); }
 .sd-consumer-demo table { min-width: 340px; margin-bottom: 0; }
+
+.sd-fanout-demo { margin: 28px 0; padding: 20px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line)); border-radius: 10px; background: var(--accent-soft); }
+.sd-fanout-demo > header > span { color: var(--accent); font: 750 9px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
+.sd-article .sd-fanout-demo h3 { margin: 4px 0; }
+.sd-fanout-demo > header p { margin: 0; color: var(--muted); font-size: 12px; }
+.sd-fanout-branches { margin: 18px 0 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sd-fanout-branches > div { min-height: 76px; padding: 12px; display: grid; place-content: center; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); text-align: center; }
+.sd-fanout-branches > div.is-paused { border-color: color-mix(in srgb, var(--warning) 55%, var(--line)); background: var(--yellow-soft); }
+.sd-fanout-branches strong, .sd-fanout-branches span { display: block; }
+.sd-fanout-branches strong { font-size: 13px; }
+.sd-fanout-branches span { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.sd-fanout-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.sd-fanout-controls button { min-height: 38px; padding: 8px 11px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 7px; color: var(--text-secondary); background: var(--surface); font-size: 10px; font-weight: 720; cursor: pointer; }
+.sd-fanout-controls button:hover, .sd-fanout-controls button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.sd-fanout-demo > output { min-height: 58px; margin: 11px 0; padding: 11px 13px; display: block; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.sd-fanout-demo > output strong, .sd-fanout-demo > output span { display: block; }
+.sd-fanout-demo > output strong { font-size: 13px; }
+.sd-fanout-demo > output span { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.sd-fanout-demo > details table { margin-bottom: 0; }
 .sd-fencing-demo { margin: 28px 0; padding: 20px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line)); border-radius: 10px; background: var(--accent-soft); }
 .sd-fencing-demo > header > span { color: var(--accent); font: 750 9px ui-monospace, monospace; text-transform: uppercase; letter-spacing: .09em; }
 .sd-article .sd-fencing-demo h2 { margin: 4px 0; font-size: 21px; }
@@ -4293,6 +4312,8 @@ button.flow-card { cursor: pointer; }
   .sd-stampede-controls button { flex: 1 1 calc(50% - 8px); justify-content: center; }
   .sd-consumer-partitions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sd-consumer-controls button { flex: 1 1 calc(50% - 8px); justify-content: center; }
+  .sd-fanout-branches { grid-template-columns: 1fr; }
+  .sd-fanout-controls button { flex: 1 1 calc(50% - 8px); justify-content: center; }
   .sd-failure-checklist ul { columns: 1; }
   .sd-failure-deep-dive dl { grid-template-columns: 1fr; }
   .sd-failure-deep-dive dl > div { border-right: 0; border-bottom: 1px solid var(--line); }

@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 49 migrations are recorded, ending at `202609040015_publish_system_design_production_engineering`
+4. [ ] `supabase migration list --linked` — confirm all 50 migrations are recorded, ending at `202609040016_publish_system_design_common_patterns`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -93,7 +93,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
    where relnamespace = 'public'::regnamespace and relkind = 'r'
    order by relname;
    ```
-7. [ ] Confirm the canonical catalogs seeded: 162 DSA questions, 146 System Design concepts, 27 design problems, 48 curated Behavioral questions
+7. [ ] Confirm the canonical catalogs seeded: 162 DSA questions, 178 System Design concepts, 27 design problems, 48 curated Behavioral questions
 
 Apply `202609030005_save_behavioral_story_aggregate.sql` before deploying the aggregate-writing application. Migration-first makes already-loaded split-write clients fail safely before partial mutation: direct story/theme writes fail with `42501`, while direct calls to the legacy theme RPC fail with `0A000`. App-first leaves the torn-write window open until the migration lands. Rolling application code back after the migration is safe but degraded because the old split-write path stays unavailable; keep the migration and roll forward.
 
@@ -285,6 +285,8 @@ Check the production response for any page:
 7. [ ] Grep application logs for `"level":"error"` events: `account_export_failed`, `account_deletion_failed`, `reminder_worker_failed`, `calendar_export_record_failed`
 
 Before deploying the Production Engineering lesson family, apply `202609040015_publish_system_design_production_engineering.sql`. Confirm the read-only catalog has exactly 164 concept IDs and that an authenticated disposable account can save progress for `observability`; keep hosted verification unchecked until dated evidence exists. App-first remains publicly readable but progress for the 18 new IDs fails until migration. A code rollback is safe with the additive catalog rows retained; roll forward rather than deleting catalog rows that may already anchor private progress.
+
+Before deploying the Common Architecture Patterns lesson family, apply `202609040016_publish_system_design_common_patterns.sql`. Confirm the read-only catalog has exactly 178 concept IDs and that an authenticated disposable account can save and clear progress for `scaling-reads`; keep hosted verification unchecked until dated evidence exists. App-first remains publicly readable but progress for the 14 new IDs fails until migration. A code rollback is safe with the additive catalog rows retained; roll forward rather than deleting catalog rows that may already anchor private progress.
 
 ---
 

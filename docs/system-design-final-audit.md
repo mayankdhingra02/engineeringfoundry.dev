@@ -4,9 +4,9 @@ Audit date: 2026-09-04
 
 ## Verdict
 
-**PARTIAL** for Required-family completion; the 164 published lessons are release-valid.
+**PARTIAL** for Required-family completion; all 178 repository lessons are release-valid.
 
-The published material passes the release audit, including the 18-lesson Production Engineering family. Fourteen repository topics remain intentionally unpublished in Common Architecture Patterns, and the reviewed 161-to-178 crosswalk identifies ten Required blueprint outcomes that remain blueprint-only. All 15 Required practice designs are published; 33 additional P1/P2 practice ideas remain an optional, honestly labeled backlog.
+The published material passes the release audit, including the 18-lesson Production Engineering and 14-lesson Common Architecture Patterns families. Every repository topic and all 15 Required practice designs are published. The reviewed 161-to-178 crosswalk still identifies ten Required blueprint outcomes that remain blueprint-only; those are the only open EF-SD topic-coverage outcomes. Thirty-three additional P1/P2 practice ideas remain an optional, honestly labeled backlog.
 
 ## Scope and inventory
 
@@ -14,19 +14,19 @@ The published material passes the release audit, including the 18-lesson Product
 
 | Metric | Complete manifest | Published |
 |---|---:|---:|
-| Sections | 10 | 9 with published material |
-| Lessons | 178 | 164 |
-| Subtopics | 1,389 | 1,319 |
-| Must Know | 68 | 66 |
-| Important | 83 | 72 |
-| Advanced | 27 | 26 |
-| Estimated lesson time | 70h 52m | 65h 22m |
+| Sections | 10 | 10 with published material |
+| Lessons | 178 | 178 |
+| Subtopics | 1,389 | 1,389 |
+| Must Know | 68 | 68 |
+| Important | 83 | 83 |
+| Advanced | 27 | 27 |
+| Estimated lesson time | 70h 52m | 70h 52m |
 
 Published priority time:
 
-- Must Know: 28h 57m
-- Important: 26h 11m
-- Advanced: 10h 14m
+- Must Know: 29h 42m
+- Important: 30h 31m
+- Advanced: 10h 39m
 - Representative Focus Now plan, SDE II + 1 week: 22 lessons, 11h 10m of lesson metadata; the generated 1-hour/day study plan selects a feasible prerequisite-aware subset.
 
 ### Practice
@@ -49,13 +49,13 @@ Published priority time:
 
 ### Visual and learning support
 
-- Mermaid diagrams: 145 total (91 concept diagrams, 54 practice diagrams)
-- Custom-interactive placements: 9 across 8 reusable implementations
-- Static comparison-designated lessons: 25 published
-- Manifest-designated text-only lessons: 34 published
-- Worked examples: 46 blocks across 40 published lessons
-- Practice connections: all 164 published lessons render validated practice links
-- Combined published lesson and practice time: approximately 78h 51m
+- Mermaid diagrams: 154 total (100 concept diagrams, 54 practice diagrams)
+- Custom-interactive placements: 10 across 9 reusable implementations
+- Static comparison-designated lessons: 28 published
+- Manifest-designated text-only lessons: 50 published
+- Worked examples: 60 rendered blocks across 54 published lessons
+- Practice connections: all 178 published lessons render validated practice links
+- Combined published lesson and practice time: approximately 84h 21m
 
 Generated inventories:
 
@@ -90,7 +90,7 @@ Generated inventories:
 
 - The prior 2026-08-14 browser audit returned HTTP 200 for 239 then-canonical routes and exact HTTP 308 destinations for 11 retired routes; this content batch does not relabel that historical run as coverage for the new lessons.
 - 70 literal internal System Design links resolve against canonical lesson/problem routes in the focused release audit.
-- 118 unique authoritative external references are represented in the release-audit source set; network reachability remains a separate scheduled/manual check.
+- 128 unique authoritative external references are represented in the release-audit source set; network reachability remains a separate scheduled/manual check.
 - Added repeatable route and external-link audit scripts.
 
 ### Curriculum metadata
@@ -116,7 +116,7 @@ Generated inventories:
 
 ### Diagrams
 
-- Generated an auditable 145-diagram inventory with lesson, route, purpose, description, type, node count, responsive behavior, and dark-mode status.
+- Generated an auditable 154-diagram inventory with lesson, route, purpose, description, type, node count, responsive behavior, and dark-mode status.
 - Fixed node counting for sequence diagrams, state diagrams, and additional Mermaid node shapes.
 - Render-tested Mermaid SVG output in dark mode with no fallback error and a descriptive accessible label.
 
@@ -162,10 +162,10 @@ Generated inventories:
 
 - ESLint: passed
 - TypeScript `tsc --noEmit`: passed
-- 18 focused System Design scripts are enrolled; the canonical static lane is the release gate for the exact candidate.
+- 19 focused System Design scripts are enrolled; the canonical static lane is the release gate for the exact candidate.
 - Content/design/public-link validators: passed
 - Release audit: passed
-- External-link audit: prior 93/93 network run passed; the current 118-reference source set is registry- and source-validated, with reachability remaining scheduled/manual.
+- External-link audit: prior 93/93 network run passed; the current 128-reference source set is registry- and source-validated, with reachability remaining scheduled/manual.
 - Route audit: prior 239 canonical + 11 redirect browser run passed; current lesson routes are source-validated and require the candidate's canonical public-route smoke before deployment evidence.
 - Default `next build`: blocked by environment-only Turbopack internal port binding
 - Historical non-release diagnostic only: `next build --webpack` passed, 403 static pages generated. The canonical release build is now plain `next build` using Turbopack.
@@ -175,15 +175,13 @@ Generated inventories:
 
 ### Required content gaps
 
-1. **Common Architecture Patterns remains unpublished:** 14 routes stay honest/noindex until the family passes its source, lesson, route, and inventory checks.
-2. **Ten blueprint outcomes remain blueprint-only:** the reviewed crosswalk preserves these as explicit work rather than hiding them in broader topics.
+1. **Ten blueprint outcomes remain blueprint-only:** the reviewed crosswalk preserves these as explicit Required work rather than hiding them in broader topics.
 
 ### Should Fix
 
-1. **Publish the 14-topic architecture-pattern family as a connected synthesis layer.** Each lesson should point back to canonical mechanisms instead of repeating them.
-2. **Resolve the ten blueprint-only outcomes through explicit new lessons or reviewed merged mappings.** Crosswalk changes must remain deliberate and test-covered.
-3. **Keep the 33 optional practice ideas out of Required completion claims.** Publish them only when their dossiers pass the existing practice contract.
-4. **Capture production-hosted Core Web Vitals** with the Chrome DevTools performance backend before launch.
+1. **Resolve the ten blueprint-only outcomes through explicit new lessons or reviewed merged mappings.** Crosswalk changes must remain deliberate and test-covered.
+2. **Keep the 33 optional practice ideas out of Required completion claims.** Publish them only when their dossiers pass the existing practice contract.
+3. **Capture production-hosted Core Web Vitals** with the Chrome DevTools performance backend before launch.
 
 ### Nice to Have
 

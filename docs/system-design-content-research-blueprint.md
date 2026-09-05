@@ -1,7 +1,7 @@
 # Engineering Foundry System Design content research blueprint
 
 Review date: 2026-09-04
-Scope: vendor-neutral System Design curriculum and the first production-engineering publication batch
+Scope: vendor-neutral System Design curriculum, Production Engineering, and Common Architecture Patterns publication
 
 ## Editorial contract
 
@@ -45,6 +45,12 @@ Two repository lessons—Feature Stores and Choosing Specialized Building Blocks
 
 TLS maps to the Networking & APIs blueprint outcome “TLS Termination and Trust Boundaries.” It remains in the repository's production-engineering family because that is where the full trust-boundary lesson is sequenced.
 
+## Common Architecture Patterns disposition
+
+The 14 lessons in this family are a synthesis layer over already published mechanisms. Scaling Reads and Read-Heavy Systems connect replicas, caches, CDNs, partitioning, skew, and freshness without repeating their foundational lessons. Scaling Writes and Write-Heavy Systems connect partition keys, admission, durable logs, queues, batching, and compaction. Fan-Out distinguishes independent subscriptions from competing consumers; Fan-Out-on-Write vs Fan-Out-on-Read makes amplification placement a workload decision. Background Jobs and Long-Running Jobs define durable acceptance, leases, checkpoints, cancellation, and publication. Batch vs Stream Processing, CQRS, hot-partition handling, contention handling, multi-step workflows, and large-file processing each retain their own failure and recovery boundary.
+
+Publication closes the finite 178-topic repository queue. It does not close the ten Required blueprint-only outcomes. Those remain the only EF-SD topic-coverage gaps and are reserved for an explicit lesson or reviewed merged-disposition batch.
+
 ## Claim and source matrix for the 2026-09-04 batch
 
 | Claim ID | Supported lesson decisions | Primary or authoritative sources |
@@ -58,9 +64,18 @@ TLS maps to the Networking & APIs blueprint outcome “TLS Termination and Trust
 | `SD-TLS-BOUNDARY` | TLS 1.3 protects one connection; every terminator creates a new plaintext and key-management boundary. | RFC 9846 |
 | `SD-KEY-LIFECYCLE` | Encryption decisions require explicit plaintext/key boundaries; secrets need controlled creation, distribution, rotation, revocation, audit, backup, and recovery. | NIST Key Management Guidelines; OWASP Secrets Management |
 | `SD-ABUSE-LAYERS` | Resource exhaustion and automated business-flow abuse require layered edge filtering, request bounds, identity-aware quotas, admission control, and downstream isolation. | OWASP API Security Top 10 2023; OWASP Denial of Service guidance |
+| `SD-PATTERN-READ-SCALE` | Read scaling places replicas, caches, and projections according to access skew and freshness; read-after-write paths need an authoritative or version-aware route. | PostgreSQL warm standby and replication; Amazon Builders' Library caching guidance |
+| `SD-PATTERN-WRITE-DISTRIBUTION` | Write throughput depends on partition-key distribution and the narrowest serialization point; salting or calculated write shards trade write spread for read fan-in. | AWS DynamoDB partition-key and write-sharding guidance |
+| `SD-PATTERN-FANOUT` | Separate subscriptions create independent delivery obligations, while consumers sharing one subscription divide work; each branch needs its own backlog and retry state. | Google Cloud Pub/Sub overview; Microsoft Competing Consumers pattern |
+| `SD-PATTERN-JOBS` | Background and long-running operations need durable accepted/running/terminal states, restartable work, idempotent effects, and an explicit status or result channel. | Microsoft background-job guidance; Microsoft Asynchronous Request-Reply pattern |
+| `SD-PATTERN-BATCH-STREAM` | Batch and streaming differ in boundedness, latency, time, state, and correction policy even when they share logical transforms. | Google Cloud Dataflow overview and pipeline-planning guidance |
+| `SD-PATTERN-CQRS` | CQRS separates command invariants from query projections only when different models or scaling boundaries justify eventual-consistency and replay cost. | Microsoft CQRS pattern |
+| `SD-PATTERN-CONTENTION` | Optimistic checks, locks, queues, partitions, and merge policies address different conflict rates and invariants; lock order and transaction duration remain operational controls. | PostgreSQL transaction isolation and explicit locking documentation |
+| `SD-PATTERN-WORKFLOW` | A multi-step business outcome is durable state whose retries and compensations can each fail; compensation is not an automatic rollback. | Microsoft Saga pattern; Amazon Builders' Library idempotent API guidance |
+| `SD-PATTERN-LARGE-FILE` | Large-file processing separates resumable multipart transfer, immutable input, chunk work, validated assembly, and atomic result publication. | Amazon S3 multipart-upload documentation; Microsoft background-job guidance |
 
 ## Publication review
 
-The 18 production-engineering lessons use original Engineering Foundry prose, bounded examples, canonical internal routes, valid practice IDs, and HTTPS references. The current TLS reference is RFC 9846, which obsoletes RFC 8446. Protocol lessons distinguish specification guarantees from application policy. Observability lessons distinguish signal collection from user-centered reliability decisions. Security lessons never treat encryption, identity, a gateway, a token, or a tenant ID as authorization by itself.
+The 18 Production Engineering and 14 Common Architecture Patterns lessons use original Engineering Foundry prose, bounded examples, canonical internal routes, valid practice IDs, and HTTPS references. The current TLS reference is RFC 9846, which obsoletes RFC 8446. Protocol lessons distinguish specification guarantees from application policy. Observability lessons distinguish signal collection from user-centered reliability decisions. Security lessons never treat encryption, identity, a gateway, a token, or a tenant ID as authorization by itself. Pattern lessons state the decision threshold, durable state, failure mode, recovery path, and cost rather than presenting named patterns as universal defaults.
 
-The family can be published while the broader EF-SD requirement remains partial. The ten blueprint-only outcomes and 14 Common Architecture Pattern lessons remain explicit work rather than being hidden by this review. All 15 Required practice designs are already published; 33 additional P1/P2 practice ideas remain an optional, honest backlog.
+All 178 repository topics and all 15 Required practice designs are now published. The broader EF-SD requirement remains partial only because ten Required blueprint-only outcomes still need publication or an explicit reviewed merged disposition. The 33 additional P1/P2 practice ideas remain an optional, honest backlog and do not reopen Required practice completion.
