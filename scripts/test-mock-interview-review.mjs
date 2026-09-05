@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { activeMockSessionPlans, getMockRubric } from "../data/mock-interviews/index.ts";
+import { getLowLevelDesignMockPlanSlug, getLowLevelDesignPracticeSlug } from "../data/mock-interviews/low-level-design-handoffs.ts";
 import {
   MOCK_REVIEW_ACCOUNT_UNAVAILABLE_ERROR,
   MOCK_REVIEW_INVALID_INPUT_ERROR,
@@ -266,7 +267,11 @@ for (const marker of [
   'id="mock-review-save-status" role="status" aria-live="polite" aria-atomic="true"',
 ]) assert.ok(component.includes(marker), `The client review contract is missing ${marker}.`);
 assert.ok(styles.includes('.mock-feedback-actions .button[aria-disabled="true"]') && styles.includes('.mock-feedback-actions .button-secondary[aria-disabled="true"]:hover'), "The pending save trigger must retain a distinct non-hovering visual state while it remains focusable.");
-for (const marker of ['"parking-lot": "parking-allocation"', '"elevator-control": "elevator-dispatch"', '"vending-machine": "vending-workflow"', '"conference-room-booking": "meeting-room-scheduler"', '"notification-system": "notification-orchestrator"', 'return practiceSlug ? `/low-level-design/practice/${practiceSlug}` : "/low-level-design/practice"', 'return "Browse Low-Level Design specialist practice"']) assert.ok(mockContent.includes(marker), `The LLD remediation handoff is missing ${marker}.`);
+for (const [mockPlanSlug, practiceSlug] of [["parking-lot", "parking-allocation"], ["elevator-control", "elevator-dispatch"], ["vending-machine", "vending-workflow"], ["amazon-locker-parcel-locker", "package-delivery-lifecycle"], ["conference-room-booking", "meeting-room-scheduler"], ["notification-system", "notification-orchestrator"]]) {
+  assert.equal(getLowLevelDesignPracticeSlug(mockPlanSlug), practiceSlug, `${mockPlanSlug} must return to its exact specialist practice.`);
+  assert.equal(getLowLevelDesignMockPlanSlug(practiceSlug), mockPlanSlug, `${practiceSlug} must enter its exact Mock plan.`);
+}
+for (const marker of ['return practiceSlug ? `/low-level-design/practice/${practiceSlug}` : "/low-level-design/practice"', 'return "Browse Low-Level Design specialist practice"']) assert.ok(mockContent.includes(marker), `The LLD remediation handoff is missing ${marker}.`);
 assert.ok(component.includes("getMockPreparationLinkLabel(selectedPlan)"), "The Mock debrief must not claim an exact LLD exercise when only the specialist area is available.");
 assert.ok(styles.includes('.mock-rubric label > span { min-height: 44px; }'), "Mobile rubric choices must preserve the 44px interaction floor.");
 assert.equal((saveBody.match(/track\("mock_review_saved"/g) ?? []).length, 1, "A successful review must have exactly one analytics emission point.");
