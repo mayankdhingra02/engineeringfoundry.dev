@@ -841,6 +841,70 @@
       "claims_supported": [],
       "usage_limits": "Discovery and provenance record only until claim-level support is audited; do not infer a universal process across locations or organizations.",
       "notes": "Repository confidence: Limited. Applicability: General careers information; location and organization vary."
+    },
+    {
+      "id": "SRC-ML-RULES", "title": "Rules of Machine Learning", "publisher": "Google for Developers", "url": "https://developers.google.com/machine-learning/guides/rules-of-ml", "source_class": "first-party engineering/science", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-ROADMAP-MAPPING", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-RULES"], "usage_limits": "Baselines, instrumentation, launch sequencing, and production iteration guidance.", "notes": "Primary source mapped to the published ML Design curriculum."
+    },
+    {
+      "id": "SRC-ML-METRICS", "title": "Classification: accuracy, recall, precision, and related metrics", "publisher": "Google for Developers", "url": "https://developers.google.com/machine-learning/crash-course/classification/accuracy-precision-recall", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-04", "volatility": "periodic",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-METRICS"], "usage_limits": "Task-sensitive classification metrics and the limitations of accuracy on imbalanced data.", "notes": "Official source mapped to the published ML Design curriculum."
+    },
+    {
+      "id": "SRC-ML-TFDV", "title": "TensorFlow Data Validation", "publisher": "TensorFlow", "url": "https://www.tensorflow.org/tfx/guide/tfdv", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-04", "volatility": "periodic",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-TFDV"], "usage_limits": "Schema validation, training-serving skew, and drift detection.", "notes": "Official source mapped to the published ML Design curriculum."
+    },
+    {
+      "id": "SRC-ML-FEAST-PIT", "title": "Point-in-time joins", "publisher": "Feast", "url": "https://docs.feast.dev/getting-started/concepts/point-in-time-joins", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-04", "volatility": "periodic",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-FEAST-PIT"], "usage_limits": "Historical feature retrieval and point-in-time correctness.", "notes": "Official source mapped to the published ML Design curriculum."
+    },
+    {
+      "id": "SRC-ML-YOUTUBE-REC", "title": "Deep Neural Networks for YouTube Recommendations", "publisher": "Google Research", "url": "https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/", "source_class": "original paper", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-YOUTUBE-REC"], "usage_limits": "Historical two-stage candidate generation and ranking example; not a claim about a current production system.", "notes": "Original paper mapped to recommendation decisions."
+    },
+    {
+      "id": "SRC-ML-TECH-DEBT", "title": "Hidden Technical Debt in Machine Learning Systems", "publisher": "Google Research", "url": "https://research.google/pubs/hidden-technical-debt-in-machine-learning-systems/", "source_class": "original paper", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-ROADMAP-MAPPING", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-TECH-DEBT"], "usage_limits": "Feedback loops, data dependencies, configuration debt, and system-level ML risks.", "notes": "Original paper mapped to lifecycle risk decisions."
+    },
+    {
+      "id": "SRC-ML-TEST-SCORE", "title": "The ML Test Score", "publisher": "Google Research", "url": "https://research.google/pubs/the-ml-test-score-a-rubric-for-ml-production-readiness-and-technical-debt-reduction/", "source_class": "original paper", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-ROADMAP-MAPPING", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-TEST-SCORE"], "usage_limits": "Production-readiness tests and monitoring across data, models, infrastructure, and integration.", "notes": "Original paper used for system controls, not an interview readiness score."
+    },
+    {
+      "id": "SRC-ML-EXPERIMENT-SRM", "title": "Diagnosing Sample Ratio Mismatch in Online Controlled Experiments", "publisher": "Microsoft Research", "url": "https://www.microsoft.com/en-us/research/publication/diagnosing-sample-ratio-mismatch-in-online-controlled-experiments-a-taxonomy-and-rules-of-thumb-for-practitioners/", "source_class": "original paper", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-EXPERIMENT-SRM"], "usage_limits": "Experiment integrity, assignment checks, and sample-ratio mismatch diagnosis.", "notes": "Original paper mapped to experiment-integrity decisions."
+    },
+    {
+      "id": "SRC-ML-EXPERIMENT-PRE", "title": "Patterns of Trustworthy Experimentation: Pre-Experiment Stage", "publisher": "Microsoft Research", "url": "https://www.microsoft.com/en-us/research/articles/patterns-of-trustworthy-experimentation-pre-experiment-stage/", "source_class": "first-party engineering/science", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-EXPERIMENT-PRE"], "usage_limits": "Randomization units, guardrails, network effects, and pre-experiment validity checks.", "notes": "First-party research guidance mapped to experimentation decisions."
+    },
+    {
+      "id": "SRC-ML-MLFLOW-REGISTRY", "title": "Model Registry Workflows", "publisher": "MLflow", "url": "https://mlflow.org/docs/latest/ml/model-registry/workflow", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-04", "volatility": "periodic",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-MLFLOW-REGISTRY"], "usage_limits": "Versioned model artifacts, aliases, environment promotion, and lifecycle metadata.", "notes": "Official project documentation; version-sensitive behavior must be reverified."
+    },
+    {
+      "id": "SRC-ML-KSERVE", "title": "Welcome to KServe", "publisher": "KServe", "url": "https://kserve.github.io/website/docs/intro", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-04", "volatility": "periodic",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-KSERVE"], "usage_limits": "Serving control/data-plane separation, autoscaling, routing, and model-runtime concerns.", "notes": "Official project documentation; not a universal serving recommendation."
+    },
+    {
+      "id": "SRC-ML-K8S-ROLLOUT", "title": "Deployments", "publisher": "Kubernetes", "url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/", "source_class": "official documentation", "published_at": null, "verified_at": "2026-09-04", "volatility": "periodic",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-K8S-ROLLOUT"], "usage_limits": "Controlled rollout, progress detection, revision history, and rollback mechanics.", "notes": "Official project documentation used for general rollout mechanics."
+    },
+    {
+      "id": "SRC-ML-RAG", "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", "publisher": "arXiv", "url": "https://arxiv.org/abs/2005.11401", "source_class": "original paper", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-RAG"], "usage_limits": "Foundational retrieval-augmented generation architecture and provenance motivation.", "notes": "Original paper; current product techniques remain workload-dependent."
+    },
+    {
+      "id": "SRC-ML-NIST-RMF", "title": "Artificial Intelligence Risk Management Framework 1.0", "publisher": "NIST", "url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10", "source_class": "standard / RFC", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-NIST-RMF"], "usage_limits": "Lifecycle risk management, oversight, transparency, measurement, and governance framing.", "notes": "Framework source; it does not prescribe one implementation."
+    },
+    {
+      "id": "SRC-ML-GOOGLE-SLO", "title": "Service Level Objectives", "publisher": "Google Site Reliability Engineering", "url": "https://sre.google/sre-book/service-level-objectives/", "source_class": "first-party engineering/science", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-GOOGLE-SLO"], "usage_limits": "User-centered service indicators, objectives, and reliability decision boundaries.", "notes": "First-party operating guidance; objectives remain service-specific."
+    },
+    {
+      "id": "SRC-ML-FORECASTING", "title": "Forecasting: Principles and Practice (3rd ed)", "publisher": "OTexts", "url": "https://otexts.com/fpp3/", "source_class": "first-party engineering/science", "published_at": null, "verified_at": "2026-09-04", "volatility": "stable",
+      "applies_to": ["EF-ML", "EF-ML-CONCEPT-COVERAGE", "EF-ML-PRACTICE-PROVENANCE"], "claims_supported": ["ML-FORECASTING"], "usage_limits": "Forecast horizons, time-series cross-validation, baselines, accuracy, and probabilistic forecasts.", "notes": "Author-maintained source mapped to forecasting decisions."
     }
   ]
 }

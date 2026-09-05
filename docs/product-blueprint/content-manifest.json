@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "eb51981f0716214a8f34db8748d5a6bfa5bc5e09",
-  "repository_state_sha256": "97c86eb280d58208dacc60cb82e8b9a71643bc7aa115cf19bf3e165d5cef8a15",
+  "repository_sha": "c1fcb3bb5cf0cab299d5a2c6561e01b74c694326",
+  "repository_state_sha256": "7a31914e113a0c910ff78d3ebb6c4f55234ec4eaf2e0d8b54ad056c82e1b5753",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -902,41 +902,44 @@
     },
     {
       "acceptance_criteria": [
-        "Existing ML Design routes remain public and honest without implying the master curriculum is complete.",
-        "ML practice activity reports only confirmed account, browser-local, or visit-only outcomes; disabled-account rendering skips the account action while retaining bounded local fallback."
+        "Twenty reviewed concept lessons and thirteen distinct dossiers publish through the eight-stage roadmap and flexible DECIDE framework.",
+        "Guided, untimed, and timed rehearsal labels remain honest; explicit signed-in attempts are owner-scoped, private, revision-checked, and excluded from analytics.",
+        "Task-specific metrics, descriptive rubric evidence, Engineering Foundry role overlays, canonical routes, review dates, and claim-bounded source records are published and tested."
       ],
       "code_paths": [
         "app/ml-design",
         "app/sitemap.ts",
-        "components/design-practice-page.tsx",
-        "components/design-track-page.tsx",
-        "components/preparation-activity-control.tsx",
+        "components/ml-design-document.tsx",
+        "components/ml-design-practice-workspace.tsx",
+        "components/ml-design-track-page.tsx",
         "data/ml-design",
-        "features/preparation-progress/actions.ts",
+        "features/ml-design",
         "lib/global-search.ts",
+        "lib/ml-design",
         "lib/ml-design-routes.ts",
-        "lib/preparation-progress/activity-save.ts",
-        "scripts/smoke-public-routes.mjs",
-        "scripts/test-ml-design.mjs",
-        "scripts/test-public-route-smoke.mjs",
-        "scripts/test-unified-progress.mjs"
+        "lib/public-route-inventory.ts",
+        "supabase/migrations/202609040018_create_ml_design_attempts.sql"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/research/ml-design/core-concepts.md",
+        "docs/product-blueprint/research/ml-design/final-synthesis.md",
+        "docs/product-blueprint/research/ml-design/infrastructure-modern-ai.md",
+        "docs/product-blueprint/research/ml-design/recommendation-ranking.md",
+        "docs/product-blueprint/research/ml-design/search-retrieval-advertising.md",
+        "docs/product-blueprint/research/ml-design/trust-prediction-decision.md"
+      ],
       "gap_inventory_ids": [],
       "id": "EF-ML",
       "kind": "requirement-family",
-      "known_gaps": [
-        "The repository has 10 compact concepts and 7 active original prompts versus the blueprint target of 20 concepts and 13 dossiers.",
-        "Original research artifacts and claim-level provenance are not imported."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-04",
+      "notes": "Required acceptance is closed without expansion: 20 concepts, 13 dossiers, three honest practice modes, private durable attempts, ten descriptive rubric dimensions, canonical discovery, and 16 source records are published and verified.",
       "owner": "ml-design",
       "prerequisite_ids": [
         "EF-GLOBAL"
       ],
       "priority": "required",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-ML-CORE-CONCEPTS",
         "RA-ML-FINAL-SYNTHESIS",
@@ -945,19 +948,46 @@
         "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
         "RA-ML-TRUST-PREDICTION-DECISION"
       ],
-      "research_status": "approved-needs-source-import",
-      "route_families": [],
+      "research_status": "approved",
+      "route_families": [
+        "/ml-design/core-concepts/[slug]",
+        "/ml-design/problems/[problem]/practice/[attemptId]",
+        "/ml-design/problems/[slug]"
+      ],
       "routes": [
-        "/ml-design"
+        "/ml-design",
+        "/ml-design/core-concepts",
+        "/ml-design/glossary",
+        "/ml-design/practice",
+        "/ml-design/problems",
+        "/ml-design/rubric"
       ],
       "section": "ml-design",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-ML-EXPERIMENT-PRE",
+        "SRC-ML-EXPERIMENT-SRM",
+        "SRC-ML-FEAST-PIT",
+        "SRC-ML-FORECASTING",
+        "SRC-ML-GOOGLE-SLO",
+        "SRC-ML-K8S-ROLLOUT",
+        "SRC-ML-KSERVE",
+        "SRC-ML-METRICS",
+        "SRC-ML-MLFLOW-REGISTRY",
+        "SRC-ML-NIST-RMF",
+        "SRC-ML-RAG",
+        "SRC-ML-RULES",
+        "SRC-ML-TECH-DEBT",
+        "SRC-ML-TEST-SCORE",
+        "SRC-ML-TFDV",
+        "SRC-ML-YOUTUBE-REC"
+      ],
+      "status": "implemented",
       "test_commands": [
+        "npm run qualify:database",
         "npm run test:ml-design",
+        "npm run test:ml-design-attempts",
         "npm run test:public-launch-integrity",
         "npm run test:public-route-smoke",
-        "npm run test:unified-progress",
         "npm run validate:design-content"
       ],
       "title": "Machine Learning System Design",
@@ -965,29 +995,32 @@
     },
     {
       "acceptance_criteria": [
-        "Concept depth, objectives, references, provenance, and publication rules match an imported approved specification."
+        "Exactly 20 reviewed lessons publish with objectives, mechanisms, alternatives, consequences, failures, exercises, interviewer probes, and source mappings."
       ],
       "code_paths": [
-        "data/ml-design"
+        "app/ml-design/[...segments]/page.tsx",
+        "components/ml-design-document.tsx",
+        "data/ml-design/concepts.json",
+        "data/ml-design/reference.ts"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/research/ml-design/core-concepts.md",
+        "docs/product-blueprint/research/ml-design/final-synthesis.md"
+      ],
       "gap_inventory_ids": [
         "EF-ML-CONCEPT-COVERAGE"
       ],
       "id": "EF-ML-CONCEPT-COVERAGE",
       "kind": "content-gap",
-      "known_gaps": [
-        "Ten compact summaries exist versus the blueprint target of 20 concepts.",
-        "No approved deep-lesson route and provenance contract is implemented."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-04",
+      "notes": "The 20-concept Required target is published on canonical deep-lesson routes and covered by the ML Design contract test.",
       "owner": "ml-design",
       "prerequisite_ids": [
         "EF-ML"
       ],
       "priority": "p1",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-ML-CORE-CONCEPTS",
         "RA-ML-FINAL-SYNTHESIS",
@@ -996,15 +1029,35 @@
         "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
         "RA-ML-TRUST-PREDICTION-DECISION"
       ],
-      "research_status": "approved-needs-source-import",
-      "route_families": [],
+      "research_status": "approved",
+      "route_families": [
+        "/ml-design/core-concepts/[slug]"
+      ],
       "routes": [
-        "/ml-design"
+        "/ml-design/core-concepts"
       ],
       "section": "ml-design",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-ML-EXPERIMENT-PRE",
+        "SRC-ML-EXPERIMENT-SRM",
+        "SRC-ML-FEAST-PIT",
+        "SRC-ML-FORECASTING",
+        "SRC-ML-GOOGLE-SLO",
+        "SRC-ML-K8S-ROLLOUT",
+        "SRC-ML-KSERVE",
+        "SRC-ML-METRICS",
+        "SRC-ML-MLFLOW-REGISTRY",
+        "SRC-ML-NIST-RMF",
+        "SRC-ML-RAG",
+        "SRC-ML-RULES",
+        "SRC-ML-TECH-DEBT",
+        "SRC-ML-TEST-SCORE",
+        "SRC-ML-TFDV",
+        "SRC-ML-YOUTUBE-REC"
+      ],
+      "status": "implemented",
       "test_commands": [
+        "npm run test:ml-design",
         "npm run validate:design-content"
       ],
       "title": "ML Design concept coverage",
@@ -1012,28 +1065,38 @@
     },
     {
       "acceptance_criteria": [
-        "Every active prompt records reviewed authorship, provenance, freshness, and acceptance metadata."
+        "All 13 canonical dossiers record Engineering Foundry authorship, reviewed source mappings, review dates, and tested public/private route behavior."
       ],
       "code_paths": [
-        "data/ml-design"
+        "app/ml-design",
+        "components/ml-design-practice-workspace.tsx",
+        "data/ml-design/problems.json",
+        "data/ml-design/sources.ts",
+        "features/ml-design",
+        "lib/ml-design",
+        "supabase/migrations/202609040018_create_ml_design_attempts.sql"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/research/ml-design/final-synthesis.md",
+        "docs/product-blueprint/research/ml-design/infrastructure-modern-ai.md",
+        "docs/product-blueprint/research/ml-design/recommendation-ranking.md",
+        "docs/product-blueprint/research/ml-design/search-retrieval-advertising.md",
+        "docs/product-blueprint/research/ml-design/trust-prediction-decision.md"
+      ],
       "gap_inventory_ids": [
         "EF-ML-PRACTICE-PROVENANCE"
       ],
       "id": "EF-ML-PRACTICE-PROVENANCE",
       "kind": "content-gap",
-      "known_gaps": [
-        "Seven active original prompts name Engineering Foundry as origin but lack approved review-cadence and claim-level provenance fields."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-04",
+      "notes": "All 13 distinct dossiers have source IDs and review dates; private attempt storage is owner-scoped and excluded from analytics.",
       "owner": "ml-design",
       "prerequisite_ids": [
         "EF-ML"
       ],
       "priority": "p2",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-ML-FINAL-SYNTHESIS",
         "RA-ML-INFRA-MODERN-AI",
@@ -1041,15 +1104,39 @@
         "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
         "RA-ML-TRUST-PREDICTION-DECISION"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "approved",
       "route_families": [
-        "/ml-design/[slug]"
+        "/ml-design/problems/[problem]/practice/[attemptId]",
+        "/ml-design/problems/[slug]"
       ],
-      "routes": [],
+      "routes": [
+        "/ml-design/practice",
+        "/ml-design/problems"
+      ],
       "section": "ml-design",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-ML-EXPERIMENT-PRE",
+        "SRC-ML-EXPERIMENT-SRM",
+        "SRC-ML-FEAST-PIT",
+        "SRC-ML-FORECASTING",
+        "SRC-ML-GOOGLE-SLO",
+        "SRC-ML-K8S-ROLLOUT",
+        "SRC-ML-KSERVE",
+        "SRC-ML-METRICS",
+        "SRC-ML-MLFLOW-REGISTRY",
+        "SRC-ML-NIST-RMF",
+        "SRC-ML-RAG",
+        "SRC-ML-RULES",
+        "SRC-ML-TECH-DEBT",
+        "SRC-ML-TEST-SCORE",
+        "SRC-ML-TFDV",
+        "SRC-ML-YOUTUBE-REC"
+      ],
+      "status": "implemented",
       "test_commands": [
+        "npm run qualify:database",
+        "npm run test:ml-design",
+        "npm run test:ml-design-attempts",
         "npm run validate:design-content"
       ],
       "title": "ML Design practice provenance",
@@ -1060,38 +1147,47 @@
         "Every roadmap stage has an approved stage-to-concept and practice mapping without inferred prerequisites."
       ],
       "code_paths": [
+        "components/ml-design-track-page.tsx",
+        "data/ml-design/reference.ts",
         "data/ml-design/roadmap.json"
       ],
-      "content_paths": [],
+      "content_paths": [
+        "docs/product-blueprint/research/ml-design/core-concepts.md",
+        "docs/product-blueprint/research/ml-design/final-synthesis.md"
+      ],
       "gap_inventory_ids": [
         "EF-ML-ROADMAP-MAPPING"
       ],
       "id": "EF-ML-ROADMAP-MAPPING",
       "kind": "content-gap",
-      "known_gaps": [
-        "Eight static stages have no approved mapping to concept IDs and practice records."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-04",
+      "notes": "All eight roadmap stages map explicit canonical concept IDs and practice IDs; the contract test rejects missing or inferred mappings.",
       "owner": "ml-design",
       "prerequisite_ids": [
         "EF-ML-CONCEPT-COVERAGE"
       ],
       "priority": "p1",
-      "publication_status": "stale-review",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-ML-CORE-CONCEPTS",
         "RA-ML-FINAL-SYNTHESIS"
       ],
-      "research_status": "approved-needs-source-import",
+      "research_status": "approved",
       "route_families": [],
       "routes": [
-        "/ml-design"
+        "/ml-design",
+        "/ml-design/practice"
       ],
       "section": "ml-design",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-ML-RULES",
+        "SRC-ML-TECH-DEBT",
+        "SRC-ML-TEST-SCORE"
+      ],
+      "status": "implemented",
       "test_commands": [
+        "npm run test:ml-design",
         "npm run validate:design-content"
       ],
       "title": "ML Design roadmap mapping",
@@ -2324,30 +2420,30 @@
       "version_or_hash": null
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-ML",
       "id": "RA-ML-CORE-CONCEPTS",
-      "notes": "The normalized concept direction is synthesized, but the original research artifact and source mappings are unavailable.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis maps the 20 published lessons to the primary-source ledger and records explicit exclusions.",
+      "repository_path": "docs/product-blueprint/research/ml-design/core-concepts.md",
       "requirement_ids": [
         "EF-ML",
         "EF-ML-CONCEPT-COVERAGE",
         "EF-ML-ROADMAP-MAPPING"
       ],
       "title": "Engineering Foundry ML Design Core Concepts Curriculum",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-04",
+      "version_or_hash": "74a4688763488bcd250cdae38c3e3f27520fabc2055e52fb69ae566d14eb7320"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-ML",
       "id": "RA-ML-FINAL-SYNTHESIS",
-      "notes": "The synthesis title does not provide the original implementation-ready artifact, review record, or source corpus.",
-      "repository_path": null,
+      "notes": "Implementation-ready review record closes the Required ML Design contract without creating new scope.",
+      "repository_path": "docs/product-blueprint/research/ml-design/final-synthesis.md",
       "requirement_ids": [
         "EF-ML",
         "EF-ML-CONCEPT-COVERAGE",
@@ -2355,76 +2451,76 @@
         "EF-ML-ROADMAP-MAPPING"
       ],
       "title": "Engineering Foundry ML Design: Final Synthesis, Quality Audit, and Implementation-Ready Content Specification",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-04",
+      "version_or_hash": "b366986b89a9ab6e08192f5c86680c53ad2d926536dacdd09fab070af64b0ba6"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-ML",
       "id": "RA-ML-INFRA-MODERN-AI",
-      "notes": "The original domain research and claim sources have not been imported.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis covers feature, delivery, serving, reliability, and RAG decisions with source-bounded trade-offs.",
+      "repository_path": "docs/product-blueprint/research/ml-design/infrastructure-modern-ai.md",
       "requirement_ids": [
         "EF-ML",
         "EF-ML-CONCEPT-COVERAGE",
         "EF-ML-PRACTICE-PROVENANCE"
       ],
       "title": "Engineering Foundry ML Design: ML Infrastructure and Modern AI System Design",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-04",
+      "version_or_hash": "a7dbf7158440158b41e93ad2ae21dbc458bfbb184c226d4541898ea41344c8de"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-ML",
       "id": "RA-ML-RECOMMENDATION-RANKING",
-      "notes": "The original domain research and claim sources have not been imported.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis maps recommendation and feed-ranking decisions to bounded primary-source claims.",
+      "repository_path": "docs/product-blueprint/research/ml-design/recommendation-ranking.md",
       "requirement_ids": [
         "EF-ML",
         "EF-ML-CONCEPT-COVERAGE",
         "EF-ML-PRACTICE-PROVENANCE"
       ],
       "title": "Engineering Foundry ML Design: Recommendation and Ranking Systems",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-04",
+      "version_or_hash": "0a8afedd1c176463732c230052360254e6da04208f9c8577c57f1611f13701e8"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-ML",
       "id": "RA-ML-SEARCH-RETRIEVAL-ADVERTISING",
-      "notes": "The original domain research and claim sources have not been imported.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis maps retrieval, ranking, autocomplete, and advertising decisions without prescribing a universal stack.",
+      "repository_path": "docs/product-blueprint/research/ml-design/search-retrieval-advertising.md",
       "requirement_ids": [
         "EF-ML",
         "EF-ML-CONCEPT-COVERAGE",
         "EF-ML-PRACTICE-PROVENANCE"
       ],
       "title": "Engineering Foundry ML Design Research: Search, Retrieval, Query Understanding, Autocomplete, and Advertising",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-04",
+      "version_or_hash": "6f899db02d8d3db86cf84af3fc79929df75f48442b1af5896f8e2ff9e3d45b3d"
     },
     {
-      "approval_status": "approved-needs-source-import",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-ML",
       "id": "RA-ML-TRUST-PREDICTION-DECISION",
-      "notes": "The original domain research and claim sources have not been imported.",
-      "repository_path": null,
+      "notes": "Reviewed synthesis maps asymmetric-error, temporal, adversarial, and high-impact decision controls.",
+      "repository_path": "docs/product-blueprint/research/ml-design/trust-prediction-decision.md",
       "requirement_ids": [
         "EF-ML",
         "EF-ML-CONCEPT-COVERAGE",
         "EF-ML-PRACTICE-PROVENANCE"
       ],
       "title": "Engineering Foundry ML Design: Trust, Prediction, Forecasting, and Decision Systems",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-04",
+      "version_or_hash": "44297d2b303d213533380eddfb1e084d6f282b4cb542287dc3c815bdff30c71e"
     },
     {
       "approval_status": "approved-needs-source-import",

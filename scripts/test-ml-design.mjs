@@ -95,6 +95,14 @@ for (const mode of ["guided", "untimed", "timed"]) assert.ok(practice.includes(`
 assert.match(practice, /No total score is calculated\./);
 assert.match(practice, /does not send them to analytics/);
 assert.doesNotMatch(practice, /track\([^\n]*(assumptions|notes|review)/i, "private attempt content must not enter analytics");
+const attemptActions = read("features/ml-design/actions.ts");
+const attemptPanel = read("features/ml-design/problem-attempt-panel.tsx");
+const attemptMigration = read("supabase/migrations/202609040018_create_ml_design_attempts.sql");
+assert.match(attemptPanel, /owner-scoped|visible only|private/i, "saved attempt entry must label private ownership honestly");
+assert.doesNotMatch(attemptActions, /track\(/, "saved private attempt actions must not emit analytics");
+assert.match(attemptMigration, /enable row level security/);
+assert.match(attemptMigration, /Owners can read ML Design attempts/);
+assert.match(attemptMigration, /target_expected_revision/);
 
 const sitemapPaths = new Set(buildSitemap().map((entry) => new URL(entry.url).pathname));
 assert.ok(canonicalPaths.every((path) => sitemapPaths.has(path)), "the sitemap must publish every canonical ML route");
@@ -103,6 +111,15 @@ assert.ok(mlDesignConcepts.every((item) => searchHrefs.has(mlDesignConceptHref(i
 assert.ok(activeMlDesignProblems.every((item) => searchHrefs.has(mlDesignProblemHref(item.slug))), "search must deep-link every dossier");
 
 const governance = JSON.parse(read("docs/product-blueprint/registry/requirements.json")).requirements.find((requirement) => requirement.id === "EF-ML");
-assert.equal(governance.status, "partial", "content/routes alone must not close EF-ML before authenticated attempts and provenance artifacts land");
+assert.equal(governance.status, "implemented", "completed Required acceptance closes EF-ML instead of expanding it");
+assert.equal(governance.research_status, "approved");
+assert.equal(governance.publication_status, "published");
+assert.deepEqual(governance.known_gaps, []);
+const registrySources = JSON.parse(read("docs/product-blueprint/registry/sources.json")).sources.filter((source) => source.id.startsWith("SRC-ML-"));
+assert.equal(registrySources.length, 16, "all reviewed ML sources must exist in the governance ledger");
+assert.ok(mlDesignSources.every((source) => registrySources.some((record) => record.id === source.id && record.verified_at === source.reviewedAt)), "rendered source IDs and review dates must reconcile with the ledger");
+const mlArtifacts = JSON.parse(read("docs/product-blueprint/registry/research-artifacts.json")).artifacts.filter((artifact) => artifact.id.startsWith("RA-ML-"));
+assert.equal(mlArtifacts.length, 6);
+assert.ok(mlArtifacts.every((artifact) => artifact.availability === "repository-present" && artifact.approval_status === "approved" && /^[0-9a-f]{64}$/.test(artifact.version_or_hash)), "all six ML synthesis artifacts must be approved repository records");
 
-console.log("ML Design contract passed: 20 concepts, 13 canonical dossiers, DECIDE, canonical routes, three practice modes, descriptive rubric, glossary, sources, search, and sitemap are aligned.");
+console.log("ML Design Required contract passed: 20 concepts, 13 canonical dossiers, DECIDE, canonical routes, three practice modes, private attempts, descriptive rubric, and provenance are aligned.");

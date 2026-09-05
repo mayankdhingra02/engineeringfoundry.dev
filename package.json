@@ -93,6 +93,7 @@
     "test:system-design-workspace": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-system-design-workspace.mjs",
     "test:system-design-release-audit": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-system-design-release-audit.mjs",
     "test:ml-design": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-ml-design.mjs",
+    "test:ml-design-attempts": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-ml-design-attempts.mjs",
     "test:low-level-design": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-low-level-design.mjs",
     "test:salary-negotiation": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-salary-negotiation.mjs",
     "audit:system-design-external-links": "node scripts/audit-system-design-external-links.mjs",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import {
   MlConceptDirectory,
   MlConceptPage,
@@ -10,6 +11,7 @@ import {
   MlSourceList,
 } from "@/components/ml-design-document";
 import { MlDesignPracticeWorkspace } from "@/components/ml-design-practice-workspace";
+import { MlDesignProblemAttemptPanel } from "@/features/ml-design/problem-attempt-panel";
 import { getMlDesignConcept, getMlDesignLegacyProblem, getMlDesignProblem } from "@/data/ml-design";
 import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
@@ -77,7 +79,7 @@ export default async function MlDesignContentPage({ params }: { params: Promise<
   if (segments.length === 2 && segments[0] === "problems") {
     const problem = getMlDesignProblem(segments[1]);
     if (!problem) notFound();
-    return <MlDesignDocument title={problem.title} description={problem.summary} context={`${problem.family} · ${problem.difficulty}`} reviewed={problem.lastReviewed}><MlDesignPracticeWorkspace problem={problem} accountPlatformAvailable={isAccountPlatformAvailable()} /><MlSourceList sourceIds={problem.sourceIds} /></MlDesignDocument>;
+    return <MlDesignDocument title={problem.title} description={problem.summary} context={`${problem.family} · ${problem.difficulty}`} reviewed={problem.lastReviewed}><MlDesignPracticeWorkspace problem={problem} accountPlatformAvailable={isAccountPlatformAvailable()} privateAttempts={<Suspense fallback={<p className="ml-attempt-empty">Loading private attempts…</p>}><MlDesignProblemAttemptPanel problemId={problem.slug} problemTitle={problem.title} /></Suspense>} /><MlSourceList sourceIds={problem.sourceIds} /></MlDesignDocument>;
   }
   notFound();
 }
