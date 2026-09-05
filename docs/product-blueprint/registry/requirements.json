@@ -715,7 +715,7 @@
       "publication_status": "published",
       "routes": ["/interview-tips/methodology"],
       "route_families": ["/interview-tips/rounds/[slug]"],
-      "source_ledger_ids": ["SRC-BEH-OPM-STRUCTURED", "SRC-BEH-OPM-GUIDE", "SRC-COMP-AMAZON-OFFICIAL", "SRC-COMP-MICROSOFT-OFFICIAL", "SRC-PLAY-EEOC-ACCOMMODATION", "SRC-PLAY-MIT-PRESENTATION", "SRC-PLAY-YALE-AFTER-INTERVIEW"],
+      "source_ledger_ids": ["SRC-BEH-OPM-STRUCTURED", "SRC-BEH-OPM-GUIDE", "SRC-COMP-AMAZON-OFFICIAL", "SRC-COMP-MICROSOFT-OFFICIAL", "SRC-PLAY-EEOC-ACCOMMODATION", "SRC-PLAY-MIT-PRESENTATION"],
       "research_artifact_ids": ["RA-PLAY-FINAL-SYNTHESIS", "RA-PLAY-ROUND-EXECUTION"],
       "prerequisite_ids": ["EF-PLAY"],
       "code_paths": ["lib/interview-playbook/dossiers", "components/interview-playbook/round-execution-dossier.tsx"],
