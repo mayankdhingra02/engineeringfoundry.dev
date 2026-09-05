@@ -165,17 +165,17 @@ function familyFor(id) {
 }
 
 function normalizeScope(scope) {
-  if (scope === "bootstrap") fail("bootstrap scope must explicitly enumerate required_family_ids and required_gap_ids.");
+  if (typeof scope === "string") fail("scope must explicitly enumerate required_family_ids and required_gap_ids.");
   assertObject(scope, "requirements registry scope");
   assertOnlyKeys(scope, new Set(["phase", "required_family_ids", "required_gap_ids"]), "requirements registry scope");
-  if (scope.phase !== "bootstrap") fail('requirements registry scope.phase must be "bootstrap".');
+  if (scope.phase !== "bootstrap" && scope.phase !== "required-closure") fail('requirements registry scope.phase must be "bootstrap" or "required-closure".');
   assertStringArray(scope.required_family_ids, "requirements registry scope.required_family_ids");
   assertStringArray(scope.required_gap_ids, "requirements registry scope.required_gap_ids");
   const familyIds = stableStrings(scope.required_family_ids);
   const gapIds = stableStrings(scope.required_gap_ids);
-  if (JSON.stringify(familyIds) !== JSON.stringify(stableStrings(REQUIRED_FAMILIES))) fail("bootstrap scope.required_family_ids must contain exactly the 15 master requirement families.");
-  if (JSON.stringify(gapIds) !== JSON.stringify(stableStrings(REQUIRED_GAP_IDS))) fail("bootstrap scope.required_gap_ids must contain exactly the 18 approved public content-gap IDs.");
-  return { value: { phase: "bootstrap", required_family_ids: familyIds, required_gap_ids: gapIds }, requiredGapIds: gapIds };
+  if (JSON.stringify(familyIds) !== JSON.stringify(stableStrings(REQUIRED_FAMILIES))) fail("scope.required_family_ids must contain exactly the 15 master requirement families.");
+  if (JSON.stringify(gapIds) !== JSON.stringify(stableStrings(REQUIRED_GAP_IDS))) fail("scope.required_gap_ids must contain exactly the 18 approved public content-gap IDs.");
+  return { value: { phase: scope.phase, required_family_ids: familyIds, required_gap_ids: gapIds }, requiredGapIds: gapIds };
 }
 
 function normalizeUnmodeled(items) {

@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "b7f49e4da52ab92965c5af908341df846b4f41f5",
-  "repository_state_sha256": "20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb44968d10ff",
+  "repository_sha": "543fcf2707bfd07cc444d72a2b330a43bf5d9468",
+  "repository_state_sha256": "513cc2cceee7309da960941a99d1fd68f56a8a544bbdac72a4d4460f1a87b19b",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -790,12 +790,9 @@
       "gap_inventory_ids": [],
       "id": "EF-GLOBAL",
       "kind": "requirement-family",
-      "known_gaps": [
-        "Rendered browser accessibility and focus/history coverage remains incomplete.",
-        "Hosted production evidence remains an external owner gate."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": "Family publication means public platform surfaces exist; it does not complete every atomic global requirement.",
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Repository-owned global acceptance is closed by the accepted integrated hardening baseline, mapped atomic acceptance criteria, full release qualification, and focused browser reviews. Production-hosted evidence remains separately and truthfully classified under EF-OPS-EXTERNAL-PRODUCTION-GATES.",
       "owner": "platform",
       "prerequisite_ids": [],
       "priority": "required",
@@ -808,7 +805,7 @@
       ],
       "section": "global-platform",
       "source_ledger_ids": [],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
         "npm run lint",
         "npm run qualify:auth-local",
@@ -1398,32 +1395,32 @@
         "docs/impact-ledger/README.md",
         "docs/product-blueprint/registry/requirements.json",
         "docs/product-blueprint/registry/research-artifacts.json",
-        "docs/product-blueprint/registry/sources.json"
+        "docs/product-blueprint/registry/sources.json",
+        "docs/product-blueprint/research/governance-and-release/final-required-closure.md"
       ],
       "gap_inventory_ids": [],
       "id": "EF-OPS",
       "kind": "requirement-family",
-      "known_gaps": [
-        "This bootstrap models families and current gap rows, not every atomic blueprint requirement.",
-        "Generated outputs require their dedicated output-only metadata commit."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Required repository governance is closed with an explicit Required-closure registry phase, zero unmodeled Required atoms, deterministic output-only metadata commits, and green local and hosted release lanes. External production-owner gates remain separate and blocked without overclaiming them.",
       "owner": "release-governance",
       "prerequisite_ids": [
         "EF-GLOBAL"
       ],
       "priority": "required",
-      "publication_status": "unpublished",
+      "publication_status": "published",
       "research_artifact_ids": [
         "RA-LAUNCH-V1-FINISH-PLAN"
       ],
-      "research_status": "needs-research",
+      "research_status": "approved",
       "route_families": [],
       "routes": [],
       "section": "governance-and-release",
-      "source_ledger_ids": [],
-      "status": "partial",
+      "source_ledger_ids": [
+        "SRC-OPS-MASTER-GOAL"
+      ],
+      "status": "implemented",
       "test_commands": [
         "npm run test:analytics-launch-evidence",
         "npm run test:content-validator",
@@ -2189,12 +2186,9 @@
       "gap_inventory_ids": [],
       "id": "EF-SUP",
       "kind": "requirement-family",
-      "known_gaps": [
-        "Employer-specific referral policy remains intentionally absent.",
-        "Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-05",
+      "notes": "Required supporting-route acceptance is closed. Browser QA verifies Referral Back/Forward mode restoration, mounted local-draft preservation, URL privacy, and guarded focus recovery; employer-specific policy remains the separate deliberate P2 record EF-SUP-REFERRAL-POLICY.",
       "owner": "supporting-product",
       "prerequisite_ids": [
         "EF-GLOBAL"
@@ -2213,7 +2207,7 @@
       ],
       "section": "supporting-routes",
       "source_ledger_ids": [],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
         "npm run qualify:database",
         "npm run test:challenge-privacy",
@@ -2525,19 +2519,19 @@
       "version_or_hash": "62ca75813e9d659c2276d40194d770245dbe18c08ecba213062dc15bdb1693e9"
     },
     {
-      "approval_status": "unverified",
-      "availability": "missing",
+      "approval_status": "approved",
+      "availability": "repository-present",
       "external_record": null,
       "family_id": "EF-OPS",
       "id": "RA-LAUNCH-V1-FINISH-PLAN",
-      "notes": "The master blueprint preserves only a synthesis title and contribution; the original research artifact has not been imported or verified.",
-      "repository_path": null,
+      "notes": "Repository synthesis records the Required-family execution sequence, deterministic governance evidence, closure rules, and explicitly separate external and deferred gates.",
+      "repository_path": "docs/product-blueprint/research/governance-and-release/final-required-closure.md",
       "requirement_ids": [
         "EF-OPS"
       ],
       "title": "Engineering Foundry v1 Launch Finish Plan",
-      "verified_at": null,
-      "version_or_hash": null
+      "verified_at": "2026-09-05",
+      "version_or_hash": "545e27018a5d66ba5615c572850b86f8e139744e0994d5b72799898d827c497f"
     },
     {
       "approval_status": "unverified",
@@ -2810,7 +2804,7 @@
   ],
   "schema_version": 1,
   "scope": {
-    "phase": "bootstrap",
+    "phase": "required-closure",
     "required_family_ids": [
       "EF-AIB",
       "EF-BEH",
@@ -2849,12 +2843,5 @@
       "EF-SUP-REFERRAL-POLICY"
     ]
   },
-  "unmodeled_atomic_requirements": [
-    {
-      "id": "EF-GLOBAL-ATOMIC-COVERAGE",
-      "priority": "required",
-      "reason": "The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint.",
-      "section": "global"
-    }
-  ]
+  "unmodeled_atomic_requirements": []
 }

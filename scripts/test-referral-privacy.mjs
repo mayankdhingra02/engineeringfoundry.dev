@@ -77,11 +77,12 @@ const canonicalizationBlock = source.slice(source.indexOf("const canonicalHref =
 if (!canonicalizationBlock.includes("canonicalHref !== currentHref") || !canonicalizationBlock.includes("window.history.replaceState")) errors.push("Invalid, missing, or foreign referral queries must be guarded and canonicalized with replaceState.");
 const changeModeBlock = source.slice(source.indexOf("function changeMode"), source.indexOf("function updateRequest"));
 if (!changeModeBlock.includes("nextHref === currentHref") || !changeModeBlock.includes("window.history.pushState")) errors.push("Explicit referral mode switches must use a guarded browser-history push.");
-if (!source.includes('window.addEventListener("popstate"')) errors.push("Referral workspace must restore mode on Back and Forward navigation.");
-if (!source.includes('window.removeEventListener("popstate"')) errors.push("Referral workspace must clean up its Back and Forward listener.");
-const historyFocusBlock = source.slice(source.indexOf("function recoverModeFocusAfterHistory"), source.indexOf('window.addEventListener("popstate"'));
-for (const marker of ["previousPanel?.contains(previousFocus)", "requestAnimationFrame", "focusIsUnclaimed", "selectedModeButton?.isConnected", "selectedModeButton.focus()", "cancelAnimationFrame"]) {
+const historyFocusBlock = source.slice(source.indexOf("const previousMode = renderedModeRef.current"), source.indexOf("function changeMode"));
+for (const marker of ["lastModePanelFocusRef.current !== previousMode", "requestAnimationFrame", "focusIsUnclaimed", "settledFocusIsUnclaimed", "selectedModeButton?.isConnected", "selectedModeButton.focus()", "cancelAnimationFrame", "[mode, pathname]"]) {
   if (!historyFocusBlock.includes(marker)) errors.push(`Referral Back and Forward focus recovery is missing its ${marker} guard.`);
+}
+if (!source.includes('lastModePanelFocusRef.current = "request"') || !source.includes('lastModePanelFocusRef.current = "referrer"') || !source.includes('document.addEventListener("focusin", rememberModePanelFocus)') || !source.includes('document.removeEventListener("focusin", rememberModePanelFocus)')) {
+  errors.push("Referral history focus recovery must remember and clean up the last focused mode panel.");
 }
 if (/\btrack\(/.test(historyFocusBlock)) errors.push("Referral Back and Forward history recovery must not emit analytics.");
 for (const draftSetter of ["setRequestDraft", "setReferrerDraft", "setRequestGenerated", "setCardGenerated", "setRequestChecks", "setReviewChecks"]) {

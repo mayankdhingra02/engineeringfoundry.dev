@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-05
-repository_sha: b7f49e4da52ab92965c5af908341df846b4f41f5
-repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb44968d10ff
+repository_sha: 543fcf2707bfd07cc444d72a2b330a43bf5d9468
+repository_state_sha256: 513cc2cceee7309da960941a99d1fd68f56a8a544bbdac72a4d4460f1a87b19b
 ---
 
 # Engineering Foundry requirement coverage
@@ -13,9 +13,9 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 ## Summary
 
 - Requirements: 34
-- Sources: 100
+- Sources: 101
 - Gap inventory IDs: 18
-- Explicitly unmodeled atomic requirements: 1
+- Explicitly unmodeled atomic requirements: 0
 
 ### Modeled implementation status
 
@@ -23,9 +23,9 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 0 |
-| partial | 6 |
+| partial | 3 |
 | implemented-unverified | 0 |
-| implemented | 21 |
+| implemented | 24 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -34,7 +34,7 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 
 | Priority | Modeled | Unmodeled | Total |
 | --- | ---: | ---: | ---: |
-| required | 13 | 1 | 14 |
+| required | 13 | 0 | 13 |
 | p1 | 11 | 0 | 11 |
 | p2 | 5 | 0 | 5 |
 | requires-founder-approval | 2 | 0 | 2 |
@@ -46,19 +46,19 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 
 | Research status | Count |
 | --- | ---: |
-| approved | 16 |
+| approved | 17 |
 | approved-needs-source-import | 1 |
 | needs-current-verification | 1 |
-| needs-research | 9 |
+| needs-research | 8 |
 | not-applicable | 7 |
 
 ### Publication status
 
 | Publication status | Count |
 | --- | ---: |
-| unpublished | 9 |
+| unpublished | 8 |
 | noindex-draft | 0 |
-| published | 20 |
+| published | 21 |
 | stale-review | 5 |
 | archived | 0 |
 
@@ -66,7 +66,7 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 
 | Family | Modeled | Unmodeled | Total |
 | --- | ---: | ---: | ---: |
-| EF-GLOBAL | 2 | 1 | 3 |
+| EF-GLOBAL | 2 | 0 | 2 |
 | EF-SD | 3 | 0 | 3 |
 | EF-ML | 4 | 0 | 4 |
 | EF-DSA | 3 | 0 | 3 |
@@ -92,7 +92,6 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 | company-guides | 2 | 0 | 2 |
 | core-concepts | 1 | 0 | 1 |
 | dsa | 3 | 0 | 3 |
-| global | 0 | 1 | 1 |
 | global-platform | 1 | 0 | 1 |
 | governance-and-release | 2 | 0 | 2 |
 | interview-experiences | 1 | 0 | 1 |
@@ -121,7 +120,7 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 | EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved | stale-review | claim-recorded | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 2 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | claim-recorded | /dsa/languages | /dsa/languages/[slug] | 8 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-EXP | interview-experiences | required | implemented | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 7 | — |
-| EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 17 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
+| EF-GLOBAL | global-platform | required | implemented | not-applicable | published | not-applicable | / | — | 0 | 17 | — |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
 | EF-LLD | low-level-design | required | implemented | not-applicable | published | not-applicable | /low-level-design, /low-level-design/practice, /low-level-design/rubric | /low-level-design/lessons/[slug], /low-level-design/practice/[slug] | 0 | 5 | — |
 | EF-LLD-REHEARSAL | low-level-design | p1 | implemented | not-applicable | published | not-applicable | /low-level-design/practice, /low-level-design/rubric, /mock-interviews | /low-level-design/practice/[slug] | 0 | 2 | — |
@@ -131,7 +130,7 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 | EF-ML-ROADMAP-MAPPING | ml-design | p1 | implemented | approved | published | claim-recorded | /ml-design, /ml-design/practice | — | 3 | 2 | — |
 | EF-MOCK | mock-interviews | required | implemented | approved | published | claim-recorded | /mock-interviews | — | 3 | 6 | — |
 | EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
-| EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 10 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
+| EF-OPS | governance-and-release | required | implemented | approved | published | claim-recorded | — | — | 1 | 10 | — |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
 | EF-PLAY | interview-playbook | required | implemented | approved | published | claim-recorded | /interview-playbook, /interview-tips, /interview-tips/methodology, /interview-tips/rounds | — | 7 | 8 | — |
 | EF-PLAY-CURRICULUM-DEPTH | interview-playbook | p1 | implemented | approved | published | claim-recorded | /interview-tips, /interview-tips/methodology | — | 7 | 2 | — |
@@ -141,18 +140,13 @@ repository_state_sha256: 20fe0f7628338e48d3606049d6889cb6147d795cbce9e34f1325bb4
 | EF-SD | system-design | required | implemented | needs-research | stale-review | claim-recorded | /system-design/start-here/introduction | — | 50 | 13 | — |
 | EF-SD-PRACTICE-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | missing | — | /system-design/problems/[problemId] | 0 | 1 | — |
 | EF-SD-TOPIC-COVERAGE | system-design | p1 | implemented | needs-research | stale-review | claim-recorded | — | /system-design/[...segments] | 50 | 9 | — |
-| EF-SUP | supporting-routes | required | partial | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 12 | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
+| EF-SUP | supporting-routes | required | implemented | not-applicable | published | not-applicable | /challenges, /feedback, /prepare, /referrals, /resources | — | 0 | 12 | — |
 | EF-SUP-REFERRAL-POLICY | referrals | p2 | deferred | needs-current-verification | unpublished | missing | /referrals | — | 0 | 2 | The current local toolkit deliberately directs users to official employer rules and makes no employer-policy claims. |
 | EF-VIZ | visualization-lab | p1 | partial | approved-needs-source-import | unpublished | missing | — | — | 0 | 1 | No canonical lab route, catalog, reviewed trace set, ten integrations, or rendered performance evidence exists. |
 
 ## Required blockers
 
-| ID | Record type | Status | Gap/reason |
-| --- | --- | --- | --- |
-| EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
-| EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
-| EF-SUP | modeled | partial | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
-| EF-GLOBAL-ATOMIC-COVERAGE | unmodeled | unmodeled | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
+None.
 
 ## P1 blockers and dispositions
 
@@ -195,9 +189,9 @@ These states describe recorded provenance only; they do not claim source complet
 | Source record state | Count |
 | --- | ---: |
 | not-applicable | 7 |
-| missing | 8 |
+| missing | 7 |
 | discovery-recorded | 0 |
-| claim-recorded | 19 |
+| claim-recorded | 20 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
@@ -222,7 +216,7 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-ML-ROADMAP-MAPPING | approved | claim-recorded | SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE |
 | EF-MOCK | approved | claim-recorded | SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED, SRC-PLAY-EEOC-ACCOMMODATION |
 | EF-MOCK-PEER-FACILITATION | needs-research | missing | — |
-| EF-OPS | needs-research | missing | — |
+| EF-OPS | approved | claim-recorded | SRC-OPS-MASTER-GOAL |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | not-applicable | not-applicable | — |
 | EF-PLAY | approved | claim-recorded | SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED, SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-PLAY-EEOC-ACCOMMODATION, SRC-PLAY-MIT-PRESENTATION, SRC-PLAY-YALE-AFTER-INTERVIEW |
 | EF-PLAY-CURRICULUM-DEPTH | approved | claim-recorded | SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED, SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-PLAY-EEOC-ACCOMMODATION, SRC-PLAY-MIT-PRESENTATION, SRC-PLAY-YALE-AFTER-INTERVIEW |
@@ -238,9 +232,7 @@ These states describe recorded provenance only; they do not claim source complet
 
 ## Explicitly unmodeled atomic requirements
 
-| ID | Family | Section | Priority | Reason |
-| --- | --- | --- | --- | --- |
-| EF-GLOBAL-ATOMIC-COVERAGE | EF-GLOBAL | global | required | The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint. |
+None.
 
 ## Source records
 
@@ -288,6 +280,7 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-ML-TEST-SCORE | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING |
 | SRC-ML-TFDV | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
 | SRC-ML-YOUTUBE-REC | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
+| SRC-OPS-MASTER-GOAL | Engineering Foundry editorial inference | 2026-09-05 | EF-OPS |
 | SRC-PLAY-EEOC-ACCOMMODATION | official documentation | 2026-09-05 | EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-PLAY-MIT-PRESENTATION | first-party engineering/science | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-PLAY-YALE-AFTER-INTERVIEW | official documentation | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH |
@@ -353,19 +346,19 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Availability | Count |
 | --- | ---: |
-| missing | 7 |
-| repository-present | 23 |
+| missing | 6 |
+| repository-present | 24 |
 | external-recorded | 0 |
 
 ### Approval status
 
 | Approval status | Count |
 | --- | ---: |
-| unverified | 5 |
+| unverified | 4 |
 | approved-needs-source-import | 0 |
 | needs-current-verification | 0 |
 | requires-founder-approval | 2 |
-| approved | 23 |
+| approved | 24 |
 | excluded | 0 |
 
 | ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |
@@ -383,7 +376,7 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
 | RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | repository-present | approved | 27e1a44c62f8f0b3583c0341816d0ba5844fc0b0ca234eae8a77145f64939fd2 | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | docs/product-blueprint/research/dsa/python-java-language-guides.md | — |
 | RA-DSA-ROLE-ROADMAPS | EF-DSA | repository-present | approved | 62ca75813e9d659c2276d40194d770245dbe18c08ecba213062dc15bdb1693e9 | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS | docs/product-blueprint/research/dsa/role-roadmaps.md | — |
-| RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | missing | unverified | — | — | EF-OPS | — | — |
+| RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | repository-present | approved | 545e27018a5d66ba5615c572850b86f8e139744e0994d5b72799898d827c497f | 2026-09-05 | EF-OPS | docs/product-blueprint/research/governance-and-release/final-required-closure.md | — |
 | RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
 | RA-ML-CORE-CONCEPTS | EF-ML | repository-present | approved | 74a4688763488bcd250cdae38c3e3f27520fabc2055e52fb69ae566d14eb7320 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/core-concepts.md | — |
 | RA-ML-FINAL-SYNTHESIS | EF-ML | repository-present | approved | b366986b89a9ab6e08192f5c86680c53ad2d926536dacdd09fab070af64b0ba6 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/final-synthesis.md | — |
@@ -408,7 +401,6 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-AIB-LEARNING-STRATEGY | missing | requires-founder-approval |
 | RA-AIB-MVP-RECOMMENDATION | missing | requires-founder-approval |
 | RA-DSA-JAVASCRIPT-REQUEST | missing | unverified |
-| RA-LAUNCH-V1-FINISH-PLAN | missing | unverified |
 | RA-LOW-LEVEL-SYSTEMS | missing | unverified |
 | RA-SD-CONTENT-RESEARCH-BLUEPRINT | missing | unverified |
 | RA-SD-CURRICULUM-TOPIC-MAP | missing | unverified |

@@ -7,13 +7,13 @@
       "title": "Engineering Foundry v1 Launch Finish Plan",
       "family_id": "EF-OPS",
       "requirement_ids": ["EF-OPS"],
-      "repository_path": null,
+      "repository_path": "docs/product-blueprint/research/governance-and-release/final-required-closure.md",
       "external_record": null,
-      "version_or_hash": null,
-      "availability": "missing",
-      "approval_status": "unverified",
-      "verified_at": null,
-      "notes": "The master blueprint preserves only a synthesis title and contribution; the original research artifact has not been imported or verified."
+      "version_or_hash": "545e27018a5d66ba5615c572850b86f8e139744e0994d5b72799898d827c497f",
+      "availability": "repository-present",
+      "approval_status": "approved",
+      "verified_at": "2026-09-05",
+      "notes": "Repository synthesis records the Required-family execution sequence, deterministic governance evidence, closure rules, and explicitly separate external and deferred gates."
     },
     {
       "id": "RA-DSA-COMPETITIVE-RESEARCH",
