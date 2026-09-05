@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Braces, CheckCircle2, ChevronRight, ListChecks, Menu, Route, X } from "lucide-react";
+import { BookOpen, Braces, CheckCircle2, ChevronRight, ClipboardCheck, ListChecks, Menu, Route, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DSACurriculumNode } from "@/data/dsa/curriculum";
@@ -76,6 +76,7 @@ export function DSASidebar({ curriculum, completedPageSlugs = [] }: { curriculum
       { label: "Practice", href: "/dsa/questions", icon: ListChecks },
       { label: "Roadmap", href: "/dsa/roadmap", icon: Route },
       { label: "Review", href: "/dsa/languages", icon: BookOpen },
+      { label: "Playbook", href: "/interview-playbook", icon: ClipboardCheck },
     ] as const;
     return <div className="dsa-learning-jobs" aria-label="DSA workspace jobs">{jobs.map(({ label, href, icon: Icon }) => <Link href={href} key={href} onClick={() => setDrawerOpen(false)}><Icon size={14} aria-hidden="true" />{label}</Link>)}</div>;
   }

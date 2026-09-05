@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Braces, Building2, CalendarRange, Compass, ListChecks, Map, Menu, Route, X } from "lucide-react";
+import { BookOpen, Braces, Building2, CalendarRange, ClipboardCheck, Compass, ListChecks, Map, Menu, Route, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
 import { useModalDrawer } from "@/hooks/use-modal-drawer";
@@ -57,9 +57,9 @@ export function DSAWorkspaceSidebar() {
     <aside className="dsa-workspace-sidebar" aria-label="Coding interview workspace navigation">
       <Link className="dsa-workspace-brand" href="/dsa" aria-current={pathname === "/dsa" ? "page" : undefined}><span><Braces size={16} />Coding Interviews</span><small>DSA workspace home</small></Link>
       <WorkspaceNavigation pathname={pathname} onNavigate={() => setDrawerOpen(false)} />
-      <p>Interview-focused practice, not a from-scratch algorithms course.</p>
+      <div className="dsa-workspace-return"><Link href="/interview-playbook"><ClipboardCheck size={15} aria-hidden="true" />Return to Interview Playbook</Link><p>Interview-focused practice, not a from-scratch algorithms course.</p></div>
     </aside>
     <button ref={triggerRef} type="button" className="dsa-workspace-trigger" aria-haspopup="dialog" aria-expanded={drawerOpen} onClick={() => setDrawerOpen(true)}><Menu size={17} />DSA: Practice · Roadmap · Review</button>
-    {drawerOpen && <div className="dsa-workspace-backdrop"><button type="button" className="dsa-workspace-dismiss" aria-label="Close coding interview navigation" onClick={() => setDrawerOpen(false)} /><aside ref={drawerRef} className="dsa-workspace-drawer" role="dialog" aria-modal="true" aria-label="Coding interview workspace navigation"><div className="dsa-workspace-drawer-heading"><span><Braces size={16} />Coding Interviews</span><button type="button" aria-label="Close coding interview navigation" onClick={() => setDrawerOpen(false)}><X size={18} /></button></div><WorkspaceNavigation pathname={pathname} onNavigate={() => setDrawerOpen(false)} /></aside></div>}
+    {drawerOpen && <div className="dsa-workspace-backdrop"><button type="button" className="dsa-workspace-dismiss" aria-label="Close coding interview navigation" onClick={() => setDrawerOpen(false)} /><aside ref={drawerRef} className="dsa-workspace-drawer" role="dialog" aria-modal="true" aria-label="Coding interview workspace navigation"><div className="dsa-workspace-drawer-heading"><span><Braces size={16} />Coding Interviews</span><button type="button" aria-label="Close coding interview navigation" onClick={() => setDrawerOpen(false)}><X size={18} /></button></div><WorkspaceNavigation pathname={pathname} onNavigate={() => setDrawerOpen(false)} /><Link className="dsa-workspace-drawer-return" href="/interview-playbook" onClick={() => setDrawerOpen(false)}><ClipboardCheck size={15} aria-hidden="true" />Return to Interview Playbook</Link></aside></div>}
   </>;
 }

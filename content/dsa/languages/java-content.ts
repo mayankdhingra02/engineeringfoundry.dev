@@ -5,6 +5,14 @@ export const javaLanguageGuide: LanguageGuideData = {
   name: "Java",
   label: "Java for Coding Interviews",
   description: "Collections, syntax, and implementation patterns worth remembering before a DSA interview.",
+  runtimeNote: "Portable Java 17+ subset; the representative fixture compiles in CI with Temurin 25. Reviewed against Java SE 25 LTS specifications and APIs.",
+  reviewedAt: "September 5, 2026",
+  sources: [
+    { id: "SRC-DSA-JAVA-JLS", label: "Java Language Specification 25", url: "https://docs.oracle.com/javase/specs/jls/se25/html/", supports: "Primitive/reference values, equality, numeric promotion, strings, arrays, generics, and language semantics." },
+    { id: "SRC-DSA-JAVA-UTIL", label: "Java SE 25 java.util", url: "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/package-summary.html", supports: "Collections Framework, comparators, maps, sets, deques, and priority queues." },
+    { id: "SRC-DSA-JAVA-ARRAYDEQUE", label: "Java SE 25 ArrayDeque", url: "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ArrayDeque.html", supports: "Stack/queue operations, null restrictions, and amortized operation guarantees." },
+    { id: "SRC-DSA-JAVA-PRIORITYQUEUE", label: "Java SE 25 PriorityQueue", url: "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/PriorityQueue.html", supports: "Heap ordering, head semantics, comparator behavior, and operation costs." },
+  ],
   quickReference: [
     { title: "Arrays and lists", code: `int[] nums = new int[n];
 int[][] grid = new int[rows][cols];
@@ -449,6 +457,27 @@ static long rangeSum(long[] prefix, int left, int right) {
     }
     return visited;
 }` },
+  ],
+  debuggingChecklist: [
+    "Restate the invariant and trace the smallest failing input before editing the implementation.",
+    "Check primitive versus reference equality, nullable wrappers, and every equals/hashCode assumption used by maps or sets.",
+    "Promote operands to long before arithmetic that may overflow int; avoid subtraction comparators.",
+    "Verify array, String, and collection length APIs and the chosen closed or half-open interval convention.",
+    "Test empty, singleton, duplicate, overflow, Unicode, and deep traversal cases; choose an explicit stack when depth is unbounded.",
+  ],
+  interviewerTopics: [
+    "Why == and equals answer different questions for references and how hashCode must agree with equals.",
+    "Why ArrayDeque is normally preferable to legacy Stack and which operations reject null.",
+    "How PriorityQueue chooses its head and how to build an overflow-safe comparator.",
+    "Where boxing, unboxing, generic collections, and nullable lookup results create runtime cost or risk.",
+    "When int is insufficient and why casting after an overflowing operation is too late.",
+  ],
+  exercises: [
+    { kind: "predict", title: "Reference or value equality", prompt: "Predict the results of new String(\"x\") == new String(\"x\") and the corresponding equals call.", answerCheck: "The reference comparison is false for the two distinct objects; equals is true because String defines content equality." },
+    { kind: "trace", title: "Trace queue discovery", prompt: "Trace an ArrayDeque BFS from A to neighbors B and C when both point to D. Mark visited at insertion time.", answerCheck: "D is offered once: mark it visited when B offers it so C cannot add a duplicate queue entry." },
+    { kind: "repair", title: "Repair the comparator", prompt: "Replace (a, b) -> a.score - b.score and explain the failure it avoids.", answerCheck: "Use Comparator.comparingInt or Integer.compare(a.score, b.score); subtraction can overflow and violate comparator ordering." },
+    { kind: "choose", title: "Choose a collection", prompt: "Choose ArrayList, HashSet, HashMap, ArrayDeque, TreeMap, or PriorityQueue for indexed access, membership, FIFO, ordered keys, and next priority.", answerCheck: "ArrayList, HashSet, ArrayDeque, TreeMap, and PriorityQueue respectively; HashMap is for key/value lookup without sorted-key requirements." },
+    { kind: "transfer", title: "Unlabeled transfer", prompt: "Maintain the next three tasks by smallest deadline, breaking ties by insertion order. State the queue element and comparator.", answerCheck: "Store a record/object with deadline and sequence; compare first with Long.compare on deadline, then Long.compare on sequence." },
   ],
   mistakes: [
     { title: "Comparing strings with ==", explanation: "== compares references. Use equals for String content." },
