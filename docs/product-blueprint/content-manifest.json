@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "a61cbee1ea875818eebac679f3741a262c826afb",
-  "repository_state_sha256": "e4a3bb45645cce62845fc062b65a5e8601ce32ebfd5574adb633d49b35578ab2",
+  "repository_sha": "fc7806b8c0e5d9dfb252f6b453443f48d9a04cac",
+  "repository_state_sha256": "69fcdc5048d209dc4679cb6e94c3bc29da8b44ab336ddf09fda88319f04a7f63",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1605,6 +1605,7 @@
         "content/system-design",
         "content/system-design/production-engineering",
         "data/system-design/manifest.ts",
+        "data/system-design/topic-crosswalk.ts",
         "features/preparation-progress/actions.ts",
         "features/system-design",
         "lib/supabase/database.types.ts",
@@ -1616,18 +1617,22 @@
         "scripts/qualify-persistence-local.mjs",
         "scripts/qualify-security-local.mjs",
         "scripts/smoke-public-routes.mjs",
+        "scripts/test-canonical-catalog-integrity.mjs",
         "scripts/test-public-route-smoke.mjs",
         "scripts/test-system-design-production-engineering.mjs",
         "scripts/test-system-design-study-plan.mjs",
+        "scripts/test-system-design-topic-crosswalk.mjs",
         "scripts/test-system-design-workspace.mjs",
         "scripts/test-unified-progress.mjs",
         "supabase/migrations/202609030006_save_system_design_item_progress_if_revision.sql",
         "supabase/migrations/202609040010_delete_system_design_attempt_if_revision.sql",
+        "supabase/migrations/202609040015_publish_system_design_production_engineering.sql",
         "supabase/tests/database/preparation_activity_import.test.sql",
         "supabase/tests/database/system_design_workspace.test.sql"
       ],
       "content_paths": [
         "docs/system-design-content-inventory.json",
+        "docs/system-design-content-research-blueprint.md",
         "docs/system-design-final-audit.md",
         "docs/system-design-practice-workspace.md"
       ],
@@ -1636,7 +1641,7 @@
       "kind": "requirement-family",
       "known_gaps": [
         "164 of 178 topics are published; 14 architecture-pattern topics remain unpublished.",
-        "The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk."
+        "The reviewed crosswalk identifies ten blueprint-only outcomes that still require publication or an explicit merged disposition."
       ],
       "last_verified_at": "2026-09-04",
       "notes": "All 15 Required practice designs in Section 6.5 have published walkthroughs; 12 additional P1 designs are also published and 33 optional P1/P2 ideas remain honest unpublished backlog. Do not delete or invent topics to reconcile the 161-to-178 mismatch.",
@@ -1656,16 +1661,38 @@
         "/system-design/start-here/introduction"
       ],
       "section": "system-design",
-      "source_ledger_ids": [],
+      "source_ledger_ids": [
+        "SRC-SD-GOOGLE-ALERTING",
+        "SRC-SD-GOOGLE-SLO",
+        "SRC-SD-NIST-KEY-MANAGEMENT",
+        "SRC-SD-NIST-ZERO-TRUST",
+        "SRC-SD-OIDC-CORE",
+        "SRC-SD-OTEL-LOGS",
+        "SRC-SD-OTEL-OVERVIEW",
+        "SRC-SD-OWASP-API-SECURITY",
+        "SRC-SD-OWASP-AUTHORIZATION",
+        "SRC-SD-OWASP-DOS",
+        "SRC-SD-OWASP-MULTI-TENANT",
+        "SRC-SD-OWASP-SECRETS",
+        "SRC-SD-OWASP-SESSION",
+        "SRC-SD-RFC-6749",
+        "SRC-SD-RFC-6750",
+        "SRC-SD-RFC-7519",
+        "SRC-SD-RFC-7636",
+        "SRC-SD-RFC-8725",
+        "SRC-SD-RFC-9846"
+      ],
       "status": "partial",
       "test_commands": [
         "npm run qualify:database",
+        "npm run test:canonical-catalog-integrity",
         "npm run test:public-route-smoke",
         "npm run test:system-design-manifest",
         "npm run test:system-design-practice",
         "npm run test:system-design-production-engineering",
         "npm run test:system-design-release-audit",
         "npm run test:system-design-study-plan",
+        "npm run test:system-design-topic-crosswalk",
         "npm run test:system-design-workspace",
         "npm run test:unified-progress"
       ],
@@ -1721,10 +1748,16 @@
         "app/system-design/[...segments]/page.tsx",
         "content/system-design/production-engineering",
         "data/system-design/manifest.ts",
-        "scripts/test-system-design-production-engineering.mjs"
+        "data/system-design/topic-crosswalk.ts",
+        "scripts/test-canonical-catalog-integrity.mjs",
+        "scripts/test-system-design-production-engineering.mjs",
+        "scripts/test-system-design-topic-crosswalk.mjs",
+        "supabase/migrations/202609040015_publish_system_design_production_engineering.sql",
+        "supabase/tests/database/system_design_workspace.test.sql"
       ],
       "content_paths": [
-        "docs/system-design-content-inventory.json"
+        "docs/system-design-content-inventory.json",
+        "docs/system-design-content-research-blueprint.md"
       ],
       "gap_inventory_ids": [
         "EF-SD-TOPIC-COVERAGE"
@@ -1733,10 +1766,10 @@
       "kind": "content-gap",
       "known_gaps": [
         "14 of 178 repository topics remain unpublished; all are in the architecture-patterns family.",
-        "The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking."
+        "Ten blueprint rows have no repository lesson and remain explicit blueprint-only outcomes."
       ],
       "last_verified_at": "2026-09-04",
-      "notes": null,
+      "notes": "The numeric mismatch is reconciled: 161 unique blueprint rows map to all 178 repository topics through exact, split, merged, repository-only, or blueprint-only dispositions. Publication gaps remain owned by EF-SD and do not reopen taxonomy reconciliation.",
       "owner": "system-design",
       "prerequisite_ids": [
         "EF-SD"
@@ -1753,12 +1786,36 @@
       ],
       "routes": [],
       "section": "system-design",
-      "source_ledger_ids": [],
+      "source_ledger_ids": [
+        "SRC-SD-GOOGLE-ALERTING",
+        "SRC-SD-GOOGLE-SLO",
+        "SRC-SD-NIST-KEY-MANAGEMENT",
+        "SRC-SD-NIST-ZERO-TRUST",
+        "SRC-SD-OIDC-CORE",
+        "SRC-SD-OTEL-LOGS",
+        "SRC-SD-OTEL-OVERVIEW",
+        "SRC-SD-OWASP-API-SECURITY",
+        "SRC-SD-OWASP-AUTHORIZATION",
+        "SRC-SD-OWASP-DOS",
+        "SRC-SD-OWASP-MULTI-TENANT",
+        "SRC-SD-OWASP-SECRETS",
+        "SRC-SD-OWASP-SESSION",
+        "SRC-SD-RFC-6749",
+        "SRC-SD-RFC-6750",
+        "SRC-SD-RFC-7519",
+        "SRC-SD-RFC-7636",
+        "SRC-SD-RFC-8725",
+        "SRC-SD-RFC-9846"
+      ],
       "status": "partial",
       "test_commands": [
+        "npm run qualify:database",
+        "npm run test:canonical-catalog-integrity",
         "npm run test:system-design-manifest",
         "npm run test:system-design-production-engineering",
-        "npm run test:system-design-release-audit"
+        "npm run test:system-design-release-audit",
+        "npm run test:system-design-topic-crosswalk",
+        "npm run test:system-design-workspace"
       ],
       "title": "System Design topic coverage",
       "visual_ids": []
