@@ -1,7 +1,7 @@
 import { activeChallenges } from "@/data/challenges";
 import { companies } from "@/data/companies";
 import { behavioralCategories, behavioralSearchQuestions } from "@/data/behavioral";
-import { activeQuestions, dsaPatterns, dsaTopics } from "@/data/dsa";
+import { activeQuestions, dsaPatterns, dsaTopics, questionsForPattern } from "@/data/dsa";
 import { dsaCurriculumPages } from "@/data/dsa/curriculum";
 import { dsaCompanies } from "@/data/dsa/interview-prep";
 import { dsaLanguages } from "@/data/dsa/languages";
@@ -56,7 +56,7 @@ export const suggestedGlobalSearchItems: readonly GlobalSearchItem[] = [
 export const globalSearchItems: readonly GlobalSearchItem[] = [
   ...activeQuestions.map((question) => ({ title: question.title, type: `Question · ${question.source.name}`, href: `/dsa/questions?q=${encodeURIComponent(question.title)}` })),
   ...dsaTopics.map((topic) => ({ title: topic.name, type: "Topic", href: `/dsa/${topic.slug}` })),
-  ...dsaPatterns.map((pattern) => ({ title: pattern.name, type: "Pattern", href: `/dsa/questions?q=${encodeURIComponent(pattern.slug)}` })),
+  ...dsaPatterns.map((pattern) => ({ title: pattern.name, type: `Pattern · ${questionsForPattern(pattern.slug).length} questions`, href: `/dsa/patterns/${pattern.slug}` })),
   ...dsaCurriculumPages.filter((page) => page.status === "published").map((page) => ({ title: page.navigationTitle ?? page.title, type: `DSA guide · ${page.category}`, href: page.slug! })),
   ...dsaCompanies.map((company) => ({ title: `${company.name} coding interview questions`, type: "DSA company index · demo tags", href: `/dsa/companies/${company.slug}` })),
   ...dsaLanguages.filter((language) => language.status === "published").map((language) => ({ title: `DSA in ${language.name}`, type: "DSA language guide", href: `/dsa/languages/${language.slug}` })),

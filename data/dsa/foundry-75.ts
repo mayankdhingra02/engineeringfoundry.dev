@@ -260,7 +260,7 @@ const topicByRoadmapTag: Record<string, string[]> = {
   greedy: ["greedy"],
   "basic-dynamic-programming": ["dynamic-programming"],
   "topological-sort": ["graphs", "topological-ordering"],
-  "optional-shortest-path": ["graphs", "shortest-paths"],
+  "optional-shortest-path": ["graphs", "shortest-paths-weighted-graphs"],
 };
 
 function canonicalPattern(pattern: string): string[] {
@@ -284,6 +284,15 @@ function canonicalPattern(pattern: string): string[] {
   return ["frequency-map"];
 }
 
+function requiredTopicOverlays(slug: string, title: string, patterns: readonly string[], topics: readonly string[]) {
+  const next = new Set(topics);
+  if (patterns.includes("topological-sort")) next.add("topological-ordering");
+  if (patterns.includes("union-find")) next.add("union-find");
+  if (/matrix|grid|island|flood fill|rotting oranges/i.test(`${slug} ${title}`)) next.add("matrix-grid-traversal");
+  if (slug === "network-delay-time") next.add("shortest-paths-weighted-graphs");
+  return [...next];
+}
+
 function normalizeExisting(question: DsaQuestion): Foundry75Question {
   const patterns = question.patterns.length
     ? question.patterns
@@ -293,6 +302,7 @@ function normalizeExisting(question: DsaQuestion): Foundry75Question {
   if (!profile) throw new Error(`${question.slug} has no Foundry 75 practice profile for ${primaryPattern}.`);
   return {
     ...question,
+    topics: requiredTopicOverlays(question.slug, question.title, patterns, question.topics),
     patterns,
     catalogVersion: FOUNDRY_75_VERSION,
     sourceClass: question.isOriginal ? "engineering-foundry-original" : "external-reference",
@@ -323,7 +333,8 @@ function normalizeAddition(id: (typeof foundry75AdditionIds)[number]): Foundry75
   if (!problem?.url || !problem.difficulty || !problem.whyItMatters) throw new Error(`Foundry 75 addition ${id} lacks required public metadata.`);
   const patterns = canonicalPattern(problem.pattern);
   const profile = patternProfiles[patterns[0]];
-  const topics = [...new Set((problem.topicTags ?? []).flatMap((tag) => topicByRoadmapTag[tag] ?? []))];
+  const baseTopics = [...new Set((problem.topicTags ?? []).flatMap((tag) => topicByRoadmapTag[tag] ?? []))];
+  const topics = requiredTopicOverlays(id, problem.title, patterns, baseTopics);
   if (!topics.length) throw new Error(`Foundry 75 addition ${id} lacks a canonical topic mapping.`);
   return {
     id: `lc-${id}`,
