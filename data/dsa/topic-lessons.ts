@@ -160,13 +160,10 @@ const details: Record<string, TopicLessonFields | DsaTopicLesson> = {
 
 const baseTopics = topicData as DsaTopic[];
 
-export const dsaTopicLessons: DsaTopicLesson[] = [
-  ...baseTopics.map((topic) => ({ ...topic, ...details[topic.slug] })),
-  details["topological-ordering"],
-  details["union-find"],
-  details["matrix-grid-traversal"],
-  details["shortest-paths-weighted-graphs"],
-] as DsaTopicLesson[];
+export const dsaTopicLessons: DsaTopicLesson[] = baseTopics.map((topic) => ({
+  ...topic,
+  ...details[topic.slug],
+})) as DsaTopicLesson[];
 
 if (dsaTopicLessons.length !== 20 || new Set(dsaTopicLessons.map((topic) => topic.slug)).size !== 20) {
   throw new Error("The Required DSA topic catalog must contain exactly 20 unique topics.");
