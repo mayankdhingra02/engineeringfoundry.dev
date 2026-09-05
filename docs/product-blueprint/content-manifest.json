@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "55db1387046ae7e40bb1712b66c003f29f3feeac",
-  "repository_state_sha256": "5c5b79da3b2936bbfac6e63b5b3fc331e960af568d16f577bb73ba60a59ff66f",
+  "repository_sha": "fda62b7c5403486aacbc6c9a0214d03f8ace6eab",
+  "repository_state_sha256": "5d6185d06518b41df1c74e25ec05704040d8b3cf6dd9bae2dfa47e7667f5cbe9",
   "requirements": [
     {
       "acceptance_criteria": [
