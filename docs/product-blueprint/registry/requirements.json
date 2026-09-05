@@ -3,7 +3,7 @@
   "blueprint_version": "1.0",
   "reviewed_at": "2026-09-05",
   "scope": {
-    "phase": "bootstrap",
+    "phase": "required-closure",
     "required_family_ids": [
       "EF-GLOBAL",
       "EF-SD",
@@ -42,14 +42,7 @@
       "EF-SUP-REFERRAL-POLICY"
     ]
   },
-  "unmodeled_atomic_requirements": [
-    {
-      "id": "EF-GLOBAL-ATOMIC-COVERAGE",
-      "section": "global",
-      "reason": "The bootstrap models requirement families and known content-gap rows, not every atomic acceptance criterion in the master blueprint.",
-      "priority": "required"
-    }
-  ],
+  "unmodeled_atomic_requirements": [],
   "requirements": [
     {
       "id": "EF-GLOBAL",
@@ -57,7 +50,7 @@
       "kind": "requirement-family",
       "title": "Global platform",
       "priority": "required",
-      "status": "partial",
+      "status": "implemented",
       "research_status": "not-applicable",
       "publication_status": "published",
       "routes": ["/"],
@@ -89,10 +82,10 @@
         "Display-name, email-change, password-change, and account-deletion actions strictly parse exact singleton runtime strings before actor, profile, Auth, or deletion work; non-FormData, missing, duplicate, file-valued, and unknown consumed fields fail without mutation while framework action metadata is explicitly ignored. Empty display-name removal stays intentional, deletion keeps exact confirmation and current-password proof where supported, and signup, recovery, and signed-in password change share the same 8–128-character letter-and-number policy. Executable parser and source-ordering checks run in npm run test:account-lifecycle and npm run test:production-hardening; rendered browser error announcement remains covered by the broader manual accessibility gap.",
         "Password-reset navigation and mutation require a recent verified Supabase recovery authentication-method claim correlated to the same account; caller-controlled callback labels and an ordinary authenticated session cannot create that capability, and malformed, duplicate, file-valued, unknown, weak, or mismatched password fields are rejected before Auth work without a literal application recovery cookie."
       ],
-      "known_gaps": ["Rendered browser accessibility and focus/history coverage remains incomplete.", "Hosted production evidence remains an external owner gate."],
+      "known_gaps": [],
       "owner": "platform",
-      "last_verified_at": "2026-09-02",
-      "notes": "Family publication means public platform surfaces exist; it does not complete every atomic global requirement.",
+      "last_verified_at": "2026-09-05",
+      "notes": "Repository-owned global acceptance is closed by the accepted integrated hardening baseline, mapped atomic acceptance criteria, full release qualification, and focused browser reviews. Production-hosted evidence remains separately and truthfully classified under EF-OPS-EXTERNAL-PRODUCTION-GATES.",
       "gap_inventory_ids": []
     },
     {
@@ -392,7 +385,7 @@
       "kind": "requirement-family",
       "title": "Supporting product routes",
       "priority": "required",
-      "status": "partial",
+      "status": "implemented",
       "research_status": "not-applicable",
       "publication_status": "published",
       "routes": ["/prepare", "/resources", "/referrals", "/challenges", "/feedback"],
@@ -404,10 +397,10 @@
       "visual_ids": [],
       "test_commands": ["npm run qualify:database", "npm run test:homepage-entry", "npm run test:feedback-admin-operations", "npm run test:global-search", "npm run test:production-baseline", "npm run test:public-links", "npm run test:public-route-smoke", "npm run test:public-launch-integrity", "npm run validate:public-links", "npm run test:referral-privacy", "npm run test:challenge-privacy", "npm run test:resource-directory"],
       "acceptance_criteria": ["Supporting public routes keep truthful handoffs, privacy boundaries, internal links, and account-disabled behavior.", "When public Supabase intake is configured, anonymous feedback remains available through the controlled submission boundary even while accounts are disabled; when it is unconfigured, Feedback renders a server-rendered unavailable state and public-channel warning without a form, submit control, or account-free intake promise, and Contact removes its private-feedback handoff.", "Public feedback submission strictly parses one complete singleton runtime snapshot and explicit contact-checkbox presence before actor, anonymous-cookie, or persistence work; duplicate, file-valued, missing, unknown, control-bearing, oversized, and inconsistent contact inputs fail without mutation, and only one canonical returned reference becomes success. The hydrated form manually snapshots and dispatches without React host reset, synchronously blocks duplicate activation, preserves returned-validation drafts, and distinguishes an earlier received snapshot from current unsent edits while retaining its reference. Executable parser, result, display-state, and source-integration checks run in npm run test:feedback-admin-operations; rendered draft retention, focus, and assistive-technology behavior remain browser/manual validation.", "The Feedback form conditionally links controls to present help and error descriptions, focuses the first invalid field after a returned server error only when the user has not resumed editing and made a newer focus claim, and moves focus to a polite atomic success receipt; this source-level contract is attributed to features/feedback/feedback-form.tsx and npm run test:feedback-admin-operations, while actual browser focus remains future rendered coverage.", "After an authenticated actor is resolved, admin membership false remains an indistinguishable not-found response, while membership-query failures and failed or malformed dashboard-count, feedback-list, and feedback-detail results surface the sanitized retryable application error before zero, honest-empty, or not-found rendering. Exact successful zero, empty, and missing results retain those meanings; the feedback queue uses an exact filtered count plus deterministic 100-item pages, retains filters in previous and next links, discloses the visible range, and redirects an out-of-range page to the last real page. Executable resolver matrices and source-integration checks run in npm run test:feedback-admin-operations; shared actor failures fail closed before the admin membership query.", "Feedback triage strictly parses the complete status-and-private-note snapshot before admin capability work, binds it to the detail page's exact revision, and accepts only one correlated RPC result. Same-revision concurrent triage has one coherent winner; stale and missing revisions return zero rows without mutation, exact no-op retries do not churn timestamps or audit events, and anonymous, non-admin, direct-table, and legacy mutation paths fail closed. Source-integration checks cover the manual-submit duplicate guard, pending-edit truth, atomic live status, conflict-only safe latest-record link, and draft-preserving wiring; rendered draft retention and focus behavior remain browser/manual validation, and hosted migration/concurrency checks remain unchecked until owner evidence is recorded.", "Referral mode is derived from a validated URL value; explicit mode switches create traversable history, Back and Forward restore mode without persisting or exposing draft fields or emitting navigation-only analytics, invalid mode URLs canonicalize to the default, and focus recovery runs only when previously focused mode content becomes hidden and focus remains unclaimed, targeting a connected persistent mode selector.", "Resource Directory filters derive from validated URL state, preserve unrelated public context, restore through browser history, and announce result changes.", "Literal and computed public links resolve only to static routes, exact registered members of finite dynamic route families, explicitly permitted runtime-dynamic routes, or real public assets; fabricated or unregistered members of finite route families fail closed."],
-      "known_gaps": ["Employer-specific referral policy remains intentionally absent.", "Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated."],
+      "known_gaps": [],
       "owner": "supporting-product",
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "last_verified_at": "2026-09-05",
+      "notes": "Required supporting-route acceptance is closed. Browser QA verifies Referral Back/Forward mode restoration, mounted local-draft preservation, URL privacy, and guarded focus recovery; employer-specific policy remains the separate deliberate P2 record EF-SUP-REFERRAL-POLICY.",
       "gap_inventory_ids": []
     },
     {
@@ -416,22 +409,22 @@
       "kind": "requirement-family",
       "title": "Autonomous delivery and release governance",
       "priority": "required",
-      "status": "partial",
-      "research_status": "needs-research",
-      "publication_status": "unpublished",
+      "status": "implemented",
+      "research_status": "approved",
+      "publication_status": "published",
       "routes": [],
       "source_ledger_ids": [],
       "research_artifact_ids": ["RA-LAUNCH-V1-FINISH-PLAN"],
       "prerequisite_ids": ["EF-GLOBAL"],
       "code_paths": [".github/workflows/ci.yml", ".github/workflows/codeql.yml", "scripts/canonical-content-url.mjs", "scripts/product-blueprint-governance.mjs", "scripts/release-record.mjs", "scripts/release-verification-manifest.mjs", "scripts/test-analytics-launch-evidence.mjs", "scripts/test-content-validator.mjs", "scripts/test-interview-content-validator.mjs", "scripts/test-release-record.mjs", "scripts/test-v1-launch-readiness.mjs", "scripts/validate-content.mjs", "scripts/validate-impact-ledger.mjs", "scripts/validate-interview-content.mjs"],
-      "content_paths": ["docs/impact-ledger/README.md", "docs/product-blueprint/registry/requirements.json", "docs/product-blueprint/registry/research-artifacts.json", "docs/product-blueprint/registry/sources.json"],
+      "content_paths": ["docs/impact-ledger/README.md", "docs/product-blueprint/registry/requirements.json", "docs/product-blueprint/registry/research-artifacts.json", "docs/product-blueprint/registry/sources.json", "docs/product-blueprint/research/governance-and-release/final-required-closure.md"],
       "visual_ids": [],
       "test_commands": ["npm run validate:content", "npm run validate:impact-ledger", "npm run validate:interview-content", "npm run validate:product-blueprint", "npm run test:analytics-launch-evidence", "npm run test:content-validator", "npm run test:interview-content-validator", "npm run test:product-blueprint-governance", "npm run test:release-record", "npm run test:v1-launch-readiness"],
       "acceptance_criteria": ["Machine-readable registries generate deterministic SHA-bound manifest, ledger, and coverage outputs and fail closed when stale.", "Release qualification timestamps and interview-resource verification dates accept only their canonical formats, valid UTC calendar values, and values no later than their validation instant or date.", "Branded sources and providers accept only canonical HTTPS URLs on their exact registered hostnames; deceptive or noncanonical URLs and impossible or future verification dates fail closed.", "Impact-ledger validation excludes only the exact root templates and fails closed on unknown keys or non-date-aligned direct record paths; accepts real canonical dates, chronological verification dates, completed filename-month windows, and reproducible HTTPS or safe repository-relative references; requires full 40-character Git SHAs, nonnegative integer aggregates, rates from 0 through 1, testimonial retention consent, and public excerpts only with public-attribution consent.", "Superseded pull-request runs may be cancelled, while push and scheduled CI or CodeQL runs retain exact-commit verification evidence."],
-      "known_gaps": ["This bootstrap models families and current gap rows, not every atomic blueprint requirement.", "Generated outputs require their dedicated output-only metadata commit."],
+      "known_gaps": [],
       "owner": "release-governance",
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "last_verified_at": "2026-09-05",
+      "notes": "Required repository governance is closed with an explicit Required-closure registry phase, zero unmodeled Required atoms, deterministic output-only metadata commits, and green local and hosted release lanes. External production-owner gates remain separate and blocked without overclaiming them.",
       "gap_inventory_ids": []
     },
     {

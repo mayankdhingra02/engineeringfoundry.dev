@@ -161,6 +161,7 @@ export function ReferralWorkspace() {
   const referrerPanelRef = useRef<HTMLDivElement>(null);
   const renderedModeRef = useRef<ReferralMode>(mode);
   const renderedPathnameRef = useRef(pathname);
+  const lastModePanelFocusRef = useRef<ReferralMode | null>(null);
   const pendingHistoryFocusFrame = useRef<number | null>(null);
   const opened = useRef(false);
 
@@ -181,54 +182,65 @@ export function ReferralWorkspace() {
   }, [mode]);
 
   useEffect(() => {
+    const previousMode = renderedModeRef.current;
+    const previousPathname = renderedPathnameRef.current;
     renderedModeRef.current = mode;
     renderedPathnameRef.current = pathname;
+
+    if (pathname !== previousPathname || mode === previousMode || lastModePanelFocusRef.current !== previousMode) return;
+
+    const previousPanel = previousMode === "request" ? requestPanelRef.current : referrerPanelRef.current;
+    if (!previousPanel) return;
+
+    const activeElement = document.activeElement;
+    const focusIsUnclaimed = !(activeElement instanceof HTMLElement)
+      || activeElement === document.body
+      || activeElement === document.documentElement
+      || !activeElement.isConnected
+      || previousPanel.contains(activeElement);
+    if (!focusIsUnclaimed) return;
+
+    pendingHistoryFocusFrame.current = window.requestAnimationFrame(() => {
+      pendingHistoryFocusFrame.current = null;
+      if (renderedPathnameRef.current !== pathname || renderedModeRef.current !== mode) return;
+
+      const settledActiveElement = document.activeElement;
+      const settledFocusIsUnclaimed = !(settledActiveElement instanceof HTMLElement)
+        || settledActiveElement === document.body
+        || settledActiveElement === document.documentElement
+        || !settledActiveElement.isConnected
+        || previousPanel.contains(settledActiveElement);
+      if (!settledFocusIsUnclaimed) return;
+
+      const selectedModeButton = mode === "request" ? requestModeButtonRef.current : referrerModeButtonRef.current;
+      if (selectedModeButton?.isConnected) selectedModeButton.focus();
+    });
+
+    return () => {
+      if (pendingHistoryFocusFrame.current !== null) {
+        window.cancelAnimationFrame(pendingHistoryFocusFrame.current);
+        pendingHistoryFocusFrame.current = null;
+      }
+    };
   }, [mode, pathname]);
 
   useEffect(() => {
-    function recoverModeFocusAfterHistory() {
-      const previousMode = renderedModeRef.current;
-      const previousPathname = renderedPathnameRef.current;
-      const nextMode = parseReferralMode(window.location.search);
-
-      if (window.location.pathname !== previousPathname || nextMode === previousMode) return;
-
-      const previousPanel = previousMode === "request" ? requestPanelRef.current : referrerPanelRef.current;
-      const previousFocus = document.activeElement;
-      if (!(previousFocus instanceof HTMLElement) || !previousPanel?.contains(previousFocus)) return;
-
-      if (pendingHistoryFocusFrame.current !== null) {
-        window.cancelAnimationFrame(pendingHistoryFocusFrame.current);
+    function rememberModePanelFocus(event: FocusEvent) {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        lastModePanelFocusRef.current = null;
+      } else if (requestPanelRef.current?.contains(target)) {
+        lastModePanelFocusRef.current = "request";
+      } else if (referrerPanelRef.current?.contains(target)) {
+        lastModePanelFocusRef.current = "referrer";
+      } else if (target.matches('a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])')) {
+        lastModePanelFocusRef.current = null;
       }
-
-      pendingHistoryFocusFrame.current = window.requestAnimationFrame(() => {
-        pendingHistoryFocusFrame.current = null;
-        const settledMode = parseReferralMode(window.location.search);
-        if (window.location.pathname !== previousPathname || settledMode === previousMode) return;
-
-        const activeElement = document.activeElement;
-        const focusIsUnclaimed = !(activeElement instanceof HTMLElement)
-          || activeElement === document.body
-          || activeElement === document.documentElement
-          || !activeElement.isConnected
-          || activeElement === previousFocus
-          || previousPanel.contains(activeElement);
-        if (!focusIsUnclaimed) return;
-
-        const selectedModeButton = settledMode === "request" ? requestModeButtonRef.current : referrerModeButtonRef.current;
-        if (!selectedModeButton?.isConnected) return;
-        selectedModeButton.focus();
-      });
     }
 
-    window.addEventListener("popstate", recoverModeFocusAfterHistory);
-    // Guarded focus recovery only runs for an actual same-route mode change.
+    document.addEventListener("focusin", rememberModePanelFocus);
     return () => {
-      window.removeEventListener("popstate", recoverModeFocusAfterHistory);
-      if (pendingHistoryFocusFrame.current !== null) {
-        window.cancelAnimationFrame(pendingHistoryFocusFrame.current);
-        pendingHistoryFocusFrame.current = null;
-      }
+      document.removeEventListener("focusin", rememberModePanelFocus);
     };
   }, []);
 

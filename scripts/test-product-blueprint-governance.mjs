@@ -353,6 +353,18 @@ try {
   {
     const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
     const registry = requirementsRegistry();
+    registry.scope.phase = "required-closure";
+    registry.unmodeled_atomic_requirements = [];
+    write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
+    const closure = commit(fixture.cwd, "test: close required registry scope");
+    const generated = buildGovernanceArtifacts(fixture.cwd, closure);
+    assert.equal(generated.model.scope.phase, "required-closure", "The governed registry must preserve the Required-closure phase.");
+    assert.deepEqual(generated.model.unmodeled, [], "A completed Required registry may truthfully contain no unmodeled atomic requirements.");
+  }
+
+  {
+    const fixture = createFixture(); fixtureDirectories.push(fixture.cwd);
+    const registry = requirementsRegistry();
     registry.requirements.find((item) => item.id === "EF-SD").prerequisite_ids = ["EF-ML"];
     registry.requirements.find((item) => item.id === "EF-ML").prerequisite_ids = ["EF-SD"];
     write(fixture.cwd, REQUIREMENTS_REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`);
