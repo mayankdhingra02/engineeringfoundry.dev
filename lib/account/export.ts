@@ -3,7 +3,7 @@ import "server-only";
 import type { AuthenticatedActor } from "@/lib/auth/actor";
 import { collectAccountExportRows } from "./export-pagination";
 
-const EXPORT_VERSION = "1.5";
+const EXPORT_VERSION = "1.6";
 
 function unwrap<T>(result: { data: T | null; error: { message: string } | null }, section: string): T {
   if (result.error) throw new Error(`Account export query failed: ${section}`);
@@ -12,7 +12,7 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 
 export async function buildAccountExport(actor: AuthenticatedActor) {
   const userId = actor.user.id;
-  const [profileResult, preparationPreferencesResult, interviewPreferencesResult, playbookDiagnosticSettingsResult, applications, interviewRounds, interviewPreparations, interviewPreparationTasks, customQuestions, stories, storyThemes, storyQuestionLinks, answers, savedQuestions, dsaProgress, dsaQuestionProgress, systemDesignProgress, systemDesignItemProgress, systemDesignAttempts, trackActivityProgress, reminders, calendarExports, playbookConfidence, playbookPriorities, playbookConstraints, mockSessions, mockRatings, experienceRecords, experienceRounds, feedbackSubmissions] = await Promise.all([
+  const [profileResult, preparationPreferencesResult, interviewPreferencesResult, playbookDiagnosticSettingsResult, applications, interviewRounds, interviewPreparations, interviewPreparationTasks, customQuestions, stories, storyThemes, storyQuestionLinks, answers, savedQuestions, dsaProgress, dsaQuestionProgress, dsaPracticeAttempts, systemDesignProgress, systemDesignItemProgress, systemDesignAttempts, trackActivityProgress, reminders, calendarExports, playbookConfidence, playbookPriorities, playbookConstraints, mockSessions, mockRatings, experienceRecords, experienceRounds, feedbackSubmissions] = await Promise.all([
     actor.supabase.from("profiles").select("username,display_name,bio,current_company,current_role,years_experience,linkedin_url,github_url,avatar_url,is_public,onboarding_complete,onboarding_completed_at,created_at,updated_at").eq("id", userId).maybeSingle(),
     actor.supabase.from("user_preparation_preferences").select("dsa_level,dsa_plan_id,dsa_company_slug,dsa_preferred_language_slug,dsa_interview_date,system_design_level,system_design_preparation_window,system_design_role,system_design_minutes_per_day,preferred_role_level,primary_preparation_focus,created_at,updated_at").eq("user_id", userId).maybeSingle(),
     actor.supabase.from("interview_reminder_preferences").select("preferred_timezone,in_app_enabled,prep_3_days_enabled,interview_1_day_enabled,interview_1_hour_enabled,email_enabled,created_at,updated_at").eq("user_id", userId).maybeSingle(),
@@ -29,6 +29,7 @@ export async function buildAccountExport(actor: AuthenticatedActor) {
     collectAccountExportRows("behavioral_saved_questions", (from, to) => actor.supabase.from("behavioral_saved_questions").select("id,custom_question_id,curated_question_id,created_at").eq("user_id", userId).order("created_at").order("id").range(from, to)),
     collectAccountExportRows("dsa_progress", (from, to) => actor.supabase.from("dsa_progress").select("item_kind,item_id,status,created_at,updated_at").eq("user_id", userId).order("created_at").order("item_kind").order("item_id").range(from, to)),
     collectAccountExportRows("dsa_question_progress", (from, to) => actor.supabase.from("dsa_question_progress").select("question_id,status,confidence,bookmarked,notes,first_attempted_at,last_practiced_at,solved_at,created_at,updated_at").eq("user_id", userId).order("created_at").order("question_id").range(from, to)),
+    collectAccountExportRows("dsa_practice_attempts", (from, to) => actor.supabase.from("dsa_practice_attempts").select("id,question_id,catalog_version,title,status,mode,duration_minutes,prior_exposure,elapsed_seconds,review_reason,document,revision,completed_at,created_at,updated_at").eq("user_id", userId).order("created_at").order("id").range(from, to)),
     collectAccountExportRows("system_design_progress", (from, to) => actor.supabase.from("system_design_progress").select("item_kind,item_id,status,completed_at,last_interacted_at,created_at,updated_at").eq("user_id", userId).order("created_at").order("item_kind").order("item_id").range(from, to)),
     collectAccountExportRows("system_design_item_progress", (from, to) => actor.supabase.from("system_design_item_progress").select("item_id,item_type,status,confidence,bookmarked,notes,first_reviewed_at,last_practiced_at,created_at,updated_at").eq("user_id", userId).order("created_at").order("item_type").order("item_id").range(from, to)),
     collectAccountExportRows("system_design_attempts", (from, to) => actor.supabase.from("system_design_attempts").select("id,problem_id,application_id,title,status,confidence,document,revision,first_practiced_at,last_practiced_at,created_at,updated_at").eq("user_id", userId).order("created_at").order("id").range(from, to)),
@@ -83,6 +84,7 @@ export async function buildAccountExport(actor: AuthenticatedActor) {
     dsa: {
       roadmap_progress: dsaProgress,
       question_progress: dsaQuestionProgress,
+      practice_attempts: dsaPracticeAttempts,
     },
     system_design: {
       learning_progress: systemDesignProgress,

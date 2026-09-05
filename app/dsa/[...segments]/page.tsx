@@ -33,8 +33,10 @@ import { PatternLesson } from "@/features/dsa/pattern-lesson";
 import { TopicLesson } from "@/features/dsa/topic-lesson";
 import { createPageMetadata } from "@/lib/metadata";
 import { buildDsaStaticParams } from "@/lib/public-route-inventory";
+import { getDsaPracticeAttemptSummaries } from "@/lib/dsa/practice-queries";
+import { dsaPracticeModes, type DsaPracticeMode } from "@/lib/dsa/practice-attempt";
 
-type PageProps = { params: Promise<{ segments: string[] }>; searchParams: Promise<{ application?: string; company?: string }> };
+type PageProps = { params: Promise<{ segments: string[] }>; searchParams: Promise<{ application?: string; company?: string; mode?: string }> };
 
 export const dynamicParams = false;
 
@@ -149,15 +151,16 @@ function PatternDetailPage({ slug }: { slug: string }) {
 
 async function PracticeRoute({ searchParams, libraryOnly }: { searchParams: PageProps["searchParams"]; libraryOnly: boolean }) {
   const query = await searchParams;
-  const state = await getDsaWorkspaceState(query.application);
-  return <PracticeWorkspace {...state} libraryOnly={libraryOnly} />;
+  const [state, attempts] = await Promise.all([getDsaWorkspaceState(query.application), getDsaPracticeAttemptSummaries()]);
+  return <PracticeWorkspace {...state} attempts={attempts} libraryOnly={libraryOnly} />;
 }
 
 async function QuestionDetailRoute({ questionId, searchParams }: { questionId: string; searchParams: PageProps["searchParams"] }) {
   const question = getCanonicalDsaQuestion(questionId); if (!question?.inQuestionBrowser) notFound();
   const query = await searchParams;
   const state = await getDsaWorkspaceState(query.application);
-  return <DsaQuestionDetail question={question} signedIn={state.signedIn} progress={state.progress} applicationId={state.application?.id} companySlug={state.application?.company_slug ?? query.company} accountPlatformAvailable={state.accountPlatformAvailable} />;
+  const practiceMode = dsaPracticeModes.includes(query.mode as DsaPracticeMode) ? query.mode as DsaPracticeMode : "untimed";
+  return <DsaQuestionDetail question={question} signedIn={state.signedIn} progress={state.progress} applicationId={state.application?.id} companySlug={state.application?.company_slug ?? query.company} accountPlatformAvailable={state.accountPlatformAvailable} practiceMode={practiceMode} />;
 }
 
 async function TopicPage({ slug }: { slug: string }) {

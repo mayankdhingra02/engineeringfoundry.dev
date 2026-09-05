@@ -562,7 +562,7 @@ check("the page passes the coherent aggregate revision into the form", pageSourc
 // =====================================================================
 // 8. Account export
 // =====================================================================
-check("EXPORT_VERSION is current at 1.5", exportSource.includes('const EXPORT_VERSION = "1.5"'));
+check("EXPORT_VERSION is current at 1.6", exportSource.includes('const EXPORT_VERSION = "1.6"'));
 check("export gains a top-level interview_playbook section", exportSource.includes("interview_playbook: {"));
 for (const subsection of ["diagnostic_settings", "confidence", "priorities", "constraints"]) {
   check(`interview_playbook export includes ${subsection}`, new RegExp(`interview_playbook: \\{[\\s\\S]{0,400}${subsection}`).test(exportSource));
