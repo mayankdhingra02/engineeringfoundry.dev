@@ -85,7 +85,7 @@ Never run a destructive reset against a hosted project. `supabase db reset` is l
 1. [ ] `supabase link --project-ref <production-ref>`
 2. [ ] `supabase db diff --linked` — **inspect the diff before applying**; an unexpected drop or rename stops the release
 3. [ ] `supabase db push` — applies migrations in filename order
-4. [ ] `supabase migration list --linked` — confirm all 53 migrations are recorded, ending at `202609050001_create_dsa_practice_attempts`
+4. [ ] `supabase migration list --linked` — confirm all 54 migrations are recorded, ending at `202609050002_record_mock_session_conditions`
 5. [ ] Spot-check that grants, RLS policies, and function definitions match `docs/auth-security.md`, `docs/authenticated-workspace.md`, and `docs/unified-preparation-progress.md`, including `preparation_track_progress` and owner-scoped active-plan preferences
 6. [ ] Confirm every owner-scoped table reports `rowsecurity = true`:
    ```sql
@@ -293,6 +293,8 @@ Before deploying the Required System Design closure lesson family, apply `202609
 Before enabling saved ML Design attempts, apply `202609040018_create_ml_design_attempts.sql`. With two disposable owners, confirm create/read isolation, exact-revision save and delete behavior, denial of direct writes, and denial of anonymous RPC execution; keep hosted verification unchecked until dated evidence exists. Public tab-only practice remains available before migration, and a code rollback retains private attempts without data loss.
 
 Before enabling signed-in DSA practice worksheets, apply `202609050001_create_dsa_practice_attempts.sql`. With two disposable owners, confirm create/read isolation, exact-revision save behavior, server-derived review reasons, denial of direct writes, and denial of anonymous RPC execution; keep hosted verification unchecked until dated evidence exists. Anonymous timers remain available before migration, and a code rollback retains private attempts without data loss.
+
+Before enabling condition-aware Mock review saves, apply `202609050002_record_mock_session_conditions.sql`. With two disposable owners, confirm all five canonical tracks save through the new RPC; exposure, timing, hint policy, assistance, outcome, and required interruption/failure reason persist; configured conditions cannot change on resave; direct writes and anonymous execution remain denied; and the retired RPC signature is absent. Keep hosted verification unchecked until dated evidence exists. Public browser-only practice remains available before migration, and a code rollback retains the additive private condition data without loss.
 
 ---
 
