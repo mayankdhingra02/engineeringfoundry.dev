@@ -1,10 +1,105 @@
 {
   "blueprint_version": "1.0",
   "generated_or_reviewed_at": "2026-09-05",
-  "repository_sha": "b459bb85c503db71905533308fdca6ddc30e517a",
-  "repository_state_sha256": "da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e690919429469ed3a85c",
+  "repository_sha": "456a58d0068700cd429cf59c4b3d1c8145583622",
+  "repository_state_sha256": "eca31151863439a5121b2045a92ba793cb30d9535bbc16bbf2c0ed895c9a48d7",
   "schema_version": 1,
   "sources": [
+    {
+      "applies_to": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "claims_supported": [
+        "BEH-COMPANY-MODIFIER-EXAMPLE"
+      ],
+      "id": "SRC-BEH-AMAZON-INTERVIEW",
+      "notes": "Used to demonstrate a sourced company modifier while canonical story facts remain unchanged.",
+      "published_at": null,
+      "publisher": "Amazon Jobs",
+      "source_class": "official company hiring/candidate",
+      "title": "Interview loop preparation",
+      "url": "https://www.amazon.jobs/content/en-gb/how-we-hire/interview-loop",
+      "usage_limits": "First-party example of company-specific behavioral-question and STAR preparation guidance only; no universal process, exact-question, frequency, hidden-policy, or outcome claim.",
+      "verified_at": "2026-09-05",
+      "volatility": "volatile"
+    },
+    {
+      "applies_to": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "claims_supported": [
+        "BEH-JOB-RELATED-BOUNDARY"
+      ],
+      "id": "SRC-BEH-EEOC-SELECTION",
+      "notes": "Primary boundary source for excluding personality folklore and unsupported inference.",
+      "published_at": null,
+      "publisher": "U.S. Equal Employment Opportunity Commission",
+      "source_class": "official documentation",
+      "title": "Questions and Answers to Clarify and Provide a Common Interpretation of the Uniform Guidelines on Employee Selection Procedures",
+      "url": "https://www.eeoc.gov/laws/guidance/questions-and-answers-clarify-and-provide-common-interpretation-uniform-guidelines",
+      "usage_limits": "Supports the boundary that selection procedures should remain job-related and validated; it is not legal advice and does not validate Engineering Foundry as an employer selection test.",
+      "verified_at": "2026-09-05",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "claims_supported": [
+        "BEH-ROLE-RELATIVE-EVIDENCE"
+      ],
+      "id": "SRC-BEH-GOVUK-SUCCESS",
+      "notes": "Primary framework source for separating evidence types and contextual scope.",
+      "published_at": null,
+      "publisher": "UK Cabinet Office",
+      "source_class": "official documentation",
+      "title": "Success Profiles",
+      "url": "https://www.gov.uk/government/publications/success-profiles",
+      "usage_limits": "Supports role-relative behaviors, experience, and technical evidence; framework-specific terminology is not generalized to all employers.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "claims_supported": [
+        "BEH-PROBES-AND-ANCHORS"
+      ],
+      "id": "SRC-BEH-OPM-GUIDE",
+      "notes": "Primary guidance for descriptive probe and rubric design.",
+      "published_at": null,
+      "publisher": "U.S. Office of Personnel Management",
+      "source_class": "official documentation",
+      "title": "Structured Interview Guide",
+      "url": "https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/guide/",
+      "usage_limits": "Supports behavioral examples, proficiency boundaries, follow-up probes, and evidence-based anchors; Engineering Foundry remains a preparation product, not a selection procedure.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-BEH",
+        "EF-BEH-CURRICULUM-DEPTH"
+      ],
+      "claims_supported": [
+        "BEH-STRUCTURED-EVIDENCE"
+      ],
+      "id": "SRC-BEH-OPM-STRUCTURED",
+      "notes": "Primary public guidance used for the evidence-first curriculum boundary.",
+      "published_at": null,
+      "publisher": "U.S. Office of Personnel Management",
+      "source_class": "official documentation",
+      "title": "Structured Interviews",
+      "url": "https://www.opm.gov/policy-data-oversight/assessment-and-selection/structured-interviews/",
+      "usage_limits": "Supports job-related competencies, consistent questions, and common evaluation standards; it does not establish one universal employer process.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
     {
       "applies_to": [
         "EF-COMP",
