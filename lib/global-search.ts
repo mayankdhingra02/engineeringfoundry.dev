@@ -51,6 +51,7 @@ export const suggestedGlobalSearchItems: readonly GlobalSearchItem[] = [
   { title: "System Design practice library", type: "System Design practice", href: "/system-design/problems" },
   { title: "Low-Level Design curriculum", type: "Low-Level Design", href: "/low-level-design" },
   { title: "Low-Level Design practice library", type: "Low-Level Design practice", href: "/low-level-design/practice" },
+  { title: "Low-Level Design self-review rubric", type: "Low-Level Design", href: "/low-level-design/rubric" },
   { title: "Salary Negotiation toolkit", type: "Career tool", href: "/salary-negotiation" },
   { title: "Company interview guides", type: "Company preparation", href: "/companies" },
 ];
