@@ -6,6 +6,7 @@ import {
 
 export const INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT = 20;
 export const INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT = 100;
+const INTERVIEW_EXPERIENCE_MAX_PAGE = 100_000;
 
 const OWNER_STATUSES = new Set<unknown>([
   "draft",
@@ -81,6 +82,9 @@ export type OwnedInterviewExperienceHistory =
       status: "ready";
       items: readonly OwnedInterviewExperience[];
       limit: typeof INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT;
+      page: number;
+      totalCount: number;
+      totalPages: number;
     }>
   | Readonly<{ status: "unavailable" }>;
 
@@ -93,6 +97,9 @@ export type AdminInterviewExperienceQueue =
       status: "ready";
       items: readonly AdminInterviewExperience[];
       limit: typeof INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT;
+      page: number;
+      totalCount: number;
+      totalPages: number;
     }>
   | Readonly<{ status: "unavailable" }>;
 
@@ -202,16 +209,42 @@ function parseRounds(
   return [...parsed].sort((left, right) => left.position - right.position);
 }
 
-function hasSuccessfulArrayResult(value: unknown, limit: number) {
-  return (
-    isPlainRecord(value) &&
-    hasExactKeys(value, ["data", "error"]) &&
-    Object.hasOwn(value, "data") &&
-    Object.hasOwn(value, "error") &&
-    value.error === null &&
-    Array.isArray(value.data) &&
-    value.data.length <= limit
-  );
+export function resolveInterviewExperiencePage(value: unknown): number {
+  if (value === undefined) return 1;
+  if (typeof value !== "string" || !/^[1-9]\d*$/.test(value)) return 1;
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page <= INTERVIEW_EXPERIENCE_MAX_PAGE
+    ? page
+    : 1;
+}
+
+function resolvePaginatedRows(
+  value: unknown,
+  page: number,
+  limit: number,
+): Readonly<{ data: unknown[]; totalCount: number; totalPages: number }> | null {
+  if (
+    !isPlainRecord(value) ||
+    !hasExactKeys(value, ["data", "error", "count"]) ||
+    value.error !== null ||
+    !Array.isArray(value.data) ||
+    !Number.isSafeInteger(value.count) ||
+    (value.count as number) < 0 ||
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    page > INTERVIEW_EXPERIENCE_MAX_PAGE
+  ) {
+    return null;
+  }
+  const totalCount = value.count as number;
+  const offset = (page - 1) * limit;
+  const expectedLength = Math.min(limit, Math.max(totalCount - offset, 0));
+  if (value.data.length !== expectedLength) return null;
+  return {
+    data: value.data,
+    totalCount,
+    totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+  };
 }
 
 function parseOwnerRow(value: unknown): OwnedInterviewExperience | null {
@@ -334,30 +367,52 @@ function parseAdminRow(value: unknown): AdminInterviewExperience | null {
 
 export function resolveOwnedInterviewExperienceHistory(
   result: unknown,
+  page = 1,
 ): OwnedInterviewExperienceHistory {
-  if (!hasSuccessfulArrayResult(result, INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT)) {
+  const resolved = resolvePaginatedRows(
+    result,
+    page,
+    INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT,
+  );
+  if (!resolved) return { status: "unavailable" };
+  const rows = resolved.data.map(parseOwnerRow);
+  if (rows.some((row) => row === null)) return { status: "unavailable" };
+  const items = rows as OwnedInterviewExperience[];
+  if (new Set(items.map((item) => item.id)).size !== items.length) {
     return { status: "unavailable" };
   }
-  const rows = (result as { data: unknown[] }).data.map(parseOwnerRow);
-  if (rows.some((row) => row === null)) return { status: "unavailable" };
   return {
     status: "ready",
-    items: rows as OwnedInterviewExperience[],
+    items,
     limit: INTERVIEW_EXPERIENCE_OWNER_HISTORY_LIMIT,
+    page,
+    totalCount: resolved.totalCount,
+    totalPages: resolved.totalPages,
   };
 }
 
 export function resolveAdminInterviewExperienceQueue(
   result: unknown,
+  page = 1,
 ): AdminInterviewExperienceQueue {
-  if (!hasSuccessfulArrayResult(result, INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT)) {
+  const resolved = resolvePaginatedRows(
+    result,
+    page,
+    INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT,
+  );
+  if (!resolved) return { status: "unavailable" };
+  const rows = resolved.data.map(parseAdminRow);
+  if (rows.some((row) => row === null)) return { status: "unavailable" };
+  const items = rows as AdminInterviewExperience[];
+  if (new Set(items.map((item) => item.id)).size !== items.length) {
     return { status: "unavailable" };
   }
-  const rows = (result as { data: unknown[] }).data.map(parseAdminRow);
-  if (rows.some((row) => row === null)) return { status: "unavailable" };
   return {
     status: "ready",
-    items: rows as AdminInterviewExperience[],
+    items,
     limit: INTERVIEW_EXPERIENCE_ADMIN_QUEUE_LIMIT,
+    page,
+    totalCount: resolved.totalCount,
+    totalPages: resolved.totalPages,
   };
 }

@@ -16,7 +16,7 @@ An approved report may be withdrawn. The schema reserves an archived lifecycle v
 
 An Interview Experience save is one owner-derived aggregate operation: the parent report, its bounded round context, and the requested draft-or-submitted state commit together. Existing reports carry the exact loaded `updated_at` revision. A stale, missing, foreign, or lifecycle-ineligible target does not overwrite the current aggregate and is reported as a conflict. Withdraw, delete, and moderation decisions use the same revision boundary, so an older screen cannot silently replace a newer contributor or moderator decision.
 
-The contribution UI distinguishes the submitted snapshot from edits made while its request is pending. A confirmed earlier snapshot must not clear or claim to include newer local edits. Query failures for the bounded recent private-history list are distinct from a genuinely empty list. The route does not claim that its bounded recent list is a complete paginated archive; broader owner-history pagination remains future work.
+The contribution UI distinguishes the submitted snapshot from edits made while its request is pending. A confirmed earlier snapshot must not clear or claim to include newer local edits. Query failures for private contributor history and the moderation queue are distinct from genuinely empty results. Both views use exact counts, stable ordering, and server-side pages, so older private reports and moderation work remain reachable without claiming that the first page is the complete result set.
 
 ## Data and analytics boundaries
 

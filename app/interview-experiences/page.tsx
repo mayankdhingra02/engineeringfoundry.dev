@@ -6,19 +6,28 @@ import { isAccountPlatformAvailable } from "@/lib/account-platform";
 import { createPageMetadata } from "@/lib/metadata";
 import { getAuthenticatedActorState } from "@/lib/auth/actor";
 import { getOwnedInterviewExperienceHistory } from "@/lib/interview-experiences/queries";
+import { resolveInterviewExperiencePage } from "@/lib/interview-experiences/private-state";
 import { listPublicInterviewExperiences } from "@/lib/supabase/public";
 
 export const metadata = createPageMetadata({ title: "Interview Experiences", description: "Read reviewed, contributor-submitted interview process reports and learn how privacy-conscious reports are moderated before publication.", path: "/interview-experiences" });
 export const dynamic = "force-dynamic";
 
-export default async function InterviewExperiencesPage() {
+type Search = { submissions_page?: string | string[] };
+
+export default async function InterviewExperiencesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Search>;
+}) {
+  const search = await searchParams;
+  const ownerPage = resolveInterviewExperiencePage(search.submissions_page);
   const accountPlatformAvailable = isAccountPlatformAvailable();
   const actorState = accountPlatformAvailable
     ? await getAuthenticatedActorState()
     : { state: "anonymous" as const };
   const publicResult = await listPublicInterviewExperiences();
   const ownerState = actorState.state === "authenticated"
-    ? await getOwnedInterviewExperienceHistory(actorState.actor)
+    ? await getOwnedInterviewExperienceHistory(actorState.actor, ownerPage)
     : actorState.state === "unavailable"
       ? { status: "unavailable" as const }
       : { status: "anonymous" as const };

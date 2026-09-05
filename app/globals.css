@@ -3564,6 +3564,9 @@ button.flow-card { cursor: pointer; }
 .experience-owned strong, .experience-owned span { display: block; }
 .experience-owned span { margin-top: 3px; color: var(--muted); font-size: var(--type-meta); text-transform: capitalize; }
 .experience-owned p { margin: 5px 0 0; color: var(--text-secondary); font-size: var(--type-small); }
+.experience-owned .experience-directory-empty .button { margin-top: 14px; }
+.experience-pagination { margin-top: 14px; padding-top: 14px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--line); }
+.experience-pagination > span { margin: 0; color: var(--muted); font-size: var(--type-meta); text-transform: none; }
 .experience-future-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
 .experience-future-grid article { min-width: 0; min-height: 170px; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .experience-future-grid svg { color: var(--green); }
@@ -3608,6 +3611,7 @@ button.flow-card { cursor: pointer; }
   .experience-directory-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .experience-preview dl { grid-template-columns: 1fr; }
   .experience-directory-entry > header, .experience-submission-intro, .experience-owned li { align-items: flex-start; flex-direction: column; }
+  .experience-pagination { justify-content: space-between; }
   .experience-field-grid .form-group.full { grid-column: auto; }
   .experience-builder-header, .experience-community-note { align-items: stretch; flex-direction: column; }
   .experience-builder-header .button, .experience-community-note .button { align-self: flex-start; }
