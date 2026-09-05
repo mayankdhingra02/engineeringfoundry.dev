@@ -254,7 +254,7 @@
       "source_ledger_ids": ["SRC-COMP-AMAZON-OFFICIAL", "SRC-COMP-ANTHROPIC-OFFICIAL", "SRC-COMP-ATLASSIAN-OFFICIAL", "SRC-COMP-GOOGLE-OFFICIAL", "SRC-COMP-META-OFFICIAL", "SRC-COMP-MICROSOFT-OFFICIAL", "SRC-COMP-NVIDIA-OFFICIAL", "SRC-COMP-OPENAI-OFFICIAL", "SRC-COMP-UBER-OFFICIAL", "SRC-COMP-WALMART-OFFICIAL"],
       "research_artifact_ids": ["RA-BEH-COMPANY-GUIDES", "RA-COMP-PRIORITY-COMPANIES"],
       "prerequisite_ids": ["EF-GLOBAL"],
-      "code_paths": ["app/admin/company-freshness/page.tsx", "app/admin/page.tsx", "app/companies", "app/globals.css", "data/company-guides/v1.ts", "features/company-guides/company-guide-v1.tsx", "lib/admin/operations.ts", "lib/company-guides/freshness.ts", "scripts/test-company-guides.mjs", "scripts/test-feedback-admin-operations.mjs"],
+      "code_paths": ["app/admin/company-freshness/page.tsx", "app/admin/page.tsx", "app/companies", "app/globals.css", "data/company-guides/v1.ts", "features/company-guides/company-guide-v1.tsx", "lib/admin/operations.ts", "lib/company-guides/freshness.ts", "scripts/test-company-guides.mjs", "scripts/test-feedback-admin-operations.mjs", "scripts/test-low-level-design.mjs"],
       "content_paths": ["docs/product-blueprint/research/company-guides/priority-company-guides.md"],
       "visual_ids": [],
       "test_commands": ["npm run test:company-guides", "npm run test:company-interview-guide"],
