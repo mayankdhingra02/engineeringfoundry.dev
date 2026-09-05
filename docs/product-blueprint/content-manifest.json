@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
-  "generated_or_reviewed_at": "2026-09-02",
-  "repository_sha": "8e2bee151395197103445a5c6316ff546291a880",
-  "repository_state_sha256": "e42b4b1ea3f1c677069e7bfb6a74283583d3f6b0a75d18ea95c6a3e1b0b6a5a4",
+  "generated_or_reviewed_at": "2026-09-04",
+  "repository_sha": "a61cbee1ea875818eebac679f3741a262c826afb",
+  "repository_state_sha256": "e4a3bb45645cce62845fc062b65a5e8601ce32ebfd5574adb633d49b35578ab2",
   "requirements": [
     {
       "acceptance_criteria": [
@@ -1603,6 +1603,7 @@
         "components/system-design-practice-library.tsx",
         "components/system-design-sidebar.tsx",
         "content/system-design",
+        "content/system-design/production-engineering",
         "data/system-design/manifest.ts",
         "features/preparation-progress/actions.ts",
         "features/system-design",
@@ -1616,6 +1617,7 @@
         "scripts/qualify-security-local.mjs",
         "scripts/smoke-public-routes.mjs",
         "scripts/test-public-route-smoke.mjs",
+        "scripts/test-system-design-production-engineering.mjs",
         "scripts/test-system-design-study-plan.mjs",
         "scripts/test-system-design-workspace.mjs",
         "scripts/test-unified-progress.mjs",
@@ -1633,12 +1635,11 @@
       "id": "EF-SD",
       "kind": "requirement-family",
       "known_gaps": [
-        "146 of 178 topics are published; 32 remain unpublished.",
-        "27 of 60 practice walkthroughs are published; 33 remain unpublished.",
+        "164 of 178 topics are published; 14 architecture-pattern topics remain unpublished.",
         "The blueprint target of 161 rows and repository manifest of 178 topics require a reviewed crosswalk."
       ],
-      "last_verified_at": "2026-09-02",
-      "notes": "Do not delete or invent topics to reconcile the 161-to-178 mismatch.",
+      "last_verified_at": "2026-09-04",
+      "notes": "All 15 Required practice designs in Section 6.5 have published walkthroughs; 12 additional P1 designs are also published and 33 optional P1/P2 ideas remain honest unpublished backlog. Do not delete or invent topics to reconcile the 161-to-178 mismatch.",
       "owner": "system-design",
       "prerequisite_ids": [
         "EF-GLOBAL"
@@ -1662,6 +1663,7 @@
         "npm run test:public-route-smoke",
         "npm run test:system-design-manifest",
         "npm run test:system-design-practice",
+        "npm run test:system-design-production-engineering",
         "npm run test:system-design-release-audit",
         "npm run test:system-design-study-plan",
         "npm run test:system-design-workspace",
@@ -1672,7 +1674,7 @@
     },
     {
       "acceptance_criteria": [
-        "Each practice record publishes only after its reviewed brief, walkthrough, assumptions, and trade-offs pass validation."
+        "Each Required practice record publishes only after its reviewed brief, walkthrough, assumptions, and trade-offs pass validation."
       ],
       "code_paths": [
         "content/system-design/problems",
@@ -1684,11 +1686,9 @@
       ],
       "id": "EF-SD-PRACTICE-COVERAGE",
       "kind": "content-gap",
-      "known_gaps": [
-        "27 of 60 walkthroughs are published; 33 remain researched and unpublished."
-      ],
-      "last_verified_at": "2026-09-02",
-      "notes": null,
+      "known_gaps": [],
+      "last_verified_at": "2026-09-04",
+      "notes": "All 15 Required designs from master blueprint Section 6.5 are published and validated. Twelve additional P1 designs are published; 33 optional P1/P2 manifest records remain an explicit non-blocking backlog.",
       "owner": "system-design",
       "prerequisite_ids": [
         "EF-SD"
@@ -1706,11 +1706,11 @@
       "routes": [],
       "section": "system-design",
       "source_ledger_ids": [],
-      "status": "partial",
+      "status": "implemented",
       "test_commands": [
         "npm run test:system-design-practice"
       ],
-      "title": "System Design practice coverage",
+      "title": "Required System Design practice coverage",
       "visual_ids": []
     },
     {
@@ -1719,7 +1719,9 @@
       ],
       "code_paths": [
         "app/system-design/[...segments]/page.tsx",
-        "data/system-design/manifest.ts"
+        "content/system-design/production-engineering",
+        "data/system-design/manifest.ts",
+        "scripts/test-system-design-production-engineering.mjs"
       ],
       "content_paths": [
         "docs/system-design-content-inventory.json"
@@ -1730,10 +1732,10 @@
       "id": "EF-SD-TOPIC-COVERAGE",
       "kind": "content-gap",
       "known_gaps": [
-        "32 of 178 repository topics remain unpublished.",
+        "14 of 178 repository topics remain unpublished; all are in the architecture-patterns family.",
         "The blueprint's 161-row target and repository's 178-topic manifest differ by 17 before semantic crosswalking."
       ],
-      "last_verified_at": "2026-09-02",
+      "last_verified_at": "2026-09-04",
       "notes": null,
       "owner": "system-design",
       "prerequisite_ids": [
@@ -1755,6 +1757,7 @@
       "status": "partial",
       "test_commands": [
         "npm run test:system-design-manifest",
+        "npm run test:system-design-production-engineering",
         "npm run test:system-design-release-audit"
       ],
       "title": "System Design topic coverage",
