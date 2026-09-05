@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CheckCircle2, Clock3, Eye, Pause, Play, RotateCcw, ShieldCheck } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { MlDesignProblem } from "@/types";
 import { mlDesignFramework, mlRubric, mlRubricBands } from "@/data/ml-design/reference";
 import { ML_DESIGN_PROBLEMS_ROOT } from "@/lib/ml-design-routes";
@@ -35,7 +35,7 @@ function formatTime(seconds: number) {
   return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
 }
 
-export function MlDesignPracticeWorkspace({ problem, accountPlatformAvailable }: { problem: MlDesignProblem; accountPlatformAvailable: boolean }) {
+export function MlDesignPracticeWorkspace({ problem, accountPlatformAvailable, privateAttempts }: { problem: MlDesignProblem; accountPlatformAvailable: boolean; privateAttempts?: ReactNode }) {
   const [mode, setMode] = useState<Mode>("guided");
   const [revealed, setRevealed] = useState(0);
   const [duration, setDuration] = useState(45);
@@ -93,6 +93,7 @@ export function MlDesignPracticeWorkspace({ problem, accountPlatformAvailable }:
   return <>
     <section className="ml-problem-brief" aria-labelledby="problem-brief-title"><h2 id="problem-brief-title">Interview prompt</h2><blockquote>{problem.prompt}</blockquote><dl><div><dt>Decision unit</dt><dd>{problem.decisionUnit}</dd></div><div><dt>Level</dt><dd>{problem.difficulty}</dd></div><div><dt>Family</dt><dd>{problem.family}</dd></div><div><dt>Domains</dt><dd>{problem.domains.join(" · ")}</dd></div></dl></section>
     <MlDesignFlow visual={problem.visual} />
+    {privateAttempts}
 
     <section className="ml-practice-workspace" aria-labelledby="practice-title">
       <div className="ml-practice-heading"><div><h2 id="practice-title">Work the problem</h2><p>Choose the amount of structure you want. This draft stays only in this tab; refreshing discards it.</p></div><PreparationActivityControl track="ml-design" itemId={problem.id} noun="practice" accountPlatformAvailable={accountPlatformAvailable} /></div>
