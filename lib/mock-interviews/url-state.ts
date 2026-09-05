@@ -1,7 +1,7 @@
 import { plansForMockTrack } from "@/data/mock-interviews";
 import type { MockPracticeMode, MockTrack } from "@/types";
 
-export const mockInterviewTracks: readonly MockTrack[] = ["dsa", "system-design", "ml-design", "behavioral"];
+export const mockInterviewTracks: readonly MockTrack[] = ["dsa", "system-design", "low-level-design", "ml-design", "behavioral"];
 const mockInterviewModes: readonly MockPracticeMode[] = ["solo", "peer"];
 const ownedKeys = ["track", "problem", "mode"] as const;
 

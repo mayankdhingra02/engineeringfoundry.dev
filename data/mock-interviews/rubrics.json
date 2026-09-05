@@ -26,6 +26,20 @@
     ]
   },
   {
+    "id": "rubric-low-level-design", "track": "low-level-design", "title": "Low-Level Design reasoning practice rubric",
+    "disclaimer": "An Engineering Foundry self-review aid—not an employer scoring system or hiring prediction.",
+    "dimensions": [
+      { "id": "clarification", "label": "Scope and use cases", "description": "Clarifies actors, the primary behavior, constraints, and deliberate non-goals." },
+      { "id": "modeling", "label": "Domain modeling", "description": "Chooses concepts with meaningful identity, state, or behavior without modeling every noun." },
+      { "id": "responsibilities", "label": "Responsibilities", "description": "Gives decisions, state changes, and side effects clear owners." },
+      { "id": "contracts", "label": "Interfaces and contracts", "description": "Defines operations, results, and collaboration boundaries that preserve encapsulation." },
+      { "id": "invariants", "label": "State and invariants", "description": "Makes lifecycle, legal transitions, and failure behavior explicit." },
+      { "id": "evolution", "label": "Evolution and testability", "description": "Handles a follow-up change and identifies useful seams for deterministic tests." },
+      { "id": "tradeoffs", "label": "Tradeoffs", "description": "Explains alternatives and adds patterns only when concrete variation earns them." },
+      { "id": "communication", "label": "Communication", "description": "Keeps the model legible and validates it by walking representative behavior." }
+    ]
+  },
+  {
     "id": "rubric-ml-design", "track": "ml-design", "title": "ML System Design reasoning practice rubric",
     "disclaimer": "An Engineering Foundry self-review aid—not an employer scoring system or hiring prediction.",
     "dimensions": [

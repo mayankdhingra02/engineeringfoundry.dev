@@ -1,4 +1,16 @@
 import { activeMockSessionPlans, getMockRubric } from "@/data/mock-interviews";
+import {
+  MOCK_ASSISTANCE_STATES,
+  MOCK_HINT_POLICIES,
+  MOCK_PROMPT_EXPOSURES,
+  MOCK_SESSION_OUTCOMES,
+  MOCK_TIMING_MODES,
+  type MockAssistanceState,
+  type MockHintPolicy,
+  type MockPromptExposure,
+  type MockSessionOutcome,
+  type MockTimingMode,
+} from "@/lib/mock-interviews/session-conditions";
 import type { MockPracticeMode, MockTrack } from "@/types";
 
 export const MOCK_REVIEW_INVALID_INPUT_ERROR =
@@ -20,6 +32,12 @@ const REVIEW_INPUT_KEYS = [
   "rubricId",
   "startedAt",
   "elapsedSeconds",
+  "promptExposure",
+  "timingMode",
+  "hintPolicy",
+  "assistanceState",
+  "sessionOutcome",
+  "sessionIssue",
   "strength",
   "improvement",
   "followUp",
@@ -58,6 +76,12 @@ export type MockInterviewReviewInput = {
   rubricId: string;
   startedAt: string;
   elapsedSeconds: number;
+  promptExposure: MockPromptExposure;
+  timingMode: MockTimingMode;
+  hintPolicy: MockHintPolicy;
+  assistanceState: MockAssistanceState;
+  sessionOutcome: MockSessionOutcome;
+  sessionIssue: string;
   strength: string;
   improvement: string;
   followUp: string;
@@ -167,6 +191,13 @@ function parseMockInterviewReviewInputUnchecked(
     !Number.isInteger(input.elapsedSeconds) ||
     input.elapsedSeconds < 0 ||
     input.elapsedSeconds > POSTGRES_INTEGER_MAX ||
+    !MOCK_PROMPT_EXPOSURES.some((value) => value === input.promptExposure) ||
+    !MOCK_TIMING_MODES.some((value) => value === input.timingMode) ||
+    !MOCK_HINT_POLICIES.some((value) => value === input.hintPolicy) ||
+    !MOCK_ASSISTANCE_STATES.some((value) => value === input.assistanceState) ||
+    !MOCK_SESSION_OUTCOMES.some((value) => value === input.sessionOutcome) ||
+    !isReflection(input.sessionIssue) ||
+    (input.sessionOutcome !== "completed" && !input.sessionIssue.trim()) ||
     !isReflection(input.strength) ||
     !isReflection(input.improvement) ||
     !isReflection(input.followUp) ||
@@ -213,6 +244,12 @@ function parseMockInterviewReviewInputUnchecked(
       rubricId: plan.rubric_id,
       startedAt: input.startedAt,
       elapsedSeconds: input.elapsedSeconds,
+      promptExposure: input.promptExposure as MockPromptExposure,
+      timingMode: input.timingMode as MockTimingMode,
+      hintPolicy: input.hintPolicy as MockHintPolicy,
+      assistanceState: input.assistanceState as MockAssistanceState,
+      sessionOutcome: input.sessionOutcome as MockSessionOutcome,
+      sessionIssue: input.sessionIssue,
       strength: input.strength,
       improvement: input.improvement,
       followUp: input.followUp,

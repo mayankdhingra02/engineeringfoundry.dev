@@ -3,6 +3,8 @@ import { loadInputs, validateMockContent } from "./validate-mock-content.mjs";
 const inputs = await loadInputs();
 const validate = (overrides = {}) => validateMockContent({ ...inputs, ...overrides });
 if (validate().length) throw new Error("The valid mock-interview dataset failed validation");
+if (inputs.lowLevelDesignProblems.length !== 59) throw new Error(`Expected 59 LLD mock problems, found ${inputs.lowLevelDesignProblems.length}`);
+if (inputs.plans.filter((plan) => plan.track === "low-level-design" && plan.status === "active").length !== 59) throw new Error("Every LLD mock problem must produce one active session plan");
 
 const badReference = structuredClone(inputs.plans);
 badReference[0].content_reference.id = "missing-prompt";
@@ -30,4 +32,4 @@ for (const [errors, expected] of cases) {
 }
 if (validate({ plans: futurePlans }).length) throw new Error("Validator added an unintended maximum session-plan count");
 
-console.log("Mock content validator regression checks passed: invalid reference, unknown rubric, company tag, and 6 additional future plans.");
+console.log("Mock content validator regression checks passed: 59 LLD prompts, invalid reference, unknown rubric, company tag, and 6 additional future plans.");

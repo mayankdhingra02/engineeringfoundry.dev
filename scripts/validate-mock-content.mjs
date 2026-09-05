@@ -1,11 +1,12 @@
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
-const validTracks = new Set(["dsa", "system-design", "ml-design", "behavioral"]);
+const validTracks = new Set(["dsa", "system-design", "low-level-design", "ml-design", "behavioral"]);
 const validStatuses = new Set(["active", "needs_review"]);
 const expectedKinds = new Map([
   ["dsa", "dsa-question"],
   ["system-design", "system-design-problem"],
+  ["low-level-design", "low-level-design-problem"],
   ["ml-design", "ml-design-problem"],
   ["behavioral", "behavioral-question"],
 ]);
@@ -15,7 +16,7 @@ const placeholderPattern = /\b(placeholder|demo|lorem ipsum|coming soon)\b/i;
 const nonEmptyString = (value) => typeof value === "string" && value.trim().length > 0;
 const nonEmptyList = (value) => Array.isArray(value) && value.length > 0 && value.every(nonEmptyString);
 
-export function validateMockContent({ plans, rubrics, dsaQuestions, systemProblems, mlProblems, behavioralQuestions }) {
+export function validateMockContent({ plans, rubrics, dsaQuestions, systemProblems, lowLevelDesignProblems, mlProblems, behavioralQuestions }) {
   const errors = [];
   const check = (condition, message) => { if (!condition) errors.push(message); };
   const unique = (items, field, label) => {
@@ -31,6 +32,7 @@ export function validateMockContent({ plans, rubrics, dsaQuestions, systemProble
   const registries = {
     "dsa-question": new Map(dsaQuestions.map((item) => [item.id, item])),
     "system-design-problem": new Map(systemProblems.map((item) => [item.id, item])),
+    "low-level-design-problem": new Map(lowLevelDesignProblems.map((item) => [item.id, { ...item, status: "active", source: { name: "Engineering Foundry", platform: "original" } }])),
     "ml-design-problem": new Map(mlProblems.map((item) => [item.id, item])),
     "behavioral-question": new Map(behavioralQuestions.map((item) => [item.id, item])),
   };
@@ -42,6 +44,16 @@ export function validateMockContent({ plans, rubrics, dsaQuestions, systemProble
     unique(rubric.dimensions ?? [], "id", `Mock rubric ${rubric.id} dimensions`);
     rubric.dimensions?.forEach((dimension) => check(nonEmptyString(dimension.label) && nonEmptyString(dimension.description), `Mock rubric ${rubric.id} has an invalid dimension ${dimension.id}`));
     check(!Object.hasOwn(rubric, "company") && !Object.hasOwn(rubric, "companies") && !Object.hasOwn(rubric, "companyAssociations"), `Mock rubric ${rubric.id} must not contain company associations`);
+  });
+
+  unique(lowLevelDesignProblems, "id", "LLD mock problems");
+  unique(lowLevelDesignProblems, "slug", "LLD mock problems");
+  lowLevelDesignProblems.forEach((problem) => {
+    check(slugPattern.test(problem.slug), `LLD mock problem ${problem.id} has an invalid slug`);
+    check(nonEmptyString(problem.title) && nonEmptyString(problem.focus), `LLD mock problem ${problem.id} has empty critical content`);
+    check(["Foundation", "Intermediate", "Advanced"].includes(problem.difficulty), `LLD mock problem ${problem.id} has invalid difficulty ${problem.difficulty}`);
+    check(nonEmptyList(problem.domains), `LLD mock problem ${problem.id} requires domains`);
+    check(!Object.hasOwn(problem, "company") && !Object.hasOwn(problem, "companies") && !Object.hasOwn(problem, "companyAssociations"), `LLD mock problem ${problem.id} must not contain company associations`);
   });
 
   plans.forEach((plan) => {
@@ -83,12 +95,20 @@ async function load(path) {
 }
 
 async function loadInputs() {
-  const [plans, rubrics, dsaFoundations, dsaCore, dsaStructures, dsaAdvanced, systemProblems, mlProblems, behavioralQuestions] = await Promise.all([
+  const [basePlans, rubrics, dsaFoundations, dsaCore, dsaStructures, dsaAdvanced, systemProblems, lowLevelDesignProblems, mlProblems, behavioralQuestions] = await Promise.all([
     load("data/mock-interviews/session-plans.json"), load("data/mock-interviews/rubrics.json"),
     load("data/dsa/questions-foundations.json"), load("data/dsa/questions-core-patterns.json"), load("data/dsa/questions-structures.json"), load("data/dsa/questions-advanced.json"),
-    load("data/system-design/problems.json"), load("data/ml-design/problems.json"), load("data/behavioral/questions.json"),
+    load("data/system-design/problems.json"), load("data/mock-interviews/lld-problems.json"), load("data/ml-design/problems.json"), load("data/behavioral/questions.json"),
   ]);
-  return { plans, rubrics, dsaQuestions: [...dsaFoundations, ...dsaCore, ...dsaStructures, ...dsaAdvanced], systemProblems, mlProblems, behavioralQuestions };
+  const lldPlans = lowLevelDesignProblems.map((problem) => ({
+    id: `mock-${problem.id}`, slug: problem.slug, title: problem.title, track: "low-level-design",
+    recommended_minutes: { min: 35, max: 45 },
+    sections: [{ id: "clarify", title: "Clarify and scope", minutes: 8 }, { id: "model", title: "Model behavior and state", minutes: 22 }, { id: "evolve", title: "Validate and evolve", minutes: 10 }],
+    candidate_instructions: ["Clarify the primary flow.", "Assign responsibilities and walk the behavior.", "Apply one follow-up change."],
+    interviewer_instructions: ["Probe the main invariant.", "Ask about one invalid transition.", "Observe the chosen boundary."],
+    content_reference: { kind: "low-level-design-problem", id: problem.id }, rubric_id: "rubric-low-level-design", status: "active",
+  }));
+  return { plans: [...basePlans, ...lldPlans], rubrics, dsaQuestions: [...dsaFoundations, ...dsaCore, ...dsaStructures, ...dsaAdvanced], systemProblems, lowLevelDesignProblems, mlProblems, behavioralQuestions };
 }
 
 async function main() {
@@ -99,7 +119,7 @@ async function main() {
     errors.forEach((error) => console.error(`- ${error}`));
     process.exit(1);
   }
-  console.log(`Mock content validation passed: ${inputs.plans.length} session plans across 4 tracks and ${inputs.rubrics.length} track-specific rubrics.`);
+  console.log(`Mock content validation passed: ${inputs.plans.length} session plans across 5 tracks and ${inputs.rubrics.length} track-specific rubrics.`);
 }
 
 export { loadInputs };

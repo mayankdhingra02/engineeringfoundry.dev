@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-05
-repository_sha: 1167cbbb538749c48e7e3c6a86ec9cf77148d75a
-repository_state_sha256: 9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61c1a820f32
+repository_sha: 2d482ac8bde14a39646025f683bad9313caf5ebc
+repository_state_sha256: 32004fbe79aa8a7f804afab769fc1ad413ed14da4dce3ead81afb5a4afbda6e5
 ---
 
 # Engineering Foundry requirement coverage
@@ -23,9 +23,9 @@ repository_state_sha256: 9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 0 |
-| partial | 13 |
+| partial | 12 |
 | implemented-unverified | 0 |
-| implemented | 14 |
+| implemented | 15 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -46,8 +46,8 @@ repository_state_sha256: 9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61
 
 | Research status | Count |
 | --- | ---: |
-| approved | 12 |
-| approved-needs-source-import | 2 |
+| approved | 13 |
+| approved-needs-source-import | 1 |
 | needs-current-verification | 4 |
 | needs-research | 11 |
 | not-applicable | 5 |
@@ -58,8 +58,8 @@ repository_state_sha256: 9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61
 | --- | ---: |
 | unpublished | 10 |
 | noindex-draft | 0 |
-| published | 14 |
-| stale-review | 10 |
+| published | 15 |
+| stale-review | 9 |
 | archived | 0 |
 
 ## Requirements by family
@@ -129,7 +129,7 @@ repository_state_sha256: 9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61
 | EF-ML-CONCEPT-COVERAGE | ml-design | p1 | implemented | approved | published | claim-recorded | /ml-design/core-concepts | /ml-design/core-concepts/[slug] | 16 | 2 | — |
 | EF-ML-PRACTICE-PROVENANCE | ml-design | p2 | implemented | approved | published | claim-recorded | /ml-design/practice, /ml-design/problems | /ml-design/problems/[problem]/practice/[attemptId], /ml-design/problems/[slug] | 16 | 4 | — |
 | EF-ML-ROADMAP-MAPPING | ml-design | p1 | implemented | approved | published | claim-recorded | /ml-design, /ml-design/practice | — | 3 | 2 | — |
-| EF-MOCK | mock-interviews | required | partial | approved-needs-source-import | stale-review | missing | /mock-interviews | — | 0 | 4 | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
+| EF-MOCK | mock-interviews | required | implemented | approved | published | claim-recorded | /mock-interviews | — | 3 | 6 | — |
 | EF-MOCK-PEER-FACILITATION | mock-interviews | p2 | deferred | needs-research | unpublished | missing | /mock-interviews | — | 0 | 2 | The current product intentionally does not match, schedule, verify, or guarantee peers. |
 | EF-OPS | governance-and-release | required | partial | needs-research | unpublished | missing | — | — | 0 | 10 | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | governance-and-release | external-owner-gate | blocked | not-applicable | unpublished | not-applicable | — | — | 0 | 2 | No production deployment is authorized in this repository mission.; DNS and TLS, hosted Supabase migrations and backups, provider configuration, account enablement, analytics consent, legal review, and live production QA require external owners or credentials. |
@@ -153,7 +153,6 @@ repository_state_sha256: 9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
-| EF-MOCK | modeled | partial | Peer matching, scheduling, trust, moderation, and advanced evaluation are deliberately deferred.; Pure URL-state and private-session reset contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-OPS | modeled | partial | This bootstrap models families and current gap rows, not every atomic blueprint requirement.; Generated outputs require their dedicated output-only metadata commit. |
 | EF-SAL | modeled | partial | Source, freshness, and qualified legal review remain incomplete.; Persistent comparison remains deliberately unapproved. |
 | EF-SUP | modeled | partial | Employer-specific referral policy remains intentionally absent.; Rendered Referral Back/Forward restoration and guarded focus recovery remain unautomated. |
@@ -177,7 +176,6 @@ repository_state_sha256: 9d4165cb1aafa5e82f06e55c01006e1f6667a371bd138ffdb722e61
 | EF-DSA-CURRICULUM-SHELLS | dsa | approved | 2 |
 | EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 8 |
 | EF-LLD | low-level-design | needs-research | 0 |
-| EF-MOCK | mock-interviews | approved-needs-source-import | 0 |
 | EF-SAL | salary-negotiation | needs-current-verification | 0 |
 | EF-SD | system-design | needs-research | 50 |
 | EF-SD-PRACTICE-COVERAGE | system-design | needs-research | 0 |
@@ -207,9 +205,9 @@ These states describe recorded provenance only; they do not claim source complet
 | Source record state | Count |
 | --- | ---: |
 | not-applicable | 5 |
-| missing | 12 |
+| missing | 11 |
 | discovery-recorded | 0 |
-| claim-recorded | 17 |
+| claim-recorded | 18 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
@@ -232,7 +230,7 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-ML-CONCEPT-COVERAGE | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
 | EF-ML-PRACTICE-PROVENANCE | approved | claim-recorded | SRC-ML-EXPERIMENT-PRE, SRC-ML-EXPERIMENT-SRM, SRC-ML-FEAST-PIT, SRC-ML-FORECASTING, SRC-ML-GOOGLE-SLO, SRC-ML-K8S-ROLLOUT, SRC-ML-KSERVE, SRC-ML-METRICS, SRC-ML-MLFLOW-REGISTRY, SRC-ML-NIST-RMF, SRC-ML-RAG, SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE, SRC-ML-TFDV, SRC-ML-YOUTUBE-REC |
 | EF-ML-ROADMAP-MAPPING | approved | claim-recorded | SRC-ML-RULES, SRC-ML-TECH-DEBT, SRC-ML-TEST-SCORE |
-| EF-MOCK | approved-needs-source-import | missing | — |
+| EF-MOCK | approved | claim-recorded | SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED, SRC-PLAY-EEOC-ACCOMMODATION |
 | EF-MOCK-PEER-FACILITATION | needs-research | missing | — |
 | EF-OPS | needs-research | missing | — |
 | EF-OPS-EXTERNAL-PRODUCTION-GATES | not-applicable | not-applicable | — |
@@ -261,8 +259,8 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-BEH-AMAZON-INTERVIEW | official company hiring/candidate | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
 | SRC-BEH-EEOC-SELECTION | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
 | SRC-BEH-GOVUK-SUCCESS | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
-| SRC-BEH-OPM-GUIDE | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
-| SRC-BEH-OPM-STRUCTURED | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
+| SRC-BEH-OPM-GUIDE | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
+| SRC-BEH-OPM-STRUCTURED | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-COMP-AMAZON-OFFICIAL | official company hiring/candidate | 2026-09-05 | EF-COMP, EF-COMP-GUIDE-COVERAGE, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE |
 | SRC-COMP-ANTHROPIC-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-ATLASSIAN-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
@@ -300,7 +298,7 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-ML-TEST-SCORE | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE, EF-ML-ROADMAP-MAPPING |
 | SRC-ML-TFDV | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
 | SRC-ML-YOUTUBE-REC | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
-| SRC-PLAY-EEOC-ACCOMMODATION | official documentation | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
+| SRC-PLAY-EEOC-ACCOMMODATION | official documentation | 2026-09-05 | EF-MOCK, EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-PLAY-MIT-PRESENTATION | first-party engineering/science | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH, EF-PLAY-ROUND-PROVENANCE, EF-PLAY-TECHNICAL-PRESENTATION |
 | SRC-PLAY-YALE-AFTER-INTERVIEW | official documentation | 2026-09-05 | EF-PLAY, EF-PLAY-CURRICULUM-DEPTH |
 | SRC-SD-AWS-CACHING | first-party engineering/science | 2026-09-04 | EF-SD, EF-SD-TOPIC-COVERAGE |
