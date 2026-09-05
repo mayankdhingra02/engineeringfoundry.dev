@@ -93,6 +93,23 @@ export type BehavioralCategory =
   | "Cross-functional Work"
   | "Incident & Quality";
 export type BehavioralScope = "Individual" | "Team" | "Cross-functional" | "Leadership";
+export type BehavioralQuestionLevel = "Entry" | "Mid" | "Senior" | "Staff+";
+export type BehavioralFollowUpFamily =
+  | "clarification-timeline"
+  | "personal-ownership"
+  | "alternatives"
+  | "information-at-the-time"
+  | "technical-detail"
+  | "stakeholders-disagreement"
+  | "measurement-evidence"
+  | "causality-limits"
+  | "risk-failure-mode"
+  | "counterfactual"
+  | "scale-durability"
+  | "learning-later-behavior"
+  | "level-scope"
+  | "confidentiality"
+  | "cross-answer-consistency";
 
 export interface BehavioralQuestion {
   id: string;
@@ -105,6 +122,13 @@ export interface BehavioralQuestion {
   followUps: string[];
   answerGuidance: string[];
   commonMistakes: string[];
+  safeVariants: string[];
+  levelRelevance: BehavioralQuestionLevel[];
+  roleRelevance: string[];
+  followUpFamilies: BehavioralFollowUpFamily[];
+  companyModifierSourceIds: string[];
+  privacyWarning: string;
+  editorialReviewDate: string;
   searchFeatured?: boolean;
   status: "active" | "needs_review";
   source: { name: "Engineering Foundry"; platform: "original" };

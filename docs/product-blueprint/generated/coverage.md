@@ -2,8 +2,8 @@
 schema_version: 1
 blueprint_version: 1.0
 generated_or_reviewed_at: 2026-09-05
-repository_sha: b459bb85c503db71905533308fdca6ddc30e517a
-repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e690919429469ed3a85c
+repository_sha: 20e1eafe8261f8a387b83fbd4fe6449413fb66b8
+repository_state_sha256: b222add9d7743ba015b17ea6d1111ce7feeea40f31eecb4a819a396b1a2d1415
 ---
 
 # Engineering Foundry requirement coverage
@@ -13,7 +13,7 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 ## Summary
 
 - Requirements: 34
-- Sources: 87
+- Sources: 92
 - Gap inventory IDs: 18
 - Explicitly unmodeled atomic requirements: 1
 
@@ -23,9 +23,9 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 1 |
-| partial | 18 |
+| partial | 16 |
 | implemented-unverified | 0 |
-| implemented | 8 |
+| implemented | 10 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -46,9 +46,9 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 
 | Research status | Count |
 | --- | ---: |
-| approved | 6 |
+| approved | 8 |
 | approved-needs-source-import | 2 |
-| needs-current-verification | 9 |
+| needs-current-verification | 7 |
 | needs-research | 12 |
 | not-applicable | 5 |
 
@@ -58,8 +58,8 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 | --- | ---: |
 | unpublished | 11 |
 | noindex-draft | 0 |
-| published | 8 |
-| stale-review | 15 |
+| published | 10 |
+| stale-review | 13 |
 | archived | 0 |
 
 ## Requirements by family
@@ -113,8 +113,8 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 | EF-AIB | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Audience, placement, source artifacts, and relationship to ML Design remain unresolved. |
 | EF-AIB-BEGINNER-SCOPE | ai-basics | requires-founder-approval | deferred | needs-research | unpublished | missing | — | — | 0 | 0 | Learning outcomes, audience, relationship to ML Design, exercises, and source policy remain unresolved. |
 | EF-AIB-KIDS | ai-for-kids | excluded | excluded | not-applicable | unpublished | not-applicable | — | — | 0 | 0 | Explicitly excluded from the current product scope. |
-| EF-BEH | behavioral | required | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 6 | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.; Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
-| EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
+| EF-BEH | behavioral | required | implemented | approved | published | claim-recorded | /behavioral, /behavioral/learn, /behavioral/practice, /behavioral/questions, /behavioral/review, /behavioral/stories, /behavioral/workspace | — | 5 | 7 | — |
+| EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | implemented | approved | published | claim-recorded | /behavioral/learn, /behavioral/practice, /behavioral/review | — | 5 | 4 | — |
 | EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
 | EF-DSA | dsa | required | implemented | approved | published | claim-recorded | /dsa, /dsa/companies, /dsa/languages, /dsa/patterns, /dsa/practice, /dsa/questions, /dsa/roadmap, /dsa/roadmap/topic-map, /dsa/roadmaps, /dsa/strategy, /dsa/study-plans | /dsa/[...segments], /dsa/questions/[question]/practice/[attemptId] | 11 | 12 | — |
@@ -149,7 +149,6 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 
 | ID | Record type | Status | Gap/reason |
 | --- | --- | --- | --- |
-| EF-BEH | modeled | partial | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.; Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-COMP | modeled | partial | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
@@ -165,7 +164,6 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 
 | ID | Record type | Status | Gap/reason |
 | --- | --- | --- | --- |
-| EF-BEH-CURRICULUM-DEPTH | modeled | partial | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
 | EF-COMP-GUIDE-COVERAGE | modeled | partial | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
 | EF-DSA-LANGUAGE-COVERAGE | modeled | partial | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-LLD-REHEARSAL | modeled | partial | Core lessons and practices exist, but the rehearsal and evaluator workflow is unspecified. |
@@ -177,8 +175,6 @@ repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e6909194294
 
 | ID | Section | Research status | Sources |
 | --- | --- | --- | ---: |
-| EF-BEH | behavioral | needs-current-verification | 0 |
-| EF-BEH-CURRICULUM-DEPTH | behavioral | needs-current-verification | 0 |
 | EF-COMP | company-guides | needs-current-verification | 10 |
 | EF-COMP-GUIDE-COVERAGE | company-guides | needs-current-verification | 10 |
 | EF-DSA-CURRICULUM-SHELLS | dsa | approved | 2 |
@@ -217,17 +213,17 @@ These states describe recorded provenance only; they do not claim source complet
 | Source record state | Count |
 | --- | ---: |
 | not-applicable | 5 |
-| missing | 18 |
+| missing | 16 |
 | discovery-recorded | 2 |
-| claim-recorded | 9 |
+| claim-recorded | 11 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
 | EF-AIB | needs-research | missing | — |
 | EF-AIB-BEGINNER-SCOPE | needs-research | missing | — |
 | EF-AIB-KIDS | not-applicable | not-applicable | — |
-| EF-BEH | needs-current-verification | missing | — |
-| EF-BEH-CURRICULUM-DEPTH | needs-current-verification | missing | — |
+| EF-BEH | approved | claim-recorded | SRC-BEH-AMAZON-INTERVIEW, SRC-BEH-EEOC-SELECTION, SRC-BEH-GOVUK-SUCCESS, SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED |
+| EF-BEH-CURRICULUM-DEPTH | approved | claim-recorded | SRC-BEH-AMAZON-INTERVIEW, SRC-BEH-EEOC-SELECTION, SRC-BEH-GOVUK-SUCCESS, SRC-BEH-OPM-GUIDE, SRC-BEH-OPM-STRUCTURED |
 | EF-COMP | needs-current-verification | discovery-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
 | EF-COMP-GUIDE-COVERAGE | needs-current-verification | discovery-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
 | EF-DSA | approved | claim-recorded | SRC-DSA-ALGOMONSTER-ROADMAP, SRC-DSA-JAVA-ARRAYDEQUE, SRC-DSA-JAVA-JLS, SRC-DSA-JAVA-PRIORITYQUEUE, SRC-DSA-JAVA-UTIL, SRC-DSA-LEETCODE-EXPLORE, SRC-DSA-PY-BISECT, SRC-DSA-PY-COLLECTIONS, SRC-DSA-PY-DATA, SRC-DSA-PY-HEAPQ, SRC-DSA-TECH-HANDBOOK-PLAN |
@@ -268,6 +264,11 @@ These states describe recorded provenance only; they do not claim source complet
 
 | ID | Class | Verified | Applies to |
 | --- | --- | --- | --- |
+| SRC-BEH-AMAZON-INTERVIEW | official company hiring/candidate | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
+| SRC-BEH-EEOC-SELECTION | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
+| SRC-BEH-GOVUK-SUCCESS | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
+| SRC-BEH-OPM-GUIDE | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
+| SRC-BEH-OPM-STRUCTURED | official documentation | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH |
 | SRC-COMP-AMAZON-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-ANTHROPIC-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-ATLASSIAN-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
@@ -362,8 +363,8 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Availability | Count |
 | --- | ---: |
-| missing | 21 |
-| repository-present | 9 |
+| missing | 15 |
+| repository-present | 15 |
 | external-recorded | 0 |
 
 ### Approval status
@@ -371,22 +372,22 @@ These states describe recorded provenance only; they do not claim source complet
 | Approval status | Count |
 | --- | ---: |
 | unverified | 5 |
-| approved-needs-source-import | 10 |
-| needs-current-verification | 4 |
+| approved-needs-source-import | 5 |
+| needs-current-verification | 3 |
 | requires-founder-approval | 2 |
-| approved | 9 |
+| approved | 15 |
 | excluded | 0 |
 
 | ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | RA-AIB-LEARNING-STRATEGY | EF-AIB | missing | requires-founder-approval | — | — | EF-AIB, EF-AIB-BEGINNER-SCOPE | — | — |
 | RA-AIB-MVP-RECOMMENDATION | EF-AIB | missing | requires-founder-approval | — | — | EF-AIB, EF-AIB-BEGINNER-SCOPE | — | — |
-| RA-BEH-COMPANY-GUIDES | EF-BEH | missing | needs-current-verification | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
-| RA-BEH-CURRICULUM-ARCHITECTURE | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
-| RA-BEH-FINAL-SYNTHESIS | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
-| RA-BEH-PRACTICE-MOCK-FEEDBACK | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK | — | — |
-| RA-BEH-RUBRICS-SENIORITY | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
-| RA-BEH-STORY-BANK-EXAMPLES | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
+| RA-BEH-COMPANY-GUIDES | EF-BEH | repository-present | approved | 3b6c60e23e471fa78d1956fec00428c191c28e775e7ecaa17d0e2ce2ff3ee5e2 | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-COMP, EF-COMP-GUIDE-COVERAGE | docs/product-blueprint/research/behavioral/company-modifiers.md | — |
+| RA-BEH-CURRICULUM-ARCHITECTURE | EF-BEH | repository-present | approved | 6ffdeba2c78c95d56fca88c52bd3128a5fa29164a5b6eacf340425a6cf47c5d2 | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH | docs/product-blueprint/research/behavioral/curriculum-architecture.md | — |
+| RA-BEH-FINAL-SYNTHESIS | EF-BEH | repository-present | approved | 722f0827dc507c312ad12053064176ed6cced4d8babe585ae873fa93534d361d | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH | docs/product-blueprint/research/behavioral/final-synthesis.md | — |
+| RA-BEH-PRACTICE-MOCK-FEEDBACK | EF-BEH | repository-present | approved | 2c044da4b64e42e48da6c7a1ee8c3828971cbdd90b208cd31d58545119e7a35b | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH, EF-MOCK | docs/product-blueprint/research/behavioral/practice-followups-and-feedback.md | — |
+| RA-BEH-RUBRICS-SENIORITY | EF-BEH | repository-present | approved | f0dcda04a7fb3b9d800ab7fa97dafbb8f66736d32ab21822cc2c485bf1b99440 | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH | docs/product-blueprint/research/behavioral/rubrics-and-seniority.md | — |
+| RA-BEH-STORY-BANK-EXAMPLES | EF-BEH | repository-present | approved | ae5d8bbc7eb2af1cfbe5784adce61861843dd73f5da9d06f60b1732f6b4d7e85 | 2026-09-05 | EF-BEH, EF-BEH-CURRICULUM-DEPTH | docs/product-blueprint/research/behavioral/story-bank-and-examples.md | — |
 | RA-COMP-PRIORITY-COMPANIES | EF-COMP | missing | needs-current-verification | — | — | EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
 | RA-DSA-COMPETITIVE-RESEARCH | EF-DSA | repository-present | approved | e2b6f73712c012ce9fef3c4b803b7ebd5d79c262b159f45b19cadd1548f9090b | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS | docs/product-blueprint/research/dsa/competitive-product-and-practice.md | — |
 | RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
@@ -416,12 +417,6 @@ These states describe recorded provenance only; they do not claim source complet
 | --- | --- | --- |
 | RA-AIB-LEARNING-STRATEGY | missing | requires-founder-approval |
 | RA-AIB-MVP-RECOMMENDATION | missing | requires-founder-approval |
-| RA-BEH-COMPANY-GUIDES | missing | needs-current-verification |
-| RA-BEH-CURRICULUM-ARCHITECTURE | missing | approved-needs-source-import |
-| RA-BEH-FINAL-SYNTHESIS | missing | approved-needs-source-import |
-| RA-BEH-PRACTICE-MOCK-FEEDBACK | missing | approved-needs-source-import |
-| RA-BEH-RUBRICS-SENIORITY | missing | approved-needs-source-import |
-| RA-BEH-STORY-BANK-EXAMPLES | missing | approved-needs-source-import |
 | RA-COMP-PRIORITY-COMPANIES | missing | needs-current-verification |
 | RA-DSA-JAVASCRIPT-REQUEST | missing | unverified |
 | RA-LAUNCH-V1-FINISH-PLAN | missing | unverified |

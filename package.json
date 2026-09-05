@@ -26,6 +26,8 @@
     "test:auth-foundation": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-auth-foundation.mjs",
     "test:application-tracker": "node --experimental-strip-types --no-warnings scripts/test-application-tracker.mjs",
     "test:behavioral-workspace": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-behavioral-workspace.mjs",
+    "test:behavioral-curriculum": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-behavioral-curriculum.mjs",
+    "test:behavioral-required-closure": "node --experimental-loader ./scripts/typescript-path-loader.mjs --experimental-strip-types --no-warnings scripts/test-behavioral-required-closure.mjs",
     "test:behavioral-v1-polish": "node --experimental-strip-types --no-warnings scripts/test-behavioral-v1-polish.mjs",
     "test:analytics-launch-evidence": "node --experimental-strip-types --no-warnings scripts/test-analytics-launch-evidence.mjs",
     "test:v1-launch-readiness": "node --experimental-strip-types --no-warnings scripts/test-v1-launch-readiness.mjs",

@@ -1,6 +1,6 @@
 import { activeChallenges } from "@/data/challenges";
 import { companies } from "@/data/companies";
-import { behavioralCategories, behavioralSearchQuestions } from "@/data/behavioral";
+import { behavioralCategories, behavioralLessons, behavioralSearchQuestions } from "@/data/behavioral";
 import { activeQuestions, dsaPatterns, dsaTopics, questionsForPattern } from "@/data/dsa";
 import { dsaCurriculumPages } from "@/data/dsa/curriculum";
 import { dsaCompanies } from "@/data/dsa/interview-prep";
@@ -30,6 +30,8 @@ const staticResults: readonly GlobalSearchItem[] = [
   { title: "Low-Level Design curriculum", type: "Curriculum", href: "/low-level-design" },
   { title: "Salary Negotiation toolkit", type: "Career tool", href: "/salary-negotiation" },
   { title: "ML system design", type: "Roadmap", href: "/ml-design" },
+  { title: "Behavioral evidence-gap drill", type: "Behavioral practice", href: "/behavioral/practice" },
+  { title: "Behavioral evidence review", type: "Behavioral rubric", href: "/behavioral/review" },
   { title: "Mock Interview Practice Lab", type: "Practice", href: "/mock-interviews" },
   { title: "Referral Request Builder", type: "Career tool", href: "/referrals?mode=request" },
   { title: "Referrer Toolkit", type: "Career tool", href: "/referrals?mode=referrer" },
@@ -71,6 +73,7 @@ export const globalSearchItems: readonly GlobalSearchItem[] = [
   ...activeMlDesignProblems.map((problem) => ({ title: problem.title, type: "ML Design problem", href: mlDesignProblemHref(problem.slug) })),
   ...mlDesignConcepts.map((concept) => ({ title: concept.title, type: "ML Design concept", href: mlDesignConceptHref(concept.slug) })),
   ...behavioralCategories.map((category) => ({ title: category.name, type: "Behavioral category", href: `/behavioral?category=${encodeURIComponent(category.name)}` })),
+  ...behavioralLessons.map((lesson) => ({ title: lesson.title, type: `Behavioral lesson · ${lesson.phase}`, href: `/behavioral/learn/${lesson.slug}` })),
   ...behavioralSearchQuestions.map((question) => ({ title: question.prompt, type: "Behavioral practice", href: `/behavioral?question=${question.slug}` })),
   ...interviewPlaybookSections.map((section) => ({ title: `${section.title} playbook`, type: "Interview playbook", href: `/interview-tips#${section.id}` })),
   ...activeResources.map((resource) => ({ title: resource.title, type: `Resource · ${resource.provider}`, href: `/resources?search=${encodeURIComponent(resource.title)}` })),
