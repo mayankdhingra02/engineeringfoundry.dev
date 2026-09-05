@@ -1,9 +1,9 @@
 ---
 schema_version: 1
 blueprint_version: 1.0
-generated_or_reviewed_at: 2026-09-04
-repository_sha: 12779b38c4dd390e24b12ee70f0693c5b5d6a918
-repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c8ed4243a1
+generated_or_reviewed_at: 2026-09-05
+repository_sha: b459bb85c503db71905533308fdca6ddc30e517a
+repository_state_sha256: da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e690919429469ed3a85c
 ---
 
 # Engineering Foundry requirement coverage
@@ -13,7 +13,7 @@ repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c
 ## Summary
 
 - Requirements: 34
-- Sources: 76
+- Sources: 87
 - Gap inventory IDs: 18
 - Explicitly unmodeled atomic requirements: 1
 
@@ -23,9 +23,9 @@ repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c
 | --- | ---: |
 | not-started | 0 |
 | placeholder | 1 |
-| partial | 19 |
+| partial | 18 |
 | implemented-unverified | 0 |
-| implemented | 7 |
+| implemented | 8 |
 | blocked | 2 |
 | deferred | 4 |
 | excluded | 1 |
@@ -46,10 +46,10 @@ repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c
 
 | Research status | Count |
 | --- | ---: |
-| approved | 4 |
-| approved-needs-source-import | 3 |
+| approved | 6 |
+| approved-needs-source-import | 2 |
 | needs-current-verification | 9 |
-| needs-research | 13 |
+| needs-research | 12 |
 | not-applicable | 5 |
 
 ### Publication status
@@ -58,8 +58,8 @@ repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c
 | --- | ---: |
 | unpublished | 11 |
 | noindex-draft | 0 |
-| published | 7 |
-| stale-review | 16 |
+| published | 8 |
+| stale-review | 15 |
 | archived | 0 |
 
 ## Requirements by family
@@ -117,9 +117,9 @@ repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c
 | EF-BEH-CURRICULUM-DEPTH | behavioral | p1 | partial | needs-current-verification | stale-review | missing | /behavioral | — | 0 | 2 | The full 16-lesson curriculum and deeper evaluation architecture are not present. |
 | EF-COMP | company-guides | required | partial | needs-current-verification | stale-review | discovery-recorded | /companies | — | 10 | 2 | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
 | EF-COMP-GUIDE-COVERAGE | company-guides | p1 | partial | needs-current-verification | stale-review | discovery-recorded | — | /companies/[slug] | 10 | 2 | Ten normalized priority records exist, but claim-level provenance, current verification, and an approved expansion set remain incomplete. |
-| EF-DSA | dsa | required | partial | needs-research | stale-review | missing | /dsa | — | 0 | 8 | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
-| EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved-needs-source-import | stale-review | missing | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 0 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
-| EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | missing | /dsa/languages | /dsa/languages/[slug] | 0 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
+| EF-DSA | dsa | required | implemented | approved | published | claim-recorded | /dsa, /dsa/companies, /dsa/languages, /dsa/patterns, /dsa/practice, /dsa/questions, /dsa/roadmap, /dsa/roadmap/topic-map, /dsa/roadmaps, /dsa/strategy, /dsa/study-plans | /dsa/[...segments], /dsa/questions/[question]/practice/[attemptId] | 11 | 12 | — |
+| EF-DSA-CURRICULUM-SHELLS | dsa | p2 | partial | approved | stale-review | claim-recorded | — | /dsa/interview-strategy/[...segments], /dsa/roadmaps/[...segments], /dsa/start-here/[...segments] | 2 | 2 | Thirty-four curriculum records remain explicit coming-soon states. |
+| EF-DSA-LANGUAGE-COVERAGE | dsa | p1 | partial | needs-research | stale-review | claim-recorded | /dsa/languages | /dsa/languages/[slug] | 8 | 1 | C++, JavaScript/TypeScript, and Go remain coming soon.; C++ placement and approved source artifacts remain unresolved. |
 | EF-EXP | interview-experiences | required | partial | not-applicable | published | not-applicable | /interview-experiences | — | 0 | 7 | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | global-platform | required | partial | not-applicable | published | not-applicable | / | — | 0 | 17 | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | core-concepts | requires-new-research | blocked | needs-research | unpublished | missing | — | — | 0 | 0 | The requested subject and audience are ambiguous; existing scoped concepts must not be relabeled. |
@@ -151,7 +151,6 @@ repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c
 | --- | --- | --- | --- |
 | EF-BEH | modeled | partial | The existing workspace and question catalog do not constitute the blueprint's 16-lesson curriculum.; Research artifacts, adaptive probes, and evaluation acceptance mapping remain incomplete.; Pure URL-state contracts are covered; rendered Back/Forward and focus behavior remain unautomated. |
 | EF-COMP | modeled | partial | Ten normalized priority guides exist, but claim-level source mapping and freshness operations remain incomplete.; Four guides also have mature legacy modules; internal complete labels do not establish master completion. |
-| EF-DSA | modeled | partial | Python and Java are published while C++, JavaScript/TypeScript, and Go remain coming soon.; Unpublished curriculum shells require reviewed source-backed content.; Rendered Back/Forward and focus behavior lacks automated browser coverage. |
 | EF-EXP | modeled | partial | Hosted database, moderation, removal, and two-user evidence remain external owner gates.; Some availability and canonical-variant behavior remains source-contract rather than route-runtime tested. |
 | EF-GLOBAL | modeled | partial | Rendered browser accessibility and focus/history coverage remains incomplete.; Hosted production evidence remains an external owner gate. |
 | EF-LLD | modeled | partial | Source and master acceptance mapping remains unverified.; A rehearsal/evaluator workflow and Low-Level Systems track require separate product decisions. |
@@ -182,9 +181,8 @@ repository_state_sha256: bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c
 | EF-BEH-CURRICULUM-DEPTH | behavioral | needs-current-verification | 0 |
 | EF-COMP | company-guides | needs-current-verification | 10 |
 | EF-COMP-GUIDE-COVERAGE | company-guides | needs-current-verification | 10 |
-| EF-DSA | dsa | needs-research | 0 |
-| EF-DSA-CURRICULUM-SHELLS | dsa | approved-needs-source-import | 0 |
-| EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 0 |
+| EF-DSA-CURRICULUM-SHELLS | dsa | approved | 2 |
+| EF-DSA-LANGUAGE-COVERAGE | dsa | needs-research | 8 |
 | EF-LLD | low-level-design | needs-research | 0 |
 | EF-MOCK | mock-interviews | approved-needs-source-import | 0 |
 | EF-PLAY | interview-playbook | needs-current-verification | 0 |
@@ -219,9 +217,9 @@ These states describe recorded provenance only; they do not claim source complet
 | Source record state | Count |
 | --- | ---: |
 | not-applicable | 5 |
-| missing | 21 |
+| missing | 18 |
 | discovery-recorded | 2 |
-| claim-recorded | 6 |
+| claim-recorded | 9 |
 
 | Requirement | Research status | Source state | Source IDs |
 | --- | --- | --- | --- |
@@ -232,9 +230,9 @@ These states describe recorded provenance only; they do not claim source complet
 | EF-BEH-CURRICULUM-DEPTH | needs-current-verification | missing | — |
 | EF-COMP | needs-current-verification | discovery-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
 | EF-COMP-GUIDE-COVERAGE | needs-current-verification | discovery-recorded | SRC-COMP-AMAZON-OFFICIAL, SRC-COMP-ANTHROPIC-OFFICIAL, SRC-COMP-ATLASSIAN-OFFICIAL, SRC-COMP-GOOGLE-OFFICIAL, SRC-COMP-META-OFFICIAL, SRC-COMP-MICROSOFT-OFFICIAL, SRC-COMP-NVIDIA-OFFICIAL, SRC-COMP-OPENAI-OFFICIAL, SRC-COMP-UBER-OFFICIAL, SRC-COMP-WALMART-OFFICIAL |
-| EF-DSA | needs-research | missing | — |
-| EF-DSA-CURRICULUM-SHELLS | approved-needs-source-import | missing | — |
-| EF-DSA-LANGUAGE-COVERAGE | needs-research | missing | — |
+| EF-DSA | approved | claim-recorded | SRC-DSA-ALGOMONSTER-ROADMAP, SRC-DSA-JAVA-ARRAYDEQUE, SRC-DSA-JAVA-JLS, SRC-DSA-JAVA-PRIORITYQUEUE, SRC-DSA-JAVA-UTIL, SRC-DSA-LEETCODE-EXPLORE, SRC-DSA-PY-BISECT, SRC-DSA-PY-COLLECTIONS, SRC-DSA-PY-DATA, SRC-DSA-PY-HEAPQ, SRC-DSA-TECH-HANDBOOK-PLAN |
+| EF-DSA-CURRICULUM-SHELLS | approved | claim-recorded | SRC-DSA-ALGOMONSTER-ROADMAP, SRC-DSA-TECH-HANDBOOK-PLAN |
+| EF-DSA-LANGUAGE-COVERAGE | needs-research | claim-recorded | SRC-DSA-JAVA-ARRAYDEQUE, SRC-DSA-JAVA-JLS, SRC-DSA-JAVA-PRIORITYQUEUE, SRC-DSA-JAVA-UTIL, SRC-DSA-PY-BISECT, SRC-DSA-PY-COLLECTIONS, SRC-DSA-PY-DATA, SRC-DSA-PY-HEAPQ |
 | EF-EXP | not-applicable | not-applicable | — |
 | EF-GLOBAL | not-applicable | not-applicable | — |
 | EF-GLOBAL-CORE-CONCEPTS-SCOPE | needs-research | missing | — |
@@ -280,6 +278,17 @@ These states describe recorded provenance only; they do not claim source complet
 | SRC-COMP-OPENAI-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-UBER-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
 | SRC-COMP-WALMART-OFFICIAL | official company hiring/candidate | 2026-08-21 | EF-COMP, EF-COMP-GUIDE-COVERAGE |
+| SRC-DSA-ALGOMONSTER-ROADMAP | pedagogy/pain-point source | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS |
+| SRC-DSA-JAVA-ARRAYDEQUE | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-JAVA-JLS | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-JAVA-PRIORITYQUEUE | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-JAVA-UTIL | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-LEETCODE-EXPLORE | official documentation | 2026-09-05 | EF-DSA |
+| SRC-DSA-PY-BISECT | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-PY-COLLECTIONS | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-PY-DATA | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-PY-HEAPQ | official documentation | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE |
+| SRC-DSA-TECH-HANDBOOK-PLAN | respected secondary synthesis | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS |
 | SRC-ML-EXPERIMENT-PRE | first-party engineering/science | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
 | SRC-ML-EXPERIMENT-SRM | original paper | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
 | SRC-ML-FEAST-PIT | official documentation | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-PRACTICE-PROVENANCE |
@@ -353,8 +362,8 @@ These states describe recorded provenance only; they do not claim source complet
 
 | Availability | Count |
 | --- | ---: |
-| missing | 24 |
-| repository-present | 6 |
+| missing | 21 |
+| repository-present | 9 |
 | external-recorded | 0 |
 
 ### Approval status
@@ -362,10 +371,10 @@ These states describe recorded provenance only; they do not claim source complet
 | Approval status | Count |
 | --- | ---: |
 | unverified | 5 |
-| approved-needs-source-import | 13 |
+| approved-needs-source-import | 10 |
 | needs-current-verification | 4 |
 | requires-founder-approval | 2 |
-| approved | 6 |
+| approved | 9 |
 | excluded | 0 |
 
 | ID | Family | Availability | Approval | Version/hash | Verified | Requirements | Repository path | External record |
@@ -379,10 +388,10 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-BEH-RUBRICS-SENIORITY | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
 | RA-BEH-STORY-BANK-EXAMPLES | EF-BEH | missing | approved-needs-source-import | — | — | EF-BEH, EF-BEH-CURRICULUM-DEPTH | — | — |
 | RA-COMP-PRIORITY-COMPANIES | EF-COMP | missing | needs-current-verification | — | — | EF-COMP, EF-COMP-GUIDE-COVERAGE | — | — |
-| RA-DSA-COMPETITIVE-RESEARCH | EF-DSA | missing | approved-needs-source-import | — | — | EF-DSA, EF-DSA-CURRICULUM-SHELLS | — | — |
-| RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | — | — | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | — | — |
-| RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | missing | approved-needs-source-import | — | — | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | — | — |
-| RA-DSA-ROLE-ROADMAPS | EF-DSA | missing | approved-needs-source-import | — | — | EF-DSA, EF-DSA-CURRICULUM-SHELLS | — | — |
+| RA-DSA-COMPETITIVE-RESEARCH | EF-DSA | repository-present | approved | e2b6f73712c012ce9fef3c4b803b7ebd5d79c262b159f45b19cadd1548f9090b | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS | docs/product-blueprint/research/dsa/competitive-product-and-practice.md | — |
+| RA-DSA-JAVASCRIPT-REQUEST | EF-DSA | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE | — | — |
+| RA-DSA-PYTHON-JAVA-LANGUAGES | EF-DSA | repository-present | approved | 27e1a44c62f8f0b3583c0341816d0ba5844fc0b0ca234eae8a77145f64939fd2 | 2026-09-05 | EF-DSA, EF-DSA-LANGUAGE-COVERAGE | docs/product-blueprint/research/dsa/python-java-language-guides.md | — |
+| RA-DSA-ROLE-ROADMAPS | EF-DSA | repository-present | approved | 62ca75813e9d659c2276d40194d770245dbe18c08ecba213062dc15bdb1693e9 | 2026-09-05 | EF-DSA, EF-DSA-CURRICULUM-SHELLS | docs/product-blueprint/research/dsa/role-roadmaps.md | — |
 | RA-LAUNCH-V1-FINISH-PLAN | EF-OPS | missing | unverified | — | — | EF-OPS | — | — |
 | RA-LOW-LEVEL-SYSTEMS | EF-LLD | missing | unverified | — | — | EF-DSA-LANGUAGE-COVERAGE, EF-LLD | — | — |
 | RA-ML-CORE-CONCEPTS | EF-ML | repository-present | approved | 74a4688763488bcd250cdae38c3e3f27520fabc2055e52fb69ae566d14eb7320 | 2026-09-04 | EF-ML, EF-ML-CONCEPT-COVERAGE, EF-ML-ROADMAP-MAPPING | docs/product-blueprint/research/ml-design/core-concepts.md | — |
@@ -414,10 +423,7 @@ These states describe recorded provenance only; they do not claim source complet
 | RA-BEH-RUBRICS-SENIORITY | missing | approved-needs-source-import |
 | RA-BEH-STORY-BANK-EXAMPLES | missing | approved-needs-source-import |
 | RA-COMP-PRIORITY-COMPANIES | missing | needs-current-verification |
-| RA-DSA-COMPETITIVE-RESEARCH | missing | approved-needs-source-import |
 | RA-DSA-JAVASCRIPT-REQUEST | missing | unverified |
-| RA-DSA-PYTHON-JAVA-LANGUAGES | missing | approved-needs-source-import |
-| RA-DSA-ROLE-ROADMAPS | missing | approved-needs-source-import |
 | RA-LAUNCH-V1-FINISH-PLAN | missing | unverified |
 | RA-LOW-LEVEL-SYSTEMS | missing | unverified |
 | RA-PLAY-DIAGNOSTIC-PLAN | missing | approved-needs-source-import |

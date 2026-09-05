@@ -1,8 +1,8 @@
 {
   "blueprint_version": "1.0",
-  "generated_or_reviewed_at": "2026-09-04",
-  "repository_sha": "12779b38c4dd390e24b12ee70f0693c5b5d6a918",
-  "repository_state_sha256": "bb6b0c2b5b42976c7eab8f5598d5b15d7ba369abeea27b4218d1a3c8ed4243a1",
+  "generated_or_reviewed_at": "2026-09-05",
+  "repository_sha": "b459bb85c503db71905533308fdca6ddc30e517a",
+  "repository_state_sha256": "da95032bd0ac0950fb74b941a9934dbb42d7f9ba2232e690919429469ed3a85c",
   "schema_version": 1,
   "sources": [
     {
@@ -174,6 +174,214 @@
       "usage_limits": "Discovery and provenance record only until claim-level support is audited; do not infer a universal process across locations or organizations.",
       "verified_at": "2026-08-21",
       "volatility": "volatile"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-CURRICULUM-SHELLS"
+      ],
+      "claims_supported": [
+        "DSA-PRODUCT-PATTERN-ORDER"
+      ],
+      "id": "SRC-DSA-ALGOMONSTER-ROADMAP",
+      "notes": "Competitive product observation; Engineering Foundry decisions remain independently authored.",
+      "published_at": null,
+      "publisher": "AlgoMonster",
+      "source_class": "pedagogy/pain-point source",
+      "title": "The Optimal Learning Roadmap",
+      "url": "https://algo.monster/problems/roadmap",
+      "usage_limits": "Public prerequisite and pattern-learning mechanics only; marketing, success rates, company frequency, and universal preparation claims are excluded.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-JAVA-ARRAYDEQUE"
+      ],
+      "id": "SRC-DSA-JAVA-ARRAYDEQUE",
+      "notes": "Primary source for choosing ArrayDeque over legacy Stack in ordinary interview code.",
+      "published_at": null,
+      "publisher": "Oracle",
+      "source_class": "official documentation",
+      "title": "ArrayDeque, Java SE 25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ArrayDeque.html",
+      "usage_limits": "ArrayDeque stack/queue operations, null restriction, and documented amortized operation behavior.",
+      "verified_at": "2026-09-05",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-JAVA-LANGUAGE-SEMANTICS"
+      ],
+      "id": "SRC-DSA-JAVA-JLS",
+      "notes": "The guide intentionally uses a portable Java 17+ interview subset.",
+      "published_at": null,
+      "publisher": "Oracle",
+      "source_class": "official documentation",
+      "title": "Java Language Specification, Java SE 25 Edition",
+      "url": "https://docs.oracle.com/javase/specs/jls/se25/html/",
+      "usage_limits": "Java 25 language semantics for values, references, equality, numeric promotion, strings, arrays, generics, and exceptions.",
+      "verified_at": "2026-09-05",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-JAVA-PRIORITYQUEUE"
+      ],
+      "id": "SRC-DSA-JAVA-PRIORITYQUEUE",
+      "notes": "Primary source for Java heap direction and comparator guidance.",
+      "published_at": null,
+      "publisher": "Oracle",
+      "source_class": "official documentation",
+      "title": "PriorityQueue, Java SE 25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/PriorityQueue.html",
+      "usage_limits": "PriorityQueue ordering, head semantics, comparator behavior, null restriction, and documented operation costs.",
+      "verified_at": "2026-09-05",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-JAVA-COLLECTIONS"
+      ],
+      "id": "SRC-DSA-JAVA-UTIL",
+      "notes": "Primary API reference for the published Java container decision table.",
+      "published_at": null,
+      "publisher": "Oracle",
+      "source_class": "official documentation",
+      "title": "java.util package summary, Java SE 25",
+      "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/package-summary.html",
+      "usage_limits": "Java Collections Framework types and API semantics; performance remains implementation- and operation-specific.",
+      "verified_at": "2026-09-05",
+      "volatility": "stable"
+    },
+    {
+      "applies_to": [
+        "EF-DSA"
+      ],
+      "claims_supported": [
+        "DSA-PRODUCT-LEARNING-FLOW"
+      ],
+      "id": "SRC-DSA-LEETCODE-EXPLORE",
+      "notes": "First-party product documentation used only for competitive mechanics.",
+      "published_at": null,
+      "publisher": "LeetCode",
+      "source_class": "official documentation",
+      "title": "How to use Explore",
+      "url": "https://support.leetcode.com/hc/en-us/articles/360013578114-How-to-use-Explore",
+      "usage_limits": "Public product mechanics for topic cards, mixed learning media, navigation, and completion state; no problem corpus, outcome, or company-frequency claims.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-PYTHON-BISECT"
+      ],
+      "id": "SRC-DSA-PY-BISECT",
+      "notes": "Primary source for bisect boundary semantics.",
+      "published_at": null,
+      "publisher": "Python Software Foundation",
+      "source_class": "official documentation",
+      "title": "bisect — Array bisection algorithm",
+      "url": "https://docs.python.org/3/library/bisect.html",
+      "usage_limits": "Insertion-point semantics and the distinction between logarithmic search and linear list insertion.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-PYTHON-COLLECTIONS"
+      ],
+      "id": "SRC-DSA-PY-COLLECTIONS",
+      "notes": "Primary source for the FIFO deque recommendation and its end-operation cost boundary.",
+      "published_at": null,
+      "publisher": "Python Software Foundation",
+      "source_class": "official documentation",
+      "title": "collections — Container datatypes",
+      "url": "https://docs.python.org/3/library/collections.html",
+      "usage_limits": "deque, Counter, defaultdict, named record, and documented operation behavior.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-PYTHON-DATA-STRUCTURES"
+      ],
+      "id": "SRC-DSA-PY-DATA",
+      "notes": "Reviewed against the Python 3.14 documentation while the guide keeps a portable 3.11+ subset.",
+      "published_at": null,
+      "publisher": "Python Software Foundation",
+      "source_class": "official documentation",
+      "title": "Python tutorial: Data Structures",
+      "url": "https://docs.python.org/3/tutorial/datastructures.html",
+      "usage_limits": "Python built-in container semantics and documented usage; complexity statements are limited to separately documented or qualified expectations.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-LANGUAGE-COVERAGE"
+      ],
+      "claims_supported": [
+        "DSA-PYTHON-HEAPQ"
+      ],
+      "id": "SRC-DSA-PY-HEAPQ",
+      "notes": "The public guide teaches a portable min-heap technique and labels version-sensitive conveniences.",
+      "published_at": null,
+      "publisher": "Python Software Foundation",
+      "source_class": "official documentation",
+      "title": "heapq — Heap queue algorithm",
+      "url": "https://docs.python.org/3/library/heapq.html",
+      "usage_limits": "Heap invariant, push/pop operations, tuple priority use, and runtime-version-sensitive max-heap APIs.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
+    },
+    {
+      "applies_to": [
+        "EF-DSA",
+        "EF-DSA-CURRICULUM-SHELLS"
+      ],
+      "claims_supported": [
+        "DSA-PRODUCT-TIME-AWARE-PLANNING"
+      ],
+      "id": "SRC-DSA-TECH-HANDBOOK-PLAN",
+      "notes": "Secondary synthesis used with explicit editorial-inference boundaries.",
+      "published_at": null,
+      "publisher": "Tech Interview Handbook",
+      "source_class": "respected secondary synthesis",
+      "title": "Coding interview study plan",
+      "url": "https://www.techinterviewhandbook.org/coding-interview-study-plan/",
+      "usage_limits": "Supports time-aware prioritization and breadth/depth planning as product patterns; exact hour, duration, employer, and outcome claims are not adopted.",
+      "verified_at": "2026-09-05",
+      "volatility": "periodic"
     },
     {
       "applies_to": [
