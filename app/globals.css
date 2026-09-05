@@ -2215,6 +2215,30 @@ button.flow-card { cursor: pointer; }
 .playbook-tip-grid details > div h3:not(:first-child) { margin-top: 20px; }
 .playbook-tip-grid ul { padding: 0; border: 0; }
 .playbook-tip-grid details > div h3:last-of-type + ul li svg { color: var(--muted); }
+.dossier-toc { margin-top: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: var(--line); }
+.dossier-toc .text-link { min-width: 0; min-height: 44px; padding: 8px 11px; display: flex; align-items: center; overflow-wrap: anywhere; background: var(--surface); }
+.dossier-toc .text-link:hover { background: var(--surface-2); }
+.playbook-lifecycle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
+.playbook-lifecycle-grid article { min-width: 0; padding: clamp(20px, 3vw, 28px); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.playbook-lifecycle-grid article:nth-child(2n) { border-right: 0; }
+.playbook-lifecycle-grid article:nth-last-child(-n + 2) { border-bottom: 0; }
+.playbook-lifecycle-grid h3 { margin: 20px 0 8px; font-size: 19px; letter-spacing: -.025em; }
+.playbook-lifecycle-grid p { margin: 0; color: var(--text-secondary); font-size: var(--type-small); line-height: 1.6; }
+.playbook-lifecycle-grid ul, .playbook-debrief-grid ul { margin: 18px 0; padding: 0; display: grid; gap: 9px; list-style: none; }
+.playbook-lifecycle-grid li, .playbook-debrief-grid li { position: relative; padding-left: 17px; color: var(--text-secondary); font-size: var(--type-small); line-height: 1.55; }
+.playbook-lifecycle-grid li::before, .playbook-debrief-grid li::before { content: ""; position: absolute; left: 1px; top: .65em; width: 6px; height: 6px; border: 1px solid var(--accent); border-radius: 50%; }
+.playbook-lifecycle-grid article > p:last-child { padding-top: 13px; border-top: 1px solid var(--line); }
+.playbook-contingency-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.playbook-contingency-grid article { min-width: 0; padding: 20px 0; display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 2px 15px; border-bottom: 1px solid var(--line); }
+.playbook-contingency-grid article:nth-child(odd) { padding-right: 28px; }
+.playbook-contingency-grid article:nth-child(even) { padding-left: 28px; border-left: 1px solid var(--line); }
+.playbook-contingency-grid .feature-card-top { grid-row: 1 / 3; }
+.playbook-contingency-grid h3 { margin: 1px 0 7px; font-size: 16px; letter-spacing: -.02em; }
+.playbook-contingency-grid p { margin: 0; color: var(--text-secondary); font-size: var(--type-small); line-height: 1.6; }
+.playbook-debrief-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; border-block: 1px solid var(--line); }
+.playbook-debrief-grid article { min-width: 0; padding: 23px; border-right: 1px solid var(--line); }
+.playbook-debrief-grid article:last-child { border-right: 0; }
+.playbook-debrief-grid h3 { margin: 0; font-size: 18px; }
 .interview-checklist-grid { margin-top: 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .interview-checklist-grid fieldset { min-width: 0; margin: 0; padding: 22px; border: 1px solid var(--line); border-radius: 11px; background: var(--card); }
 .interview-checklist-grid legend { padding: 0 8px; }
@@ -2277,7 +2301,13 @@ button.flow-card { cursor: pointer; }
 }
 
 @media (max-width: 800px) {
-  .story-inventory-grid, .behavioral-question-grid, .behavioral-mistakes, .playbook-tip-grid, .interview-checklist-grid, .resource-integrity > div:last-child { grid-template-columns: 1fr; }
+  .dossier-toc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .story-inventory-grid, .behavioral-question-grid, .behavioral-mistakes, .playbook-tip-grid, .interview-checklist-grid, .playbook-lifecycle-grid, .playbook-contingency-grid, .playbook-debrief-grid, .resource-integrity > div:last-child { grid-template-columns: 1fr; }
+  .playbook-lifecycle-grid article, .playbook-lifecycle-grid article:nth-child(2n), .playbook-lifecycle-grid article:nth-last-child(-n + 2) { border-right: 0; border-bottom: 1px solid var(--line); }
+  .playbook-lifecycle-grid article:last-child { border-bottom: 0; }
+  .playbook-contingency-grid article:nth-child(odd), .playbook-contingency-grid article:nth-child(even) { padding: 18px 0; border-left: 0; }
+  .playbook-debrief-grid article { border-right: 0; border-bottom: 1px solid var(--line); }
+  .playbook-debrief-grid article:last-child { border-bottom: 0; }
   .behavioral-review-grid, .truthful-recovery { grid-template-columns: 1fr; }
   .behavioral-final-checklist { position: static; }
   .resource-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -52,7 +52,7 @@ export const ROUND_EXECUTION_GUIDE_GROUPS: readonly RoundExecutionGuideGroup[] =
     id: "people-collaboration",
     title: "People, projects, and collaboration",
     description: "Make ownership, judgment, technical depth, stakeholder communication, and follow-up reasoning concrete.",
-    slugs: ["behavioral", "project-deep-dive", "hiring-manager", "cross-functional"],
+    slugs: ["behavioral", "project-deep-dive", "hiring-manager", "cross-functional", "technical-presentation"],
   },
 ];
 

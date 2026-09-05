@@ -317,3 +317,21 @@ export function buildInterviewPlaybookOverview(
     primaryRoundReason,
   };
 }
+
+/**
+ * Selects one completed round for the private debrief handoff. A real
+ * scheduled instant wins; unscheduled completed rounds follow by round number
+ * and stable id. This is a navigation choice, not an evaluation of outcome.
+ */
+export function selectLatestCompletedInterviewPlaybookRound(
+  applications: readonly InterviewPlaybookApplicationSummary[],
+): InterviewPlaybookRoundSummary | null {
+  return applications
+    .flatMap((application) => application.rounds)
+    .filter((round) => round.state === "completed")
+    .sort((left, right) => {
+      const leftTime = parseScheduledAt(left.scheduledAt) ?? Number.NEGATIVE_INFINITY;
+      const rightTime = parseScheduledAt(right.scheduledAt) ?? Number.NEGATIVE_INFINITY;
+      return rightTime - leftTime || right.roundNumber - left.roundNumber || right.id.localeCompare(left.id);
+    })[0] ?? null;
+}
